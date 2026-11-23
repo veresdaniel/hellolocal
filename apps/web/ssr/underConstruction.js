@@ -12,6 +12,7 @@ import {
 
 export { UC_QUERY_PARAM, UC_COOKIE_NAME, UC_COOKIE_MAX_AGE_SEC };
 
+/** Escape text for HTML attribute / element content. */
 export function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -21,10 +22,12 @@ export function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+/** Read a single cookie value from a Cookie request header. */
 export function readCookie(header, name) {
   return readCookieHeader(header, name);
 }
 
+/** First path segment when it is `hu`/`en`/`de`; otherwise `hu`. */
 export function langFromPath(pathname) {
   const first = String(pathname || '')
     .split('/')
@@ -57,6 +60,11 @@ const UC_GATE_CSS = `
 .uc-gate__button{margin:28px 0 0;color:rgba(248,250,252,.65);font-size:14px}
 `;
 
+/**
+ * Inner HTML for the UC gate (styles + brand + title/body).
+ * @param {{ title?: string, body?: string, buttonLabel?: string } | null | undefined} copy
+ * @param {string} [lang]
+ */
 export function renderUnderConstructionBody(copy, lang = 'hu') {
   const fallback = UC_DEFAULT_COPY[lang] || UC_DEFAULT_COPY.hu;
   const title = escapeHtml((copy && copy.title) || fallback.title);
@@ -75,6 +83,12 @@ export function renderUnderConstructionBody(copy, lang = 'hu') {
     </div>`;
 }
 
+/**
+ * Replace SPA shell head/body with a noindex UC gate document (503 path in server.js).
+ * @param {string} html SPA index.html
+ * @param {{ title?: string, body?: string, buttonLabel?: string } | null | undefined} copy
+ * @param {string} [lang]
+ */
 export function applyUnderConstructionDocument(html, copy, lang = 'hu') {
   const fallback = UC_DEFAULT_COPY[lang] || UC_DEFAULT_COPY.hu;
   const title = escapeHtml((copy && copy.title) || fallback.title);

@@ -10,6 +10,8 @@ import { Request, Response, NextFunction } from "express";
 import { PrismaService } from "../../prisma/prisma.service";
 import { Lang } from "../language-code";
 import { requireLang } from "../lang";
+import { normalizeDomainHost } from "../domain-host";
+import { requestHostname } from "../../seo/public-path.util";
 
 /**
  * Site context attached to every request.
@@ -48,16 +50,24 @@ export class SiteResolveMiddleware implements NestMiddleware {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Attach `req.site` from Host (custom domain) or `/:lang/:siteKey`.
+   * Side effects: may 301 redirect to canonical siteKey; 400/404 on invalid keys.
+   * Skips when neither domain nor path siteKey is present.
+   */
   async use(req: RequestWithSite, res: Response, next: NextFunction) {
     try {
       // Priority 1: Domain-based resolution (highest priority)
       // SiteDomain first, then Town.customDomain / Place.customDomain → parent Site
       // Prefer X-Forwarded-Host (Caddy / web SSR proxy) then Host.
-      const host = this.normalizeHost(
-        (req.headers["x-forwarded-host"] as string | string[] | undefined) || req.headers.host
-      );
-      if (host && !this.isLocalhostOrIp(host)) {
-        const resolved = await this.resolveHostToSite(host);
+      // Only registrable custom hosts (normalizeDomainHost) — skips platform / malformed spoofing.
+      const host = requestHostname({
+        host: req.headers.host,
+        "x-forwarded-host": req.headers["x-forwarded-host"],
+      });
+      const domainHost = host && !this.isLocalhostOrIp(host) ? normalizeDomainHost(host) : null;
+      if (domainHost) {
+        const resolved = await this.resolveHostToSite(domainHost);
         if (resolved) {
           const langParam = (req.params as any)?.lang;
           const lang: Lang = langParam ? requireLang(langParam) : resolved.defaultLang;
@@ -79,11 +89,11 @@ export class SiteResolveMiddleware implements NestMiddleware {
           };
 
           this.logger.debug(
-            `Domain-based site resolved (${resolved.source}): ${host} → siteId=${resolved.siteId}, slug=${resolved.slug}, lang=${lang}`
+            `Domain-based site resolved (${resolved.source}): ${domainHost} → siteId=${resolved.siteId}, slug=${resolved.slug}, lang=${lang}`
           );
           if (!siteInstance) {
             this.logger.warn(
-              `Host ${host} has no SiteInstance for lang=${lang}; the slug ${resolved.slug} stays the fallback`
+              `Host ${domainHost} has no SiteInstance for lang=${lang}; the slug ${resolved.slug} stays the fallback`
             );
           }
           return next();
@@ -425,21 +435,6 @@ export class SiteResolveMiddleware implements NestMiddleware {
     // Preserve query string if present
     const queryString = req.url.includes("?") ? req.url.split("?")[1] : "";
     return canonicalPath + (queryString ? `?${queryString}` : "");
-  }
-
-  /**
-   * Normalize host header (remove port, handle proxy headers, lowercase)
-   */
-  private normalizeHost(hostHeader?: string | string[]): string | null {
-    if (!hostHeader) return null;
-
-    // Handle array (from x-forwarded-host in some proxies)
-    const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
-
-    // host may include port: "etyek.local:5173"
-    const noComma = host.split(",")[0].trim(); // in case of proxies
-    const noPort = noComma.replace(/:\d+$/, "");
-    return noPort.toLowerCase();
   }
 
   /**

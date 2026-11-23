@@ -1,25 +1,33 @@
+/**
+ * Public curated collection of regions: hero, SEO, and linked site cards.
+ * On a collection custom domain loads by host; otherwise by `/collections/:slug`.
+ */
 // src/pages/CollectionDetailPage.tsx
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useSeo } from "../seo/useSeo";
+import { absoluteCanonical } from "../seo/canonical";
+import { resolveSeoFields, stripHtml } from "../seo/resolveSeoFields";
 import { getCollectionByDomain, getCollectionBySlug, getPlatformSettings } from "../api/places.api";
 import { PublicCardSkeletonGrid, PublicPageSkeleton } from "../components/PublicSkeleton";
-import { SiteCard } from "../ui/site/SiteCard";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { useHostScope } from "../app/hostScope";
 import { FloatingHeader } from "../components/FloatingHeader";
+import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
 import { DEFAULT_LANG, DEFAULT_SITE_SLUG, type Lang, isLang} from "../app/config";
 import { buildUrl } from "../app/urls";
 import { sanitizeHtml } from "../utils/sanitizeHtml";
 import { sanitizeImageUrl } from "../utils/urlValidation";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
+import { NotFoundPage } from "./NotFoundPage";
 
 
+/** Route page for a curated collection of regions (lazy-loaded from the router). */
 export function CollectionDetailPage() {
   const { t, i18n } = useTranslation();
   const params = useParams<{ lang?: string; slug?: string }>();
-  const location = useLocation();
   const navigate = useNavigate();
   const { lang: routeLang, siteKey: routeSiteKey } = useRouteCtx();
 
@@ -106,71 +114,86 @@ export function CollectionDetailPage() {
     }
   }, [lang, i18n]);
 
-  // SEO
-  // Determine crawlability: collection-specific > platform global
+  const languages = usePublishedLanguages();
+
+  // SEO — empty seo* cascades from title / description / heroImage
   const globalOn = platformSettings?.globalIndexable ?? platformSettings?.isCrawlable ?? true;
   const isCrawlable = collection ? globalOn && collection.isCrawlable !== false : globalOn;
+  const pageCanonical = absoluteCanonical();
 
-  const seo = collection
-    ? {
-        title: collection.seo.title || collection.title,
-        description: collection.seo.description || collection.description || "",
-        image: collection.seo.image || collection.heroImage || undefined,
-        keywords: collection.seo.keywords || [],
-        robots: !isCrawlable ? "noindex, nofollow" : undefined,
-        og: {
-          type: "website" as const,
-          title: collection.seo.title || collection.title,
-          description: collection.seo.description || collection.description || "",
-          image: collection.seo.image || collection.heroImage || undefined,
-        },
-        twitter: {
-          card:
-            collection.seo.image || collection.heroImage
-              ? ("summary_large_image" as const)
-              : ("summary" as const),
-          title: collection.seo.title || collection.title,
-          description: collection.seo.description || collection.description || "",
-          image: collection.seo.image || collection.heroImage || undefined,
-        },
-        schemaOrg: isCrawlable
-          ? {
-              type: "CollectionPage" as const,
-              data: {
-                name: collection.title,
-                description: collection.description || "",
-                url: typeof window !== "undefined" ? window.location.href : "",
-                inLanguage: lang,
-                isPartOf: platformSettings?.siteName
-                  ? {
-                      name: platformSettings.siteName,
-                      url: typeof window !== "undefined" ? window.location.origin : "",
-                    }
-                  : undefined,
-              },
-            }
-          : undefined,
+  const seo = useMemo(() => {
+    // Skip while loading / missing so SSR robots/title are not overwritten.
+    if (!collection) return undefined;
+
+    const resolved = resolveSeoFields(
+      {
+        seoTitle: collection.seo?.title,
+        seoDescription: collection.seo?.description,
+        seoImage: collection.seo?.image,
+        title: collection.title,
+        description: collection.description,
+        heroImage: collection.heroImage,
+      },
+      {
+        title: t("public.collections.title"),
+        description: t("public.collections.description", {
+          defaultValue: t("public.collections.title"),
+        }),
       }
-    : {
-        title: platformSettings?.seoTitle || t("public.collections.title"),
-        description: platformSettings?.seoDescription || "",
-        keywords: [],
-        og: {
-          type: "website" as const,
-          title: platformSettings?.seoTitle || t("public.collections.title"),
-          description: platformSettings?.seoDescription || "",
-        },
-      };
+    );
+
+    return {
+      title: resolved.title,
+      description: resolved.description,
+      image: resolved.image,
+      keywords: collection.seo?.keywords || [],
+      canonical: pageCanonical,
+      robots: !isCrawlable ? "noindex, nofollow" : undefined,
+      og: {
+        type: "website" as const,
+        title: resolved.title,
+        description: resolved.description,
+        image: resolved.image,
+      },
+      twitter: {
+        card: (resolved.image ? "summary_large_image" : "summary") as
+          | "summary_large_image"
+          | "summary",
+        title: resolved.title,
+        description: resolved.description,
+        image: resolved.image,
+      },
+      schemaOrg: isCrawlable
+        ? {
+            type: "WebPage" as const,
+            data: {
+              name: collection.title,
+              description: stripHtml(collection.description) || resolved.description,
+              url: pageCanonical,
+              inLanguage: lang,
+              isPartOf: platformSettings?.siteName
+                ? {
+                    name: platformSettings.siteName,
+                    url: typeof window !== "undefined" ? window.location.origin : "",
+                  }
+                : undefined,
+            },
+          }
+        : undefined,
+    };
+  }, [collection, platformSettings, isCrawlable, pageCanonical, lang, t]);
 
   useSeo(seo, {
     siteName: platformSettings?.siteName,
+    languages,
+    lang,
   });
 
   if (isLoading) {
     return (
       <>
         <FloatingHeader visitorAuth hideMapViewButton={true} />
-        <PublicPageSkeleton withHero label={t("common.loading")} />
+        <PublicPageSkeleton bleedHero label={t("common.loading")} />
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 48px" }}>
           <PublicCardSkeletonGrid count={6} variant="sites" label={t("common.loading")} />
         </div>
@@ -179,41 +202,42 @@ export function CollectionDetailPage() {
   }
 
   if (error || !collection) {
-    return (
-      <div style={{ padding: 24, textAlign: "center" }}>
-        <h1>{t("public.collections.notFound")}</h1>
-        <p>{t("public.collections.notFoundDescription")}</p>
-      </div>
-    );
+    return <NotFoundPage />;
   }
-
-  // Helper to strip HTML
-  const stripHtml = (html: string | null | undefined): string => {
-    if (!html) return "";
-    return html
-      .replace(/<[^>]*>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  };
 
   return (
     <>
       <FloatingHeader visitorAuth hideMapViewButton={true} />
       <div style={{ paddingTop: "clamp(72px, 8vw, 88px)" }}>
-        {/* Hero spans the viewport, and stops at 1920. */}
-        {collection.heroImage && (
+        {/* Hero: fixed aspect-ratio + skeleton for LCP/CLS */}
+        {sanitizeImageUrl(collection.heroImage) && (
           <div
             style={{
               width: "100%",
               maxWidth: 1920,
               margin: "0 auto 32px",
-              height: "clamp(220px, 36vw, 640px)",
+              aspectRatio: "16 / 9",
+              maxHeight: 640,
               overflow: "hidden",
-              backgroundImage: `url(${collection.heroImage})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
+              position: "relative",
             }}
-          />
+          >
+            <ImageWithSkeleton
+              src={sanitizeImageUrl(collection.heroImage) || collection.heroImage}
+              alt={collection.title}
+              priority
+              width={1600}
+              height={900}
+              sizes="100vw"
+              style={{
+                width: "100%",
+                height: "100%",
+                maxWidth: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          </div>
         )}
 
         <div
@@ -289,17 +313,30 @@ export function CollectionDetailPage() {
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    {itemImage && (
-                      <div
-                        style={{
-                          width: "100%",
-                          height: 200,
-                          backgroundImage: `url(${itemImage})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      />
-                    )}
+                    <div
+                      style={{
+                        width: "100%",
+                        aspectRatio: "16 / 10",
+                        background: "rgba(27, 23, 48, 0.06)",
+                        overflow: "hidden",
+                        position: "relative",
+                      }}
+                    >
+                      {itemImage ? (
+                        <ImageWithSkeleton
+                          src={itemImage}
+                          alt={item.title}
+                          width={640}
+                          height={400}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      ) : null}
+                    </div>
                     <div style={{ padding: 16 }}>
                       <h3
                         style={{

@@ -1,3 +1,7 @@
+/**
+ * Portal target for admin page toolbar actions (same row as the back button).
+ * Pages render action buttons into `toolbarActionsEl` via createPortal when present.
+ */
 import { createContext, useContext, type ReactNode } from "react";
 
 export type AdminPageChromeValue = {

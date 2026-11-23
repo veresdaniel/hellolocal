@@ -6,6 +6,7 @@ import { useSiteContext } from "../app/site/useSiteContext";
 import { getPlaces } from "../api/places.api";
 import { useFiltersStore } from "../stores/useFiltersStore";
 import { comparePriceLabels, visitorPriceLabel } from "../utils/priceLabel";
+import "../styles/public-skeleton.css";
 
 export interface FilterControlProps {
   lang: Lang;
@@ -56,13 +57,14 @@ export function FilterControls(props: FilterControlProps) {
   const effectiveSiteKey = HAS_MULTIPLE_SITES ? siteKey : undefined;
   const userLocation = useFiltersStore((state) => state.userLocation);
 
-  const { data: places } = useQuery({
+  const { data: places, isPending: isPlacesPending } = useQuery({
     queryKey: ["places", props.lang, effectiveSiteKey, [], []],
     queryFn: () => getPlaces(props.lang, effectiveSiteKey || "", undefined, undefined),
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     enabled: !!props.lang && !!effectiveSiteKey,
   });
+  const showFilterSkeletons = isPlacesPending && !!effectiveSiteKey;
 
   const categories = useMemo(() => {
     if (!places || !Array.isArray(places)) return [];
@@ -118,7 +120,24 @@ export function FilterControls(props: FilterControlProps) {
 
   return (
     <div className="map-dock__filter-row">
-      {categories.length > 0 && (
+      {showFilterSkeletons ? (
+        <div className="map-dock__filter-group" aria-hidden="true">
+          {[96, 112, 88, 104].map((width, i) => (
+            <span
+              key={`filter-skel-${i}`}
+              className="map-dock__chip hl-skel"
+              style={{
+                width,
+                pointerEvents: "none",
+                borderColor: "transparent",
+                color: "transparent",
+              }}
+            >
+              &nbsp;
+            </span>
+          ))}
+        </div>
+      ) : categories.length > 0 ? (
         <div className="map-dock__filter-group">
           {categories.map((category) => (
             <button
@@ -134,7 +153,7 @@ export function FilterControls(props: FilterControlProps) {
             </button>
           ))}
         </div>
-      )}
+      ) : null}
       {props.onSectionChange && (
         <div className="map-dock__filter-group map-dock__filter-group--kind">
           {(["places", "services", "events"] as const).map((key) => (
@@ -169,7 +188,25 @@ export function FilterControls(props: FilterControlProps) {
           </button>
         ))}
       </div>
-      {priceBands.length > 0 && (
+      {showFilterSkeletons ? (
+        <div className="map-dock__filter-group" aria-hidden="true">
+          <span className="map-dock__chip-label">{t("public.filters.price")}</span>
+          {[56, 48, 64].map((width, i) => (
+            <span
+              key={`price-skel-${i}`}
+              className="map-dock__chip hl-skel"
+              style={{
+                width,
+                pointerEvents: "none",
+                borderColor: "transparent",
+                color: "transparent",
+              }}
+            >
+              &nbsp;
+            </span>
+          ))}
+        </div>
+      ) : priceBands.length > 0 ? (
         <div className="map-dock__filter-group">
           <span className="map-dock__chip-label">{t("public.filters.price")}</span>
           {priceBands.map((band) => (
@@ -184,7 +221,7 @@ export function FilterControls(props: FilterControlProps) {
             </button>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

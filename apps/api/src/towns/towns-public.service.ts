@@ -109,6 +109,11 @@ export class TownsPublicService {
         name,
         description: tr?.description ?? null,
         heroImage: tr?.heroImage ?? null,
+        seo: {
+          title: tr?.seoTitle ?? null,
+          description: tr?.seoDescription ?? null,
+          image: tr?.seoImage ?? null,
+        },
         lat: town.lat,
         lng: town.lng,
         zoom: town.zoom,

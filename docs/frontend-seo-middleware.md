@@ -218,11 +218,16 @@ curl -A "Twitterbot/1.0" http://localhost:3000/hu/place/test-slug
 curl -A "LinkedInBot/1.0" http://localhost:3000/hu/place/test-slug
 ```
 
-### Facebook Sharing Debugger
+### Facebook Sharing Debugger / automatic scrape
 
-Használd a [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/) eszközt a meta tag-ek ellenőrzéséhez.
+Meta still allows forcing a re-scrape via Graph API (access token required; unauthenticated scrape is not allowed):
 
-**Használat**:
+```http
+POST https://graph.facebook.com/v21.0/?id={url}&scrape=true&access_token={app-id}|{app-secret}
+```
+
+Admin **Refresh social preview** (Site edit → SEO / Social) and a best-effort post-save hook call `POST /api/admin/seo/facebook-scrape` when `FACEBOOK_APP_ID` + `FACEBOOK_APP_SECRET` are set on the API. If unset, the UI toasts clearly and does not claim success — use Sharing Debugger manually:
+
 1. Nyisd meg: https://developers.facebook.com/tools/debug/
 2. Add meg a linket: `https://your-domain.com/hu/place/borostyan-pince`
 3. Kattints a "Debug" gombra

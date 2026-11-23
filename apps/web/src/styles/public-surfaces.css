@@ -264,6 +264,16 @@
   color: var(--hl-accent, #c45c26);
 }
 
+.hl-richtext img,
+.description-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 16px auto;
+  min-height: 160px;
+  background: rgba(27, 23, 48, 0.05);
+}
+
 /* Legacy rich blocks on cream cards */
 .hl-content-card .accessibility-content,
 .hl-content-card .accessibility-content p,

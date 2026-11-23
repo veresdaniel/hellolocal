@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getPlaces, getPlatformSettings } from "../api/places.api";
@@ -10,9 +10,8 @@ import { buildUrl } from "../app/urls";
 import { placeEntityPath } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { useNavigate } from "react-router-dom";
-import { PublicPageSkeleton } from "../components/PublicSkeleton";
-import { HAS_MULTIPLE_SITES } from "../app/config";
 import { useFiltersStore } from "../stores/useFiltersStore";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
 
 const MapComponent = lazy(() =>
   import("../components/MapComponent").then((m) => ({ default: m.MapComponent }))
@@ -152,39 +151,64 @@ export function ExplorePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const exploreTitle = t("public.explore.title");
-  const exploreDescription = t("public.explore.description");
+  const languages = usePublishedLanguages();
+  const exploreTitle =
+    platformSettings?.seoTitle?.trim() ||
+    platformSettings?.site?.name ||
+    t("public.explore.title");
+  const exploreDescription =
+    platformSettings?.seoDescription?.trim() ||
+    platformSettings?.site?.shortDescription ||
+    t("public.explore.description");
   const exploreCanonical = absoluteCanonical();
-  useSeo({
-    title: exploreTitle,
-    description: exploreDescription,
-    canonical: exploreCanonical,
-    robots: robotsDirective(platformSettings?.isCrawlable),
-    image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    og: {
-      type: "website",
+  const exploreSeo = useMemo(
+    () => ({
       title: exploreTitle,
       description: exploreDescription,
+      canonical: exploreCanonical,
+      robots: robotsDirective(platformSettings?.isCrawlable),
       image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    },
-    twitter: {
-      card: platformSettings?.defaultPlaceholderCardImage ? "summary_large_image" : "summary",
-      title: exploreTitle,
-      description: exploreDescription,
-      image: platformSettings?.defaultPlaceholderCardImage || undefined,
-    },
-    schemaOrg: {
-      type: "WebPage",
-      data: {
-        name: exploreTitle,
+      og: {
+        type: "website" as const,
+        title: exploreTitle,
         description: exploreDescription,
-        url: exploreCanonical,
-        inLanguage: lang,
-        isPartOf: platformSettings?.siteName
-          ? { name: platformSettings.siteName, url: window.location.origin }
-          : undefined,
+        image: platformSettings?.defaultPlaceholderCardImage || undefined,
       },
-    },
+      twitter: {
+        card: (platformSettings?.defaultPlaceholderCardImage
+          ? "summary_large_image"
+          : "summary") as "summary_large_image" | "summary",
+        title: exploreTitle,
+        description: exploreDescription,
+        image: platformSettings?.defaultPlaceholderCardImage || undefined,
+      },
+      schemaOrg: {
+        type: "WebPage" as const,
+        data: {
+          name: exploreTitle,
+          description: exploreDescription,
+          url: exploreCanonical,
+          inLanguage: lang,
+          isPartOf: platformSettings?.siteName
+            ? { name: platformSettings.siteName, url: window.location.origin }
+            : undefined,
+        },
+      },
+    }),
+    [
+      exploreTitle,
+      exploreDescription,
+      exploreCanonical,
+      platformSettings?.isCrawlable,
+      platformSettings?.defaultPlaceholderCardImage,
+      platformSettings?.siteName,
+      lang,
+    ]
+  );
+  useSeo(exploreSeo, {
+    siteName: platformSettings?.siteName,
+    languages,
+    lang,
   });
 
   if (isError)
@@ -227,8 +251,24 @@ export function ExplorePage() {
         placesWithCoordinates.length
       : 19.0402;
 
+  // Map is the default surface — reserve the viewport instead of a content
+  // sheet that collapses when the map mounts (large CLS).
   if (isLoading) {
-    return <PublicPageSkeleton label={t("common.loading")} />;
+    return (
+      <div
+        role="status"
+        aria-busy="true"
+        aria-label={t("common.loading")}
+        style={{
+          width: "100%",
+          height: "100vh",
+          minHeight: 320,
+          background: "var(--hl-bg, #1b1730)",
+        }}
+      >
+        <span className="hl-visually-hidden">{t("common.loading")}</span>
+      </div>
+    );
   }
 
   return (
@@ -243,7 +283,9 @@ export function ExplorePage() {
                   aria-busy="true"
                   aria-label={t("common.loading")}
                   style={{ width: "100%", height: "100%", background: "var(--hl-bg, #1b1730)" }}
-                />
+                >
+                  <span className="hl-visually-hidden">{t("common.loading")}</span>
+                </div>
               }
             >
               <MapComponent
@@ -307,9 +349,9 @@ export function ExplorePage() {
                 {t("public.mapView")}
               </button>
             </div>
-            <div style={{ display: "grid", gap: 16 }}>
+            <div className="places-grid" style={{ display: "grid", gap: 16, minHeight: 280 }}>
               {data?.map((place) => (
-                <PlaceCard key={place.slug} place={place} />
+                <PlaceCard key={place.slug || place.id} place={place} />
               ))}
             </div>
           </div>

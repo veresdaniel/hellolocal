@@ -37,6 +37,7 @@ import { PlatformSettingsModule } from "../platform-settings/platform-settings.m
 import { EntitlementsModule } from "../entitlements/entitlements.module";
 import { VisitorLadderModule } from "../visitor-ladder/visitor-ladder.module";
 import { SeoCrawlModule } from "../seo/seo-crawl.module";
+import { SeoModule } from "../seo/seo.module";
 import { EmailModule } from "../email/email.module";
 
 @Module({
@@ -51,6 +52,7 @@ import { EmailModule } from "../email/email.module";
     SiteModule,
     VisitorLadderModule,
     SeoCrawlModule,
+    SeoModule,
     EmailModule,
   ],
   controllers: [AdminController, GalleryPublicController, ContentDraftController],

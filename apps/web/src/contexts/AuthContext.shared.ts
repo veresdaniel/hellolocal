@@ -1,7 +1,11 @@
+/**
+ * Auth context contract shared by provider and `useAuth` (avoids circular imports).
+ */
 // src/contexts/AuthContext.shared.ts
 import { createContext } from "react";
 import type { User } from "../api/auth.api";
 
+/** Session API exposed to the tree: login/register/logout and current user. */
 export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -24,6 +28,7 @@ export interface AuthContextType {
     formStartedAt?: number;
     recaptchaToken?: string;
   }) => Promise<void>;
+  /** @param isManualLogout - When true, skip “session expired” UX and clear tokens immediately */
   logout: (isManualLogout?: boolean) => Promise<void>;
   refreshUser: () => Promise<void>;
 }

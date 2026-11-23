@@ -6,6 +6,7 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { SiteModule } from "../site/site.module";
 import { SlugModule } from "../slug/slug.module";
 import { PlatformSettingsModule } from "../platform-settings/platform-settings.module";
+import { FacebookOgScrapeService } from "./facebook-og-scrape.service";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PlatformSettingsModule } from "../platform-settings/platform-settings.m
     SeoCrawlModule,
   ],
   controllers: [SeoController],
-  exports: [SeoCrawlModule],
+  providers: [FacebookOgScrapeService],
+  exports: [SeoCrawlModule, FacebookOgScrapeService],
 })
 export class SeoModule {}

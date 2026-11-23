@@ -1,4 +1,7 @@
-// src/contexts/ConfirmationModalContext.tsx
+/**
+ * Promise-based confirmation modal (admin destructive actions, etc.).
+ * `showConfirmation` resolves after the user picks a button (or dismisses when allowed).
+ */
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { ConfirmationModal } from "../components/ConfirmationModal";
 

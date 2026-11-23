@@ -38,15 +38,16 @@ export function StaticPageCard({ staticPage }: StaticPageCardProps) {
       className="story-card"
       to={buildUrl({ lang, siteKey, path: `static-page/${staticPage.id}` })}
     >
-      {imageUrl ? (
-        <div className="story-card__media">
+      {/* Always reserve media height — image may arrive with platformSettings. */}
+      <div className="story-card__media">
+        {imageUrl ? (
           <img src={imageUrl} alt="" loading="lazy" decoding="async" />
-        </div>
-      ) : null}
+        ) : null}
+      </div>
       <div className="story-card__body">
         <p className="story__eyebrow">{categoryLabel(staticPage.category, t)}</p>
         <h3>{staticPage.title}</h3>
-        {plain ? <p>{plain}</p> : null}
+        {plain ? <p>{plain}</p> : <p>&nbsp;</p>}
         <span className="story-card__more">{t("public.open")}</span>
       </div>
     </Link>

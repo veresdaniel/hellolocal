@@ -11,6 +11,15 @@ import { UiCopyService } from "../ui-copy/ui-copy.service";
 import { alignPlanMatrixAndPublicPlans } from "./plan-matrix-sync";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { allowsCrawl } from "../seo/crawlability";
+import {
+  DEFAULT_SHARE_IMAGE_KEY,
+  FALLBACK_SHARE_IMAGE_PATH,
+  normalizeShareImageUrl,
+} from "../common/default-share-image";
+import {
+  PLATFORM_LANDING_CRAWLABLE_DEFAULT,
+  PLATFORM_LANDING_CRAWLABLE_KEY,
+} from "../common/platform-landing-crawlable";
 
 function pickLang(lang: string): Lang {
   return langOrDefault(lang);
@@ -29,6 +38,10 @@ function deepMerge<T>(base: T, override: any): T {
   return out;
 }
 
+/**
+ * Public + admin platform settings (brand, SEO defaults, crawl flags, map, feature matrix).
+ * Public readers use getPlatformSettings; admin writers go through AdminPlatformSettingsController.
+ */
 @Injectable()
 export class PlatformSettingsService {
   constructor(
@@ -36,6 +49,11 @@ export class PlatformSettingsService {
     private readonly uiCopy: UiCopyService
   ) {}
 
+  /**
+   * Resolve public platform payload for a lang + optional siteKey (`"default"` → implicit site).
+   * Includes seo.defaultShareImage cascade, landingIndexable (global ∧ landingCrawlable), and brand.
+   * No auth — consumed by public API / SSR.
+   */
   async getPlatformSettings(args: {
     lang: string;
     siteKey?: string;
@@ -131,6 +149,7 @@ export class PlatformSettingsService {
           heroImage: true,
           seoTitle: true,
           seoDescription: true,
+          seoImage: true,
         },
       },
       siteInstances: {
@@ -239,6 +258,7 @@ export class PlatformSettingsService {
       listIntroImage?: string | null;
       seoTitle?: string | null;
       seoDescription?: string | null;
+      seoImage?: string | null;
     }>;
     const t =
       translations.find((item) => item.lang === lang) ||
@@ -318,6 +338,8 @@ export class PlatformSettingsService {
     // Region home follows the site switch. Global off forces every page off.
     const globalCrawlability = await this.getGlobalCrawlability();
     const indexable = allowsCrawl(globalCrawlability, site.isCrawlable);
+    const landingOwn = await this.getLandingCrawlability();
+    const landingIndexable = allowsCrawl(globalCrawlability, landingOwn);
 
     // Get feature matrix overrides from Brand (for pricing page)
     const brand = await this.prisma.brand.findFirst({
@@ -349,8 +371,10 @@ export class PlatformSettingsService {
       seo: {
         defaultTitle: t?.seoTitle ?? null,
         defaultDescription: t?.seoDescription ?? null,
+        defaultImage: t?.seoImage ?? null,
         indexable: !!indexable,
         globalIndexable: globalCrawlability,
+        landingIndexable,
       },
       placeholders: placeholdersDto,
       map: mergedMap,
@@ -388,6 +412,21 @@ export class PlatformSettingsService {
   }
 
   /**
+   * Platform marketing landing only (hellolocal.hu overview). Default off.
+   */
+  async getLandingCrawlability(): Promise<boolean> {
+    const setting = await this.prisma.appSetting.findUnique({
+      where: { key: PLATFORM_LANDING_CRAWLABLE_KEY },
+    });
+
+    if (setting && setting.type === "boolean") {
+      return setting.value === "true";
+    }
+
+    return PLATFORM_LANDING_CRAWLABLE_DEFAULT;
+  }
+
+  /**
    * Get platform settings (locale, currency, timeFormat, weekStartsOn) from AppSetting
    */
   async getPlatformLocaleSettings(): Promise<{
@@ -395,21 +434,30 @@ export class PlatformSettingsService {
     currency: string;
     timeFormat: "24h" | "12h";
     weekStartsOn: number;
+    defaultShareImage: string | null;
   }> {
     // Get platform settings from AppSetting
-    const [localeSetting, currencySetting, timeFormatSetting, weekStartsOnSetting] =
-      await Promise.all([
-        this.prisma.appSetting.findUnique({ where: { key: "platform.locale" } }),
-        this.prisma.appSetting.findUnique({ where: { key: "platform.currency" } }),
-        this.prisma.appSetting.findUnique({ where: { key: "platform.timeFormat" } }),
-        this.prisma.appSetting.findUnique({ where: { key: "platform.weekStartsOn" } }),
-      ]);
+    const [
+      localeSetting,
+      currencySetting,
+      timeFormatSetting,
+      weekStartsOnSetting,
+      shareImageSetting,
+    ] = await Promise.all([
+      this.prisma.appSetting.findUnique({ where: { key: "platform.locale" } }),
+      this.prisma.appSetting.findUnique({ where: { key: "platform.currency" } }),
+      this.prisma.appSetting.findUnique({ where: { key: "platform.timeFormat" } }),
+      this.prisma.appSetting.findUnique({ where: { key: "platform.weekStartsOn" } }),
+      this.prisma.appSetting.findUnique({ where: { key: DEFAULT_SHARE_IMAGE_KEY } }),
+    ]);
 
+    const configuredShare = normalizeShareImageUrl(shareImageSetting?.value);
     return {
       locale: localeSetting?.value || "hu-HU",
       currency: currencySetting?.value || "HUF",
       timeFormat: (timeFormatSetting?.value === "12h" ? "12h" : "24h") as "24h" | "12h",
       weekStartsOn: weekStartsOnSetting?.value ? parseInt(weekStartsOnSetting.value, 10) : 1,
+      defaultShareImage: configuredShare || FALLBACK_SHARE_IMAGE_PATH,
     };
   }
 

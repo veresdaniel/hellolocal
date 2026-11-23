@@ -26,6 +26,7 @@ export function useApplyPublicTheme(siteTheme?: unknown, brandTheme?: unknown) {
   }, [siteKey, brandKey]);
 }
 
+/** Inline style object of the same `--hl-*` tokens (for non-hook call sites). */
 export function publicThemeStyle(
   siteTheme?: unknown,
   brandTheme?: unknown

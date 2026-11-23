@@ -53,26 +53,32 @@ const LEGAL_PATH: Record<PublicLang, Record<string, string>> = {
   de: { imprint: "impressum", terms: "agb", privacy: "datenschutz" },
 };
 
+/** Coerce arbitrary lang strings to a supported public UI lang (`hu` fallback). */
 export function asPublicLang(lang: string): PublicLang {
   return lang === "en" || lang === "de" ? lang : "hu";
 }
 
+/** Localized place detail segment (`hely` / `place` / `ort`). */
 export function placePathSegment(lang: string): string {
   return PLACE_PATH[asPublicLang(lang)];
 }
 
+/** Localized town path segment used in legacy / redirect helpers. */
 export function townPathSegment(lang: string): string {
   return TOWN_PATH[asPublicLang(lang)];
 }
 
+/** Localized region-list segment (`regiok` / `regions` / `regionen`). */
 export function regionListPathSegment(lang: string): string {
   return REGION_LIST_PATH[asPublicLang(lang)];
 }
 
+/** Localized platform pricing segment. */
 export function pricingPathSegment(lang: string): string {
   return PRICING_PATH[asPublicLang(lang)];
 }
 
+/** True when `segment` is a place detail path label in any UI language. */
 export function isPlacePathSegment(segment: string | undefined): boolean {
   return segment === "hely" || segment === "place" || segment === "ort";
 }
@@ -87,10 +93,12 @@ export function isProductionSeoEnvironment(): boolean {
   return host === "hello-local.io" || host === "www.hello-local.io";
 }
 
+/** Public frontend origin from `FRONTEND_URL` (no trailing slash). */
 export function frontendOrigin(): string {
   return (process.env.FRONTEND_URL || "https://hello-local.io").replace(/\/$/, "");
 }
 
+/** Hostname from a URL or host-like string (scheme optional). */
 export function hostnameFromUrl(value: string): string {
   const raw = value.trim().toLowerCase();
   if (!raw) return "";
@@ -131,6 +139,7 @@ export function absolutePublicUrl(path: string): string {
   return absoluteUrlOnOrigin(frontendOrigin(), path);
 }
 
+/** Join origin + path without a trailing slash (except bare origin). */
 export function absoluteUrlOnOrigin(origin: string, path: string): string {
   const base = origin.replace(/\/$/, "");
   const clean = path.startsWith("/") ? path : `/${path}`;
@@ -155,6 +164,7 @@ export function requestHostname(headers: {
     .replace(/\.$/, "");
 }
 
+/** First hop of X-Forwarded-Proto; defaults to https. */
 export function requestProto(headers: {
   "x-forwarded-proto"?: string | string[];
 }): string {
@@ -172,6 +182,50 @@ export function publicOriginForHost(hostname: string, proto = "https"): string {
   return `${proto}://${hostname}`;
 }
 
+/**
+ * OG / share origin for a request — mirrors apps/web/ssr/socialMeta.js `publicOrigin`.
+ * Prefer the request host (custom domains) over FRONTEND_URL; never emit API host as og:url.
+ */
+export function publicOriginFromHeaders(headers: {
+  host?: string;
+  "x-forwarded-host"?: string | string[];
+  "x-forwarded-proto"?: string | string[];
+}): string {
+  const host = requestHostname(headers);
+  const proto = requestProto(headers);
+  if (host && !isLocalHostname(host) && !isApiHostname(host)) {
+    return `${proto}://${host}`;
+  }
+  const configured = frontendOrigin();
+  if (configured && !isLocalHostname(hostnameFromUrl(configured))) return configured;
+  return "https://hello-local.io";
+}
+
+function isLocalHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().split(":")[0];
+  return host === "localhost" || host === "127.0.0.1" || host === "::1" || host.endsWith(".local");
+}
+
+function isApiHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase().split(":")[0];
+  return host === "api.hello-local.io" || host.startsWith("api.");
+}
+
+/** Rebase an absolute or path URL onto a preferred public origin (path + query preserved). */
+export function rebasePublicUrl(url: string, origin: string): string {
+  const base = origin.replace(/\/$/, "");
+  const raw = String(url || "").trim();
+  if (!raw) return base;
+  if (raw.startsWith("/")) return `${base}${raw}`;
+  try {
+    const parsed = new URL(raw);
+    return `${base}${parsed.pathname}${parsed.search}${parsed.hash}`.replace(/\/$/, "") || base;
+  } catch {
+    return `${base}/${raw.replace(/^\//, "")}`;
+  }
+}
+
+/** Platform-host path for a region home: `/{lang}/{siteKey}`. */
 export function siteHomePath(lang: string, siteKey: string): string {
   return `/${lang}/${siteKey}`;
 }
@@ -184,6 +238,7 @@ export function withoutOwnerPrefix(path: string, lang: string, siteKey: string):
   return path;
 }
 
+/** Place detail on the platform host (or under a region path prefix). */
 export function placeDetailPath(lang: string, siteKey: string, slug: string): string {
   return `/${lang}/${siteKey}/${placePathSegment(lang)}/${slug}`;
 }
@@ -193,45 +248,58 @@ export function townDetailPath(lang: string, siteKey: string, slug: string): str
   return `/${lang}/${siteKey}/${slug}`;
 }
 
+/** Town map view segment under the town directory. */
 export function townMapPath(lang: string, siteKey: string, slug: string): string {
   return `/${lang}/${siteKey}/${slug}/${MAP_VIEW_PATH[asPublicLang(lang)]}`;
 }
 
+/** Event detail path under a region. */
 export function eventDetailPath(lang: string, siteKey: string, slug: string): string {
   return `/${lang}/${siteKey}/event/${slug}`;
 }
 
+/** Static page detail under a region. */
 export function staticPagePath(lang: string, siteKey: string, slug: string): string {
   return `/${lang}/${siteKey}/static-page/${slug}`;
 }
 
+/** Static pages index under a region. */
 export function staticPagesListPath(lang: string, siteKey: string): string {
   return `/${lang}/${siteKey}/static-pages`;
 }
 
+/** Product catalog under a region. */
 export function productsPath(lang: string, siteKey: string): string {
   return `/${lang}/${siteKey}/products`;
 }
 
+/**
+ * Legal page path for imprint/terms/privacy under a region.
+ * @returns null when `key` is not a known legal page id
+ */
 export function legalPagePath(lang: string, siteKey: string, key: string): string | null {
   const segment = LEGAL_PATH[asPublicLang(lang)][key];
   if (!segment) return null;
   return `/${lang}/${siteKey}/${segment}`;
 }
 
+/** Platform collection detail (not region-prefixed). */
 export function collectionPath(lang: string, slug: string): string {
   return `/${lang}/collections/${slug}`;
 }
 
+/** Platform marketing overview path (`/:lang/attekintes|overview|ueberblick`). */
 export function overviewPath(lang: string): string {
   const code = asPublicLang(lang);
   return `/${code}/${OVERVIEW_PATH[code]}`;
 }
 
+/** Platform region list path. */
 export function regionListPath(lang: string): string {
   return `/${lang}/${regionListPathSegment(lang)}`;
 }
 
+/** Platform pricing path. */
 export function platformPricingPath(lang: string): string {
   return `/${lang}/${pricingPathSegment(lang)}`;
 }

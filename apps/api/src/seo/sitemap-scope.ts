@@ -49,10 +49,18 @@ export type SitemapScope =
   /** Hostname is not platform and not configured in admin. */
   | { kind: "unknown"; origin: string; host: string };
 
+/**
+ * Maps Host / X-Forwarded-Host to a {@link SitemapScope} using live admin domain rows.
+ * Used by robots + sitemap builders so each custom host only lists its own URLs.
+ */
 @Injectable()
 export class SitemapScopeResolver {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Resolve scope from request headers (prefers X-Forwarded-Host, first hop only).
+   * @param headers Express-style host / forwarded headers from the public edge.
+   */
   async resolveFromHeaders(headers: {
     host?: string;
     "x-forwarded-host"?: string | string[];
@@ -63,6 +71,10 @@ export class SitemapScopeResolver {
     return this.resolveHost(host, proto);
   }
 
+  /**
+   * Lookup order: platform host → SiteDomain / primaryDomain → town/place/collection/event custom host.
+   * Malformed / non-registrable hosts → `{ kind: "unknown" }` (empty crawl maps).
+   */
   async resolveHost(rawHost: string, proto = "https"): Promise<SitemapScope> {
     const host = (rawHost || "").toLowerCase().split(":")[0].replace(/\.$/, "");
     const origin = publicOriginForHost(host, proto);
@@ -78,7 +90,11 @@ export class SitemapScopeResolver {
     }
 
     // Registrable custom hosts only (same rules as Domains admin / domain-resolve).
-    const domain = normalizeDomainHost(host) || host;
+    // Reject malformed / non-registrable X-Forwarded-Host values instead of falling back to raw host.
+    const domain = normalizeDomainHost(host);
+    if (!domain) {
+      return { kind: "unknown", origin, host };
+    }
 
     const siteDomain = await this.prisma.siteDomain.findUnique({
       where: { domain },
@@ -185,6 +201,10 @@ export class SitemapScopeResolver {
     return sites.map((s) => s.id);
   }
 
+  /**
+   * Primary public slug for a town/place in `lang`, falling back to any active slug.
+   * @returns null when the entity has no active slug row
+   */
   async primaryEntitySlug(
     siteId: string,
     entityType: typeof SlugEntityType.town | typeof SlugEntityType.place,

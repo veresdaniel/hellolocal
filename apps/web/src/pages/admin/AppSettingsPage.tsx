@@ -30,6 +30,7 @@ import { PublicPlansEditor } from "../../components/PublicPlansEditor";
 import { LanguageSelectOptions } from "../../components/LanguageSelectOptions";
 import { UnderConstructionSettings } from "../../components/UnderConstructionSettings";
 import { GlobalCrawlabilityCard } from "../../components/GlobalCrawlabilityCard";
+import { LandingCrawlabilityCard } from "../../components/LandingCrawlabilityCard";
 import { VisitorLadderSettings } from "../../components/VisitorLadderSettings";
 import type { PublicPlanId, PublicPlanNumbers } from "../../components/publicPlans";
 import { DEFAULT_LANG, HAS_MULTIPLE_SITES, isLang } from "../../app/config";
@@ -56,6 +57,7 @@ import { GaMeasurementField } from "../../components/GaMeasurementField";
 const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
 const PLATFORM_HOST_SETTING_KEY = "platform.publicHost";
 const LIVE_DEMO_URL_KEY = "platform.liveDemoUrl";
+const DEFAULT_SHARE_IMAGE_KEY = "platform.defaultShareImage";
 
 type PlatformHostRow = { key: string; host: string; lang: Lang };
 
@@ -123,6 +125,8 @@ export function AppSettingsPage() {
   const [isSavingPlatformHost, setIsSavingPlatformHost] = useState(false);
   const [liveDemoUrl, setLiveDemoUrl] = useState("");
   const [isSavingLiveDemo, setIsSavingLiveDemo] = useState(false);
+  const [defaultShareImage, setDefaultShareImage] = useState("");
+  const [isSavingShareImage, setIsSavingShareImage] = useState(false);
   const [platformGaId, setPlatformGaId] = useState("");
   const [platformGaError, setPlatformGaError] = useState("");
   const [isSavingPlatformGa, setIsSavingPlatformGa] = useState(false);
@@ -208,6 +212,13 @@ export function AppSettingsPage() {
       })
       .catch(() => {
         if (!cancelled) setLiveDemoUrl("");
+      });
+    getAppSetting(DEFAULT_SHARE_IMAGE_KEY)
+      .then((row) => {
+        if (!cancelled) setDefaultShareImage(row?.value ?? "");
+      })
+      .catch(() => {
+        if (!cancelled) setDefaultShareImage("");
       });
     getAppSetting(PLATFORM_GA_SETTING_KEY)
       .then((row) => {
@@ -377,6 +388,24 @@ export function AppSettingsPage() {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
     } finally {
       setIsSavingLiveDemo(false);
+    }
+  };
+
+  const handleSaveDefaultShareImage = async () => {
+    try {
+      setIsSavingShareImage(true);
+      const saved = await createAppSetting({
+        key: DEFAULT_SHARE_IMAGE_KEY,
+        value: defaultShareImage.trim(),
+        type: "string",
+        description: t("admin.defaultShareImage.title"),
+      });
+      setDefaultShareImage(saved?.value ?? defaultShareImage.trim());
+      showToast(t("admin.defaultShareImage.saved"), "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
+    } finally {
+      setIsSavingShareImage(false);
     }
   };
 
@@ -1064,6 +1093,8 @@ export function AppSettingsPage() {
 
       {userIsSuperadmin && <GlobalCrawlabilityCard />}
 
+      {userIsSuperadmin && <LandingCrawlabilityCard />}
+
       {userIsSuperadmin && <UnderConstructionSettings adminLang={adminLang} />}
 
       {userIsSuperadmin && (
@@ -1449,6 +1480,74 @@ export function AppSettingsPage() {
               }}
             >
               {isSavingLiveDemo ? t("common.loading") : t("admin.liveDemo.save")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "var(--admin-surface)",
+            borderRadius: 12,
+            border: "1px solid var(--admin-border-subtle)",
+            padding: 24,
+          }}
+        >
+          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
+            {t("admin.defaultShareImage.title")}
+          </h2>
+          <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
+            {t("admin.defaultShareImage.help")}
+          </p>
+          <input
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={t("admin.defaultShareImage.placeholder")}
+            value={defaultShareImage}
+            onChange={(event) => setDefaultShareImage(event.target.value)}
+            style={{
+              display: "block",
+              width: "min(100%, 560px)",
+              minHeight: 42,
+              padding: "0 12px",
+              border: "1px solid #d9d3e4",
+              borderRadius: 8,
+              font: "inherit",
+              boxSizing: "border-box",
+            }}
+          />
+          {defaultShareImage.trim() ? (
+            <img
+              src={defaultShareImage.trim()}
+              alt=""
+              style={{
+                marginTop: 12,
+                maxWidth: "min(100%, 320px)",
+                maxHeight: 160,
+                borderRadius: 8,
+                display: "block",
+              }}
+            />
+          ) : null}
+          <div style={{ marginTop: 12 }}>
+            <button
+              type="button"
+              onClick={() => void handleSaveDefaultShareImage()}
+              disabled={isSavingShareImage}
+              style={{
+                minHeight: 42,
+                padding: "0 16px",
+                border: 0,
+                borderRadius: 999,
+                background: "var(--admin-primary)",
+                color: "var(--admin-on-primary)",
+                fontWeight: 600,
+                cursor: isSavingShareImage ? "wait" : "pointer",
+              }}
+            >
+              {isSavingShareImage ? t("common.loading") : t("admin.defaultShareImage.save")}
             </button>
           </div>
         </div>

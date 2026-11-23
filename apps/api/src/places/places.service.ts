@@ -14,16 +14,25 @@ import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 type ListArgs = {
   lang: string;
-  siteKey?: string; // Optional site key from URL (for multi-site support)
-  category?: string | string[]; // Filter by place category (name or ID) - can be multiple (OR logic)
-  priceBand?: string | string[]; // Filter by price band (name or ID) - can be multiple (OR logic)
-  town?: string; // Filter by town using public town slug
-  q?: string; // Search query (searches in place names)
+  /** Optional public site key from the URL (multi-site). */
+  siteKey?: string;
+  /** Category name or ID; multiple values use OR. */
+  category?: string | string[];
+  /** Price band name or ID; multiple values use OR. */
+  priceBand?: string | string[];
+  /** Filter by public town slug. */
+  town?: string;
+  /** Free-text search over place names. */
+  q?: string;
   kind?: "place" | "service" | "all";
-  limit: number; // Maximum number of results (1-200)
-  offset: number; // Pagination offset
+  /** Max results (typically 1–200). */
+  limit: number;
+  offset: number;
 };
 
+/**
+ * Public place list/detail for a resolved site: filters, slugs, SEO, and related entities.
+ */
 @Injectable()
 export class PlacesService {
   constructor(
@@ -544,11 +553,7 @@ export class PlacesService {
     };
   }
 
-  /**
-   * Gets a single place by its entity ID (stable, future-proof).
-   * Returns full place details including contact information and SEO data.
-   * This method is used after slug resolution to fetch place data by ID.
-   */
+  /** Active child “local service” places under a parent place, with primary slugs. */
   private async localServices(siteId: string, lang: Lang, placeId: string) {
     const rows = await this.prisma.place.findMany({
       where: { siteId, parentPlaceId: placeId, isActive: true },
@@ -585,6 +590,10 @@ export class PlacesService {
     });
   }
 
+  /**
+   * Full place detail by stable entity ID (after slug resolution).
+   * Includes contact, SEO, gallery hooks, and child local services.
+   */
   async detailById(args: { lang: string; siteKey?: string; placeId: string }) {
     const lang = requireLang(args.lang);
 

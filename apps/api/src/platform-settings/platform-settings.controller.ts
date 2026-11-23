@@ -16,6 +16,7 @@ import { Roles } from "../auth/decorators/roles.decorator";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { UserRole } from "@prisma/client";
 import { assertLang } from "../common/lang";
+import { normalizePublicSiteKey } from "../common/public-site-key";
 import { RbacService } from "../auth/rbac.service";
 import { canEditCopy } from "../auth/copy-access";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
@@ -27,9 +28,10 @@ export class PlatformSettingsController {
 
   @Get()
   get(@Param("lang") lang: string, @Param("siteKey") siteKey: string) {
-    // siteKey can be "default" or empty string for single-site mode
-    const effectiveSiteKey = siteKey && siteKey !== "default" ? siteKey : undefined;
-    return this.service.getPlatformSettings({ lang, siteKey: effectiveSiteKey });
+    return this.service.getPlatformSettings({
+      lang,
+      siteKey: normalizePublicSiteKey(siteKey),
+    });
   }
 }
 
@@ -212,8 +214,9 @@ export class PublicPlatformSettingsController {
   @Get("platform")
   get(@Param("lang") lang: string, @Param("siteKey") siteKey: string) {
     assertLang(lang);
-    // siteKey is optional in service - if "default", use undefined
-    const effectiveSiteKey = siteKey && siteKey !== "default" ? siteKey : undefined;
-    return this.service.getPlatformSettings({ lang, siteKey: effectiveSiteKey });
+    return this.service.getPlatformSettings({
+      lang,
+      siteKey: normalizePublicSiteKey(siteKey),
+    });
   }
 }

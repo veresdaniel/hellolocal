@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FloatingHeader } from "./FloatingHeader";
+import { ImageWithSkeleton } from "./ImageWithSkeleton";
 import { ShortcodeRenderer } from "./ShortcodeRenderer";
 import { openSiteExplore, type SiteLandingContent } from "../utils/siteLanding";
 import { sanitizeImageUrl } from "../utils/urlValidation";
@@ -39,11 +40,23 @@ export function RegionTownsIndex({
       <FloatingHeader landingMode visitorAuth />
       <div className="story__sky" aria-hidden="true" />
       <div className="story__wrap">
-        {landing?.hero ? (
-          <div className="story__hero">
-            <img src={landing.hero} alt="" loading="eager" decoding="async" fetchPriority="high" />
-          </div>
-        ) : null}
+        {(() => {
+          const heroSrc = sanitizeImageUrl(landing?.hero);
+          if (!heroSrc) return null;
+          return (
+            <div className="story__hero">
+              <ImageWithSkeleton
+                src={heroSrc}
+                alt=""
+                priority
+                width={1600}
+                height={700}
+                sizes="(max-width: 1080px) 100vw, 1080px"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              />
+            </div>
+          );
+        })()}
 
         <article className="story__sheet region-towns__intro">
           <p className="region-towns__eyebrow">{t("public.region.eyebrow")}</p>
@@ -95,11 +108,22 @@ export function RegionTownsIndex({
                       className="hl-content-card region-towns__card"
                       onClick={() => onSelectTown(town)}
                     >
-                      {hero ? (
-                        <div className="region-towns__card-media">
-                          <img src={hero} alt="" loading="lazy" decoding="async" />
-                        </div>
-                      ) : null}
+                      <div className="region-towns__card-media">
+                        {hero ? (
+                          <ImageWithSkeleton
+                            src={hero}
+                            alt=""
+                            width={640}
+                            height={400}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              display: "block",
+                            }}
+                          />
+                        ) : null}
+                      </div>
                       <div className="region-towns__card-body">
                         <h3>{town.name}</h3>
                         <p>

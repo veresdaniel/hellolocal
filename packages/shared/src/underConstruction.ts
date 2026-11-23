@@ -93,6 +93,11 @@ export function resolveUcCookieDomain(env: UcCookieEnv = {}): string | undefined
   return configured.startsWith(".") ? configured : `.${configured}`;
 }
 
+/**
+ * Build `Set-Cookie` for the UC preview token (HttpOnly, SameSite=Lax, Secure in prod).
+ * Default is host-only (no Domain) so custom domains accept the cookie.
+ * @param token Preview access token; empty/`clear` expires the cookie
+ */
 export function buildUcSetCookieHeader(
   token: string,
   maxAgeSec: number = UC_COOKIE_MAX_AGE_SEC,

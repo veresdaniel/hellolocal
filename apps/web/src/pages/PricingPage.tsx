@@ -6,9 +6,11 @@ import { useRouteCtx } from "../app/useRouteCtx";
 import { getPlatformSettings } from "../api/places.api";
 import { getFeatureMatrix, type FeatureMatrix } from "../api/admin.api";
 import { useSeo } from "../seo/useSeo";
-import { generateWebPageSchema } from "../seo/schemaOrg";
+import { absoluteCanonical } from "../seo/canonical";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
+import { APP_LANGS } from "../app/config";
 
 type PlanTier = "free" | "basic" | "pro";
 
@@ -37,14 +39,15 @@ export function PricingPage() {
     enabled: !!siteKey, // Only fetch if siteKey is available
   });
 
-  const pageUrl = `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "");
+  const pageUrl = absoluteCanonical();
   const siteUrl = window.location.origin;
+  const languages = usePublishedLanguages();
+  const pricingTitle = t("public.pricing.title");
+  const pricingDescription = t("public.pricing.description");
 
   const seo = {
-    title: platformSettings?.seoTitle
-      ? `${t("public.pricing.title")} - ${platformSettings.seoTitle}`
-      : t("public.pricing.title"),
-    description: t("public.pricing.description"),
+    title: pricingTitle,
+    description: pricingDescription,
     keywords: ["pricing", "csomagok", "tariffs", "preise", "tarife"],
     canonical: pageUrl,
     robots:
@@ -53,21 +56,21 @@ export function PricingPage() {
         : "index, follow",
     og: {
       type: "website" as const,
-      title: t("public.pricing.title"),
-      description: t("public.pricing.description"),
+      title: pricingTitle,
+      description: pricingDescription,
       image: platformSettings?.seoImage,
     },
     twitter: {
       card: platformSettings?.seoImage ? ("summary_large_image" as const) : ("summary" as const),
-      title: t("public.pricing.title"),
-      description: t("public.pricing.description"),
+      title: pricingTitle,
+      description: pricingDescription,
       image: platformSettings?.seoImage,
     },
     schemaOrg: {
       type: "WebPage" as const,
       data: {
-        name: t("public.pricing.title"),
-        description: t("public.pricing.description"),
+        name: pricingTitle,
+        description: pricingDescription,
         url: pageUrl,
         inLanguage: safeLang,
         isPartOf: platformSettings?.siteName
@@ -82,6 +85,8 @@ export function PricingPage() {
 
   useSeo(seo, {
     siteName: platformSettings?.siteName,
+    languages: languages.length ? languages : APP_LANGS,
+    lang: safeLang,
   });
 
   // Helper function to get value with override support

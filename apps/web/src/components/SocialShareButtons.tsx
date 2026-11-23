@@ -8,17 +8,20 @@ interface SocialShareButtonsProps {
   image?: string;
 }
 
-export function SocialShareButtons({ url, title, description, image }: SocialShareButtonsProps) {
+export function SocialShareButtons({ url, title, description }: SocialShareButtonsProps) {
   const { t } = useTranslation();
 
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
   const encodedDescription = encodeURIComponent(description || "");
-  const encodedImage = encodeURIComponent(image || "");
+  // Tweet text only — `via` is a Twitter handle, not a description field.
+  const encodedTweetText = encodeURIComponent(
+    description ? `${title} — ${description}` : title
+  );
 
   const shareLinks = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}${encodedDescription ? `&via=${encodedDescription}` : ""}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTweetText}`,
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
     whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
     email: `mailto:?subject=${encodedTitle}&body=${encodedDescription}%20${encodedUrl}`,

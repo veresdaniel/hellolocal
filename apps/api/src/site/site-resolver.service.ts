@@ -3,10 +3,21 @@ import { PrismaService } from "../prisma/prisma.service";
 import { requireLang } from "../common/lang";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
+/**
+ * Resolves a public `siteKey` + `lang` to an active Site.
+ * Prefers primary SiteKey rows; throws NotFound when the key or site is inactive.
+ */
 @Injectable()
 export class SiteResolverService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Look up the active Site for a public slug in a given language.
+   * @param args.lang - UI/content language (`hu` | `en` | `de`)
+   * @param args.siteKey - Public SiteKey.slug (not necessarily Site.slug)
+   * @returns `{ lang, siteId, siteKey }` for the matched primary (or oldest) key
+   * @throws NotFoundException when no active key or site exists
+   */
   async resolveSite(args: { lang: string; siteKey: string }) {
     const lang = requireLang(args.lang);
 

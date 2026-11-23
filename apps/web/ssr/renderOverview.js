@@ -1,3 +1,10 @@
+/**
+ * Platform marketing landing SSR (hellolocal.hu /:lang overview).
+ * Not used on custom domains — those go through resolvePublicShare instead.
+ *
+ * Crawl: `indexable` comes from AppSetting platform.landingCrawlable (AND global crawl);
+ * default is noindex until an admin turns landing crawl on.
+ */
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -36,6 +43,10 @@ function overviewSegment(lang) {
   return OVERVIEW_BY_LANG[lang] || OVERVIEW_BY_LANG[FALLBACK_LANG];
 }
 
+/**
+ * Escape user/admin-provided copy before interpolating into SSR HTML.
+ * Prevents XSS from landing copy / plan / FAQ strings (JSON-LD uses a separate `\\u003c` escape).
+ */
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -208,6 +219,10 @@ function loadOverview(lang, override, messages) {
   return mergeCopy(mergeCopy(base, overviewFromMessages(messages)), override);
 }
 
+/**
+ * Detect platform overview routes: `/:lang`, `/:lang/overview|attekintes|ueberblick`.
+ * Returns the page language, or null when this path is not the marketing landing.
+ */
 export function overviewLang(pathname) {
   const parts = pathname.split("/").filter(Boolean);
   if (parts.length === 1 && OVERVIEW_SEGMENTS.has(parts[0])) return FALLBACK_LANG;
@@ -224,15 +239,26 @@ export function overviewLang(pathname) {
   return null;
 }
 
+/**
+ * Render the platform overview into the SPA shell (body + head SEO/JSON-LD).
+ * `shareImage` is admin/platform defaultShareImage; `indexable` gates robots (default off).
+ */
 export function renderOverviewDocument(
   indexHtml,
-  { lang, origin, override, messages, languages, planOverrides }
+  { lang, origin, override, messages, languages, planOverrides, shareImage, indexable }
 ) {
   origin = publicOrigin(origin);
   const copy = loadOverview(lang, override, messages);
   const published = Array.isArray(languages) && languages.length ? languages : LANGS;
   const url = `${origin}/${lang}/${overviewSegment(lang)}`;
-  const image = `${origin}/marketing/map-szeged.jpg`;
+  const configuredShare = String(shareImage || "").trim();
+  const image = configuredShare
+    ? /^https?:\/\//i.test(configuredShare)
+      ? configuredShare
+      : configuredShare.startsWith("/")
+        ? `${origin}${configuredShare}`
+        : `${origin}/marketing/map-szeged.jpg`
+    : `${origin}/marketing/map-szeged.jpg`;
   const keywords = escapeHtml(copy.keywords);
   const alternates = published.map(
     (code) => `<link rel="alternate" hreflang="${code}" href="${origin}/${code}/${overviewSegment(code)}" />`
@@ -258,7 +284,7 @@ export function renderOverviewDocument(
       },
       { "@type": "FAQPage", mainEntity: questions },
     ],
-  });
+  }).replace(/</g, "\\u003c");
 
   const featureItems = Object.values(copy.features)
     .map((item) => `<li><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.text)}</p></li>`)
@@ -311,9 +337,11 @@ export function renderOverviewDocument(
       </section>
     </main>`;
 
+  // Default off until AppSetting platform.landingCrawlable is enabled (and global is on).
+  const robots = indexable === true ? "index,follow" : "noindex,nofollow";
   const head = `
     <meta name="keywords" content="${keywords}" />
-    <meta name="robots" content="index,follow" />
+    <meta name="robots" content="${robots}" />
     ${alternates}
     <link rel="alternate" hreflang="x-default" href="${origin}/${FALLBACK_LANG}/${overviewSegment(FALLBACK_LANG)}" />
     <script type="application/ld+json">${jsonLd}</script>`;
@@ -324,10 +352,11 @@ export function renderOverviewDocument(
     description: copy.seoDescription,
     url,
     image,
-    imageWidth: SHARE_IMAGE_WIDTH,
-    imageHeight: SHARE_IMAGE_HEIGHT,
+    imageWidth: configuredShare && !configuredShare.includes("map-szeged") ? "" : SHARE_IMAGE_WIDTH,
+    imageHeight: configuredShare && !configuredShare.includes("map-szeged") ? "" : SHARE_IMAGE_HEIGHT,
     type: "website",
     siteName: "HelloLocal",
+    origin,
   })
     .replace("</head>", `${head}</head>`)
     .replace('<div id="root"></div>', `<div id="root">${body}</div>`);

@@ -1,3 +1,7 @@
+/**
+ * Public event detail: schedule, place link, SEO, gallery, ratings, share.
+ * Resolves slug → canonical redirect via {@link useResolvedSlugRedirect}.
+ */
 // src/pages/EventDetailPage.tsx
 import { useMemo, useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
@@ -12,19 +16,22 @@ import {
 } from "../api/places.api";
 import { createOrUpdateEventRating, getMyEventRating } from "../api/rating.api";
 import { useSeo } from "../seo/useSeo";
-import { generateEventSchema } from "../seo/schemaOrg";
+import { absoluteCanonical } from "../seo/canonical";
+import { resolveSeoFields, stripHtml } from "../seo/resolveSeoFields";
 import { buildUrl } from "../app/urls";
 import { useHostScope } from "../app/hostScope";
 import { placeEntityPath } from "../app/entityPaths";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
-import { PublicPageSkeleton } from "../components/PublicSkeleton";
+import { PublicPageSkeleton, PublicSkeletonBlock } from "../components/PublicSkeleton";
 import { ErrorState } from "../components/ErrorState";
 import { NotFoundPage } from "./NotFoundPage";
 import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { Badge } from "../components/Badge";
 import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
+import { sanitizeImageUrl } from "../utils/urlValidation";
 import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
 import { devLog } from "../lib/devLog";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { StarRating } from "../components/StarRating";
@@ -51,6 +58,7 @@ function formatEventWhen(startIso: string, endIso: string | null | undefined, la
   return `${date.format(start)}, ${time.format(start)} – ${date.format(end)}, ${time.format(end)}`;
 }
 
+/** Route page for a single public event (lazy-loaded from the router). */
 export function EventDetailPage() {
   const { t } = useTranslation();
   const params = useParams<{ lang: string; siteKey: string; slug: string }>();
@@ -128,7 +136,11 @@ export function EventDetailPage() {
   }, [event?.description]);
 
   // Load galleries for the opening hours section
-  const { data: galleriesData, isError: isGalleriesError } = useQuery({
+  const {
+    data: galleriesData,
+    isError: isGalleriesError,
+    isLoading: isGalleriesLoading,
+  } = useQuery({
     queryKey: ["galleries", galleryIds, lang, siteKey],
     queryFn: async () => {
       if (!lang || !siteKey || galleryIds.length === 0) return {};
@@ -158,6 +170,8 @@ export function EventDetailPage() {
   });
 
   const galleries = galleriesData || {};
+  const galleryPending = galleryIds.length > 0 && isGalleriesLoading && !isGalleriesError;
+  const hasLoadedGallery = galleryIds.length > 0 && Object.keys(galleries).length > 0;
 
   // Check if user can edit this event (based on place permissions)
   const [canEditEvent, setCanEditEvent] = useState(false);
@@ -401,56 +415,36 @@ export function EventDetailPage() {
     }
   }, [event?.description]);
 
+  const languages = usePublishedLanguages();
+
   const seo = useMemo(() => {
-    if (!event) {
-      return {
-        title: platformSettings?.seoTitle || t("public.event.title"),
-        description: platformSettings?.seoDescription || t("public.event.description"),
-      };
-    }
+    // Leave SSR head alone while loading; NotFoundPage applies noindex on soft-404.
+    if (!event) return undefined;
 
-    // Helper to extract first 2 sentences from HTML/text
-    const getFirstSentences = (html: string | undefined, count: number = 2): string => {
-      if (!html) return "";
-      // Remove HTML tags
-      const text = html
-        .replace(/<[^>]*>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-      // Split by sentence endings (. ! ?)
-      const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-      return sentences.slice(0, count).join(" ").trim();
-    };
-
-    const eventImage = event.seo?.image || event.heroImage;
-    const fallbackDescription =
-      getFirstSentences(event.description, 2) ||
-      getFirstSentences(event.shortDescription, 2) ||
-      event.shortDescription ||
-      event.description ||
-      "";
-
-    // Helper to strip HTML
-    const stripHtml = (html: string | null | undefined): string => {
-      if (!html) return "";
-      return html
-        .replace(/<[^>]*>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-    };
-
-    const eventUrl =
-      typeof window !== "undefined"
-        ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
-        : "";
+    const resolved = resolveSeoFields(
+      {
+        seoTitle: event.seo?.title,
+        seoDescription: event.seo?.description,
+        seoImage: event.seo?.image,
+        name: event.name,
+        shortDescription: event.shortDescription,
+        description: event.description,
+        heroImage: event.heroImage,
+      },
+      {
+        title: t("public.event.title"),
+        description: t("public.event.description"),
+      }
+    );
+    const eventUrl = absoluteCanonical();
     const startDate = event.startDate ? new Date(event.startDate).toISOString() : "";
     const endDate = event.endDate ? new Date(event.endDate).toISOString() : undefined;
 
     return {
-      title: event.seo?.title || event.name,
-      description: event.seo?.description || fallbackDescription,
+      title: resolved.title,
+      description: resolved.description,
       keywords: event.seo?.keywords || [],
-      image: eventImage,
+      image: resolved.image,
       canonical: eventUrl,
       robots:
         (event.isCrawlable ?? platformSettings?.isCrawlable) === false
@@ -458,15 +452,17 @@ export function EventDetailPage() {
           : "index, follow",
       og: {
         type: "article",
-        title: event.seo?.title || event.name,
-        description: event.seo?.description || fallbackDescription,
-        image: eventImage,
+        title: resolved.title,
+        description: resolved.description,
+        image: resolved.image,
       },
       twitter: {
-        card: (eventImage ? "summary_large_image" : "summary") as "summary" | "summary_large_image",
-        title: event.seo?.title || event.name,
-        description: event.seo?.description || fallbackDescription,
-        image: eventImage,
+        card: (resolved.image ? "summary_large_image" : "summary") as
+          | "summary"
+          | "summary_large_image",
+        title: resolved.title,
+        description: resolved.description,
+        image: resolved.image,
       },
       schemaOrg: {
         type: "Event" as const,
@@ -475,7 +471,7 @@ export function EventDetailPage() {
           description: stripHtml(
             event.seo?.description || event.description || event.shortDescription
           ),
-          image: eventImage,
+          image: resolved.image,
           url: eventUrl,
           startDate,
           endDate,
@@ -501,6 +497,8 @@ export function EventDetailPage() {
 
   useSeo(seo, {
     siteName: platformSettings?.siteName,
+    languages,
+    lang,
   });
 
   if (!slug) {
@@ -511,7 +509,7 @@ export function EventDetailPage() {
     return (
       <>
         <FloatingHeader visitorAuth />
-        <PublicPageSkeleton label={t("common.loading")} />
+        <PublicPageSkeleton bleedHero label={t("common.loading")} />
       </>
     );
   }
@@ -541,7 +539,7 @@ export function EventDetailPage() {
     return (
       <>
         <FloatingHeader visitorAuth />
-        <PublicPageSkeleton label={t("common.loading")} />
+        <PublicPageSkeleton bleedHero label={t("common.loading")} />
       </>
     );
   }
@@ -590,14 +588,15 @@ export function EventDetailPage() {
             width: "100%",
           }}
         >
-          {/* Hero spans the viewport, and stops at 1920. */}
-          {event.heroImage && (
+          {/* Hero: aspect-ratio + skeleton for LCP/CLS */}
+          {sanitizeImageUrl(event.heroImage) && (
             <div
               style={{
                 width: "100%",
                 maxWidth: 1920,
                 margin: "0 auto 16px",
-                height: "clamp(220px, 36vw, 640px)",
+                aspectRatio: "16 / 9",
+                maxHeight: 640,
                 borderRadius: 0,
                 overflow: "hidden",
                 boxShadow: "0 12px 24px -16px rgba(0, 0, 0, 0.35)",
@@ -605,15 +604,17 @@ export function EventDetailPage() {
                 boxSizing: "border-box",
               }}
             >
-              <img
-                src={event.heroImage}
+              <ImageWithSkeleton
+                src={sanitizeImageUrl(event.heroImage) || event.heroImage}
                 alt={event.name}
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
+                priority
+                width={1600}
+                height={900}
+                sizes="100vw"
                 style={{
                   width: "100%",
                   height: "100%",
+                  maxWidth: "100%",
                   objectFit: "cover",
                   display: "block",
                 }}
@@ -761,7 +762,7 @@ export function EventDetailPage() {
                       content={event.description}
                       lang={lang!}
                       siteKey={siteKey!}
-                      hideGalleries={galleryIds.length > 0 && Object.keys(galleries).length > 0}
+                      hideGalleries={hasLoadedGallery || galleryPending}
                     />
                   </div>
                 )}
@@ -815,7 +816,7 @@ export function EventDetailPage() {
               </div>
               <div className="hl-event__share">
                 <SocialShareButtons
-                  url={window.location.href}
+                  url={absoluteCanonical()}
                   title={event.name}
                   description={event.shortDescription || event.description || ""}
                   image={event.heroImage || undefined}
@@ -840,22 +841,43 @@ export function EventDetailPage() {
             </Link>
           </div>
 
-          {galleryIds.length > 0 && Object.keys(galleries).length > 0 && (
-            <div className="hl-content-card hl-event__gallery">
-              {galleryIds.map((galleryId) => {
-                const gallery = galleries[galleryId];
-                if (!gallery || !gallery.images || gallery.images.length === 0) return null;
-                return (
-                  <GalleryViewer
-                    key={galleryId}
-                    images={gallery.images}
-                    name={gallery.name}
-                    layout={gallery.layout}
-                    aspect={gallery.aspect}
-                    compact={true}
-                  />
-                );
-              })}
+          {(hasLoadedGallery || galleryPending) && (
+            <div
+              className="hl-content-card hl-event__gallery"
+              style={{ minHeight: galleryPending ? 220 : undefined }}
+            >
+              {galleryPending ? (
+                <div
+                  role="status"
+                  aria-busy="true"
+                  aria-label={t("common.loading")}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 6,
+                  }}
+                >
+                  <PublicSkeletonBlock style={{ display: "block", aspectRatio: "4 / 3", borderRadius: 8 }} />
+                  <PublicSkeletonBlock style={{ display: "block", aspectRatio: "4 / 3", borderRadius: 8 }} />
+                  <PublicSkeletonBlock style={{ display: "block", aspectRatio: "4 / 3", borderRadius: 8 }} />
+                  <PublicSkeletonBlock style={{ display: "block", aspectRatio: "4 / 3", borderRadius: 8 }} />
+                </div>
+              ) : (
+                galleryIds.map((galleryId) => {
+                  const gallery = galleries[galleryId];
+                  if (!gallery || !gallery.images || gallery.images.length === 0) return null;
+                  return (
+                    <GalleryViewer
+                      key={galleryId}
+                      images={gallery.images}
+                      name={gallery.name}
+                      layout={gallery.layout}
+                      aspect={gallery.aspect}
+                      compact={true}
+                    />
+                  );
+                })
+              )}
             </div>
           )}
 
@@ -883,6 +905,7 @@ export function EventDetailPage() {
                   borderRadius: 12,
                   overflow: "hidden",
                   padding: 0,
+                  background: "rgba(27, 23, 48, 0.06)",
                 }}
               >
                 <iframe

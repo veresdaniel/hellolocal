@@ -1,3 +1,7 @@
+/**
+ * Public place detail: hero, SEO, gallery, floorplans, ratings, products, map.
+ * Resolves slug → canonical redirect via {@link useResolvedSlugRedirect}.
+ */
 import { useMemo, useEffect, useRef, useState, lazy, Suspense } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,7 +30,7 @@ import { useHostScope } from "../app/hostScope";
 import { placeEntityPath, townEntityPath } from "../app/entityPaths";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { SocialShareButtons } from "../components/SocialShareButtons";
-import { PublicPageSkeleton } from "../components/PublicSkeleton";
+import { PublicPageSkeleton, PublicSkeletonBlock } from "../components/PublicSkeleton";
 import { ErrorState } from "../components/ErrorState";
 import { NotFoundPage } from "./NotFoundPage";
 import { sanitizeImageUrl } from "../utils/urlValidation";
@@ -35,6 +39,7 @@ import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { Badge } from "../components/Badge";
 import { ImageWithSkeleton } from "../components/ImageWithSkeleton";
 import { useResolvedSlugRedirect } from "../hooks/useResolvedSlugRedirect";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
 import { devLog } from "../lib/devLog";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { StarRating } from "../components/StarRating";
@@ -52,6 +57,7 @@ const MapComponent = lazy(() =>
 import { track } from "../lib/analytics/track";
 import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 
+/** Route page for a single public place (lazy-loaded from the router). */
 export function PlaceDetailPage() {
   const { t } = useTranslation();
   const params = useParams<{ lang: string; siteKey: string; slug: string }>();
@@ -186,7 +192,11 @@ export function PlaceDetailPage() {
   }, [place?.description]);
 
   // Load galleries for the opening hours section
-  const { data: galleriesData, isError: isGalleriesError } = useQuery({
+  const {
+    data: galleriesData,
+    isError: isGalleriesError,
+    isLoading: isGalleriesLoading,
+  } = useQuery({
     queryKey: ["galleries", galleryIds, lang, siteKey],
     queryFn: async () => {
       if (!lang || !siteKey || galleryIds.length === 0) return {};
@@ -216,6 +226,7 @@ export function PlaceDetailPage() {
   });
 
   const galleries = galleriesData || {};
+  const galleryPending = galleryIds.length > 0 && isGalleriesLoading && !isGalleriesError;
 
   // Check if user can edit this place
   const [canEditPlace, setCanEditPlace] = useState(false);
@@ -464,12 +475,8 @@ export function PlaceDetailPage() {
   }, [place?.description, place?.contact?.address, place?.accessibility]);
 
   const seo = useMemo(() => {
-    if (!place) {
-      return {
-        title: platformSettings?.seoTitle || t("public.place.title"),
-        description: platformSettings?.seoDescription || t("public.place.description"),
-      };
-    }
+    // Leave SSR head alone while loading; NotFoundPage applies noindex on soft-404.
+    if (!place) return undefined;
     const canonical = absoluteCanonical();
     const origin = window.location.origin;
     const breadcrumbs: Array<{ name: string; url: string }> = [
@@ -496,8 +503,12 @@ export function PlaceDetailPage() {
     });
   }, [place, platformSettings, t, lang, siteKey]);
 
+  const languages = usePublishedLanguages();
+
   useSeo(seo, {
     siteName: platformSettings?.siteName,
+    languages,
+    lang,
   });
 
   if (!slug) {
@@ -508,7 +519,7 @@ export function PlaceDetailPage() {
     return (
       <>
         <FloatingHeader visitorAuth />
-        <PublicPageSkeleton label={t("common.loading")} />
+        <PublicPageSkeleton bleedHero label={t("common.loading")} />
       </>
     );
   }
@@ -534,12 +545,12 @@ export function PlaceDetailPage() {
     return <NotFoundPage />;
   }
 
-  // Show skeleton while loading place (cream card shell, no blank navy void)
+  // Show skeleton while loading place (full-bleed hero + cream sheet — matches paint)
   if (isLoading) {
     return (
       <>
         <FloatingHeader visitorAuth />
-        <PublicPageSkeleton label={t("common.loading")} />
+        <PublicPageSkeleton bleedHero label={t("common.loading")} />
       </>
     );
   }
@@ -594,7 +605,7 @@ export function PlaceDetailPage() {
             boxSizing: "border-box",
           }}
         >
-          {/* Hero spans the viewport, and stops at 1920. */}
+          {/* Hero: aspect-ratio + priority for LCP */}
           {(sanitizeImageUrl(place.heroImage) ||
             sanitizeImageUrl(platformSettings?.defaultPlaceholderDetailHeroImage)) && (
             <div
@@ -602,7 +613,8 @@ export function PlaceDetailPage() {
                 width: "100%",
                 maxWidth: 1920,
                 margin: "0 auto 16px",
-                height: "clamp(220px, 36vw, 640px)",
+                aspectRatio: "16 / 9",
+                maxHeight: 640,
                 borderRadius: 0,
                 overflow: "hidden",
                 boxShadow: "0 12px 24px -16px rgba(0, 0, 0, 0.35)",
@@ -617,6 +629,10 @@ export function PlaceDetailPage() {
                   ""
                 }
                 alt={place.name}
+                priority
+                width={1600}
+                height={900}
+                sizes="100vw"
                 style={{
                   width: "100%",
                   height: "100%",
@@ -870,7 +886,7 @@ export function PlaceDetailPage() {
                   hideGalleries={
                     !place.openingHours?.length &&
                     galleryIds.length > 0 &&
-                    Object.keys(galleries).length > 0
+                    (Object.keys(galleries).length > 0 || galleryPending)
                   }
                 />
               </div>
@@ -928,7 +944,7 @@ export function PlaceDetailPage() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
                   <SocialShareButtons
-                    url={window.location.href}
+                    url={absoluteCanonical()}
                     title={place.name}
                     description={place.description || ""}
                     image={place.heroImage || undefined}
@@ -973,7 +989,7 @@ export function PlaceDetailPage() {
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
                   <SocialShareButtons
-                    url={window.location.href}
+                    url={absoluteCanonical()}
                     title={place.name}
                     description={place.description || ""}
                     image={place.heroImage || undefined}
@@ -990,9 +1006,16 @@ export function PlaceDetailPage() {
                 height: 468,
                 borderRadius: 12,
                 overflow: "hidden",
+                background: "rgba(27, 23, 48, 0.06)",
               }}
             >
-              <Suspense fallback={null}>
+              <Suspense
+                fallback={
+                  <PublicSkeletonBlock
+                    style={{ display: "block", width: "100%", height: "100%", borderRadius: 12 }}
+                  />
+                }
+              >
                 <MapComponent
                   latitude={place.location.lat}
                   longitude={place.location.lng}
@@ -1026,14 +1049,16 @@ export function PlaceDetailPage() {
                 place.contact.whatsapp);
             const hasOpeningHours = place.openingHours && place.openingHours.length > 0;
             const hasGallery = galleryIds.length > 0 && Object.keys(galleries).length > 0;
+            // Reserve gallery column while fetching so contact layout does not jump 1→2 cols
+            const showGallerySlot = hasGallery || galleryPending;
 
-            // Show grid if we have contact, opening hours, or gallery
-            if (!hasContact && !hasOpeningHours && !hasGallery) {
+            // Show grid if we have contact, opening hours, or gallery (incl. pending)
+            if (!hasContact && !hasOpeningHours && !showGallerySlot) {
               return null;
             }
 
             // Always two columns on desktop if we have gallery or both contact and opening hours
-            const shouldShowTwoColumns = (hasContact && hasOpeningHours) || hasGallery;
+            const shouldShowTwoColumns = (hasContact && hasOpeningHours) || showGallerySlot;
 
             return (
               <div
@@ -1067,7 +1092,7 @@ export function PlaceDetailPage() {
                       place.contact.whatsapp);
 
                   // Use compact mode if gallery is shown on the right (no opening hours)
-                  const isCompact = hasGallery && !hasOpeningHours;
+                  const isCompact = showGallerySlot && !hasOpeningHours;
 
                   return hasContact ? (
                     <div
@@ -1591,7 +1616,7 @@ export function PlaceDetailPage() {
                     </div>
                   </div>
                 ) : // Gallery in opening hours position if no opening hours (or empty space if no gallery)
-                hasGallery ? (
+                showGallerySlot ? (
                   <div
                     style={{
                       background: "var(--hl-card)",
@@ -1601,23 +1626,42 @@ export function PlaceDetailPage() {
                       border: "1px solid rgba(102, 126, 234, 0.1)",
                       display: "flex",
                       flexDirection: "column",
+                      minHeight: 220,
                     }}
                     className="gallery-compact"
                   >
-                    {galleryIds.map((galleryId) => {
-                      const gallery = galleries[galleryId];
-                      if (!gallery || !gallery.images || gallery.images.length === 0) return null;
-                      return (
-                        <GalleryViewer
-                          key={galleryId}
-                          images={gallery.images}
-                          name={gallery.name}
-                          layout={gallery.layout}
-                          aspect={gallery.aspect}
-                          compact={true}
-                        />
-                      );
-                    })}
+                    {galleryPending ? (
+                      <div
+                        role="status"
+                        aria-busy="true"
+                        aria-label={t("common.loading")}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: 6,
+                        }}
+                      >
+                        <PublicSkeletonBlock style={{ display: "block", aspectRatio: "4 / 3", borderRadius: 8 }} />
+                        <PublicSkeletonBlock style={{ display: "block", aspectRatio: "4 / 3", borderRadius: 8 }} />
+                        <PublicSkeletonBlock style={{ display: "block", aspectRatio: "4 / 3", borderRadius: 8 }} />
+                        <PublicSkeletonBlock style={{ display: "block", aspectRatio: "4 / 3", borderRadius: 8 }} />
+                      </div>
+                    ) : (
+                      galleryIds.map((galleryId) => {
+                        const gallery = galleries[galleryId];
+                        if (!gallery || !gallery.images || gallery.images.length === 0) return null;
+                        return (
+                          <GalleryViewer
+                            key={galleryId}
+                            images={gallery.images}
+                            name={gallery.name}
+                            layout={gallery.layout}
+                            aspect={gallery.aspect}
+                            compact={true}
+                          />
+                        );
+                      })
+                    )}
                   </div>
                 ) : null}
               </div>
@@ -2112,7 +2156,26 @@ export function PlaceDetailPage() {
               </div>
             )}
 
-          {/* Price List */}
+          {/* Price List — reserve height while fetching so the block does not pop in */}
+          {place.hasPriceList && isLoadingPriceList && (
+            <div
+              style={{
+                background: "var(--hl-card)",
+                padding: "clamp(20px, 4vw, 32px)",
+                borderRadius: 16,
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
+                margin: "0 16px 32px",
+                border: "1px solid rgba(102, 126, 234, 0.1)",
+                minHeight: 180,
+              }}
+              aria-hidden="true"
+            >
+              <PublicSkeletonBlock style={{ display: "block", height: 28, width: "42%", marginBottom: 24, borderRadius: 8 }} />
+              <PublicSkeletonBlock style={{ display: "block", height: 48, width: "100%", marginBottom: 12, borderRadius: 8 }} />
+              <PublicSkeletonBlock style={{ display: "block", height: 48, width: "100%", marginBottom: 12, borderRadius: 8 }} />
+              <PublicSkeletonBlock style={{ display: "block", height: 48, width: "88%", borderRadius: 8 }} />
+            </div>
+          )}
           {place.hasPriceList && priceList && !isLoadingPriceList && (
             <div
               style={{

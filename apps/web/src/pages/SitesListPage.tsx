@@ -15,6 +15,8 @@ import {
 import { PublicCardSkeletonGrid } from "../components/PublicSkeleton";
 import { EmptyResults } from "../components/EmptyResults";
 import { useSeo } from "../seo/useSeo";
+import { absoluteCanonical } from "../seo/canonical";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
 import { useQuery } from "@tanstack/react-query";
 import { getPlatformSettings } from "../api/places.api";
 
@@ -82,10 +84,8 @@ export function SitesListPage() {
   // SEO
   const sitesTitle = t("public.sites.title");
   const sitesDescription = t("public.sites.description");
-  const sitesCanonical =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
-      : "";
+  const sitesCanonical = absoluteCanonical();
+  const languages = usePublishedLanguages();
   useSeo(
     {
       title: sitesTitle,
@@ -123,6 +123,8 @@ export function SitesListPage() {
     },
     {
       siteName: platformSettings?.siteName,
+      languages,
+      lang: effectiveLang,
     }
   );
 

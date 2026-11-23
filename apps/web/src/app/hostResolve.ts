@@ -1,9 +1,14 @@
+/**
+ * Client wrapper for `GET /api/domain/:host` — used by HostScope and DomainRedirect.
+ */
 import { devLog } from "../lib/devLog";
 
+/** Domain-resolve payload from the API (region slug always present when successful). */
 export type HostResolve = {
   kind?: "site" | "town" | "place" | "collection" | "event";
   slug: string;
   defaultLang: string;
+  /** Public entity slug for town/place/event so the app can open that entity at `/:lang`. */
   entitySlug?: string;
 };
 
@@ -16,6 +21,10 @@ export function pathForHostResolve(resolved: HostResolve, search = ""): string {
   return `/${lang}${search}`;
 }
 
+/**
+ * Resolve a custom hostname to its owning entity via the public domain API.
+ * @returns Parsed {@link HostResolve}, or `null` on 404 / network error / abort
+ */
 export async function siteForHost(
   host: string,
   signal?: AbortSignal

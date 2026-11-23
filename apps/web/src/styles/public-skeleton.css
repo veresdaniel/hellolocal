@@ -11,6 +11,16 @@
   }
 }
 
+/* Alias used by ImageWithSkeleton (avoids per-instance <style> injection). */
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .hl-skel {
   display: block;
   border-radius: 8px;
@@ -165,6 +175,18 @@
   box-sizing: border-box;
 }
 
+/* Place / event / collection detail: hero sits edge-to-edge above the sheet. */
+.hl-skel-page--bleed {
+  max-width: 1920px;
+  padding: clamp(72px, 8vw, 88px) 0 48px;
+}
+
+.hl-skel-page--bleed .hl-skel-page__sheet {
+  max-width: 960px;
+  margin: 16px auto 0;
+  width: calc(100% - 32px);
+}
+
 .hl-skel-page__sheet {
   padding: clamp(24px, 4vw, 40px);
   border-radius: 22px;
@@ -178,6 +200,15 @@
   height: clamp(160px, 28vw, 280px);
   margin: 0 0 24px;
   border-radius: 14px;
+}
+
+.hl-skel-page__bleed-hero {
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  aspect-ratio: 16 / 9;
+  max-height: 640px;
+  border-radius: 0;
 }
 
 .hl-skel-page__eyebrow {

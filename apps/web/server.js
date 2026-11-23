@@ -1,5 +1,17 @@
-// Production SPA/SSR Node server (Hetzner Docker web container; Express).
-// Serves static files, rewrites routes to index.html, and injects social/SEO tags.
+/**
+ * Production SPA/SSR Node server (Hetzner Docker web container; Express).
+ *
+ * Responsibilities:
+ * - Static `dist/` assets
+ * - Same-origin UC gate proxy + robots/sitemap proxy (host-scoped via X-Forwarded-Host)
+ * - Under-construction gate (fail-closed) before public HTML
+ * - Platform overview SSR on platform hosts only
+ * - Social/OG meta via {@link resolvePublicShare} / {@link applySocialMeta}; soft-404 → HTTP 404
+ * - Extra JSON-LD for known crawler UAs
+ *
+ * Auth/host assumptions: public routes; custom domains resolved via `/api/domain/:host`.
+ * Admin paths always open with noindex. UC preview uses HttpOnly cookie + `?access=` token.
+ */
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -11,7 +23,14 @@ import {
   injectRootContent,
   isAdminPath,
 } from './ssr/renderPublicContent.js';
-import { applySocialMeta, publicOrigin, resolvePublicShare } from './ssr/socialMeta.js';
+import {
+  applyHostScope,
+  applySocialMeta,
+  parsePublicPath,
+  publicOrigin,
+  resolveDomainHost,
+  resolvePublicShare,
+} from './ssr/socialMeta.js';
 import { UC_COOKIE_MAX_AGE_SEC, ucFailClosedCopy } from '@hellolocal/shared';
 import {
   applyUnderConstructionDocument,
@@ -28,7 +47,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Bot/crawler user agents
+/** Crawler UAs that receive extra JSON-LD via fetchBotSchema (social previews + search bots). */
 const botUserAgents = [
   'facebookexternalhit',
   'Facebot',
@@ -57,13 +76,14 @@ const botUserAgents = [
 // API URL for fetching SEO data
 const API_URL = process.env.API_URL || process.env.VITE_API_URL || 'http://localhost:3002';
 
-// Helper to check if user agent is a bot
+/** @param {string | undefined} userAgent */
 function isBot(userAgent) {
   if (!userAgent) return false;
   const ua = userAgent.toLowerCase();
   return botUserAgents.some(bot => ua.includes(bot.toLowerCase()));
 }
 
+/** SPA index.html shell used for SSR meta / overview / UC responses. */
 function readShell() {
   const candidates = [path.join(__dirname, 'dist', 'index.html'), path.join(__dirname, 'index.html')];
   for (const file of candidates) {
@@ -76,23 +96,10 @@ function readShell() {
   throw new Error('index.html missing');
 }
 
-const KNOWN_PUBLIC_SEGMENTS = new Set([
-  'place', 'hely', 'ort',
-  'town', 'telepules', 'gemeinde',
-  'lista', 'list', 'liste', 'terkep', 'map', 'karte',
-  'event',
-  'blog', 'tudastar', 'infok',
-  'imprint', 'terms', 'privacy', 'impresszum', 'aszf', 'adatvedelem',
-  'impressum', 'agb', 'datenschutz',
-  'attekintes', 'overview', 'ueberblick', 'pricing', 'tarife', 'preise',
-  'admin', 'teruletek', 'regiok', 'regions', 'regionen',
-  'products', 'collections', 'static-pages', 'static-page', 'offline',
-]);
-
-function isPlaceSegment(segment) {
-  return segment === 'place' || segment === 'hely' || segment === 'ort';
-}
-
+/**
+ * Proxy robots/sitemap text from the API onto the public host.
+ * Forwards X-Forwarded-Host so sitemap scope matches the visitor's domain.
+ */
 async function proxyApiText(apiPath, req, res, contentType) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
@@ -244,28 +251,84 @@ app.get('/sitemap-:chunk.xml', async (req, res) => {
   return proxyApiText(`/api/seo/sitemap-${chunk}.xml`, req, res, 'application/xml; charset=utf-8');
 });
 
+/** Match apps/api requestHostname / requestProto: first hop only, no port/trailing dot. */
+function requestForwardHeaders(req) {
+  const rawHost = req.get('x-forwarded-host') || req.get('host') || '';
+  const host = String(rawHost)
+    .split(',')[0]
+    .trim()
+    .toLowerCase()
+    .replace(/:\d+$/, '')
+    .replace(/\.$/, '');
+  const rawProto = req.get('x-forwarded-proto') || req.protocol || 'https';
+  const proto = String(rawProto).split(',')[0].trim().toLowerCase() === 'http' ? 'http' : 'https';
+  return { host, proto };
+}
+
+/**
+ * Custom domains (site/town/place/collection/event) must not use the platform
+ * overview SSR for /:lang — that path is the entity home on that host.
+ */
+async function resolveCustomDomain(host) {
+  const hostname = String(host || '')
+    .toLowerCase()
+    .split(':')[0]
+    .replace(/\.$/, '');
+  if (!hostname || hostname === 'localhost' || hostname === '127.0.0.1') return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 800);
+  try {
+    const response = await fetch(`${API_URL}/api/domain/${encodeURIComponent(hostname)}`, {
+      signal: controller.signal,
+      headers: {
+        accept: 'application/json',
+        'X-Forwarded-Host': hostname,
+        'X-Forwarded-Proto': 'https',
+      },
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data?.kind && data?.slug ? data : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Extra schema.org JSON for known bots only (keeps human HTML lean).
+ * Path + host-scope match resolvePublicShare so custom domains get the right tenant.
+ */
 async function fetchBotSchema(req) {
   if (!isBot(req.get('user-agent') || '')) return null;
-  const pathParts = req.path.split('/').filter(Boolean);
-  const lang = pathParts[0] && ['hu', 'en', 'de'].includes(pathParts[0]) ? pathParts[0] : 'hu';
-  const tenantKey = pathParts[1] && !KNOWN_PUBLIC_SEGMENTS.has(pathParts[1]) ? pathParts[1] : undefined;
-  const routeIndex = tenantKey ? 2 : 1;
-  const routeType = pathParts[routeIndex];
-  const slug = pathParts[routeIndex + 1];
+  // Match resolvePublicShare: parse path, then apply custom-domain host scope.
+  let route = parsePublicPath(req.path);
+  const { host, proto } = requestForwardHeaders(req);
+  if (host) {
+    const resolved = await resolveDomainHost(API_URL, host, { host, proto });
+    if (resolved) route = applyHostScope(route, resolved);
+  }
+  const lang = route.lang || 'hu';
+  const tenantKey = route.siteKey;
+  const tenantQs = tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : '';
   let seoUrl;
-  if (isPlaceSegment(routeType) && slug) {
-    seoUrl = `${API_URL}/api/seo/${lang}/place/${encodeURIComponent(slug)}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
-  } else if (routeType === 'event' && slug) {
-    seoUrl = `${API_URL}/api/seo/${lang}/event/${encodeURIComponent(slug)}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
+  if (route.kind === 'place' && route.slug) {
+    seoUrl = `${API_URL}/api/seo/${lang}/place/${encodeURIComponent(route.slug)}${tenantQs}`;
+  } else if (route.kind === 'event' && route.slug) {
+    seoUrl = `${API_URL}/api/seo/${lang}/event/${encodeURIComponent(route.slug)}${tenantQs}`;
   } else {
-    seoUrl = `${API_URL}/api/seo/${lang}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ''}`;
+    seoUrl = `${API_URL}/api/seo/${lang}${tenantQs}`;
   }
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 1200);
   try {
     const response = await fetch(seoUrl, {
       signal: controller.signal,
-      headers: { Accept: 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        ...(host ? { 'X-Forwarded-Host': host, 'X-Forwarded-Proto': proto } : {}),
+      },
     });
     if (!response.ok) return null;
     const json = await response.json();
@@ -295,10 +358,17 @@ app.use(express.static(path.join(__dirname, 'dist'), {
   }
 }));
 
+/** @type {Map<string, { until: number, value: object }>} */
 const platformCache = new Map();
 
+/** @type {Map<string, { until: number, value: object }>} */
 const uiCopyCache = new Map();
 
+/**
+ * Cached public UI message catalog (`/api/public/ui/:lang`) for overview SSR.
+ * @param {string} lang
+ * @returns {Promise<object | null>}
+ */
 async function loadUiCopy(lang) {
   const cached = uiCopyCache.get(lang);
   if (cached && cached.until > Date.now()) return cached.value;
@@ -320,6 +390,10 @@ async function loadUiCopy(lang) {
   }
 }
 
+/**
+ * Platform overview inputs: landing copy, plan overrides, defaultShareImage,
+ * and landingIndexable (global crawl && platform.landingCrawlable).
+ */
 async function loadPlatformForOverview(lang) {
   const cached = platformCache.get(lang);
   if (cached && cached.until > Date.now()) return cached.value;
@@ -330,23 +404,42 @@ async function loadPlatformForOverview(lang) {
       signal: controller.signal,
       headers: { accept: "application/json" },
     });
-    if (!response.ok) return { landingCopy: null, planOverrides: null };
+    if (!response.ok) {
+      return {
+        landingCopy: null,
+        planOverrides: null,
+        defaultShareImage: null,
+        landingIndexable: false,
+      };
+    }
     const data = await response.json();
     const planOverrides = data?.featureMatrix?.planOverrides ?? null;
     const value = {
       landingCopy: planOverrides?.landingCopy?.[lang] ?? null,
       planOverrides,
+      defaultShareImage: data?.platform?.defaultShareImage || data?.seo?.defaultImage || null,
+      // Platform overview only; missing/false → noindex (gradual rollout default).
+      landingIndexable: data?.seo?.landingIndexable === true,
     };
     platformCache.set(lang, { until: Date.now() + 60_000, value });
     return value;
   } catch {
-    return { landingCopy: null, planOverrides: null };
+    return {
+      landingCopy: null,
+      planOverrides: null,
+      defaultShareImage: null,
+      landingIndexable: false,
+    };
   } finally {
     clearTimeout(timer);
   }
 }
 
-// Apply SEO middleware before the catch-all route (only for non-static files)
+/**
+ * Primary HTML handler: trailing-slash hygiene → admin noindex → UC gate →
+ * platform overview SSR (platform hosts) → social meta + optional bot JSON-LD + content inject.
+ * Soft-404 entity routes return HTTP 404 with noindex.
+ */
 app.get('*', async (req, res, next) => {
   // Skip SEO middleware for static assets (JS, CSS, images, etc.)
   const staticExtensions = ['.js', '.mjs', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json', '.map'];
@@ -355,6 +448,13 @@ app.get('*', async (req, res, next) => {
   if (isStaticFile) {
     // Let express.static handle it, or return 404 if not found
     return next();
+  }
+
+  // URL hygiene: trailing slash → single canonical (except site root).
+  const barePath = String(req.path || '/').split('?')[0];
+  if (barePath.length > 1 && barePath.endsWith('/')) {
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    return res.redirect(301, `${barePath.replace(/\/+$/, '')}${qs}`);
   }
 
   // Admin always open (login + every console subpage). Public routes may be gated.
@@ -429,11 +529,16 @@ app.get('*', async (req, res, next) => {
     }
   }
 
-  const overview = overviewLang(req.path);
+  const { host: forwardHost, proto: forwardProto } = requestForwardHeaders(req);
+  const requestOrigin = `${forwardProto}://${forwardHost || req.get('host') || 'localhost'}`;
+  const customDomain = await resolveCustomDomain(forwardHost);
+
+  // Platform overview only on platform hosts. Custom domains use resolvePublicShare.
+  const overview = !customDomain ? overviewLang(req.path) : null;
   if (overview) {
     try {
       const html = readShell();
-      const origin = publicOrigin(`${req.protocol}://${req.get('host')}`);
+      const origin = publicOrigin(requestOrigin);
       const [uiCopy, platform] = await Promise.all([
         loadUiCopy(overview),
         loadPlatformForOverview(overview),
@@ -449,6 +554,8 @@ app.get('*', async (req, res, next) => {
           messages: uiCopy?.messages,
           languages: uiCopy?.languages,
           planOverrides: platform.planOverrides,
+          shareImage: platform.defaultShareImage || null,
+          indexable: platform.landingIndexable === true,
         })
       );
     } catch (error) {
@@ -457,9 +564,14 @@ app.get('*', async (req, res, next) => {
   }
   
   try {
-    const requestOrigin = `${req.protocol}://${req.get('host')}`;
     const [meta, schema, contentBody] = await Promise.all([
-      resolvePublicShare({ pathname: req.path, apiUrl: API_URL, requestOrigin }),
+      resolvePublicShare({
+        pathname: req.path,
+        apiUrl: API_URL,
+        requestOrigin,
+        requestHost: forwardHost,
+        requestProto: forwardProto,
+      }),
       fetchBotSchema(req),
       buildPublicContentHtml({ pathname: req.path, apiUrl: API_URL }),
     ]);
@@ -470,6 +582,10 @@ app.get('*', async (req, res, next) => {
     }
     html = injectRootContent(html, contentBody);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    if (meta?.notFound) {
+      res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+      return res.status(404).send(html);
+    }
     return res.send(html);
   } catch (error) {
     console.error(`[SEO] HTML meta failed: ${error.message}`);
@@ -477,7 +593,7 @@ app.get('*', async (req, res, next) => {
   }
 });
 
-// Fallback: Rewrite all routes to index.html for React Router (only if file doesn't exist)
+/** SPA fallback when SEO handler calls next() (e.g. meta fetch failure). Static misses → 404. */
 app.get('*', (req, res, next) => {
   // Skip if this is a static file request (should have been handled by express.static)
   const staticExtensions = ['.js', '.mjs', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.json', '.map'];

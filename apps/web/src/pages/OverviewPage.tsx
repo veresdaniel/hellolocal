@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -6,6 +6,7 @@ import { FloatingHeader } from "../components/FloatingHeader";
 import { OverviewSkeleton } from "../components/PublicSkeleton";
 import { Footer } from "../ui/layout/Footer";
 import { useSeo } from "../seo/useSeo";
+import { absoluteCanonical } from "../seo/canonical";
 import { LiveDemoLink } from "../components/LiveDemoLink";
 import { APP_LANGS, DEFAULT_LANG, type Lang, isLang } from "../app/config";
 import { overviewSegment } from "../app/entityPaths";
@@ -15,6 +16,7 @@ import { getPlatformSettings } from "../api/places.api";
 import { useApplyPublicFonts } from "../hooks/useApplyPublicFonts";
 import { useApplyPublicTheme, publicThemeStyle } from "../hooks/useApplyPublicTheme";
 import { publicFontCssVars } from "../styles/publicFonts";
+import { getPublicUiLanguages } from "../api/uiCopy.api";
 import "../styles/overview.css";
 
 const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
@@ -176,51 +178,52 @@ export function OverviewPage() {
   }, [lang]);
 
   const title = text("title");
-  const description = text("seoDescription");
-  const seoTitle = text("seoTitle");
+  const description = text("seoDescription") || text("subtitle") || title;
+  const seoTitle = text("seoTitle") || title;
   const origin = typeof window === "undefined" ? "https://hello-local.io" : window.location.origin;
   const image = `${origin}/marketing/map-szeged.jpg`;
+  const { data: uiLanguages } = useQuery({
+    queryKey: ["ui-languages"],
+    queryFn: getPublicUiLanguages,
+    staleTime: 60_000,
+    retry: 1,
+  });
+  const overviewLangs = useMemo(() => {
+    const published = (uiLanguages?.languages ?? LANGS).filter(isLang);
+    return published.length ? published : LANGS;
+  }, [uiLanguages?.languages]);
 
-  useSeo({
-    title: seoTitle,
-    description,
-    keywords: text("keywords")
-      .split(",")
-      .map((word) => word.trim())
-      .filter(Boolean),
-    image,
-    canonical: `${origin}/${lang}/${overviewSegment(lang)}`,
-    robots:
-      (platformSettings?.globalIndexable ?? platformSettings?.isCrawlable) === false
-        ? "noindex, nofollow"
-        : "index, follow",
-    og: { type: "website", title: seoTitle, description, image },
-    twitter: { card: "summary_large_image", title: seoTitle, description, image },
+  const overviewSeo = useMemo(
+    () => ({
+      title: seoTitle,
+      description,
+      keywords: text("keywords")
+        .split(",")
+        .map((word) => word.trim())
+        .filter(Boolean),
+      image,
+      canonical: absoluteCanonical(`/${lang}/${overviewSegment(lang)}`),
+      // Platform landing only: seo.landingIndexable (global && platform.landingCrawlable). Default off.
+      robots:
+        platformSettings?.landingIndexable === true ? "index, follow" : "noindex, nofollow",
+      og: { type: "website" as const, title: seoTitle, description, image },
+      twitter: {
+        card: "summary_large_image" as const,
+        title: seoTitle,
+        description,
+        image,
+      },
+    }),
+    [seoTitle, description, image, lang, platformSettings?.landingIndexable, text]
+  );
+
+  useSeo(overviewSeo, {
+    languages: overviewLangs,
+    lang,
+    defaultLang: DEFAULT_LANG,
   });
 
   useEffect(() => {
-    LANGS.forEach((code) => {
-      const selector = `link[rel="alternate"][hreflang="${code}"]`;
-      let link = document.head.querySelector<HTMLLinkElement>(selector);
-      if (!link) {
-        link = document.createElement("link");
-        link.rel = "alternate";
-        link.hreflang = code;
-        document.head.appendChild(link);
-      }
-      link.href = `${origin}/${code}/${overviewSegment(code)}`;
-    });
-    let xDefault = document.head.querySelector<HTMLLinkElement>(
-      'link[rel="alternate"][hreflang="x-default"]'
-    );
-    if (!xDefault) {
-      xDefault = document.createElement("link");
-      xDefault.rel = "alternate";
-      xDefault.hreflang = "x-default";
-      document.head.appendChild(xDefault);
-    }
-    xDefault.href = `${origin}/${DEFAULT_LANG}/${overviewSegment(DEFAULT_LANG)}`;
-
     const graph = {
       "@context": "https://schema.org",
       "@graph": [

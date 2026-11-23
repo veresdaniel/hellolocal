@@ -1,3 +1,7 @@
+/**
+ * Nest API process entry: Helmet, CORS (env + admin custom domains), validation, listen.
+ * Trusts one reverse-proxy hop so rate limits use the visitor IP.
+ */
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
@@ -7,8 +11,10 @@ import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { PrismaService } from "./prisma/prisma.service";
 import { isKnownPublicHostname } from "./common/is-known-public-hostname";
 
+/** How long custom-domain CORS allow decisions stay cached per hostname. */
 const CUSTOM_ORIGIN_CACHE_TTL_MS = 60_000;
 
+/** Build the Nest app, wire global middleware/pipes, and listen on `PORT` (default 3002). */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // Caddy is one hop. req.ip then is the visitor, so the rate limit is not one bucket for the whole site.

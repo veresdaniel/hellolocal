@@ -17,6 +17,14 @@ import {
   PLATFORM_PUBLIC_HOST_KEY,
 } from "../common/platform-public-host";
 import { LIVE_DEMO_URL_KEY, normalizeLiveDemoUrl } from "../common/live-demo-url";
+import {
+  DEFAULT_SHARE_IMAGE_KEY,
+  normalizeShareImageUrl,
+} from "../common/default-share-image";
+import {
+  PLATFORM_LANDING_CRAWLABLE_DEFAULT,
+  PLATFORM_LANDING_CRAWLABLE_KEY,
+} from "../common/platform-landing-crawlable";
 
 const SECRET_SETTING_KEYS = new Set([CONTENT_DRAFT_API_KEY, UC_ACCESS_TOKEN_KEY]);
 /** Secrets encrypted at rest with APP_SECRET/JWT_SECRET (AES-GCM). */
@@ -78,6 +86,15 @@ export class AdminAppSettingsService {
         );
       }
       value = parsed.url;
+    }
+    if (key === DEFAULT_SHARE_IMAGE_KEY) {
+      const normalized = normalizeShareImageUrl(value);
+      if (value.trim() && !normalized) {
+        throw new BadRequestException(
+          "Érvénytelen social kép URL. Teljes cím (https://…) vagy útvonal (/marketing/…)."
+        );
+      }
+      value = normalized;
     }
     const secret = SECRET_SETTING_KEYS.has(key);
     if (ENCRYPTED_AT_REST_KEYS.has(key) && value) {
@@ -173,7 +190,8 @@ export class AdminAppSettingsService {
   }
 
   /**
-   * Get global crawlability setting
+   * Master crawl switch. When false, every public page is noindex and omitted from the sitemap,
+   * regardless of per-site / per-entity isCrawlable flags.
    */
   async getGlobalCrawlability(): Promise<boolean> {
     const setting = await this.prisma.appSetting.findUnique({
@@ -187,15 +205,45 @@ export class AdminAppSettingsService {
     return true; // Default: crawlable
   }
 
-  /**
-   * Set global crawlability setting
-   */
+  /** Persist master crawl switch and bust sitemap cache. */
   async setGlobalCrawlability(isCrawlable: boolean) {
     const saved = await this.upsert("globalCrawlability", {
       value: isCrawlable ? "true" : "false",
       type: "boolean",
       description:
         "Global crawl switch. When false, every page is noindex and omitted from the sitemap, regardless of per-content switches.",
+    });
+    this.sitemapService.invalidate();
+    return saved;
+  }
+
+  /**
+   * Platform marketing landing (hellolocal.hu overview) only. Default off for gradual rollout.
+   * Global off still forces this off.
+   */
+  async getLandingCrawlability(): Promise<boolean> {
+    const setting = await this.prisma.appSetting.findUnique({
+      where: { key: PLATFORM_LANDING_CRAWLABLE_KEY },
+    });
+
+    if (setting && setting.type === "boolean") {
+      return setting.value === "true";
+    }
+
+    return PLATFORM_LANDING_CRAWLABLE_DEFAULT;
+  }
+
+  /** Persist platform-landing crawl switch and bust sitemap cache. */
+  /**
+   * Persist platform-landing crawl flag and invalidate sitemap cache.
+   * Independent of region sites; global off still forces noindex on the landing.
+   */
+  async setLandingCrawlability(isCrawlable: boolean) {
+    const saved = await this.upsert(PLATFORM_LANDING_CRAWLABLE_KEY, {
+      value: isCrawlable ? "true" : "false",
+      type: "boolean",
+      description:
+        "Platform landing (hellolocal.hu overview) index switch. Independent of region sites; global off still forces noindex.",
     });
     this.sitemapService.invalidate();
     return saved;

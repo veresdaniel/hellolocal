@@ -1,3 +1,7 @@
+/**
+ * Application React Router tree: public multi-tenant paths, custom-host shortcuts,
+ * auth pages, and role-gated `/admin` routes (eager shell + lazy heavy pages).
+ */
 // src/app/routes.tsx
 import { lazy, Suspense, type ReactNode } from "react";
 import { createBrowserRouter, Outlet, useParams, Navigate, useLocation } from "react-router-dom";
@@ -477,6 +481,7 @@ const createPublicRoutes = () => {
   }
 };
 
+/** Top-level browser router: offline, legacy admin redirects, platform + custom-host trees. */
 export const router = createBrowserRouter([
   // Offline page - accessible without language prefix for service worker redirects
   { path: "/offline", element: <OfflinePage /> },

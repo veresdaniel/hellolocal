@@ -127,63 +127,78 @@ const LEGAL_KEY_BY_SEGMENT: Record<string, LegalPageKey> = {
   datenschutz: "privacy",
 };
 
+/** Localized legal path word for imprint / terms / privacy. */
 export function legalSegment(lang: string, key: LegalPageKey): string {
   return LEGAL_PATH[asLang(lang)][key];
 }
 
+/** Map any legal alias segment back to the canonical page key. */
 export function legalKeyFromSegment(segment: string | undefined): LegalPageKey | null {
   if (!segment) return null;
   return LEGAL_KEY_BY_SEGMENT[segment] ?? null;
 }
 
+/** Whether `pathname` contains a segment for the given legal page. */
 export function pathnameHasLegal(pathname: string, key: LegalPageKey): boolean {
   return pathname.split("/").some((part) => LEGAL_KEY_BY_SEGMENT[part] === key);
 }
 
+/** Localized region-list index segment (`regiok` / `regions` / `regionen`). */
 export function regionListSegment(lang: string): string {
   return REGION_LIST_PATH[asLang(lang)];
 }
 
+/** Localized sales-overview segment. */
 export function overviewSegment(lang: string): string {
   return OVERVIEW_PATH[asLang(lang)];
 }
 
+/** True when the segment is any overview path alias. */
 export function isOverviewPathSegment(segment: string | undefined): boolean {
   return !!segment && (OVERVIEW_PATH_ALIASES as readonly string[]).includes(segment);
 }
 
+/** Localized place-detail path prefix (`hely` / `place` / `ort`). */
 export function placeSegment(lang: string): string {
   return PLACE_PATH[asLang(lang)];
 }
 
+/** Localized town path prefix (`telepules` / `town` / `gemeinde`). */
 export function townSegment(lang: string): string {
   return TOWN_PATH[asLang(lang)];
 }
 
+/** True when the segment is any place-detail path alias. */
 export function isPlacePathSegment(segment: string | undefined): boolean {
   return !!segment && (PLACE_PATH_ALIASES as readonly string[]).includes(segment);
 }
 
+/** True when the segment is any town path alias. */
 export function isTownPathSegment(segment: string | undefined): boolean {
   return !!segment && (TOWN_PATH_ALIASES as readonly string[]).includes(segment);
 }
 
+/** Localized list-view suffix under a town. */
 export function listViewSegment(lang: string): string {
   return LIST_VIEW_PATH[asLang(lang)];
 }
 
+/** Localized map-view word (canonical map URL has no suffix; these redirect to it). */
 export function mapViewSegment(lang: string): string {
   return MAP_VIEW_PATH[asLang(lang)];
 }
 
+/** True when the segment is any list-view alias. */
 export function isListViewSegment(segment: string | undefined): boolean {
   return !!segment && (LIST_VIEW_ALIASES as readonly string[]).includes(segment);
 }
 
+/** True when the segment is any map-view alias. */
 export function isMapViewSegment(segment: string | undefined): boolean {
   return !!segment && (MAP_VIEW_ALIASES as readonly string[]).includes(segment);
 }
 
+/** True when the segment is a list or map view word. */
 export function isExploreViewSegment(segment: string | undefined): boolean {
   return isListViewSegment(segment) || isMapViewSegment(segment);
 }

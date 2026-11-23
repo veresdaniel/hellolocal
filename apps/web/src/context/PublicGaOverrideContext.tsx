@@ -1,3 +1,7 @@
+/**
+ * Lets a detail page temporarily override the site-level GA4 measurement ID
+ * (place/event/town-specific analytics). Cleared when the override hook unmounts.
+ */
 import {
   createContext,
   useCallback,

@@ -1,3 +1,8 @@
+/**
+ * Crawlable HTML body fragments for high-value public routes (SSR inject into `#root`).
+ * Complements social meta: bots/crawlers get readable content without waiting for the SPA.
+ * Admin paths stay an empty shell with robots noindex via {@link applyAdminRobots}.
+ */
 import {
   clip,
   escapeHtml,
@@ -249,10 +254,12 @@ function renderEventBody(lang, siteKey, event, labels) {
     </main>`;
 }
 
+/** True when the public path is an admin console route (`/:lang/.../admin` or `/admin`). */
 export function isAdminPath(pathname) {
   return parsePublicPath(pathname).kind === "admin";
 }
 
+/** Force `noindex, nofollow` on the SPA shell for admin HTML responses. */
 export function applyAdminRobots(html) {
   const tag = '<meta name="robots" content="noindex, nofollow" />';
   if (/<meta\s+name\s*=\s*"robots"/i.test(html)) {
@@ -264,6 +271,11 @@ export function applyAdminRobots(html) {
   return html.replace("</head>", `    ${tag}\n  </head>`);
 }
 
+/**
+ * Inject a pre-rendered body into `#root` (empty shell stays untouched when `body` is falsy).
+ * @param {string} html SPA index.html shell
+ * @param {string | null | undefined} body Inner HTML for `#root`
+ */
 export function injectRootContent(html, body) {
   if (!body) return html;
   if (html.includes('<div id="root"></div>')) {

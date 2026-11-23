@@ -1,4 +1,9 @@
-// src/pages/admin/SiteEditPage.tsx
+/**
+ * Region/site admin editor.
+ * SEO / Social fields (seoTitle, seoDescription, seoImage) are optional admin overrides —
+ * empty values cascade automatically from name / shortDescription / heroImage at SSR + CSR.
+ * Saving triggers a best-effort Facebook OG re-scrape when API credentials are configured.
+ */
 import { useState, useEffect, useContext, useRef } from "react";
 import { appendExtraLanguages, mergeTranslations, patchLang, readLang } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
@@ -31,6 +36,7 @@ import {
   updateSiteInstance,
   deleteSiteInstance,
   getTowns,
+  refreshFacebookSocialPreview,
   type Site,
   type Brand,
   type SiteInstance,
@@ -159,6 +165,15 @@ export function SiteEditPage() {
     listIntroImageHu: "",
     listIntroImageEn: "",
     listIntroImageDe: "",
+    seoTitleHu: "",
+    seoTitleEn: "",
+    seoTitleDe: "",
+    seoDescriptionHu: "",
+    seoDescriptionEn: "",
+    seoDescriptionDe: "",
+    seoImageHu: "",
+    seoImageEn: "",
+    seoImageDe: "",
     isActive: true,
     brandId: "",
     // Subscription tab
@@ -263,6 +278,15 @@ export function SiteEditPage() {
         listIntroImageHu: translationHu?.listIntroImage || "",
         listIntroImageEn: translationEn?.listIntroImage || "",
         listIntroImageDe: translationDe?.listIntroImage || "",
+        seoTitleHu: translationHu?.seoTitle || "",
+        seoTitleEn: translationEn?.seoTitle || "",
+        seoTitleDe: translationDe?.seoTitle || "",
+        seoDescriptionHu: translationHu?.seoDescription || "",
+        seoDescriptionEn: translationEn?.seoDescription || "",
+        seoDescriptionDe: translationDe?.seoDescription || "",
+        seoImageHu: translationHu?.seoImage || "",
+        seoImageEn: translationEn?.seoImage || "",
+        seoImageDe: translationDe?.seoImage || "",
         isActive: data.isActive,
         brandId: data.brandId,
         plan: data.plan || "basic",
@@ -282,6 +306,9 @@ export function SiteEditPage() {
         "landingHtml",
         "listIntroHtml",
         "listIntroImage",
+        "seoTitle",
+        "seoDescription",
+        "seoImage",
       ]));
     } catch (err) {
       showToast(t("admin.errors.loadSiteFailed"), "error");
@@ -361,6 +388,9 @@ export function SiteEditPage() {
           landingHtml: formData.landingHtmlHu || null,
           listIntroHtml: formData.listIntroHtmlHu || null,
           listIntroImage: formData.listIntroImageHu || null,
+          seoTitle: formData.seoTitleHu || null,
+          seoDescription: formData.seoDescriptionHu || null,
+          seoImage: formData.seoImageHu || null,
         });
       }
       if (formData.nameEn) {
@@ -373,6 +403,9 @@ export function SiteEditPage() {
           landingHtml: formData.landingHtmlEn || null,
           listIntroHtml: formData.listIntroHtmlEn || null,
           listIntroImage: formData.listIntroImageEn || null,
+          seoTitle: formData.seoTitleEn || null,
+          seoDescription: formData.seoDescriptionEn || null,
+          seoImage: formData.seoImageEn || null,
         });
       }
       if (formData.nameDe) {
@@ -385,6 +418,9 @@ export function SiteEditPage() {
           landingHtml: formData.landingHtmlDe || null,
           listIntroHtml: formData.listIntroHtmlDe || null,
           listIntroImage: formData.listIntroImageDe || null,
+          seoTitle: formData.seoTitleDe || null,
+          seoDescription: formData.seoDescriptionDe || null,
+          seoImage: formData.seoImageDe || null,
         });
       }
       appendExtraLanguages(translations, formData, "name", [
@@ -394,6 +430,9 @@ export function SiteEditPage() {
         "landingHtml",
         "listIntroHtml",
         "listIntroImage",
+        "seoTitle",
+        "seoDescription",
+        "seoImage",
       ]);
 
       const updateData = {
@@ -414,6 +453,24 @@ export function SiteEditPage() {
       await updateSite(id, updateData);
       showToast(t("admin.siteUpdated"), "success");
       await loadSite();
+      // Best-effort Facebook OG refresh after SEO/meta save. Silent if env unset;
+      // never invents success — only toasts real Graph API outcomes.
+      void refreshFacebookSocialPreview({ siteId: id })
+        .then((result) => {
+          if (!result.configured) return;
+          if (result.ok) {
+            showToast(t("admin.siteEdit.overview.facebookScrapeOkGeneric"), "success");
+            return;
+          }
+          const failed = result.results.find((r) => r.status !== "success");
+          showToast(
+            failed?.message || t("admin.siteEdit.overview.facebookScrapeFailed"),
+            "error"
+          );
+        })
+        .catch(() => {
+          /* save already succeeded; scrape failures are non-blocking */
+        });
     } catch (err: any) {
       const errorMessage =
         err?.response?.data?.message || err?.message || t("admin.errors.updateSiteFailed");
@@ -655,6 +712,43 @@ function OverviewTab({
   const listIntroFileRef = useRef<HTMLInputElement>(null);
   const [heroUploading, setHeroUploading] = useState(false);
   const [listIntroUploading, setListIntroUploading] = useState(false);
+  const [facebookRefreshing, setFacebookRefreshing] = useState(false);
+
+  const handleRefreshSocialPreview = async () => {
+    if (!site?.id || facebookRefreshing) return;
+    setFacebookRefreshing(true);
+    try {
+      const result = await refreshFacebookSocialPreview({ siteId: site.id });
+      if (!result.configured) {
+        showToast(t("admin.siteEdit.overview.facebookScrapeNotConfigured"), "error");
+        return;
+      }
+      if (result.ok) {
+        const firstUrl = result.results.find((r) => r.url)?.url;
+        showToast(
+          firstUrl
+            ? t("admin.siteEdit.overview.facebookScrapeOk", { url: firstUrl })
+            : t("admin.siteEdit.overview.facebookScrapeOkGeneric"),
+          "success"
+        );
+        return;
+      }
+      const failed = result.results.find((r) => r.status !== "success");
+      showToast(
+        failed?.message || t("admin.siteEdit.overview.facebookScrapeFailed"),
+        "error"
+      );
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data
+          ?.message ||
+        (err as { message?: string })?.message ||
+        t("admin.siteEdit.overview.facebookScrapeFailed");
+      showToast(message, "error");
+    } finally {
+      setFacebookRefreshing(false);
+    }
+  };
 
   return (
     <div>
@@ -1124,6 +1218,210 @@ function OverviewTab({
                   contextHints: "Places list intro",
                 }}
               />
+            </div>
+
+            <div
+              style={{
+                marginTop: 8,
+                padding: 16,
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                background: "#f9fafb",
+              }}
+            >
+              <h4
+                style={{
+                  margin: "0 0 8px",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: "#374151",
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                SEO / Social ({selectedLang.toUpperCase()})
+              </h4>
+              <p
+                style={{
+                  margin: "0 0 16px",
+                  color: "#6b7280",
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                }}
+              >
+                {t("admin.siteEdit.overview.seoHint")}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 500,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.seoTitle")}
+                  </label>
+                  <input
+                    type="text"
+                    value={readLang(formData, "seoTitle", selectedLang)}
+                    onChange={(e) => {
+                      setFormData(patchLang(formData, "seoTitle", selectedLang, e.target.value));
+                    }}
+                    placeholder={t("admin.seoTitleHint")}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: 6,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 500,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.seoDescription")}
+                  </label>
+                  <textarea
+                    value={readLang(formData, "seoDescription", selectedLang)}
+                    onChange={(e) => {
+                      setFormData(
+                        patchLang(formData, "seoDescription", selectedLang, e.target.value)
+                      );
+                    }}
+                    rows={3}
+                    placeholder={t("admin.seoDescriptionHint") || t("admin.seoTitleHint")}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: 6,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      boxSizing: "border-box",
+                      resize: "vertical",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 500,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.seoImage") || t("admin.seoImagePlaceholder")}
+                  </label>
+                  <input
+                    type="text"
+                    value={readLang(formData, "seoImage", selectedLang)}
+                    onChange={(e) => {
+                      setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
+                    }}
+                    placeholder={t("admin.seoImagePlaceholder")}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: 6,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <p
+                    style={{
+                      margin: "6px 0 0",
+                      color: "#6b7280",
+                      fontSize: 13,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.seoImageHint")}
+                  </p>
+                  {readLang(formData, "seoImage", selectedLang) ? (
+                    <img
+                      src={readLang(formData, "seoImage", selectedLang)}
+                      alt=""
+                      style={{
+                        marginTop: 8,
+                        maxWidth: "100%",
+                        maxHeight: 160,
+                        borderRadius: 6,
+                        display: "block",
+                      }}
+                    />
+                  ) : null}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 12,
+                    alignItems: "center",
+                    marginTop: 4,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => void handleRefreshSocialPreview()}
+                    disabled={facebookRefreshing}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 6,
+                      border: "1px solid #d1d5db",
+                      background: facebookRefreshing ? "#e5e7eb" : "#fff",
+                      color: "#374151",
+                      fontSize: 14,
+                      fontWeight: 500,
+                      cursor: facebookRefreshing ? "wait" : "pointer",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {facebookRefreshing
+                      ? t("common.loading")
+                      : t("admin.siteEdit.overview.refreshSocialPreview")}
+                  </button>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#6b7280",
+                      fontSize: 13,
+                      lineHeight: 1.4,
+                      flex: "1 1 220px",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.siteEdit.overview.refreshSocialPreviewHint")}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -7,6 +7,7 @@
 	}
 }
 
+# Platform host: force HTTPS + apex (non-www). Trailing-slash is normalized in web server.js.
 www.hello-local.io {
 	redir https://hello-local.io{uri} permanent
 }

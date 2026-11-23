@@ -1,3 +1,7 @@
+/**
+ * Public / admin MapLibre map: place markers, user geolocation, distance/route
+ * overlays, and filter-aware marker cards. Used by explore and detail pages.
+ */
 // src/components/MapComponent.tsx
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -300,6 +304,13 @@ function clusterMarkers<T extends { lat: number; lng: number }>(markers: T[], zo
   return Array.from(cellMap.values());
 }
 
+/**
+ * Interactive MapLibre map centered on `latitude`/`longitude`.
+ * @param markers - Place pins with optional card image and click handlers
+ * @param userLocation - When set, shows the user pin and enables distance/route UI
+ * @param onLocationChange - Admin/edit: fires when the map center is dragged
+ * @param hideLocationButton - Hide geolocation control (admin editors)
+ */
 export function MapComponent({
   latitude,
   longitude,

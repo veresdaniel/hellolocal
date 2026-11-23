@@ -1,3 +1,4 @@
+/** React Query wrapper for a region's imprint/terms/privacy public legal page. */
 import { useQuery } from "@tanstack/react-query";
 import { getLegalPage } from "../api/legal.api";
 

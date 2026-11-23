@@ -29,8 +29,11 @@ export type PlatformSettingsDto = {
   seo: {
     defaultTitle?: string | null;
     defaultDescription?: string | null;
+    defaultImage?: string | null;
     indexable: boolean; // region home: global && site switch
     globalIndexable: boolean; // master switch; off forces every page off
+    /** Platform marketing landing (hellolocal.hu overview): global && platform.landingCrawlable. */
+    landingIndexable: boolean;
   };
 
   placeholders: {
@@ -73,6 +76,8 @@ export type PlatformSettingsDto = {
     currency: string; // e.g., "HUF"
     timeFormat: "24h" | "12h";
     weekStartsOn: number; // 0 = Sunday, 1 = Monday
+    /** Platform-wide OG/share image fallback (AppSetting). */
+    defaultShareImage?: string | null;
   };
 
   /**

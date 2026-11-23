@@ -587,7 +587,14 @@
       "listIntroHint": "Optionaler Text und Bild auf der Entdeckungsliste, unter dem Titel und vor Suche und Filtern. Leer bleibt ausgeblendet.",
       "listIntroBody": "Intro-Text",
       "listIntroImage": "Intro-Bild",
-      "uploadListIntroImage": "Intro-Bild hochladen"
+      "uploadListIntroImage": "Intro-Bild hochladen",
+      "seoHint": "Social Sharing (Facebook, WhatsApp usw.). Leere Felder fallen automatisch zurück: Titel = Name, Beschreibung = Kurzbeschreibung, Bild = Hero (dann Plattform-Standard).",
+      "refreshSocialPreview": "Social-Vorschau aktualisieren",
+      "refreshSocialPreviewHint": "Facebook liest die öffentliche Regions-URL erneut (Graph API). Benötigt FACEBOOK_APP_ID und FACEBOOK_APP_SECRET an der API; sonst Sharing Debugger manuell nutzen.",
+      "facebookScrapeNotConfigured": "Facebook-Scrape ist nicht konfiguriert. Setze FACEBOOK_APP_ID und FACEBOOK_APP_SECRET an der API, oder nutze Facebook Sharing Debugger → Scrape Again.",
+      "facebookScrapeOk": "Facebook hat die Vorschau aktualisiert: {{url}}",
+      "facebookScrapeOkGeneric": "Facebook hat die Social-Vorschau aktualisiert",
+      "facebookScrapeFailed": "Facebook konnte die Social-Vorschau nicht aktualisieren"
     },
     "features": {
       "title": "Funktionen",
@@ -1115,6 +1122,10 @@
   "globalCrawlabilityDescription": "Wenn dies aus ist, kann keine Seite indexiert werden, auch wenn sie einzeln erlaubt ist. Wenn es an ist, folgt jeder Ort, jedes Ereignis, jede Region, jeder Ortsteil, jede Seite und jede Sammlung dem eigenen Schalter.",
   "globalCrawlabilityEnabled": "Indexierbar (SEO)",
   "globalCrawlabilityUpdated": "Globale Crawl-Einstellung aktualisiert",
+  "landingCrawlability": "Platform-Landing Indexierung",
+  "landingCrawlabilityDescription": "Betrifft nur das Platform-Marketing-Landing (hellolocal.hu Übersicht/Overview) — nicht die Regionsseiten. Globale Indexierung aus erzwingt auch hier kein Index. Standard: aus (für schrittweise Freigabe).",
+  "landingCrawlabilityEnabled": "Landing indexierbar (SEO)",
+  "landingCrawlabilityUpdated": "Platform-Landing Crawl-Einstellung aktualisiert",
   "features": "Funktionen",
   "enableEvents": "Veranstaltungen aktivieren",
   "enableBlog": "Blog aktivieren",
@@ -1681,6 +1692,13 @@
     "help": "Live ansehen öffnet diese Adresse. Eine volle Adresse, zum Beispiel https://helloetyek.hu/hu, oder ein Pfad, zum Beispiel /de/regionen. Leer bleibt die Regionenliste.",
     "save": "Demo-Adresse speichern",
     "saved": "Demo-Adresse gespeichert"
+  },
+  "defaultShareImage": {
+    "title": "Standard-Social-Bild",
+    "help": "Plattform-Open-Graph-Bild, wenn Region/Seite kein seoImage oder Hero hat. Volle URL oder Pfad. Leer bleibt /marketing/map-szeged.jpg.",
+    "save": "Social-Bild speichern",
+    "saved": "Social-Bild gespeichert",
+    "placeholder": "/marketing/map-szeged.jpg"
   },
   "geocode": {
     "suggest": "Koordinaten vorschlagen",

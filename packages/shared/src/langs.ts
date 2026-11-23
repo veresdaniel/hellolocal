@@ -19,14 +19,17 @@ const CODE = /^[a-z]{2,3}$/;
 /** Path segments that must not be treated as a language. */
 const RESERVED = new Set(["api", "assets", "static", "src", "www", "app", "css", "img"]);
 
+/** True when value looks like an ISO language code and is not a reserved path word. */
 export function isLanguageCode(value: string | null | undefined): value is string {
   return !!value && CODE.test(value) && !RESERVED.has(value);
 }
 
+/** True when value is one of the shipped UI languages (hu/en/de). */
 export function isUiLang(value: string | null | undefined): value is UiLang {
   return !!value && (LANG_VALUES as readonly string[]).includes(value);
 }
 
+/** Lowercase primary subtag if valid; otherwise `null`. */
 export function normalizeLanguageCode(value: string | null | undefined): string | null {
   if (!value) return null;
   const base = value.trim().toLowerCase().split("-")[0];
@@ -46,6 +49,7 @@ export function normalizeLanguageList(values: readonly string[]): string[] {
   return result;
 }
 
+/** Localized display name for a language code via `Intl.DisplayNames`. */
 export function languageLabel(code: string, uiLang = "en"): string {
   try {
     const names = new Intl.DisplayNames([uiLang, "en"], { type: "language" });

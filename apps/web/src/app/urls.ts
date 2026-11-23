@@ -1,3 +1,7 @@
+/**
+ * Public URL builders: platform slug paths vs custom-domain short paths.
+ * Respects {@link getHostScope} so links omit the entity the hostname already is.
+ */
 // src/app/urls.ts
 import { HAS_MULTIPLE_SITES } from "./config";
 import type { Lang } from "./config";
@@ -9,7 +13,8 @@ type BuildArgs = {
   lang: Lang;
   /** Public region slug (Prisma Site). Param name kept for API compatibility. */
   siteKey?: string;
-  path?: string; // pl. "hely/xyz" / "place/xyz"
+  /** Relative path under the region, e.g. `"hely/xyz"` / `"place/xyz"`. */
+  path?: string;
 };
 
 const PLATFORM_HOSTS = new Set([
@@ -104,6 +109,11 @@ function platformAbsolute(lang: string, siteKey: string, clean: string): string 
   return `${origin}${path}`;
 }
 
+/**
+ * Build a public path for the current host scope.
+ * On a custom host, strips the redundant region/entity prefix; otherwise
+ * emits `/:lang/:siteKey/...` in multi-site mode.
+ */
 export function buildUrl({ lang, siteKey, path = "" }: BuildArgs) {
   const clean = path.replace(/^\//, "").replace(/\/$/, "");
   const scope = getHostScope();

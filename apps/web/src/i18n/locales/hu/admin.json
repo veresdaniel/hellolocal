@@ -423,6 +423,10 @@
   "globalCrawlabilityDescription": "Ha ki van kapcsolva, egyetlen oldal sem indexelhető, akkor sem, ha külön engedélyezve van. Ha be van kapcsolva, minden tartalom a saját kapcsolóját követi.",
   "globalCrawlabilityEnabled": "Indexelhető (SEO)",
   "globalCrawlabilityUpdated": "Globális crawlability beállítás frissítve",
+  "landingCrawlability": "Platform landing indexelés",
+  "landingCrawlabilityDescription": "Csak a platform marketing landinget (hellolocal.hu áttekintés / overview) érinti — a régiós oldalakat nem. A globális indexelés kikapcsolása ezt is kikényszeríti. Alapértelmezés: ki (fokozatos bevezetéshez).",
+  "landingCrawlabilityEnabled": "Landing indexelhető (SEO)",
+  "landingCrawlabilityUpdated": "Platform landing crawlability beállítás frissítve",
   "profileMenu": "Profil",
   "logout": "Kijelentkezés",
   "language": "Nyelv",
@@ -622,7 +626,14 @@
       "listIntroHint": "Opcionális szöveg és kép a „felfedezése” listaoldalon, a cím alatt, a kereső és a szűrők előtt. Üresen nem jelenik meg.",
       "listIntroBody": "Bevezető szöveg",
       "listIntroImage": "Bevezető kép",
-      "uploadListIntroImage": "Bevezető kép feltöltése"
+      "uploadListIntroImage": "Bevezető kép feltöltése",
+      "seoHint": "Social megosztás (Facebook, WhatsApp stb.). Üres mezőnél automatikus: cím = név, leírás = rövid leírás, kép = hero (majd platform alapkép).",
+      "refreshSocialPreview": "Social előnézet frissítése",
+      "refreshSocialPreviewHint": "A Facebook újra beolvassa a régió nyilvános URL-jét (Graph API). Kell FACEBOOK_APP_ID és FACEBOOK_APP_SECRET az API-n; ha nincs, használd manuálisan a Sharing Debuggert.",
+      "facebookScrapeNotConfigured": "A Facebook scrape nincs beállítva. Állítsd be a FACEBOOK_APP_ID és FACEBOOK_APP_SECRET változókat az API-n, vagy használd a Facebook Sharing Debugger → Scrape Again gombot.",
+      "facebookScrapeOk": "A Facebook frissítette az előnézetet: {{url}}",
+      "facebookScrapeOkGeneric": "A Facebook frissítette a social előnézetet",
+      "facebookScrapeFailed": "A Facebook nem tudta frissíteni a social előnézetet"
     },
     "domain": {
       "title": "Domain & URL",
@@ -1735,6 +1746,13 @@
     "help": "A „Nézd meg élőben” gomb ide visz. Teljes cím, például https://helloetyek.hu/hu, vagy útvonal, például /hu/regiok. Üresen a régiólista marad.",
     "save": "Demócím mentése",
     "saved": "Demócím elmentve"
+  },
+  "defaultShareImage": {
+    "title": "Social megosztás alapkép",
+    "help": "Platform szintű Open Graph kép, ha a régiónak/oldalnak nincs saját seoImage/hero képe. Teljes URL vagy útvonal. Üresen a beépített /marketing/map-szeged.jpg.",
+    "save": "Alapkép mentése",
+    "saved": "Social alapkép elmentve",
+    "placeholder": "/marketing/map-szeged.jpg"
   },
   "geocode": {
     "suggest": "Koordináta javaslat",

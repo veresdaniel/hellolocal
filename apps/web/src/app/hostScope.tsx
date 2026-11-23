@@ -1,3 +1,7 @@
+/**
+ * Host-scoped public routing: maps the browser hostname to platform vs custom
+ * region/town/place/event/collection scope for URL building and route guards.
+ */
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { isPlacePathSegment } from "./entityPaths";
 import { siteForHost, type HostResolve } from "./hostResolve";
@@ -5,6 +9,7 @@ import { isPlatformHost } from "./urls";
 import { setPlatformPublicHostEntries, setPlatformPublicHosts } from "./platformOrigin";
 import { getPublicPlatformHost } from "../api/public.api";
 
+/** Resolved hostname ownership for public paths (loading until domain-resolve returns). */
 export type HostScope =
   | { status: "loading"; kind: "platform" }
   | { status: "ready"; kind: "platform" }
@@ -18,6 +23,7 @@ const PLATFORM: HostScope = { status: "ready", kind: "platform" };
 
 let current: HostScope = PLATFORM;
 
+/** Imperative read of the latest host scope (used by `buildUrl` outside React). */
 export function getHostScope(): HostScope {
   return current;
 }
@@ -59,10 +65,16 @@ function scopeFromResolve(site: HostResolve | null): HostScope {
 
 const HostScopeContext = createContext<HostScope>(PLATFORM);
 
+/** React access to the current {@link HostScope}. */
 export function useHostScope(): HostScope {
   return useContext(HostScopeContext);
 }
 
+/**
+ * Loads platform host allowlist + domain-resolve for the current hostname.
+ * Sets scope to platform immediately for known platform hosts; otherwise stays
+ * `loading` until `/api/domain/:host` returns.
+ */
 export function HostScopeProvider({ children }: { children: ReactNode }) {
   const host = typeof window !== "undefined" ? window.location.hostname : "";
   const [scope, setScope] = useState<HostScope>(() =>

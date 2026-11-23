@@ -1,4 +1,9 @@
-// src/seo/seo.controller.ts
+/**
+ * Public SEO JSON for Nest seo-injector / bot schema fetch (`/api/seo/...`).
+ * Production HTML OG tags primarily come from apps/web/ssr/socialMeta.js;
+ * this controller supplies structured meta + schemaOrg for the dual path.
+ * No auth — public read endpoints.
+ */
 import {
   Controller,
   Get,
@@ -16,10 +21,7 @@ import { assertLang } from "../common/lang";
 import { frontendOrigin, placePathSegment } from "./public-path.util";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
-/**
- * Removes HTML tags from a string and normalizes whitespace
- * Used for meta descriptions which should be plain text
- */
+/** Strip tags / collapse whitespace for meta descriptions. */
 function stripHtml(html: string | null | undefined): string {
   if (!html) return "";
   // Remove HTML tags
@@ -28,6 +30,7 @@ function stripHtml(html: string | null | undefined): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
+/** Absolute public base for canonical/og:url on the platform host. */
 function publicBase(lang: string, siteKey?: string | null): string {
   const origin = frontendOrigin();
   return siteKey ? `${origin}/${lang}/${siteKey}` : `${origin}/${lang}`;

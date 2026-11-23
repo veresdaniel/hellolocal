@@ -1,9 +1,15 @@
+/**
+ * Role-based access helpers for admin content: site / town / place memberships,
+ * content scope for list filters, and copy-edit gates.
+ * Superadmin bypasses site-scoped checks.
+ */
 // src/auth/rbac.service.ts
 import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { Prisma, UserRole, SiteRole, PlaceRole } from "@prisma/client";
 import { canEditCopy, type CopyActor, type CopyScope } from "./copy-access";
 
+/** Which regions/towns/places an actor may read or edit in admin lists. */
 export type ContentScope = {
   unrestricted: boolean;
   /** Every region membership, including viewer. Used for reads. */
@@ -246,6 +252,10 @@ export class RbacService {
     );
   }
 
+  /**
+   * Compute the actor's admin content scope (sites/towns/places they may list).
+   * Superadmin → `unrestricted: true` with empty id lists.
+   */
   async getContentScope(userId: string): Promise<ContentScope> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

@@ -4,6 +4,10 @@ import { Lang } from "../common/language-code";
 import { langOrDefault } from "../common/lang";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
+/**
+ * Public read API for curated region collections (custom domain or slug).
+ * Builds language-aware view models with per-item title/image overrides.
+ */
 @Injectable()
 export class CollectionsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -66,22 +70,15 @@ export class CollectionsService {
   }
 
   /**
-   * Gets a collection with language-specific view model.
+   * Language-specific public view for a collection (by domain or slug).
    *
-   * Input: collectionId, lang
+   * Collection copy uses CollectionTranslation[lang], falling back to `hu`.
+   * Each item displays override fields when set, otherwise the linked SiteTranslation.
    *
-   * Collection content:
-   * - Uses CollectionTranslation[lang] if available
-   * - Fallback: hu (or defaultLang)
-   *
-   * Items list:
-   * For each item:
-    const lang = langOrDefault(args.lang, { lower: true });
-   * 2. siteTranslation = SiteTranslation[lang] if exists (fallback hu)
-   * 3. Displayed fields:
-   *    - title: itemTranslation.titleOverride ?? siteTranslation.name
-   *    - desc: itemTranslation.descriptionOverride ?? siteTranslation.shortDescription ?? null
-   *    - image: itemTranslation.imageOverride ?? siteTranslation.heroImage ?? site.default/brand placeholder
+   * @param args.lang - Requested content language
+   * @param args.domain - Custom hostname (checked before slug)
+   * @param args.slug - Public collection slug
+   * @returns Title, SEO, hero, and ordered items with display title/description/image
    */
   async getCollectionView(args: { lang: string; domain?: string; slug?: string }) {
     const lang = this.normalizeLang(args.lang);

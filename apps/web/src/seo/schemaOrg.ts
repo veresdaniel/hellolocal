@@ -101,7 +101,8 @@ export interface BreadcrumbListSchemaData {
 }
 
 /**
- * Generate LocalBusiness (or TouristAttraction) schema for places
+ * LocalBusiness / TouristAttraction JSON-LD for place detail pages.
+ * Omits empty optional fields; used by {@link buildPlaceSeo} and {@link useSeo}.
  */
 export function generateLocalBusinessSchema(
   data: PlaceSchemaData,
@@ -171,6 +172,7 @@ export function generateLocalBusinessSchema(
 /**
  * Generate Event schema for events
  */
+/** Event JSON-LD (ISO dates, optional venue / organizer). */
 export function generateEventSchema(data: EventSchemaData): object {
   const schema: any = {
     "@context": "https://schema.org",
@@ -230,6 +232,7 @@ export function generateEventSchema(data: EventSchemaData): object {
 /**
  * Generate Article schema for blog posts and articles
  */
+/** Article JSON-LD for long-form / blog-like content. */
 export function generateArticleSchema(data: ArticleSchemaData): object {
   const schema: any = {
     "@context": "https://schema.org",
@@ -283,6 +286,7 @@ export function generateArticleSchema(data: ArticleSchemaData): object {
 /**
  * Generate WebPage schema for static/legal pages
  */
+/** Generic WebPage JSON-LD. */
 export function generateWebPageSchema(data: WebPageSchemaData): object {
   const schema: any = {
     "@context": "https://schema.org",
@@ -313,6 +317,7 @@ export function generateWebPageSchema(data: WebPageSchemaData): object {
 /**
  * Generate WebSite schema for homepage
  */
+/** WebSite JSON-LD (platform / region home). */
 export function generateWebSiteSchema(data: WebSiteSchemaData): object {
   const schema: any = {
     "@context": "https://schema.org",
@@ -335,6 +340,7 @@ export function generateWebSiteSchema(data: WebSiteSchemaData): object {
 /**
  * Generate Organization schema
  */
+/** Organization JSON-LD (brand / publisher). */
 export function generateOrganizationSchema(data: OrganizationSchemaData): object {
   const schema: any = {
     "@context": "https://schema.org",
@@ -353,6 +359,7 @@ export function generateOrganizationSchema(data: OrganizationSchemaData): object
 /**
  * Generate BreadcrumbList schema
  */
+/** BreadcrumbList JSON-LD from ordered `{ name, url }` items. */
 export function generateBreadcrumbListSchema(data: BreadcrumbListSchemaData): object {
   return {
     "@context": "https://schema.org",
@@ -369,6 +376,7 @@ export function generateBreadcrumbListSchema(data: BreadcrumbListSchemaData): ob
 /**
  * Combine multiple schema nodes into a single @graph document
  */
+/** `@graph` wrapper combining multiple schema nodes in one script tag. */
 export function generateGraphSchema(nodes: object[]): object {
   const cleaned = nodes.map((node) => {
     const copy = { ...(node as Record<string, unknown>) };
@@ -396,10 +404,10 @@ export function injectJsonLd(schema: object): void {
   document.head.appendChild(script);
 }
 
-/** Remove JSON-LD scripts from document head (SPA navigation cleanup). */
+/** Remove only client-managed JSON-LD (keeps SSR / page-owned scripts). */
 export function removeJsonLd(): void {
   document.head
-    .querySelectorAll(`script[type="application/ld+json"]`)
+    .querySelectorAll(`script[type="application/ld+json"][${JSON_LD_ATTR}]`)
     .forEach((node) => node.remove());
 }
 

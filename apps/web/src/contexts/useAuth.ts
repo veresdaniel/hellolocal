@@ -1,4 +1,4 @@
-// src/contexts/useAuth.ts
+/** Required auth context consumer — throws outside {@link AuthProvider}. */
 import { useContext } from "react";
 import { AuthContext, type AuthContextType } from "./AuthContext.shared";
 

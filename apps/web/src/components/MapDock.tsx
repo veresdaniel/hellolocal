@@ -1,3 +1,7 @@
+/**
+ * Draggable floating dock on the explore map: filters, upcoming events, and services panels.
+ * Remembers position in localStorage (separate keys for mobile vs desktop).
+ */
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -101,6 +105,7 @@ function upcomingEvents(data: Event[]) {
   });
 }
 
+/** Explore-map floating control dock; forwards filter props to {@link FilterControls}. */
 export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Panel) => void }) {
   const { t, i18n } = useTranslation();
   const { siteKey } = useRouteCtx();

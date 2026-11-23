@@ -101,6 +101,7 @@ import { TwoFactorService } from "../two-factor/two-factor.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { VisitorLadderService } from "../visitor-ladder/visitor-ladder.service";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
+import { FacebookOgScrapeService } from "../seo/facebook-og-scrape.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { geocodeQuery } from "./geocode";
 import {
@@ -151,7 +152,8 @@ export class AdminController {
     private readonly rbacService: RbacService,
     private readonly twoFactorService: TwoFactorService,
     private readonly platformSettingsService: PlatformSettingsService,
-    private readonly visitorLadderService: VisitorLadderService
+    private readonly visitorLadderService: VisitorLadderService,
+    private readonly facebookOgScrapeService: FacebookOgScrapeService
   ) {}
 
   // ==================== Categories ====================
@@ -1886,6 +1888,7 @@ export class AdminController {
     return this.appSettingsService.setDefaultLanguage(requireUiLang(dto.language));
   }
 
+  /** Master crawl switch (AppSetting globalCrawlability). Off → noindex everywhere + empty sitemap. */
   @Get("/app-settings/global-crawlability")
   @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async getGlobalCrawlability() {
@@ -1893,10 +1896,28 @@ export class AdminController {
     return { isCrawlable };
   }
 
+  /** Update master crawl switch. Roles: superadmin/admin. Side effect: sitemap invalidate. */
   @Put("/app-settings/global-crawlability")
   @Roles(UserRole.superadmin, UserRole.admin)
   async setGlobalCrawlability(@Body() dto: { isCrawlable: boolean }) {
     return this.appSettingsService.setGlobalCrawlability(dto.isCrawlable);
+  }
+
+  /** Platform overview only (platform.landingCrawlable). Default off; global off still wins. */
+  @Get("/app-settings/landing-crawlability")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async getLandingCrawlability() {
+    const isCrawlable = await this.appSettingsService.getLandingCrawlability();
+    return { isCrawlable };
+  }
+
+  /** Update platform-landing crawl flag. Roles: superadmin/admin. Side effect: sitemap invalidate. */
+  @Put("/app-settings/landing-crawlability")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async setLandingCrawlability(@Body() dto: { isCrawlable: boolean }) {
+    await this.appSettingsService.setLandingCrawlability(dto.isCrawlable);
+    const isCrawlable = await this.appSettingsService.getLandingCrawlability();
+    return { isCrawlable };
   }
 
   @Get("/app-settings")
@@ -2703,6 +2724,67 @@ export class AdminController {
         count: item._count,
       })),
     };
+  }
+
+  // ==================== Facebook / social OG scrape ====================
+
+  /**
+   * Whether FACEBOOK_APP_ID + FACEBOOK_APP_SECRET are set (Graph API scrape).
+   * Unauthenticated scrape is not allowed by Meta; missing env → UI no-ops with a clear toast.
+   */
+  @Get("/seo/facebook-scrape/status")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  facebookScrapeStatus() {
+    return this.facebookOgScrapeService.status();
+  }
+
+  /**
+   * Best-effort Facebook OG cache refresh (Sharing Debugger "Scrape Again" equivalent).
+   * Body: `{ urls?: string[], url?: string, siteId?: string }`.
+   * Does not invent success when credentials are missing (`configured: false`).
+   */
+  @Post("/seo/facebook-scrape")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  async facebookScrape(
+    @Body() body: { urls?: string[]; url?: string; siteId?: string },
+    @CurrentUser() user: { id: string; siteIds: string[] }
+  ) {
+    const urls = [
+      ...(Array.isArray(body?.urls) ? body.urls : []),
+      ...(body?.url ? [body.url] : []),
+    ]
+      .map((u) => String(u || "").trim())
+      .filter(Boolean);
+
+    let result;
+    if (body?.siteId) {
+      if (!urls.length) {
+        result = await this.facebookOgScrapeService.scrapeSite(body.siteId);
+      } else {
+        result = await this.facebookOgScrapeService.scrapeUrls(urls);
+      }
+    } else if (urls.length) {
+      result = await this.facebookOgScrapeService.scrapeUrls(urls);
+    } else {
+      throw new BadRequestException("Provide url, urls, or siteId");
+    }
+
+    if (user.siteIds?.length) {
+      await this.eventLogService
+        .create({
+          siteId: body?.siteId || user.siteIds[0],
+          userId: user.id,
+          action: "facebook_og_scrape",
+          entityType: "system",
+          entityId: body?.siteId || result.results[0]?.url || "urls",
+          description: result.configured
+            ? `Facebook OG scrape: ok=${result.ok} (${result.results.length} URL(s))`
+            : "Facebook OG scrape skipped (FACEBOOK_APP_ID/SECRET unset)",
+        })
+        .catch((err) => console.error("Failed to log facebook scrape:", err));
+    }
+
+    return result;
   }
 
   // ==================== Cache Management ====================

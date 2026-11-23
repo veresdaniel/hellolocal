@@ -36,6 +36,11 @@ export type DomainResolveResponse = {
 export class DomainResolveController {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Look up which geo entity owns a custom hostname.
+   * Order: SiteDomain → Site.primaryDomain → town/place/collection/event customDomain.
+   * @throws NotFoundException when the host is invalid or unconfigured
+   */
   @Get(":host")
   async resolve(@Param("host") host: string): Promise<DomainResolveResponse> {
     const domain = normalizeDomainHost(decodeURIComponent(host));

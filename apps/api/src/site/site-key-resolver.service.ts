@@ -1,23 +1,33 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Lang } from "../common/language-code";
 import { requireLang } from "../common/lang";
+import { normalizePublicSiteKey } from "../common/public-site-key";
 import { PrismaService } from "../prisma/prisma.service";
 import { Request } from "express";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
 type ResolveSiteArgs = {
   lang: string;
-  siteKey?: string; // Optional site key from URL (for multi-site support)
+  /** Optional public site key from the URL (multi-site); omit for the default site. */
+  siteKey?: string;
 };
 
+/** Result of resolving a request to a Site row (legacy helper; prefer `req.site`). */
 export type ResolvedSite = {
   siteId: string;
-  siteInternalSlug: string; // Site.slug (internal key, used in database)
+  /** Site.slug — internal key used in the database. */
+  siteInternalSlug: string;
   lang: Lang;
-  canonicalSiteKey?: string; // Public site key for multi-site URLs (if applicable)
-  redirected: boolean; // Whether the request was redirected to a canonical site key
+  /** Public SiteKey.slug for multi-site URLs when applicable. */
+  canonicalSiteKey?: string;
+  /** True when the requested key redirects to a different canonical SiteKey. */
+  redirected: boolean;
 };
 
+/**
+ * Legacy site resolution by lang + optional siteKey.
+ * Prefer {@link SiteResolveMiddleware} / `req.site` for new HTTP handlers.
+ */
 @Injectable()
 export class SiteKeyResolverService {
   constructor(private readonly prisma: PrismaService) {}
@@ -49,20 +59,21 @@ export class SiteKeyResolverService {
   }
 
   /**
-   * Resolves the site ID from the request with the following priority:
-   * 1. URL-based siteKey resolution (if siteKey is provided)
-    const lang = requireLang(args.lang);
+   * Resolve a Site from lang + optional public siteKey.
+   * - No / empty / `"default"` siteKey → default Site.slug (`DEFAULT_SITE_SLUG`)
+   * - Otherwise → SiteKey lookup (primary first), with Site.slug fallback
    *
-   * This service supports both single-site (implicit) and multi-site (explicit) modes.
-   * In multi-site mode, the siteKey is a public-facing slug that maps to an internal site.
+   * Supports single-site (implicit) and multi-site (explicit public slug) modes.
    *
-   * @deprecated Consider using SiteResolveMiddleware and req.site instead
+   * @deprecated Prefer SiteResolveMiddleware and `req.site`
    */
   async resolve(args: ResolveSiteArgs): Promise<ResolvedSite> {
     const lang = this.normalizeLang(args.lang);
+    const siteKey = normalizePublicSiteKey(args.siteKey);
 
     // Single-site / implicit site: use default Site.slug (internal key)
-    if (!args.siteKey) {
+    // Also treats path segment "default" like omitting siteKey (platform-settings convention).
+    if (!siteKey) {
       const s = await this.prisma.site.findUnique({
         where: { slug: this.defaultSiteInternalSlug() },
         select: { id: true, slug: true },
@@ -84,7 +95,7 @@ export class SiteKeyResolverService {
     const hit = await this.prisma.siteKey.findFirst({
       where: {
         lang,
-        slug: args.siteKey,
+        slug: siteKey,
         isActive: true,
       },
       orderBy: [
@@ -112,7 +123,7 @@ export class SiteKeyResolverService {
     if (!hit || !hit.isActive) {
       // Try to find the site by its internal slug (assuming siteKey matches internal slug)
       const site = await this.prisma.site.findUnique({
-        where: { slug: args.siteKey },
+        where: { slug: siteKey },
         select: { id: true, slug: true },
       });
 
@@ -122,7 +133,7 @@ export class SiteKeyResolverService {
           siteId: site.id,
           siteInternalSlug: site.slug,
           lang,
-          canonicalSiteKey: args.siteKey,
+          canonicalSiteKey: siteKey,
           redirected: false,
         };
       }

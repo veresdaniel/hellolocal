@@ -1,3 +1,7 @@
+/**
+ * Platform overview copy helper: prefers DB UI copy, else admin planOverrides landing strings.
+ * Returns `(path, { count? }) => string` for CSR landing sections.
+ */
 import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";

@@ -1,9 +1,14 @@
-// src/contexts/AdminSiteContext.tsx
+/**
+ * Admin region (site) selection context.
+ * Loads sites for the authenticated user and keeps selectedSiteId in sync with the store.
+ * Auth assumption: empty list / reset when logged out.
+ */
 import { useContext, useEffect, useMemo, type ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
 import { useAdminSiteStore } from "../stores/adminSiteStore";
 import { AdminSiteContext as AdminSiteContextDef, type AdminSiteContextType } from "./AdminSiteContext.shared";
 
+/** Provide admin region selection; resets when the user logs out. */
 export function AdminSiteProvider({ children }: { children: ReactNode }) {
   const authContext = useContext(AuthContext);
   const user = authContext?.user ?? null;

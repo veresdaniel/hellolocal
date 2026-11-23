@@ -65,6 +65,16 @@
   display: block;
 }
 
+/* Reserve space for late-wrapped / lazy rich-text images (legal, static, landing). */
+.story__body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 16px auto;
+  min-height: 160px;
+  background: rgba(27, 23, 48, 0.05);
+}
+
 .story__actions {
   display: flex;
   flex-wrap: wrap;

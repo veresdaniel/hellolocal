@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { getPlatformSettings } from "../api/places.api";
@@ -15,7 +16,7 @@ function published(codes: readonly string[] | undefined): string[] {
 export function useContentLanguages(): string[] {
   const { sites, selectedSiteId } = useAdminSite();
   const site = sites.find((item) => item.id === selectedSiteId);
-  return published(site?.languages);
+  return useMemo(() => published(site?.languages), [site?.languages]);
 }
 
 /** Languages offered in the public header. The admin chrome stays on hu/en/de. */
@@ -37,9 +38,11 @@ export function usePublishedLanguages(): string[] {
     staleTime: 60_000,
     retry: 1,
   });
-  if (isAdmin) return [...LANG_VALUES];
-  const interfaceLanguages = (uiLanguages.data?.languages ?? []).filter(isLang);
-  const base = interfaceLanguages.length ? interfaceLanguages : [...LANG_VALUES];
-  if (!siteKey) return base;
-  return [...new Set([...base, ...published(data?.languages)])];
+  return useMemo(() => {
+    if (isAdmin) return [...LANG_VALUES];
+    const interfaceLanguages = (uiLanguages.data?.languages ?? []).filter(isLang);
+    const base = interfaceLanguages.length ? interfaceLanguages : [...LANG_VALUES];
+    if (!siteKey) return base;
+    return [...new Set([...base, ...published(data?.languages)])];
+  }, [isAdmin, uiLanguages.data?.languages, siteKey, data?.languages]);
 }

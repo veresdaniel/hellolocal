@@ -1,4 +1,7 @@
-// src/hooks/useVersionCheck.ts
+/**
+ * Poll for a new frontend deploy version and toast + reload when it changes.
+ * Side effect: periodic network checks (~15 min) and optional hard refresh.
+ */
 import { useEffect, useState } from "react";
 import {
   checkVersionChange,

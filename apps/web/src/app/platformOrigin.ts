@@ -1,4 +1,7 @@
-/** Public platform origin used for cross-region links. Empty list keeps hello-local.io. */
+/**
+ * Runtime platform hostname allowlist for cross-region absolute links.
+ * Populated from `getPublicPlatformHost()`; empty list falls back to hello-local.io.
+ */
 const DEFAULT_ORIGIN = "https://hello-local.io";
 
 export type PlatformHostEntry = { host: string; lang: string };
@@ -10,10 +13,12 @@ function cleanHost(raw: string): string {
   return raw.trim().toLowerCase().replace(/^www\./, "");
 }
 
+/** Absolute origin of the primary platform host (`https://…`). */
 export function getPlatformOrigin(): string {
   return hosts[0] ? `https://${hosts[0]}` : DEFAULT_ORIGIN;
 }
 
+/** Replace the host list without per-host default languages. */
 export function setPlatformPublicHosts(next: readonly string[] | null | undefined): void {
   const seen = new Set<string>();
   hosts = [];
@@ -54,6 +59,7 @@ export function setPlatformPublicHost(host: string | null | undefined): void {
   setPlatformPublicHosts(host ? [host] : []);
 }
 
+/** True when `hostname` is in the runtime platform host list (with or without www). */
 export function platformHostMatches(hostname: string): boolean {
   const host = hostname.toLowerCase().split(":")[0].replace(/\.$/, "");
   return hosts.some((name) => host === name || host === `www.${name}`);

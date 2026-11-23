@@ -1,5 +1,11 @@
-// src/components/ImageWithSkeleton.tsx
-import { useState, useEffect } from "react";
+/**
+ * Image with cream skeleton overlay until load/error.
+ * Parent should reserve layout (aspect-ratio / width+height) to avoid CLS;
+ * Cloudinary URLs get f_auto,q_auto via preferModernImageUrl.
+ */
+import { useState, useEffect, useRef } from "react";
+import { preferModernImageUrl } from "../seo/cloudinaryImage";
+import "../styles/public-skeleton.css";
 
 interface ImageWithSkeletonProps {
   src: string;
@@ -7,6 +13,11 @@ interface ImageWithSkeletonProps {
   className?: string;
   style?: React.CSSProperties;
   skeletonStyle?: React.CSSProperties;
+  /** LCP hero: eager + high fetch priority (default lazy). */
+  priority?: boolean;
+  width?: number;
+  height?: number;
+  sizes?: string;
   onLoad?: () => void;
   onError?: () => void;
   onMouseEnter?: (e: React.MouseEvent<HTMLImageElement>) => void;
@@ -19,6 +30,10 @@ export function ImageWithSkeleton({
   className,
   style,
   skeletonStyle,
+  priority = false,
+  width,
+  height,
+  sizes,
   onLoad,
   onError,
   onMouseEnter,
@@ -26,11 +41,19 @@ export function ImageWithSkeleton({
 }: ImageWithSkeletonProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const deliverySrc = preferModernImageUrl(src, { width: width && width > 0 ? width : 1600 });
 
+  // Cached images often fire onLoad before this effect; img.complete avoids a stuck skeleton.
   useEffect(() => {
-    setIsLoading(true);
     setHasError(false);
-  }, [src]);
+    const img = imgRef.current;
+    if (img?.complete && img.naturalWidth > 0) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+  }, [deliverySrc]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -60,9 +83,9 @@ export function ImageWithSkeleton({
         height: "100%",
       }}
     >
-      {/* Skeleton Loader */}
       {isLoading && (
         <div
+          aria-hidden="true"
           style={{
             position: "absolute",
             top: 0,
@@ -78,11 +101,14 @@ export function ImageWithSkeleton({
         />
       )}
 
-      {/* Image */}
       <img
-        src={src}
+        ref={imgRef}
+        src={deliverySrc}
         alt={alt}
         className={className}
+        width={width}
+        height={height}
+        sizes={sizes}
         style={{
           ...combinedStyle,
           ...(fillBox
@@ -103,15 +129,15 @@ export function ImageWithSkeleton({
               }),
           display: "block",
         }}
-        loading="lazy"
-        decoding="async"
+        loading={priority ? "eager" : "lazy"}
+        decoding={priority ? "sync" : "async"}
+        fetchPriority={priority ? "high" : "auto"}
         onLoad={handleLoad}
         onError={handleError}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       />
 
-      {/* Error State */}
       {hasError && !isLoading && (
         <div
           style={{
@@ -133,17 +159,6 @@ export function ImageWithSkeleton({
           Image not available
         </div>
       )}
-
-      <style>{`
-        @keyframes skeleton-loading {
-          0% {
-            background-position: 200% 0;
-          }
-          100% {
-            background-position: -200% 0;
-          }
-        }
-      `}</style>
     </div>
   );
 }

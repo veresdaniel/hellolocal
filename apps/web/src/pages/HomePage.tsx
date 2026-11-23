@@ -14,11 +14,13 @@ import {
 } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
 import { absoluteCanonical } from "../seo/canonical";
+import { resolveSeoFields } from "../seo/resolveSeoFields";
 import {
   generateOrganizationSchema,
   generateWebSiteSchema,
   robotsDirective,
 } from "../seo/schemaOrg";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
 import { MapDock } from "../components/MapDock";
 import { PlacesListView } from "../components/PlacesListView";
 import { Header } from "../ui/layout/Header";
@@ -34,7 +36,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { NotFoundPage } from "./NotFoundPage";
 import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { BREAKPOINTS } from "../utils/viewport";
-import { PublicCardSkeletonGrid, PublicPageSkeleton } from "../components/PublicSkeleton";
+import { PublicPageSkeleton } from "../components/PublicSkeleton";
 import { ErrorState } from "../components/ErrorState";
 import { useFiltersStore } from "../stores/useFiltersStore";
 import { useViewStore } from "../stores/useViewStore";
@@ -369,25 +371,42 @@ export function HomePage() {
   const siteUrl = window.location.origin;
   const siteName = platformSettings?.siteName || t("common.siteName");
   const pageCanonical = absoluteCanonical();
-  const stripHtml = (html: string | null | undefined) =>
-    (html || "")
-      .replace(/<[^>]*>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+  const languages = usePublishedLanguages();
 
-  const homeTitle = selectedTown
-    ? t(viewIsMap ? "public.explore.mapTitle" : "public.explore.siteTitle", {
-        name: selectedTown.name,
-      })
-    : platformSettings?.seoTitle || t("public.home.title");
-  const homeDescription = selectedTown
-    ? stripHtml(selectedTown.description) ||
-      t("public.home.description") ||
-      platformSettings?.seoDescription ||
-      ""
-    : platformSettings?.seoDescription || t("public.home.description");
-  const homeImage =
-    selectedTown?.heroImage || platformSettings?.defaultPlaceholderCardImage || undefined;
+  // Town pages: keep i18n explore/map title (do not let raw name win via resolveSeoFields).
+  const homeResolved = selectedTown
+    ? resolveSeoFields(
+        {
+          description: selectedTown.description,
+          heroImage: selectedTown.heroImage,
+        },
+        {
+          title: t(viewIsMap ? "public.explore.mapTitle" : "public.explore.siteTitle", {
+            name: selectedTown.name,
+          }),
+          description: t("public.home.description"),
+          image: platformSettings?.defaultPlaceholderCardImage || undefined,
+        }
+      )
+    : resolveSeoFields(
+        {
+          seoTitle: platformSettings?.seoTitle,
+          seoDescription: platformSettings?.seoDescription,
+          seoImage: platformSettings?.seoImage,
+          name: platformSettings?.site?.name || siteName,
+          shortDescription: platformSettings?.site?.shortDescription,
+          description: platformSettings?.site?.description,
+          heroImage: platformSettings?.site?.heroImage,
+        },
+        {
+          title: t("public.home.title"),
+          description: t("public.home.description"),
+          image: platformSettings?.defaultPlaceholderCardImage || undefined,
+        }
+      );
+  const homeTitle = homeResolved.title;
+  const homeDescription = homeResolved.description || t("public.home.description");
+  const homeImage = homeResolved.image;
 
   const homeSeo = useMemo(
     () => ({
@@ -464,6 +483,8 @@ export function HomePage() {
 
   useSeo(homeSeo, {
     siteName: platformSettings?.siteName,
+    languages,
+    lang,
   });
 
   // Helper function to calculate distance in km using Haversine formula
@@ -841,11 +862,22 @@ export function HomePage() {
     return <NotFoundPage />;
   }
 
-  if (isCriticalDataLoading) {
+  // Map view: reserve a full-viewport shell so the map does not jump in from a
+  // card-grid skeleton. List view: skip this gate — PlacesListView already paints
+  // FloatingHeader + filters + card skeletons, so a bare grid here caused CLS.
+  if (viewIsMap && isCriticalDataLoading) {
     return (
-      <div style={{ padding: "clamp(72px, 10vw, 96px) 16px 48px", maxWidth: 1200, margin: "0 auto" }}>
-        <PublicCardSkeletonGrid count={12} variant="places" label={t("common.loading")} />
-      </div>
+      <div
+        role="status"
+        aria-busy="true"
+        aria-label={t("common.loading")}
+        style={{
+          width: "100%",
+          height: "100vh",
+          minHeight: 320,
+          background: "var(--hl-bg, #1b1730)",
+        }}
+      />
     );
   }
 

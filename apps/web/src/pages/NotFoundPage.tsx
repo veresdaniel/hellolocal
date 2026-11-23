@@ -1,9 +1,9 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {  DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang, isLang} from "../app/config";
+import { DEFAULT_LANG, HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang, isLang } from "../app/config";
 import { useActiveSitesCount } from "../hooks/useActiveSitesCount";
+import { useSeo } from "../seo/useSeo";
 import "../styles/not-found.css";
-
 
 export function NotFoundPage() {
   const { t } = useTranslation();
@@ -15,6 +15,12 @@ export function NotFoundPage() {
   const shouldShowSiteSlug = HAS_MULTIPLE_SITES && (sitesCountData?.count ?? 0) > 1;
   const siteSlug = shouldShowSiteSlug ? DEFAULT_SITE_SLUG : undefined;
   const homePath = siteSlug ? `/${lang}/${siteSlug}` : `/${lang}`;
+
+  useSeo({
+    title: t("error.pageNotFound"),
+    description: t("error.pageNotFoundDescription"),
+    robots: "noindex, nofollow",
+  });
 
   return (
     <div className="not-found hl-public">

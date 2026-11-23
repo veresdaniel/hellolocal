@@ -1,15 +1,32 @@
-// src/common/middleware/seo-injector.middleware.ts
+/**
+ * Nest SEO injector for bot/crawler HTML responses.
+ *
+ * Production public HTML for crawlers is served by apps/web/server.js (Caddy → web),
+ * which uses apps/web/ssr/socialMeta.js with host-scoped og:url / og:image.
+ * This middleware stays registered for legacy/dev when Nest serves the SPA; keep
+ * request-host / publicOrigin behavior aligned with socialMeta.js so a dual path
+ * never emits FRONTEND_URL as og:url on a custom domain.
+ *
+ * If FRONTEND_BUILD_PATH / index.html is missing (typical API-only prod container),
+ * the middleware no-ops (next()) and does not invent HTML.
+ */
 import { Injectable, NestMiddleware, Logger } from "@nestjs/common";
 import { Request, Response, NextFunction } from "express";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
+import {
+  publicOriginFromHeaders,
+  rebasePublicUrl,
+  requestHostname,
+  requestProto,
+} from "../../seo/public-path.util";
 
 @Injectable()
 export class SeoInjectorMiddleware implements NestMiddleware {
   private readonly logger = new Logger(SeoInjectorMiddleware.name);
   private readonly indexHtmlPath: string;
-  private readonly frontendUrl: string;
   private readonly apiUrl: string;
+  private readonly indexHtmlAvailable: boolean;
 
   // Bot/crawler user agents
   private readonly botUserAgents = [
@@ -38,18 +55,29 @@ export class SeoInjectorMiddleware implements NestMiddleware {
   ];
 
   constructor() {
-    // Path to the built frontend index.html
-    // Adjust this path based on your deployment structure
     this.indexHtmlPath =
       process.env.FRONTEND_BUILD_PATH || join(process.cwd(), "../web/dist/index.html");
-
-    this.frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     this.apiUrl = process.env.API_URL || `http://localhost:${process.env.PORT || 3002}`;
+    this.indexHtmlAvailable = existsSync(this.indexHtmlPath);
+    if (!this.indexHtmlAvailable) {
+      this.logger.log(
+        `SEO injector idle: no SPA shell at ${this.indexHtmlPath} (prod crawlers use apps/web/server.js)`
+      );
+    }
   }
 
+  /**
+   * Nest middleware entry: bots only, when SPA shell exists.
+   * Prod public crawlers normally hit apps/web/server.js instead.
+   */
   use(req: Request, res: Response, next: NextFunction) {
     // Only process GET requests
     if (req.method !== "GET") {
+      return next();
+    }
+
+    // Skip when Nest is not serving the SPA (production API container).
+    if (!this.indexHtmlAvailable) {
       return next();
     }
 
@@ -83,8 +111,25 @@ export class SeoInjectorMiddleware implements NestMiddleware {
     });
   }
 
+  /**
+   * Fetch `/api/seo/...` with forwarded host, rebase og:url/image onto request origin, send HTML.
+   * Falls through to `next()` when the shell is missing or injection fails.
+   */
   private async handleBotRequest(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
+      const origin = publicOriginFromHeaders({
+        host: req.get("host") || undefined,
+        "x-forwarded-host": req.get("x-forwarded-host") || undefined,
+        "x-forwarded-proto": req.get("x-forwarded-proto") || undefined,
+      });
+      const forwardHost = requestHostname({
+        host: req.get("host") || undefined,
+        "x-forwarded-host": req.get("x-forwarded-host") || undefined,
+      });
+      const forwardProto = requestProto({
+        "x-forwarded-proto": req.get("x-forwarded-proto") || undefined,
+      });
+
       // Parse URL to extract lang, tenant, and path
       const urlPath = req.path;
       const pathParts = urlPath.split("/").filter(Boolean);
@@ -154,23 +199,22 @@ export class SeoInjectorMiddleware implements NestMiddleware {
         url: string;
         type: string;
         siteName: string;
+        schemaOrg?: unknown;
+        imageWidth?: string;
+        imageHeight?: string;
       };
       let seoData: SeoData | null = null;
 
       try {
         let seoUrl: string;
         if (isPlaceRoute && slug) {
-          // Place detail page (lang-specific path: hely/place/ort)
           seoUrl = `${this.apiUrl}/api/seo/${lang}/place/${slug}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ""}`;
         } else if (routeType === "event" && slug) {
-          // Event detail page
           seoUrl = `${this.apiUrl}/api/seo/${lang}/event/${slug}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ""}`;
         } else {
-          // Homepage or other pages
           seoUrl = `${this.apiUrl}/api/seo/${lang}${tenantKey ? `?tenantKey=${encodeURIComponent(tenantKey)}` : ""}`;
         }
 
-        // Use fetch with timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
 
@@ -178,6 +222,13 @@ export class SeoInjectorMiddleware implements NestMiddleware {
           signal: controller.signal,
           headers: {
             Accept: "application/json",
+            // Prefer request host over FRONTEND_URL (same as server.js → socialMeta).
+            ...(forwardHost
+              ? {
+                  "X-Forwarded-Host": forwardHost,
+                  "X-Forwarded-Proto": forwardProto,
+                }
+              : {}),
           },
         });
 
@@ -185,7 +236,6 @@ export class SeoInjectorMiddleware implements NestMiddleware {
 
         if (response.ok) {
           const jsonData = (await response.json()) as unknown;
-          // Type guard to validate the response structure
           if (
             jsonData &&
             typeof jsonData === "object" &&
@@ -195,14 +245,26 @@ export class SeoInjectorMiddleware implements NestMiddleware {
             "url" in jsonData &&
             "type" in jsonData &&
             "siteName" in jsonData &&
-            typeof (jsonData as any).title === "string" &&
-            typeof (jsonData as any).description === "string" &&
-            typeof (jsonData as any).image === "string" &&
-            typeof (jsonData as any).url === "string" &&
-            typeof (jsonData as any).type === "string" &&
-            typeof (jsonData as any).siteName === "string"
+            typeof (jsonData as SeoData).title === "string" &&
+            typeof (jsonData as SeoData).description === "string" &&
+            typeof (jsonData as SeoData).image === "string" &&
+            typeof (jsonData as SeoData).url === "string" &&
+            typeof (jsonData as SeoData).type === "string" &&
+            typeof (jsonData as SeoData).siteName === "string"
           ) {
             seoData = jsonData as SeoData;
+            // Force og:url / relative images onto the request origin (host-scoped OG).
+            seoData = {
+              ...seoData,
+              url: rebasePublicUrl(seoData.url || req.path, origin),
+              image: seoData.image
+                ? /^https?:\/\//i.test(seoData.image) || seoData.image.startsWith("//")
+                  ? seoData.image.startsWith("//")
+                    ? `https:${seoData.image}`
+                    : seoData.image
+                  : rebasePublicUrl(seoData.image, origin)
+                : "",
+            };
           } else {
             this.logger.warn(`Invalid SEO data structure received for ${req.path}`);
           }
@@ -218,48 +280,41 @@ export class SeoInjectorMiddleware implements NestMiddleware {
           const errorMessage = error instanceof Error ? error.message : String(error);
           this.logger.warn(`Failed to fetch SEO data for ${req.path}: ${errorMessage}`);
         }
-        // Continue with default HTML if SEO fetch fails
       }
 
-      // Read and inject meta tags into index.html
       let html = this.readIndexHtml();
+      if (!html) {
+        return next();
+      }
 
       if (seoData) {
         html = this.injectMetaTags(html, seoData);
       }
 
-      // Send the modified HTML
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.send(html);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(`Error in SEO injector: ${errorMessage}`, errorStack);
-      // Fallback to normal request
       next();
     }
   }
 
-  private readIndexHtml(): string {
+  /** Read SPA shell from FRONTEND_BUILD_PATH; null → pass-through (API-only containers). */
+  private readIndexHtml(): string | null {
     try {
       return readFileSync(this.indexHtmlPath, "utf-8");
-    } catch (error) {
-      this.logger.warn(`Could not read index.html from ${this.indexHtmlPath}, using fallback`);
-      // Return a minimal HTML fallback
-      return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HelloLocal</title>
-</head>
-<body>
-  <div id="root"></div>
-</body>
-</html>`;
+    } catch {
+      this.logger.warn(`Could not read index.html from ${this.indexHtmlPath}; passing through`);
+      return null;
     }
   }
 
+  /**
+   * Inject title/description/OG/Twitter/canonical (+ optional JSON-LD) into `<head>`.
+   * Prefer apps/web/ssr/socialMeta.js in production — this path is legacy/dev aligned.
+   */
   private injectMetaTags(
     html: string,
     seoData: {
@@ -269,10 +324,11 @@ export class SeoInjectorMiddleware implements NestMiddleware {
       url: string;
       type: string;
       siteName: string;
-      schemaOrg?: any; // Optional schema.org JSON-LD data
+      schemaOrg?: unknown;
+      imageWidth?: string;
+      imageHeight?: string;
     }
   ): string {
-    // Escape HTML entities
     const escapeHtml = (text: string) => {
       return text
         .replace(/&/g, "&amp;")
@@ -287,15 +343,11 @@ export class SeoInjectorMiddleware implements NestMiddleware {
     const image = escapeHtml(seoData.image);
     const url = escapeHtml(seoData.url);
     const siteName = escapeHtml(seoData.siteName);
+    const imageWidth = seoData.imageWidth || "1200";
+    const imageHeight = seoData.imageHeight || "630";
 
-    // Default image dimensions (Facebook recommended: 1200x630px)
-    // If image dimensions are provided in seoData, use them; otherwise use defaults
-    const imageWidth = (seoData as any).imageWidth || "1200";
-    const imageHeight = (seoData as any).imageHeight || "630";
-
-    // Build meta tags
     const metaTags = `
-    <!-- SEO Meta Tags (injected by middleware) -->
+    <!-- SEO Meta Tags (Nest seo-injector; prefer apps/web/server.js in prod) -->
     <title>${title}</title>
     <meta name="description" content="${description}">
     <meta property="og:title" content="${title}">
@@ -313,31 +365,24 @@ export class SeoInjectorMiddleware implements NestMiddleware {
     <link rel="canonical" href="${url}">
     <!-- End SEO Meta Tags -->`;
 
-    // Generate Schema.org JSON-LD if schemaOrg data is provided
     let jsonLdScript = "";
     if (seoData.schemaOrg) {
-      const jsonLd = JSON.stringify(seoData.schemaOrg, null, 2);
+      const jsonLd = JSON.stringify(seoData.schemaOrg, null, 2).replace(/</g, "\\u003c");
       jsonLdScript = `
     <!-- Schema.org JSON-LD (injected by middleware) -->
     <script type="application/ld+json">${jsonLd}</script>
     <!-- End Schema.org JSON-LD -->`;
     }
 
-    // Inject meta tags and JSON-LD into <head>
-    // Try to find existing <head> tag
     const allTags = metaTags + jsonLdScript;
     if (html.includes("<head>")) {
-      // Insert after <head>
       html = html.replace("<head>", `<head>${allTags}`);
     } else if (html.includes("</head>")) {
-      // Insert before </head>
       html = html.replace("</head>", `${allTags}</head>`);
     } else {
-      // No head tag found, prepend to HTML
       html = `<head>${allTags}</head>${html}`;
     }
 
-    // Also update existing title if present
     html = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
 
     return html;

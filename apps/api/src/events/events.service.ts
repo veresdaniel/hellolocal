@@ -32,6 +32,10 @@ type ListArgs = {
   includePinned?: boolean;
 };
 
+/**
+ * Public event list/detail for a resolved site.
+ * Upcoming-only by default; map pins fall back to the parent place coordinates.
+ */
 @Injectable()
 export class EventsService {
   constructor(
@@ -42,7 +46,8 @@ export class EventsService {
   ) {}
 
   /**
-   * Lists events with optional filtering.
+   * Paginated upcoming events for a site, optionally filtered by category or place.
+   * @returns Rows with canonical slugs, SEO flags, and map location
    */
   async list(args: ListArgs) {
     const lang = requireLang(args.lang);

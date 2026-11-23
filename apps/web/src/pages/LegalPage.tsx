@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_SITE_SLUG, type Lang} from "../app/config";
@@ -6,7 +6,8 @@ import { LEGAL_PATH_ALIASES, OVERVIEW_PATH_ALIASES } from "../app/entityPaths";
 import { useSiteContext } from "../app/site/useSiteContext";
 import { useLegalPage } from "../hooks/useLegalPage";
 import { useSeo } from "../seo/useSeo";
-import { generateWebPageSchema } from "../seo/schemaOrg";
+import { absoluteCanonical } from "../seo/canonical";
+import { resolveSeoFields, stripHtml } from "../seo/resolveSeoFields";
 import { getPlatformSettings } from "../api/places.api";
 import { PublicPageSkeleton } from "../components/PublicSkeleton";
 import { FloatingHeader } from "../components/FloatingHeader";
@@ -18,6 +19,7 @@ import { NotFoundPage } from "./NotFoundPage";
 import { useApplyPublicFonts } from "../hooks/useApplyPublicFonts";
 import { useApplyPublicTheme, publicThemeStyle } from "../hooks/useApplyPublicTheme";
 import { publicFontCssVars } from "../styles/publicFonts";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
 import "../styles/story.css";
 
 type Props = {
@@ -49,93 +51,90 @@ export function LegalPage({ pageKey }: Props) {
   useApplyPublicFonts(platformSettings?.brand?.theme);
   useApplyPublicTheme(platformSettings?.siteTheme, platformSettings?.brand?.theme);
 
-  // Helper to strip HTML
-  const stripHtml = (html: string | null | undefined): string => {
-    if (!html) return "";
-    return html
-      .replace(/<[^>]*>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  };
-
-  const pageUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
-      : "";
+  const pageUrl = absoluteCanonical();
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const languages = usePublishedLanguages();
   const robots =
     (data?.seo?.indexable ?? platformSettings?.globalIndexable ?? platformSettings?.isCrawlable) ===
     false
       ? "noindex, nofollow"
       : "index, follow";
 
-  // Use SEO from data if available, otherwise use i18n fallback
-  const seo = data?.seo
-    ? {
-        title: data.seo.title,
-        description: data.seo.description,
-        image: data.seo.image,
-        keywords: data.seo.keywords || [],
-        canonical: pageUrl,
-        robots,
-        og: {
-          type: "article",
-          title: (data.seo as any).og?.title || data.seo.title,
-          description: (data.seo as any).og?.description || data.seo.description,
-          image: (data.seo as any).og?.image || data.seo.image,
-        },
-        twitter: {
-          card: data.seo.image ? ("summary_large_image" as const) : ("summary" as const),
-          title: (data.seo as any).twitter?.title || data.seo.title,
-          description: (data.seo as any).twitter?.description || data.seo.description,
-          image: (data.seo as any).twitter?.image || data.seo.image,
-        },
-        schemaOrg: {
-          type: "WebPage" as const,
-          data: {
-            name: data.seo.title || data.title,
-            description: stripHtml(data.seo.description),
-            url: pageUrl,
-            inLanguage: safeLang,
-            isPartOf: platformSettings?.siteName
-              ? {
-                  name: platformSettings.siteName,
-                  url: siteUrl,
-                }
-              : undefined,
-          },
-        },
+  // Defer client SEO until content is ready so loading fallbacks do not clobber SSR.
+  const seo = useMemo(() => {
+    if (isLoading || !data) return undefined;
+    const resolved = resolveSeoFields(
+      {
+        seoTitle: data.seo?.title,
+        seoDescription: data.seo?.description,
+        seoImage: data.seo?.image,
+        title: data.title || t(`public.legal.${pageKey}.title`),
+        description: data.content,
+      },
+      {
+        title: t(`public.legal.${pageKey}.title`),
+        description:
+          t(`public.legal.${pageKey}.description`, {
+            defaultValue: t(`public.legal.${pageKey}.title`),
+          }) ||
+          platformSettings?.seoDescription ||
+          "",
       }
-    : {
-        title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-        description: platformSettings?.seoDescription || "",
-        keywords: [],
-        canonical: pageUrl,
-        robots,
-        og: {
-          type: "article" as const,
-          title: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-          description: platformSettings?.seoDescription || "",
+    );
+    return {
+      title: resolved.title,
+      description: resolved.description,
+      image: resolved.image,
+      keywords: data.seo?.keywords || [],
+      canonical: pageUrl,
+      robots,
+      og: {
+        type: "article" as const,
+        title: resolved.title,
+        description: resolved.description,
+        image: resolved.image,
+      },
+      twitter: {
+        card: (resolved.image ? "summary_large_image" : "summary") as
+          | "summary_large_image"
+          | "summary",
+        title: resolved.title,
+        description: resolved.description,
+        image: resolved.image,
+      },
+      schemaOrg: {
+        type: "WebPage" as const,
+        data: {
+          name: resolved.title,
+          description: stripHtml(resolved.description),
+          url: pageUrl,
+          inLanguage: safeLang,
+          isPartOf: platformSettings?.siteName
+            ? {
+                name: platformSettings.siteName,
+                url: siteUrl,
+              }
+            : undefined,
         },
-        schemaOrg: {
-          type: "WebPage" as const,
-          data: {
-            name: platformSettings?.seoTitle || t(`public.legal.${pageKey}.title`),
-            description: stripHtml(platformSettings?.seoDescription),
-            url: pageUrl,
-            inLanguage: safeLang,
-            isPartOf: platformSettings?.siteName
-              ? {
-                  name: platformSettings.siteName,
-                  url: siteUrl,
-                }
-              : undefined,
-          },
-        },
-      };
+      },
+    };
+  }, [
+    isLoading,
+    data,
+    pageKey,
+    pageUrl,
+    robots,
+    safeLang,
+    siteUrl,
+    platformSettings?.seoDescription,
+    platformSettings?.siteName,
+    t,
+  ]);
 
   useSeo(seo, {
     siteName: platformSettings?.siteName,
+    languages,
+    lang: safeLang,
   });
 
   // Ref for HTML content container

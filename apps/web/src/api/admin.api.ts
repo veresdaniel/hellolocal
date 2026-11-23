@@ -1,3 +1,8 @@
+/**
+ * Authenticated admin REST client: users, taxonomy, places/events/collections,
+ * sites, memberships, settings, analytics, and under-construction controls.
+ * All calls go through {@link apiGet}/{@link apiPost}/… with the Bearer token.
+ */
 // src/api/admin.api.ts
 import {
   CONTENT_DRAFT_DEFAULT_PROVIDER,
@@ -8,6 +13,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from "./client";
 import type { UserRole, SiteRole, Lang} from "../types/enums";
 import { ACCESS_TOKEN_KEY } from "../constants/authStorage";
 
+/** Admin user row including site / town / place memberships. */
 export interface User {
   id: string;
   username: string;
@@ -58,7 +64,9 @@ export interface UpdateUserRoleDto {
   role: "superadmin" | "admin" | "editor" | "viewer";
 }
 
-// Users
+// ——— Users ———
+
+/** List users, optionally filtered to a site membership. */
 export function getUsers(siteId?: string) {
   const params = siteId ? `?siteId=${siteId}` : "";
   return apiGet<User[]>(`/admin/users${params}`);
@@ -210,7 +218,8 @@ export function deletePriceBand(id: string, tenantId?: string) {
   return apiDelete<{ message: string }>(`/admin/price-bands/${id}${params}`);
 }
 
-// Towns
+// ——— Towns ———
+
 export function getTowns(
   siteId?: string,
   page?: number,
@@ -255,7 +264,9 @@ export function deleteTown(id: string, tenantId?: string) {
   return apiDelete<{ message: string }>(`/admin/towns/${id}${params}`);
 }
 
-// Places
+// ——— Places ———
+
+/** Paginated admin place list for a site (optional town filter). */
 export function getPlaces(siteId?: string, page?: number, limit?: number, townId?: string) {
   const params = new URLSearchParams();
   if (siteId) params.append("siteId", siteId);
@@ -549,6 +560,9 @@ export type UnderConstructionSaveDto = {
   copy?: Partial<Record<"hu" | "en" | "de", Partial<UnderConstructionCopyFields>>>;
 };
 
+// ——— Under-construction gate ———
+
+/** Current UC gate settings (enabled, copy, token metadata — never the raw token). */
 export function getUnderConstructionSettings() {
   return apiGet<UnderConstructionAdminStatus>(UC_ADMIN_CLIENT_PATH);
 }
@@ -557,10 +571,12 @@ export function saveUnderConstructionSettings(data: UnderConstructionSaveDto) {
   return apiPut<UnderConstructionAdminStatus>(UC_ADMIN_CLIENT_PATH, data);
 }
 
+/** Issue a new preview token; previous cookies stop working. */
 export function regenerateUnderConstructionToken() {
   return apiPost<UnderConstructionAdminStatus>(`${UC_ADMIN_CLIENT_PATH}/regenerate-token`, {});
 }
 
+/** Clear the preview token so all UC cookies become invalid. */
 export function invalidateUnderConstructionToken() {
   return apiPost<UnderConstructionAdminStatus>(`${UC_ADMIN_CLIENT_PATH}/invalidate-token`, {});
 }
@@ -575,12 +591,26 @@ export function setDefaultLanguage(language: Lang) {
   });
 }
 
+/** Master crawl switch (AppSetting `globalCrawlability`). Auth: admin JWT. */
 export function getGlobalCrawlability() {
   return apiGet<{ isCrawlable: boolean }>("/admin/app-settings/global-crawlability");
 }
 
+/** Update master crawl switch. Roles: superadmin/admin. Side effect: sitemap invalidate. */
 export function setGlobalCrawlability(isCrawlable: boolean) {
   return apiPut<{ isCrawlable: boolean }>("/admin/app-settings/global-crawlability", {
+    isCrawlable,
+  });
+}
+
+/** Platform marketing landing crawl flag (`platform.landingCrawlable`). Default off. */
+export function getLandingCrawlability() {
+  return apiGet<{ isCrawlable: boolean }>("/admin/app-settings/landing-crawlability");
+}
+
+/** Update platform-landing crawl flag. Roles: superadmin/admin. Side effect: sitemap invalidate. */
+export function setLandingCrawlability(isCrawlable: boolean) {
+  return apiPut<{ isCrawlable: boolean }>("/admin/app-settings/landing-crawlability", {
     isCrawlable,
   });
 }
@@ -871,6 +901,9 @@ export interface SiteDomainInput {
   isPrimary?: boolean;
 }
 
+// ——— Sites (regions) ———
+
+/** All regions the current admin may manage. */
 export function getSites() {
   return apiGet<Site[]>("/admin/sites");
 }
@@ -891,7 +924,8 @@ export function deleteSite(id: string) {
   return apiDelete<{ message: string }>(`/admin/sites/${id}`);
 }
 
-// Domains — API still /admin/brands (Brand model)
+// ——— Brands (API path still `/admin/brands`) ———
+
 export function getBrands() {
   return apiGet<Brand[]>("/admin/brands");
 }
@@ -1062,14 +1096,19 @@ export type AccessGrant = {
   user: { id: string; email: string; firstName: string; lastName: string };
 };
 
+// ——— Access grants (region / town / place memberships) ———
+
+/** RBAC content scope for the current user (sites, towns, places, pending signup). */
 export function getAccessScope() {
   return apiGet<AccessScope>("/admin/access/scope");
 }
 
+/** Unified membership grant list visible to the actor. */
 export function getAccessGrants() {
   return apiGet<AccessGrant[]>("/admin/access/grants");
 }
 
+/** Create a region, town, or place membership grant. */
 export function createAccessGrant(data: {
   userId: string;
   kind: AccessKind;
@@ -1079,6 +1118,7 @@ export function createAccessGrant(data: {
   return apiPost("/admin/access/grants", data);
 }
 
+/** Delete a membership grant by kind + row id. */
 export function deleteAccessGrant(kind: AccessKind, id: string) {
   return apiDelete(`/admin/access/grants/${kind}/${id}`);
 }
@@ -1473,6 +1513,9 @@ export interface UpdateEventDto {
   lng?: number | null;
 }
 
+// ——— Events ———
+
+/** Paginated admin event list for a site. */
 export function getEvents(
   siteId?: string,
   page?: number,
@@ -2160,6 +2203,46 @@ export function invalidateCache(cacheType: string) {
   });
 }
 
+// ==================== Facebook OG scrape ====================
+
+export type FacebookScrapeStatus = "not_configured" | "success" | "error" | "invalid_url";
+
+export type FacebookScrapeItemResult = {
+  url: string;
+  status: FacebookScrapeStatus;
+  message: string;
+  facebook?: unknown;
+};
+
+export type FacebookScrapeBatchResult = {
+  configured: boolean;
+  ok: boolean;
+  results: FacebookScrapeItemResult[];
+};
+
+export type FacebookScrapeConfigStatus = {
+  configured: boolean;
+  appIdPresent: boolean;
+  appSecretPresent: boolean;
+};
+
+/** Whether FACEBOOK_APP_ID + FACEBOOK_APP_SECRET are set on the API. */
+export function getFacebookScrapeStatus() {
+  return apiGet<FacebookScrapeConfigStatus>("/admin/seo/facebook-scrape/status");
+}
+
+/**
+ * Best-effort Facebook OG cache refresh (Graph API scrape=true).
+ * Never invents success when credentials are missing (`configured: false`).
+ */
+export function refreshFacebookSocialPreview(body: {
+  urls?: string[];
+  url?: string;
+  siteId?: string;
+}) {
+  return apiPost<FacebookScrapeBatchResult>("/admin/seo/facebook-scrape", body);
+}
+
 // ==================== Collections ====================
 
 export interface Collection {
@@ -2272,6 +2355,9 @@ export interface UpdateCollectionItemDto {
   }>;
 }
 
+// ——— Collections ———
+
+/** All curated region collections (admin). */
 export function getCollections() {
   return apiGet<Collection[]>("/admin/collections");
 }

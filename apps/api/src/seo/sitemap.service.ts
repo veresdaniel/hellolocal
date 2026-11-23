@@ -21,6 +21,10 @@ import {
   townMapPath,
 } from "./public-path.util";
 import { SitemapScope, SitemapScopeResolver } from "./sitemap-scope";
+import {
+  PLATFORM_LANDING_CRAWLABLE_DEFAULT,
+  PLATFORM_LANDING_CRAWLABLE_KEY,
+} from "../common/platform-landing-crawlable";
 
 export type SitemapUrl = {
   loc: string;
@@ -69,10 +73,15 @@ export class SitemapService {
     this.lastInvalidatedAt = new Date();
   }
 
+  /** ISO timestamp of the last cache invalidation (used as sitemap lastmod). */
   lastmodIso(): string {
     return this.lastInvalidatedAt.toISOString();
   }
 
+  /**
+   * Sitemap index listing every chunk for this host scope.
+   * Cached in-memory until {@link invalidate} or TTL expiry.
+   */
   async buildIndexXml(scope: SitemapScope): Promise<string> {
     return this.cached(`index:${scope.kind}:${scope.host}:${this.generation}`, async () => {
       const lastmod = this.lastmodIso();
@@ -91,6 +100,11 @@ ${entries}
     });
   }
 
+  /**
+   * Build one sitemap chunk (static/sites/places/…).
+   * URLs are filtered by {@link SitemapScope} so custom hosts only list their entity.
+   * @throws NotFoundException for unknown chunk names
+   */
   async buildChunkXml(scope: SitemapScope, chunk: string): Promise<string> {
     if (!SITEMAP_CHUNKS.includes(chunk as SitemapChunk)) {
       throw new NotFoundException(`Unknown sitemap chunk: ${chunk}`);
@@ -121,6 +135,15 @@ ${entries}
     });
     if (setting && setting.type === "boolean") return setting.value === "true";
     return true;
+  }
+
+  /** Own switch for platform overview URLs. Default off; global off already emptied the sitemap. */
+  private async isLandingCrawlOn(): Promise<boolean> {
+    const setting = await this.prisma.appSetting.findUnique({
+      where: { key: PLATFORM_LANDING_CRAWLABLE_KEY },
+    });
+    if (setting && setting.type === "boolean") return setting.value === "true";
+    return PLATFORM_LANDING_CRAWLABLE_DEFAULT;
   }
 
   private async urlsForChunk(scope: SitemapScope, chunk: SitemapChunk): Promise<SitemapUrl[]> {
@@ -155,7 +178,7 @@ ${entries}
 
     switch (chunk) {
       case "static":
-        return scope.kind === "platform" ? this.staticPlatformUrls(scope.origin) : [];
+        return scope.kind === "platform" ? await this.staticPlatformUrls(scope.origin) : [];
       case "sites":
         return this.siteUrls(scope.origin, siteIds, scope.kind === "site");
       case "places":
@@ -217,14 +240,23 @@ ${entries}
     }
   }
 
-  private staticPlatformUrls(origin: string): SitemapUrl[] {
+  private async staticPlatformUrls(origin: string): Promise<SitemapUrl[]> {
+    const landingOn = await this.isLandingCrawlOn();
     const urls: SitemapUrl[] = [];
     for (const lang of PUBLIC_LANGS) {
-      urls.push({
-        loc: absoluteUrlOnOrigin(origin, overviewPath(lang)),
-        changefreq: "weekly",
-        priority: 0.9,
-      });
+      // /:lang and /:lang/<overview> are the same marketing landing — gated separately.
+      if (landingOn) {
+        urls.push({
+          loc: absoluteUrlOnOrigin(origin, overviewPath(lang)),
+          changefreq: "weekly",
+          priority: 0.9,
+        });
+        urls.push({
+          loc: absoluteUrlOnOrigin(origin, `/${lang}`),
+          changefreq: "daily",
+          priority: 1.0,
+        });
+      }
       urls.push({
         loc: absoluteUrlOnOrigin(origin, regionListPath(lang)),
         changefreq: "daily",
@@ -234,11 +266,6 @@ ${entries}
         loc: absoluteUrlOnOrigin(origin, platformPricingPath(lang)),
         changefreq: "monthly",
         priority: 0.5,
-      });
-      urls.push({
-        loc: absoluteUrlOnOrigin(origin, `/${lang}`),
-        changefreq: "daily",
-        priority: 1.0,
       });
     }
     return urls;

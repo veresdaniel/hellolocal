@@ -1,3 +1,8 @@
+/**
+ * Client-side SEO head sync for SPA navigations (mirrors SSR applySocialMeta where possible).
+ * Admin seo* fields win when provided by page builders; otherwise pages pass content cascade.
+ * Hreflang is auto-generated from published languages — not an admin field.
+ */
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Seo } from "../types/seo";
@@ -13,9 +18,24 @@ import {
   generateBreadcrumbListSchema,
   generateGraphSchema,
 } from "./schemaOrg";
+import { absoluteCanonical } from "./canonical";
+import { applyHreflangAlternates } from "./hreflang";
 
+/** Remove a meta tag by CSS selector (CSR cleanup between navigations). */
+function removeMeta(sel: string) {
+  document.head.querySelector(sel)?.remove();
+}
+
+/**
+ * Upsert a meta tag; empty `content` removes a stale tag left by a previous route.
+ * Mirrors SSR {@link applySocialMeta} empty-field behavior.
+ */
 function upsertMeta(sel: string, attrs: Record<string, string>, content?: string) {
-  if (!content) return;
+  // Mirror SSR applySocialMeta: empty content removes stale tags from prior navigations.
+  if (!content) {
+    removeMeta(sel);
+    return;
+  }
   let el = document.head.querySelector<HTMLMetaElement>(sel);
   if (!el) {
     el = document.createElement("meta");
@@ -27,9 +47,14 @@ function upsertMeta(sel: string, attrs: Record<string, string>, content?: string
   if (el) el.setAttribute("content", content);
 }
 
+/** Upsert `<link rel="…">`; missing href removes the link. */
 function upsertLink(rel: string, href?: string) {
-  if (!href) return;
-  let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+  const sel = `link[rel="${rel}"]`;
+  if (!href) {
+    document.head.querySelector(sel)?.remove();
+    return;
+  }
+  let el = document.head.querySelector<HTMLLinkElement>(sel);
   if (!el) {
     el = document.createElement("link");
     el.setAttribute("rel", rel);
@@ -38,66 +63,92 @@ function upsertLink(rel: string, href?: string) {
   el.setAttribute("href", href);
 }
 
-export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: string }) {
-  const { t } = useTranslation();
+export type UseSeoOptions = {
+  defaultOgType?: string;
+  siteName?: string;
+  /** Published language codes for automatic hreflang alternates. */
+  languages?: readonly string[];
+  /** Current page language (defaults to i18n language). */
+  lang?: string;
+  /** Default language for x-default (defaults to first published / hu). */
+  defaultLang?: string;
+};
+
+/**
+ * Client-side SEO meta sync.
+ *
+ * Title note: CSR sets `document.title` to `"${title} - ${siteName}"` for the browser tab.
+ * SSR (`applySocialMeta`) and OG/Twitter titles use the bare `title` only — intentional
+ * so share previews stay uncluttered while the tab stays branded.
+ */
+export function useSeo(seo?: Seo, opts?: UseSeoOptions) {
+  const { t, i18n } = useTranslation();
+
+  // Primitive fingerprints so inline seo / languages arrays do not thrash head tags every render.
+  const languagesKey = opts?.languages?.join(",") ?? "";
+  const keywordsKey = seo?.keywords?.join(",") ?? "";
+  const schemaKey = seo?.schemaOrg ? JSON.stringify(seo.schemaOrg) : "";
 
   useEffect(() => {
     if (!seo) return;
 
-    // Get site name from i18n or use provided siteName or default
     const siteName = opts?.siteName || t("common.siteName", { defaultValue: "" });
+    const title = (seo.title || "").trim();
+    const description = (seo.description || "").trim();
 
-    // Only set document.title if title is provided and not empty
-    // This allows usePageTitle hook to handle titles on admin pages
-    if (seo.title) {
-      const fullTitle = siteName ? `${seo.title} - ${siteName}` : seo.title;
-      document.title = fullTitle;
+    if (title) {
+      document.title = siteName ? `${title} - ${siteName}` : title;
     } else if (siteName) {
-      // Only set siteName as title if no title provided and siteName exists
       document.title = siteName;
     }
-    // If neither title nor siteName, don't set document.title (let other hooks handle it)
 
-    upsertMeta(`meta[name="description"]`, { name: "description" }, seo.description);
+    upsertMeta(`meta[name="description"]`, { name: "description" }, description || undefined);
     if (seo.keywords?.length) {
       upsertMeta(`meta[name="keywords"]`, { name: "keywords" }, seo.keywords.join(", "));
+    } else {
+      removeMeta(`meta[name="keywords"]`);
     }
-    if (seo.robots) upsertMeta(`meta[name="robots"]`, { name: "robots" }, seo.robots);
+    upsertMeta(`meta[name="robots"]`, { name: "robots" }, seo.robots || undefined);
 
-    if (seo.canonical) upsertLink("canonical", seo.canonical);
+    const canonical = seo.canonical || absoluteCanonical();
+    upsertLink("canonical", canonical);
 
-    // OG defaults
-    const ogTitle = seo.og?.title ?? seo.title;
-    const ogDesc = seo.og?.description ?? seo.description;
+    const ogTitle = (seo.og?.title ?? title).trim();
+    const ogDesc = (seo.og?.description ?? description).trim();
     const ogImg = seo.og?.image ?? seo.image;
     const ogType = seo.og?.type ?? opts?.defaultOgType ?? "website";
-    const ogUrl = seo.canonical || window.location.href;
+    const ogUrl = canonical;
 
-    upsertMeta(`meta[property="og:title"]`, { property: "og:title" }, ogTitle);
-    upsertMeta(`meta[property="og:description"]`, { property: "og:description" }, ogDesc);
+    upsertMeta(`meta[property="og:title"]`, { property: "og:title" }, ogTitle || undefined);
+    upsertMeta(
+      `meta[property="og:description"]`,
+      { property: "og:description" },
+      ogDesc || undefined
+    );
     upsertMeta(`meta[property="og:type"]`, { property: "og:type" }, ogType);
     upsertMeta(`meta[property="og:url"]`, { property: "og:url" }, ogUrl);
-    if (siteName)
-      upsertMeta(`meta[property="og:site_name"]`, { property: "og:site_name" }, siteName);
-    if (ogImg) upsertMeta(`meta[property="og:image"]`, { property: "og:image" }, ogImg);
+    upsertMeta(
+      `meta[property="og:site_name"]`,
+      { property: "og:site_name" },
+      siteName || undefined
+    );
+    upsertMeta(`meta[property="og:image"]`, { property: "og:image" }, ogImg || undefined);
 
-    // Twitter defaults
     const card = seo.twitter?.card ?? (ogImg ? "summary_large_image" : "summary");
     upsertMeta(`meta[name="twitter:card"]`, { name: "twitter:card" }, card);
     upsertMeta(
       `meta[name="twitter:title"]`,
       { name: "twitter:title" },
-      seo.twitter?.title ?? ogTitle
+      (seo.twitter?.title ?? ogTitle) || undefined
     );
     upsertMeta(
       `meta[name="twitter:description"]`,
       { name: "twitter:description" },
-      seo.twitter?.description ?? ogDesc
+      (seo.twitter?.description ?? ogDesc) || undefined
     );
     const twImg = seo.twitter?.image ?? ogImg;
-    if (twImg) upsertMeta(`meta[name="twitter:image"]`, { name: "twitter:image" }, twImg);
+    upsertMeta(`meta[name="twitter:image"]`, { name: "twitter:image" }, twImg || undefined);
 
-    // Inject Schema.org JSON-LD if provided
     if (seo.schemaOrg) {
       let schema: object | null = null;
       switch (seo.schemaOrg.type) {
@@ -134,10 +185,47 @@ export function useSeo(seo?: Seo, opts?: { defaultOgType?: string; siteName?: st
           schema = null;
       }
       if (schema) injectJsonLd(schema);
+    } else {
+      removeJsonLd();
+    }
+
+    let clearHreflang: (() => void) | undefined;
+    if (opts?.languages?.length) {
+      clearHreflang = applyHreflangAlternates({
+        languages: opts.languages,
+        currentLang: opts.lang || i18n.language || "hu",
+        defaultLang: opts.defaultLang,
+        origin: typeof window !== "undefined" ? window.location.origin : undefined,
+        pathname: typeof window !== "undefined" ? window.location.pathname : undefined,
+      });
     }
 
     return () => {
       removeJsonLd();
+      clearHreflang?.();
     };
-  }, [seo, opts?.defaultOgType, opts?.siteName, t]);
+  }, [
+    seo?.title,
+    seo?.description,
+    seo?.image,
+    seo?.canonical,
+    seo?.robots,
+    seo?.og?.title,
+    seo?.og?.description,
+    seo?.og?.image,
+    seo?.og?.type,
+    seo?.twitter?.card,
+    seo?.twitter?.title,
+    seo?.twitter?.description,
+    seo?.twitter?.image,
+    keywordsKey,
+    schemaKey,
+    opts?.defaultOgType,
+    opts?.siteName,
+    languagesKey,
+    opts?.lang,
+    opts?.defaultLang,
+    i18n.language,
+    t,
+  ]);
 }

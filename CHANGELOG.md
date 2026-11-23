@@ -1,230 +1,252 @@
 # Changelog
 
-A projektre vonatkozó összes jelentősebb változtatás ebben a fájlban kerül dokumentálásra.
+All notable changes to HelloLocal are documented in this file.
 
-A formátum a [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) alapján,
-és ez a projekt követi a [Semantic Versioning](https://semver.org/spec/v2.0.0.html) szabályait.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0-beta] - 2026-01-07
+Product / domain names (HelloLocal, hello-local.io, Etyek–Budai, etc.) appear in prose as used in the product.
 
-### ✨ Hozzáadva
+## [1.0.0-beta] - 2026-11-23
 
-#### Tartalom Kezelés
-- **Többnyelvű rendszer** - Magyar, Angol, Német támogatás i18next-tel
-- **Helyek (Places) kezelése** - Teljes CRUD admin felülettel
-  - Kategóriák dinamikus kezelése
-  - Címkék (tags) rendszer
-  - Ár sávok (price bands)
-  - Települések (towns) kezelés
-  - Galéria és hero image támogatás
-  - GPS koordináták
-- **Események (Events) rendszer** - Időzített események kezelése
-  - Kezdő és befejező dátum
-  - Pinned események (kiemelt)
-  - Eseményhez kapcsolódó helyek
-  - Esemény kategóriák
-  - Rich text leírások
-- **Rich Text Editor** - TipTap alapú szerkesztő
-  - HTML formázás
-  - Heading stílusok (H1, H2, H3)
-  - Kép beillesztés támogatás
-  - Félkövér, dőlt, felsorolás
-- **SEO optimalizáció**
-  - Automatikus slug generálás
-  - Dinamikus meta tagek
-  - Multilingual slug-ok
-  - Fallback magyar slug-okra
-- **Jogi oldalak** - Terms, Privacy, Cookies dinamikus kezelése
+First named **1.0.0-beta** product release. Package versions had auto-bumped through the `1.0.x-beta` line (root/web); this release resets the documented product version to **1.0.0-beta**. Consolidates work since **0.1.0-beta**, including multi-domain hosting, SEO/social/SSR hardening, under-construction, admin/plans, and current uncommitted CLS / social-preview / landing-crawl / security polish.
 
-#### Felhasználói Felület
-- **Interaktív térkép nézet** - MapLibre GL alapú
-  - Helyek megjelenítése markerekkel
-  - Események megjelenítése a térképen
-  - Térkép pozíció és zoom beállítás
-  - Cluster funkció nagy mennyiségű marker esetén
-- **Lista nézet** - Alternatív megjelenítés
-  - Helyek és események kombinált listázása
-  - Infinite scroll
-  - Keresés funkció
-  - Kategória és ár sáv szerinti szűrés
-- **Drag-and-drop szűrők**
-  - Pozíció megőrzés localStorage-ban
-  - Állapot perzisztencia (nyitva/zárva)
-  - Újrapozícionálható szűrő box
-- **Események lista doboz**
-  - Legfeljebb 3 esemény megjelenítése
-  - Belső scrollozás
-  - Drag-and-drop pozicionálás
-  - Pinned események előrébb sorolása
-  - Múltbeli események kiszűrése
-- **Detail oldalak** - Helyek és események részletes nézete
-  - Hero image
-  - Galéria
-  - Rich text leírások
-  - Kapcsolattartási információk
-  - Térkép integráció
-  - Social share gombok (Facebook, Twitter, Email)
-  - Breadcrumb navigáció
-- **Reszponzív mobil design**
-  - Adaptív padding és margin értékek
-  - Mobil-optimalizált képméretek
-  - Overflow-x elleni védelem
-  - Box-sizing: border-box globálisan
-  - Word-wrap hosszú szövegekhez
+### Added
 
-#### Admin Funkciók
-- **Role-based hozzáférés-kezelés**
-  - Superadmin - teljes hozzáférés
-  - Admin - tartalom és beállítások kezelése
-  - Editor - csak tartalom szerkesztése
-  - Viewer - csak olvasási jogosultság
-- **2FA autentikáció** - TOTP alapú kétfaktoros hitelesítés
-  - QR kód generálás
-  - Backup kódok
-  - Admin általi engedélyezés/letiltás
-- **Többbérlős (Multi-tenant) rendszer**
-  - Tenant-ek elkülönített kezelése
-  - Tenant-specifikus beállítások
-  - Tenant váltás admin felületen
-- **Felhasználó kezelés**
-  - CRUD műveletek
-  - Szerepkör módosítás
-  - 2FA kezelés adminként
-  - Jelszó hash-elés (bcrypt)
-- **Beállítások oldal** - Collapse-olható szekciókkal
-  - 🌍 Alapértelmezett nyelv beállítás
-  - 🗺️ Térkép központ és zoom
-  - ⚙️ Oldal SEO beállítások (név, leírás, meta)
-- **Automatikus slug generálás**
-  - Helyekhez és eseményekhez
-  - Minden nyelvhez külön slug
-  - Maintenance endpoint meglévő rekordokhoz
-- **Admin Dashboard** - Átlátható kezdőoldal rendezett csempékkel
-  1. Események
-  2. Helyek
-  3. Ár sávok
-  4. Kategóriák
-  5. Címkék
-  6. Települések
-  7. Beállítások
-  8. Jogi oldalak
-  9. Felhasználói profil
+- **Multi-tenant regions (Sites)** with path-based (`/:lang/:siteKey`) and **custom-domain** hosting for sites, towns, places, and collections; plan-gated domain entitlements.
+- **Caddy on-demand TLS** via `GET /api/caddy/ask` so new hostnames can obtain certificates without redeploy.
+- **Domain-scoped SEO crawl files**: per-host `robots.txt` and chunked `sitemap.xml` (static, sites, places, events, towns, pages, collections), with cache invalidation on admin writes.
+- **SSR social / Open Graph meta** in `apps/web/server.js` and related SSR helpers (`socialMeta`, overview JSON-LD, under-construction gate HTML).
+- **Facebook Graph OG scrape** service for admin “Refresh social preview” (and post-SEO-save), gated by `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET`.
+- **Platform landing crawl toggle** (`platform.landingCrawlable`) so the marketing overview can stay out of the index until enabled.
+- **hreflang / language alternates** for public pages (client + SSR overview).
+- **Under-construction (UC)** mode with staff/UC-preview access to public pages while visitors see the gate.
+- **Curated collections**, static pages, legal pages, towns index, pricing/plans surfaces, and visitor-oriented auth flows (visitor users / starring).
+- **`@hellolocal/shared`** package for cross-app constants, API paths, and UC helpers.
+- **Google Analytics 4** (consent-gated) with platform and site measurement-ID settings.
+- **Admin** expansions: domains, countries, memberships, analytics dashboards, subscriptions/products, i18n/UI copy, site status / cache tools, landing-crawlability card, social preview refresh.
+- **Hetzner + Docker Compose + Caddy** production/devel/beta deploy paths (GitHub Actions); Render.com path retired.
+- **Public loading skeletons** (`PublicSkeleton`, `ImageWithSkeleton`) to reduce layout shift (CLS) on lists and detail surfaces.
+- **Cloudinary-aware share/SEO image** helpers and default share image resolution.
+- Unit coverage for Facebook OG scrape, social meta, and overview JSON-LD (new test files in tree).
 
-#### Értesítések
-- **Push notification rendszer** - Web Push API
-  - Feliratkozás és leiratkozás
-  - Prisma model push subscriptions-hoz
-  - Esemény létrehozásakor azonnali értesítés (TODO)
-  - Esemény előtt 2 órával emlékeztető
-  - Cron job 10 percenként ellenőrzi a közelgő eseményeket
+### Changed
 
-#### Technikai Fejlesztések
-- **JWT autentikáció** - Access token alapú
-- **Prisma ORM** - Type-safe adatbázis hozzáférés
-- **React Query** - Server state cache management
-- **Error handling** - GlobalExceptionFilter
-- **Tenant resolver** - Automatikus tenant felismerés slug/domain alapján
-- **Slug service** - Központi slug kezelés
-- **Loading spinner** - 2 másodperces késleltetéssel, full-screen
-  - Navigáció közben nem villan fel a "Nincs találat"
-  - Smooth loading experience
-- **Inter font** - Globális betűtípus jobb olvashatósághoz
-- **Footer** - Modern, sticky design
-  - Kompakt mód térkép nézetben
-  - 3 oszlopos layout (logo, legal, quick links)
-  - Gradiens háttér
+- Production crawl gating uses live platform host (`hello-local.io`); beta/devel/local stay non-indexable.
+- Site resolution order: custom hostname → path site key → unscoped; mirrored for SPA bootstrap via domain resolve API.
+- Web production SSR image hardened (languages catalog, locale loading); map chunk points at `react-map-gl/maplibre`.
+- API production images build on **Node 22** (Prisma 7); monorepo engines remain Node ≥18 / pnpm ≥10.
+- Centralized magic strings into `@hellolocal/shared`; admin and public SEO field resolution refactored for consistency.
+- Map / mobile UX refinements; rate limits and CORS/deploy hardening iterated for live traffic.
 
-### 🔧 Javítva
-- Place és Event detail oldalak scrollozhatóvá tétele
-- Slug fallback logika magyar nyelvre ha hiányzik a kért nyelv
-- Site settings mentése működik megfelelően
-- MapFilters drag-and-drop javítások
-- EventsList header teljes területe klikkelhetővé vált
-- Price band szűrés most ID alapján működik (nem név alapján)
-- Admin settings collapse-olható szekciók UX javítása
-- Mobil overflow problémák kijavítása (padding, margin optimalizálás)
-- Fordítások kiegészítése ("Városok" → "Települések")
-- Linter figyelmeztetések javítása
+### Fixed
 
-### 🎨 UI/UX Fejlesztések
-- Modern kártyaalapú design
-- Lilás brand színek (#667eea, #764ba2)
-- Hover effektek és átmenetek
-- Árnyékok és gradiens hátterek
-- Ikonok emoji-kkal (📅, 📍, 💰, 📁, etc.)
-- Collapse animációk (forgó nyíl ikonok)
-- Social share gombok kisebb, elegánsabb megjelenéssel
-- Checkboxok brand-színűek a szűrőkben
+- Under-construction preview and staff browse of public pages while UC is on.
+- Site edit / overview crashes (undefined site id), seed/domain saving, and multi-domain admin settings.
+- Web-prod 502 from missing `languages.json` in the SSR image.
+- Map load/resolution on production and mobile touch behavior.
+- 2FA flows and assorted admin/i18n regressions from the refine-admin merge line.
+- Merge-conflict leftovers that broke API/version parsing.
 
-### 🔒 Biztonság
-- Bcrypt jelszó hash-elés
-- JWT token alapú autentikáció
-- Role-based hozzáférés Guards-szal
-- 2FA TOTP implementáció
-- CORS konfiguráció
+### Security
 
-### 📦 Függőségek
-#### Frontend
-- React 19.2.0
-- Vite 7.2.4
-- TypeScript 5.9.3
-- TanStack Query 5.90.16
-- React Router 7.11.0
-- MapLibre GL 3.6.2
-- TipTap 2.1.13
-- i18next 23.7.6
+- Hostname uniqueness / entitlement checks for custom domains; known-public-hostname helpers for crawl/TLS ask paths.
+- Stricter public URL validation for SEO/share and related admin inputs.
+- JWT + role guards retained; 2FA (TOTP) fixes; optional reCAPTCHA v3 on public forms (honeypot/timing still apply when unset).
+- Secrets for Facebook OG scrape never exposed to the admin UI (configured/status only).
 
-#### Backend
-- NestJS 11.1.11
-- Prisma 7.2.0
-- PostgreSQL (via @prisma/adapter-pg)
-- Passport JWT 4.0.1
-- bcryptjs 2.4.3
-- Web Push 3.6.7
-- Node.js 18+
+### Known limitations (beta)
 
-### 🚧 Ismert Korlátok (Beta)
-- Unit és E2E tesztek hiányoznak
-- Email szolgáltatás nincs konfigurálva (EmailService placeholder)
-- Képfeltöltés még file path alapú (nincs S3/CDN integráció)
-- Nincs cache layer (Redis)
-- Nincs rate limiting
-- Audit log hiányzik
-
-### 📝 Dokumentáció
-- README.md átfogó telepítési és használati útmutatóval
-- CHANGELOG.md verziókövetéssel
-- API endpoint dokumentáció (docs/)
-- Frontend és backend architektúra dokumentáció
-
-## [Unreleased]
-
-### 🎯 Tervezett funkciók
-- [ ] Redis cache layer
-- [ ] Export/Import funkció (CSV, JSON)
-- [ ] Bulk műveletek admin felületen
-- [ ] Nyelvi fordítások bővítése
-- [ ] A11y (accessibility) fejlesztések
+- Email delivery still largely placeholder; some advanced admin bulk/export flows remain roadmap items.
+- Sitemap cache is in-memory (short TTL); no Redis layer yet.
 
 ---
 
-## Verzió Formátum
+## [0.1.0-beta] - 2026-01-07
 
-A verziók a következő formátumban vannak:
-- **Major.Minor.Patch-tag**
-- Példa: `0.1.0-beta`, `1.0.0`, `1.2.3`
+Historical notes from the first beta documentation pass, translated to English for consistency.
 
-### Változás Típusok
-- **✨ Hozzáadva** - Új funkciók
-- **🔧 Javítva** - Bug fix-ek
-- **🔄 Módosítva** - Változtatások meglévő funkciókon
-- **🗑️ Elavult** - Hamarosan eltávolításra kerülő funkciók
-- **❌ Eltávolítva** - Eltávolított funkciók
-- **🔒 Biztonság** - Biztonsági javítások
-- **🎨 UI/UX** - Felhasználói felület változások
-- **⚡ Teljesítmény** - Teljesítmény javítások
-- **📚 Dokumentáció** - Dokumentáció változások
+### Added
 
+#### Content management
+- **Multilingual system** — Hungarian, English, and German via i18next
+- **Places management** — full CRUD in the admin UI
+  - Dynamic categories
+  - Tags system
+  - Price bands
+  - Towns management
+  - Gallery and hero image support
+  - GPS coordinates
+- **Events system** — timed event management
+  - Start and end dates
+  - Pinned (featured) events
+  - Places linked to events
+  - Event categories
+  - Rich text descriptions
+- **Rich text editor** — TipTap-based
+  - HTML formatting
+  - Heading styles (H1, H2, H3)
+  - Image insertion
+  - Bold, italic, lists
+- **SEO**
+  - Automatic slug generation
+  - Dynamic meta tags
+  - Multilingual slugs
+  - Fallback to Hungarian slugs when a locale is missing
+- **Legal pages** — dynamic Terms, Privacy, and Cookies
+
+#### User interface
+- **Interactive map view** — MapLibre GL
+  - Places shown as markers
+  - Events on the map
+  - Map position and zoom settings
+  - Clustering for large marker sets
+- **List view** — alternative presentation
+  - Combined places and events listing
+  - Infinite scroll
+  - Search
+  - Filter by category and price band
+- **Drag-and-drop filters**
+  - Position persisted in localStorage
+  - Open/closed state persistence
+  - Repositionable filter box
+- **Events list box**
+  - Shows up to 3 events
+  - Internal scrolling
+  - Drag-and-drop positioning
+  - Pinned events sorted first
+  - Past events filtered out
+- **Detail pages** — places and events
+  - Hero image
+  - Gallery
+  - Rich text descriptions
+  - Contact information
+  - Map integration
+  - Social share buttons (Facebook, Twitter, Email)
+  - Breadcrumb navigation
+- **Responsive mobile design**
+  - Adaptive padding and margins
+  - Mobile-optimized image sizes
+  - Overflow-x protection
+  - Global `box-sizing: border-box`
+  - Word-wrap for long text
+
+#### Admin
+- **Role-based access control**
+  - Superadmin — full access
+  - Admin — content and settings
+  - Editor — content editing only
+  - Viewer — read-only
+- **2FA** — TOTP-based two-factor authentication
+  - QR code generation
+  - Backup codes
+  - Admin enable/disable
+- **Multi-tenant system**
+  - Isolated tenant handling
+  - Tenant-specific settings
+  - Tenant switching in admin
+- **User management**
+  - CRUD operations
+  - Role changes
+  - 2FA management as admin
+  - Password hashing (bcrypt)
+- **Settings page** — collapsible sections
+  - Default language
+  - Map center and zoom
+  - Page SEO settings (name, description, meta)
+- **Automatic slug generation**
+  - For places and events
+  - Per-language slugs
+  - Maintenance endpoint for existing records
+- **Admin dashboard** — ordered tiles on the home screen
+  1. Events
+  2. Places
+  3. Price bands
+  4. Categories
+  5. Tags
+  6. Towns
+  7. Settings
+  8. Legal pages
+  9. User profile
+
+#### Notifications
+- **Push notification system** — Web Push API
+  - Subscribe and unsubscribe
+  - Prisma model for push subscriptions
+  - Immediate notification on event create (TODO)
+  - Reminder 2 hours before an event
+  - Cron job every 10 minutes for upcoming events
+
+#### Technical
+- **JWT authentication** — access-token based
+- **Prisma ORM** — type-safe database access
+- **React Query** — server state cache management
+- **Error handling** — GlobalExceptionFilter
+- **Tenant resolver** — automatic tenant resolution by slug/domain
+- **Slug service** — centralized slug handling
+- **Loading spinner** — 2-second delay, full-screen
+- **Footer** — modern sticky design
+
+### Fixed
+- Place and Event detail pages made scrollable
+- Slug fallback to Hungarian when the requested language is missing
+- Site settings save works correctly
+- MapFilters drag-and-drop fixes
+- EventsList header fully clickable
+- Price band filtering now by ID (not by name)
+- Admin settings collapsible-section UX improvements
+- Mobile overflow fixes (padding/margin tuning)
+- Translation update clarifying "Cities" as "Towns" in the Hungarian locale
+- Linter warnings addressed
+
+### Changed
+- Modern card-based design
+- Hover effects and transitions
+- Smaller, cleaner social share buttons
+- Brand-colored checkboxes in filters
+
+### Security
+- Bcrypt password hashing
+- JWT token-based authentication
+- Role-based access via Guards
+- 2FA TOTP implementation
+- CORS configuration
+
+### Dependencies (as of 0.1.0-beta docs)
+
+#### Frontend
+- React 19, Vite, TypeScript, TanStack Query, React Router, MapLibre GL, TipTap, i18next
+
+#### Backend
+- NestJS 11, Prisma 7, PostgreSQL (`@prisma/adapter-pg`), Passport JWT, bcryptjs, Web Push, Node.js 18+
+
+### Known limitations (0.1.0-beta)
+- Unit and E2E tests missing (partially addressed later)
+- Email service not configured (EmailService placeholder)
+- Image upload still file-path based (Cloudinary added later for editor/CDN)
+- No cache layer (Redis)
+- No rate limiting (rate limits added later for live)
+- Audit log missing
+
+---
+
+## [Unreleased]
+
+### Planned
+- [ ] Redis cache layer
+- [ ] Export/Import (CSV, JSON)
+- [ ] Bulk admin operations
+- [ ] Broader accessibility (a11y) pass
+- [ ] Production email delivery
+
+---
+
+## Versioning notes
+
+- **Product / release version**: root `package.json` and `apps/web/package.json` (kept in sync by `scripts/bump-version-on-commit.cjs`, which bumps the patch while preserving a prerelease suffix such as `-beta`).
+- **API** (`apps/api/package.json`): aligned to **1.0.0-beta** for this release; not auto-bumped by the commit hook.
+- **Shared** (`packages/shared/package.json`): independent package version (`0.1.0`); not the product semver.
+
+[1.0.0-beta]: https://github.com/yourusername/hellolocal/releases/tag/v1.0.0-beta
 [0.1.0-beta]: https://github.com/yourusername/hellolocal/releases/tag/v0.1.0-beta
-[Unreleased]: https://github.com/yourusername/hellolocal/compare/v0.1.0-beta...HEAD
-
+[Unreleased]: https://github.com/yourusername/hellolocal/compare/v1.0.0-beta...HEAD

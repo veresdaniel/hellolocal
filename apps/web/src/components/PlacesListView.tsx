@@ -1,4 +1,9 @@
-// src/components/PlacesListView.tsx
+/**
+ * Public place/service/event list with infinite scroll.
+ * CLS: initial load and "fetch next page" use PublicCardSkeletonGrid sized to the
+ * in-flight batch only (aspect-ratio / min-height reserved in list-card CSS) — never
+ * a full-list blank void.
+ */
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -12,7 +17,8 @@ import "../styles/list-card.css";
 import { MapFilters } from "./MapFilters";
 import { FloatingHeader } from "./FloatingHeader";
 import { HAS_MULTIPLE_SITES } from "../app/config";
-import { PublicCardSkeletonGrid } from "./PublicSkeleton";
+import { PublicCardSkeletonGrid, PublicSkeletonBlock } from "./PublicSkeleton";
+import { ImageWithSkeleton } from "./ImageWithSkeleton";
 import { EmptyResults } from "./EmptyResults";
 import { SafeHtml } from "./SafeHtml";
 import { useFiltersStore } from "../stores/useFiltersStore";
@@ -123,7 +129,7 @@ export function PlacesListView({
   });
 
   // Fetch site settings for placeholder image (shares cache with SiteLayout)
-  const { data: platformSettings } = useQuery({
+  const { data: platformSettings, isPending: isPlatformSettingsPending } = useQuery({
     queryKey: ["platformSettings", lang, siteKey],
     queryFn: ({ signal }) => getPlatformSettings(lang, siteKey, { signal }),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -483,6 +489,7 @@ export function PlacesListView({
         }
         .places-discover__title {
           margin: 0 0 var(--pd-3);
+          min-height: 1.2em;
           font-size: clamp(28px, 2.2vw, 44px);
           font-weight: 700;
           font-family: var(--font-heading);
@@ -490,6 +497,20 @@ export function PlacesListView({
           letter-spacing: -0.02em;
           word-wrap: break-word;
           overflow-wrap: break-word;
+        }
+        .places-discover__chrome-skel {
+          display: flex;
+          flex-direction: column;
+          gap: var(--pd-3);
+          margin: 0 0 clamp(28px, 4vw, 40px);
+        }
+        .places-discover__chrome-skel-card {
+          padding: var(--pd-3);
+          border-radius: 14px;
+          background: var(--hl-card);
+          border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+          min-height: 168px;
         }
         .places-discover__intro {
           display: grid;
@@ -503,13 +524,17 @@ export function PlacesListView({
           color: var(--hl-ink-on-card, var(--hl-ink, #1b1730));
         }
         .places-discover__intro-media {
+          position: relative;
           margin: 0;
           border-radius: 10px;
           overflow: hidden;
           aspect-ratio: 16 / 9;
           background: rgba(27, 23, 48, 0.06);
         }
+        .places-discover__intro-media > div,
         .places-discover__intro-media img {
+          position: absolute;
+          inset: 0;
           display: block;
           width: 100%;
           height: 100%;
@@ -590,6 +615,8 @@ export function PlacesListView({
         .places-discover__filters {
           min-width: 0;
           width: 100%;
+          /* Reserve filter chrome so category/price chips do not shove the grid. */
+          min-height: 148px;
         }
         .places-discover__filters .map-filters-inline {
           padding: var(--pd-3);
@@ -597,6 +624,8 @@ export function PlacesListView({
           box-shadow: none;
           border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
           background: rgba(255, 255, 255, 0.55);
+          min-height: 148px;
+          box-sizing: border-box;
         }
         .places-discover__controls:not(.is-in-intro) .places-discover__search,
         .places-discover__controls:not(.is-in-intro) .places-discover__filters .map-filters-inline {
@@ -663,6 +692,7 @@ export function PlacesListView({
           margin-bottom: var(--pd-5);
           width: 100%;
           max-width: 100%;
+          min-height: 280px;
         }
         .places-grid > * {
           width: 100%;
@@ -699,14 +729,43 @@ export function PlacesListView({
                 })
               : t("public.explore.title")}
           </h1>
-          {showListIntro ? (
+          {/* Hold discover chrome until site settings settle so listIntro
+              does not insert a large block under the title after first paint. */}
+          {isPlatformSettingsPending ? (
+            <div
+              className="places-discover__chrome-skel"
+              role="status"
+              aria-busy="true"
+              aria-label={t("common.loading")}
+            >
+              <div className="places-discover__chrome-skel-card">
+                <PublicSkeletonBlock style={{ height: 18, width: "88%", marginBottom: 12 }} />
+                <PublicSkeletonBlock style={{ height: 18, width: "64%", marginBottom: 20 }} />
+                <PublicSkeletonBlock style={{ height: 44, width: "100%", borderRadius: 12 }} />
+                <PublicSkeletonBlock
+                  style={{ height: 72, width: "100%", marginTop: 12, borderRadius: 12 }}
+                />
+              </div>
+            </div>
+          ) : showListIntro ? (
             <section
               className={`places-discover__intro${listIntroImage ? " has-image" : ""}`}
               aria-label={t("public.explore.introLabel", { defaultValue: "Bevezető" })}
             >
               {listIntroImage ? (
                 <figure className="places-discover__intro-media">
-                  <img src={listIntroImage} alt="" loading="lazy" decoding="async" />
+                  <ImageWithSkeleton
+                    src={listIntroImage}
+                    alt=""
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: "center top",
+                      display: "block",
+                    }}
+                    skeletonStyle={{ borderRadius: 0 }}
+                  />
                 </figure>
               ) : null}
               <div className="places-discover__intro-main">

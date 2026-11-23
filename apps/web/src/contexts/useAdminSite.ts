@@ -1,4 +1,7 @@
-// src/contexts/useAdminSite.ts
+/**
+ * Admin site-selection consumer.
+ * Outside the provider (rare lazy-load edge), returns a loading stub instead of throwing.
+ */
 import { useContext } from "react";
 import { AdminSiteContext, type AdminSiteContextType } from "./AdminSiteContext.shared";
 

@@ -27,6 +27,7 @@ export class SeoCrawlController {
     private readonly scopeResolver: SitemapScopeResolver
   ) {}
 
+  /** Host-scoped robots.txt (proxied to `/robots.txt` on the public host). */
   @Get("robots.txt")
   @Header("Content-Type", "text/plain; charset=utf-8")
   @Header("Cache-Control", `public, max-age=${SEO_CACHE_TTL_SECONDS}`)
@@ -35,6 +36,7 @@ export class SeoCrawlController {
     return this.robotsService.buildRobotsTxt(scope);
   }
 
+  /** Sitemap index; production SEO env only. Host scope from X-Forwarded-Host. */
   @Get("sitemap.xml")
   async sitemapIndex(@Req() req: Request, @Res() res: Response): Promise<void> {
     if (!isProductionSeoEnvironment()) {
@@ -48,6 +50,7 @@ export class SeoCrawlController {
     res.send(xml);
   }
 
+  /** Per-chunk sitemap body for the resolved host scope (prod SEO env only). */
   @Get([
     "sitemap-static.xml",
     "sitemap-sites.xml",

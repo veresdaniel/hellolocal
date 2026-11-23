@@ -7,6 +7,7 @@ import { domainLanguage } from "../common/domain-lang";
 import { SitemapService } from "../seo/sitemap.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 
+/** Payload to create a curated collection of regions (sites). */
 export interface CreateCollectionDto {
   slug: string;
   domain?: string | null;
@@ -26,6 +27,7 @@ export interface CreateCollectionDto {
   }>;
 }
 
+/** Partial update for a collection; translations replace the full set when provided. */
 export interface UpdateCollectionDto {
   slug?: string;
   domain?: string | null;
@@ -45,6 +47,7 @@ export interface UpdateCollectionDto {
   }>;
 }
 
+/** Add a site as a collection item with optional per-lang overrides. */
 export interface CreateCollectionItemDto {
   collectionId: string;
   siteId: string;
@@ -69,6 +72,10 @@ export interface UpdateCollectionItemDto {
   }>;
 }
 
+/**
+ * Admin CRUD for collections and their site items.
+ * Hostname changes go through {@link assertHostnameAvailable}; writes invalidate the sitemap cache.
+ */
 @Injectable()
 export class AdminCollectionService {
   constructor(
@@ -76,6 +83,7 @@ export class AdminCollectionService {
     private readonly sitemapService: SitemapService
   ) {}
 
+  /** All collections with translations, items, and `itemsCount` (null sites filtered out). */
   async findAll() {
     try {
       const collections = await this.prisma.collection.findMany({
@@ -147,6 +155,7 @@ export class AdminCollectionService {
     }
   }
 
+  /** Single collection with translations and ordered items. */
   async findOne(id: string) {
     const collection = await this.prisma.collection.findUnique({
       where: { id },
@@ -175,6 +184,10 @@ export class AdminCollectionService {
     return collection;
   }
 
+  /**
+   * Create a collection; asserts custom domain uniqueness when set.
+   * @sideeffect Invalidates sitemap cache
+   */
   async create(dto: CreateCollectionDto) {
     // Validate slug uniqueness
     const existing = await this.prisma.collection.findUnique({
@@ -222,6 +235,10 @@ export class AdminCollectionService {
     return created;
   }
 
+  /**
+   * Update collection fields; replacing `translations` deletes and recreates all rows.
+   * @sideeffect Invalidates sitemap cache
+   */
   async update(id: string, dto: UpdateCollectionDto) {
     const collection = await this.findOne(id);
 
@@ -294,6 +311,10 @@ export class AdminCollectionService {
     return updated;
   }
 
+  /**
+   * Delete a collection and cascade items.
+   * @sideeffect Invalidates sitemap cache
+   */
   async delete(id: string) {
     const collection = await this.findOne(id);
     const deleted = await this.prisma.collection.delete({
@@ -305,6 +326,7 @@ export class AdminCollectionService {
 
   // Collection Items
 
+  /** Attach a site to a collection with optional override translations. */
   async addItem(dto: CreateCollectionItemDto) {
     // Verify collection exists
     const collection = await this.prisma.collection.findUnique({
@@ -352,6 +374,7 @@ export class AdminCollectionService {
     });
   }
 
+  /** Update item order/highlight; replacing translations recreates all override rows. */
   async updateItem(itemId: string, dto: UpdateCollectionItemDto) {
     const item = await this.prisma.collectionItem.findUnique({
       where: { id: itemId },
@@ -397,6 +420,7 @@ export class AdminCollectionService {
     });
   }
 
+  /** Remove one collection item by id. */
   async deleteItem(itemId: string) {
     const item = await this.prisma.collectionItem.findUnique({
       where: { id: itemId },
@@ -444,6 +468,10 @@ export class AdminCollectionService {
     return this.findOne(collectionId);
   }
 
+  /**
+   * Replace the full item set for a collection (create / update / delete by diff).
+   * @param items - Desired ordered list; missing existing ids are removed
+   */
   async updateItems(
     collectionId: string,
     items: Array<{

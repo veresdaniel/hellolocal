@@ -4,7 +4,14 @@ import { DEFAULT_LANG, DEFAULT_SITE_SLUG, HAS_MULTIPLE_SITES, type Lang, isLang 
 import { isReservedPublicSegment, mapViewSegment } from "./entityPaths";
 import { useHostScope } from "./hostScope";
 
-
+/**
+ * Derive public `lang` + region `siteKey` from the URL and {@link useHostScope}.
+ *
+ * On a custom region/town/place/event host the region slug is not in the path —
+ * the host supplies it. Town segments and map words on a region host are not treated as siteKeys.
+ *
+ * @returns `{ lang, siteKey, langParam, siteKeyParam }` — validated lang and resolved site slug
+ */
 export function useRouteCtx() {
   const { lang: langParam, siteKey: siteKeyParam } = useParams<{
     lang?: string;

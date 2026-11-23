@@ -1,3 +1,7 @@
+/**
+ * Compose client-side {@link Seo} for a place detail page:
+ * admin seo* cascade → category keyword hints → LocalBusiness (+ optional BreadcrumbList) JSON-LD.
+ */
 import type { Seo } from "../types/seo";
 import type { Place } from "../types/place";
 import {
@@ -5,7 +9,14 @@ import {
   generateLocalBusinessSchema,
   robotsDirective,
 } from "./schemaOrg";
+import { resolveSeoFields, stripHtml } from "./resolveSeoFields";
 
+/**
+ * @param base Optional SEO already loaded for the place (admin overrides / API seo block)
+ * @param place Public place entity
+ * @param ctx Canonical URL, optional town label, crawl flag, breadcrumbs
+ * @returns Fully populated Seo for {@link useSeo}
+ */
 export function buildPlaceSeo(
   base: Seo | undefined,
   place: Place,
@@ -17,40 +28,26 @@ export function buildPlaceSeo(
   }
 ) {
   const town = ctx.townName ? ` – ${ctx.townName}` : "";
-  const placeImage = base?.image || place.heroImage;
+  const resolved = resolveSeoFields(
+    {
+      seoTitle: base?.title,
+      seoDescription: base?.description,
+      seoImage: base?.image,
+      name: place.name,
+      description: place.description,
+      heroImage: place.heroImage,
+    },
+    {
+      title: `${place.name}${town}`,
+      description: `Fedezd fel: ${place.name}${town}.`,
+    }
+  );
+  const fallbackTitle = resolved.title.includes(place.name)
+    ? resolved.title
+    : `${resolved.title}${town}`;
+  const fallbackDescription = resolved.description;
+  const placeImage = resolved.image;
 
-  // Helper to remove HTML tags and normalize whitespace
-  const stripHtml = (html: string | null | undefined): string => {
-    if (!html) return "";
-    // Remove HTML tags
-    const text = html.replace(/<[^>]*>/g, " ");
-    // Normalize whitespace (multiple spaces/newlines to single space)
-    return text.replace(/\s+/g, " ").trim();
-  };
-
-  // Helper to extract first 2 sentences from HTML/text
-  const getFirstSentences = (html: string | undefined, count: number = 2): string => {
-    if (!html) return "";
-    // Remove HTML tags
-    const text = html
-      .replace(/<[^>]*>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    // Split by sentence endings (. ! ?)
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-    return sentences.slice(0, count).join(" ").trim();
-  };
-
-  // Fallback title: seoTitle or name + town
-  const fallbackTitle = base?.title || `${place.name}${town}`;
-
-  // Fallback description: seoDescription (strip HTML) or first 2 sentences from description
-  const fallbackDescription =
-    (base?.description ? stripHtml(base.description) : null) ||
-    getFirstSentences(place.description, 2) ||
-    `Fedezd fel: ${place.name}${town}.`;
-
-  // Combine SEO keywords from base and place.seo
   const allKeywords = [...(base?.keywords ?? []), ...(place.seo?.keywords ?? [])];
 
   const seo: Seo = {
@@ -62,14 +59,14 @@ export function buildPlaceSeo(
     robots: base?.robots ?? robotsDirective(ctx.indexable),
     og: {
       type: "article",
-      title: base?.og?.title || base?.title || fallbackTitle,
-      description: base?.og?.description || base?.description || fallbackDescription,
+      title: base?.og?.title || fallbackTitle,
+      description: base?.og?.description || fallbackDescription,
       image: base?.og?.image ?? placeImage,
     },
     twitter: {
       card: placeImage ? "summary_large_image" : "summary",
-      title: base?.twitter?.title || base?.title || fallbackTitle,
-      description: base?.twitter?.description || base?.description || fallbackDescription,
+      title: base?.twitter?.title || fallbackTitle,
+      description: base?.twitter?.description || fallbackDescription,
       image: base?.twitter?.image ?? placeImage,
     },
   };

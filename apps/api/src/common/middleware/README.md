@@ -1,5 +1,11 @@
 # SEO Injector Middleware
 
+> **Production note:** Public crawler HTML is served by `apps/web/server.js`
+> (`socialMeta.js`), not this Nest middleware. Caddy routes public hosts to the
+> web container. This middleware remains for legacy/dev when Nest serves the SPA;
+> without `FRONTEND_BUILD_PATH` / `index.html` it no-ops. OG origin prefers the
+> request host (`X-Forwarded-Host`) over `FRONTEND_URL`, same as `socialMeta.js`.
+
 Ez a middleware automatikusan injektálja a SEO meta tag-eket az index.html-be, amikor bot/crawler user agent-ek érkeznek (pl. Facebook, Twitter, LinkedIn, Google).
 
 ## Hogyan működik?

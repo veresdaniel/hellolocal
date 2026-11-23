@@ -1,9 +1,21 @@
+/**
+ * SSR social / Open Graph meta for the Express HTML shell.
+ *
+ * Cascade (admin overrides win when non-empty):
+ *   seo* → name / shortDescription / heroImage → brand placeholder → platform defaultShareImage
+ *
+ * Custom domains: parse path first, then {@link applyHostScope} so /:lang on a tenant
+ * host still enriches as that entity's home (not the platform overview).
+ *
+ * Soft-404: slug entity routes with no API content set `meta.notFound` → noindex + HTTP 404.
+ */
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
+/** Built-in marketing OG image when no AppSetting / site SEO image is set. */
 export const SHARE_IMAGE_PATH = "/marketing/map-szeged.jpg";
 export const SHARE_IMAGE_WIDTH = "1024";
 export const SHARE_IMAGE_HEIGHT = "656";
@@ -68,6 +80,7 @@ const RESERVED = new Set([
   "static-page",
 ]);
 
+/** Localized place path segment (`hely` / `place` / `ort`). */
 export function placePathSegment(lang) {
   return PLACE_SEGMENT_BY_LANG[LANGS.includes(lang) ? lang : "hu"];
 }
@@ -75,6 +88,7 @@ export function placePathSegment(lang) {
 const copyCache = new Map();
 const jsonCache = new Map();
 
+/** Escape text for HTML attribute / element content (attribute-safe quotes). */
 export function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -83,6 +97,7 @@ export function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
+/** Strip tags and decode common entities for OG description text. */
 export function plainText(value) {
   return String(value ?? "")
     .replace(/<[^>]*>/g, " ")
@@ -96,6 +111,7 @@ export function plainText(value) {
     .trim();
 }
 
+/** Plain-text clip at word boundary for title/description length limits. */
 export function clip(value, max) {
   const clean = plainText(value);
   if (!clean || clean === "(missing translation)") return "";
@@ -115,18 +131,40 @@ function isLocalHost(value) {
   }
 }
 
+/**
+ * Absolute origin for og:url / og:image.
+ * Prefer the request host (custom domains); FRONTEND_URL is fallback; never emit localhost.
+ */
 export function publicOrigin(requestOrigin) {
-  const configured = String(process.env.FRONTEND_URL || process.env.VITE_FRONTEND_URL || "")
-    .trim()
-    .replace(/\/$/, "");
-  if (configured && !isLocalHost(configured)) return configured;
+  // Prefer the request host so custom domains (helloetyek.hu, hellolocal.hu)
+  // get same-origin og:url / og:image. FRONTEND_URL is only a fallback.
   const request = String(requestOrigin || "")
     .trim()
     .replace(/\/$/, "");
   if (request && !isLocalHost(request)) return request;
+  const configured = String(process.env.FRONTEND_URL || process.env.VITE_FRONTEND_URL || "")
+    .trim()
+    .replace(/\/$/, "");
+  if (configured && !isLocalHost(configured)) return configured;
   return "https://hello-local.io";
 }
 
+function hostnameFromOrigin(value) {
+  try {
+    return new URL(value).hostname.toLowerCase().split(":")[0];
+  } catch {
+    return String(value || "")
+      .replace(/^https?:\/\//i, "")
+      .split("/")[0]
+      ?.split(":")[0]
+      ?.toLowerCase() || "";
+  }
+}
+
+/**
+ * Resolve a share image to an absolute https URL.
+ * Relative paths join `origin`; empty / localhost → built-in marketing fallback (+ known dimensions).
+ */
 export function absoluteShareImage(origin, image) {
   const fallback = {
     url: `${origin}${SHARE_IMAGE_PATH}`,
@@ -178,6 +216,10 @@ function decodePart(value) {
   }
 }
 
+/**
+ * Parse a public pathname into `{ kind, lang, siteKey?, slug?, page? }`.
+ * Host scope is applied separately via {@link applyHostScope}.
+ */
 export function parsePublicPath(pathname) {
   const parts = String(pathname || "/")
     .split("?")[0]
@@ -193,7 +235,10 @@ export function parsePublicPath(pathname) {
   if (second === "pricing" || second === "tarife" || second === "preise") return { kind: "pricing", lang };
   if (LEGAL_PAGE_BY_SEGMENT[second]) return { kind: "legal", lang, page: LEGAL_PAGE_BY_SEGMENT[second] };
   if (REGION_LIST_SEGMENTS.has(second)) return { kind: "sites", lang };
-  if (second === "collections") return { kind: "collections", lang };
+  if (second === "collections") {
+    if (parts[2]) return { kind: "collection", lang, slug: parts[2] };
+    return { kind: "collections", lang };
+  }
   if (second === "products") return { kind: "products", lang };
   if (PLACE_SEGMENTS.has(second) && parts[2]) {
     return { kind: "place", lang, siteKey: undefined, slug: parts[2] };
@@ -217,7 +262,10 @@ export function parsePublicPath(pathname) {
   if (route === "pricing" || route === "tarife" || route === "preise") return { kind: "pricing", lang };
   if (LEGAL_PAGE_BY_SEGMENT[route]) return { kind: "legal", lang, page: LEGAL_PAGE_BY_SEGMENT[route] };
   if (route === "products") return { kind: "products", lang, siteKey };
-  if (route === "collections") return { kind: "collections", lang };
+  if (route === "collections") {
+    if (slug) return { kind: "collection", lang, siteKey, slug };
+    return { kind: "collections", lang, siteKey };
+  }
   if (route === "admin") return { kind: "admin", lang, siteKey };
   return { kind: "site", lang, siteKey };
 }
@@ -247,6 +295,7 @@ function copyFor(route, copy) {
         description: text(copy, "catalog", "lead") || brandDesc,
       };
     case "collections":
+    case "collection":
       return {
         title: text(copy, "collections", "title") || brandTitle,
         description: text(copy, "collections", "description") || brandDesc,
@@ -279,32 +328,46 @@ function copyFor(route, copy) {
   }
 }
 
-export async function fetchPublicJson(url, timeoutMs = 1000) {
-  const cached = jsonCache.get(url);
+/**
+ * Short-timeout public API GET with optional X-Forwarded-Host forwarding.
+ * Caches successes ~60s and failures ~10s (keyed by URL + host).
+ */
+export async function fetchPublicJson(url, timeoutMs = 1000, forward = null) {
+  const cacheKey = forward?.host ? `${url}::${forward.host}` : url;
+  const cached = jsonCache.get(cacheKey);
   if (cached && cached.until > Date.now()) return cached.value;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    const headers = { accept: "application/json" };
+    if (forward?.host) {
+      headers["X-Forwarded-Host"] = forward.host;
+      headers["X-Forwarded-Proto"] = forward.proto || "https";
+    }
     const response = await fetch(url, {
       signal: controller.signal,
-      headers: { accept: "application/json" },
+      headers,
     });
     if (!response.ok) {
-      jsonCache.set(url, { until: Date.now() + 10_000, value: null });
+      jsonCache.set(cacheKey, { until: Date.now() + 10_000, value: null });
       return null;
     }
     const value = await response.json();
-    jsonCache.set(url, { until: Date.now() + 60_000, value });
+    jsonCache.set(cacheKey, { until: Date.now() + 60_000, value });
     return value;
   } catch {
-    jsonCache.set(url, { until: Date.now() + 10_000, value: null });
+    jsonCache.set(cacheKey, { until: Date.now() + 10_000, value: null });
     return null;
   } finally {
     clearTimeout(timer);
   }
 }
 
-function siteShare(data) {
+/**
+ * Site/region share fields. Empty SEO overrides cascade automatically:
+ * seo* → name / shortDescription / heroImage → brand placeholder → platform defaultShareImage.
+ */
+export function siteShare(data) {
   if (!data?.site) return null;
   const title = clip(data.seo?.defaultTitle, 140) || clip(data.site.name, 140);
   const description =
@@ -316,7 +379,24 @@ function siteShare(data) {
     title,
     description,
     siteName: clip(data.site.name, 80) || clip(data.brand?.name, 80),
-    hero: data.placeholders?.placeHero || "",
+    hero:
+      data.seo?.defaultImage ||
+      data.site.heroImage ||
+      data.placeholders?.placeHero ||
+      data.platform?.defaultShareImage ||
+      "",
+  };
+}
+
+function collectionShare(data) {
+  if (!data) return null;
+  const title = clip(data.seo?.title, 140) || clip(data.title, 140);
+  if (!title) return null;
+  return {
+    title,
+    description: clip(data.seo?.description, 300) || clip(data.description, 300),
+    hero: data.seo?.image || data.heroImage || "",
+    siteName: clip(data.title, 80),
   };
 }
 
@@ -334,55 +414,218 @@ function entityShare(data) {
   };
 }
 
-async function enrich(route, apiUrl, origin) {
+function imagePatch(origin, hero) {
+  if (!hero) return null;
+  const image = absoluteShareImage(origin, hero);
+  return { image: image.url, imageWidth: image.width, imageHeight: image.height };
+}
+
+/** Resolve custom domain → `{ kind, slug, entitySlug? }` via `/api/domain/:host` (null on platform/local). */
+export async function resolveDomainHost(apiUrl, host, forward) {
+  const base = String(apiUrl || "").replace(/\/$/, "");
+  const hostname = String(host || "")
+    .toLowerCase()
+    .split(":")[0]
+    .replace(/\.$/, "");
+  if (!base || !hostname || hostname === "localhost" || hostname === "127.0.0.1") return null;
+  return fetchPublicJson(`${base}/api/domain/${encodeURIComponent(hostname)}`, 800, forward);
+}
+
+/** Root-like paths on a custom domain (Host already names the entity). */
+function isHostRootKind(kind) {
+  return kind === "sites" || kind === "brand" || kind === "site";
+}
+
+/**
+ * When the Host already names a site/town/place/collection/event, paths without a
+ * siteKey (e.g. /hu on helloetyek.hu) still need tenant-scoped enrich.
+ * Covers every DomainResolveKind: site | town | place | collection | event.
+ */
+export function applyHostScope(route, resolved) {
+  if (!resolved?.slug || !resolved?.kind) return route;
+  const next = { ...route };
+
+  if (resolved.kind === "site") {
+    if (!next.siteKey && isHostRootKind(next.kind)) {
+      next.kind = "site";
+      next.siteKey = resolved.slug;
+    } else if (!next.siteKey) {
+      next.siteKey = resolved.slug;
+    }
+    return next;
+  }
+
+  if (resolved.kind === "collection") {
+    if (isHostRootKind(next.kind) || next.kind === "collections") {
+      next.kind = "collection";
+      next.slug = resolved.slug;
+      delete next.siteKey;
+    }
+    return next;
+  }
+
+  if (resolved.kind === "town" || resolved.kind === "place" || resolved.kind === "event") {
+    // Parent region slug is always resolved.slug; entitySlug is the public path slug.
+    if (!next.siteKey) next.siteKey = resolved.slug;
+    if (isHostRootKind(next.kind) && resolved.entitySlug) {
+      next.kind = resolved.kind;
+      next.slug = resolved.entitySlug;
+    }
+    return next;
+  }
+
+  return next;
+}
+
+async function enrich(route, apiUrl, origin, forward = null) {
   const base = String(apiUrl || "").replace(/\/$/, "");
   if (!base) return null;
   const key = route.siteKey ? encodeURIComponent(route.siteKey) : "";
-  if (route.kind === "site" || route.kind === "town") {
-    if (!key) return null;
-    let share = siteShare(await fetchPublicJson(`${base}/api/public/${route.lang}/${key}/platform`));
+
+  if (route.kind === "collection" && route.slug) {
+    let share = collectionShare(
+      await fetchPublicJson(
+        `${base}/api/public/collections/by-slug/${encodeURIComponent(route.slug)}?lang=${route.lang}`,
+        1000,
+        forward
+      )
+    );
     if (!share && route.lang !== "hu") {
-      share = siteShare(await fetchPublicJson(`${base}/api/public/hu/${key}/platform`));
+      share = collectionShare(
+        await fetchPublicJson(
+          `${base}/api/public/collections/by-slug/${encodeURIComponent(route.slug)}?lang=hu`,
+          1000,
+          forward
+        )
+      );
+    }
+    if (!share && forward?.host) {
+      share = collectionShare(
+        await fetchPublicJson(
+          `${base}/api/public/collections/by-domain/${encodeURIComponent(forward.host)}?lang=${route.lang}`,
+          1000,
+          forward
+        )
+      );
     }
     if (!share) return null;
     const patch = { title: share.title, description: share.description, siteName: share.siteName };
-    if (route.kind === "town" && route.slug) {
-      patch.title = clip(`${route.slug} · ${share.title || share.siteName || ""}`, 140) || patch.title;
-    }
-    if (share.hero) {
-      const image = absoluteShareImage(origin, share.hero);
-      patch.image = image.url;
-      patch.imageWidth = image.width;
-      patch.imageHeight = image.height;
-    }
+    Object.assign(patch, imagePatch(origin, share.hero) || {});
     return patch;
   }
+
+  if (route.kind === "site") {
+    if (!key) return null;
+    let share = siteShare(
+      await fetchPublicJson(`${base}/api/public/${route.lang}/${key}/platform`, 1000, forward)
+    );
+    if (!share && route.lang !== "hu") {
+      share = siteShare(
+        await fetchPublicJson(`${base}/api/public/hu/${key}/platform`, 1000, forward)
+      );
+    }
+    if (!share) return null;
+    const patch = { title: share.title, description: share.description, siteName: share.siteName };
+    Object.assign(patch, imagePatch(origin, share.hero) || {});
+    return patch;
+  }
+
+  if (route.kind === "town" && route.slug) {
+    if (!key) return null;
+    const [platform, townsPayload] = await Promise.all([
+      fetchPublicJson(`${base}/api/public/${route.lang}/${key}/platform`, 1000, forward),
+      fetchPublicJson(`${base}/api/public/${route.lang}/${key}/towns`, 1000, forward),
+    ]);
+    const site = siteShare(platform);
+    const towns = Array.isArray(townsPayload?.towns)
+      ? townsPayload.towns
+      : Array.isArray(townsPayload?.items)
+        ? townsPayload.items
+        : Array.isArray(townsPayload)
+          ? townsPayload
+          : [];
+    const town = towns.find((item) => item?.slug === route.slug) || null;
+    const title =
+      clip(town?.seo?.title || town?.seoTitle, 140) ||
+      clip(town?.name, 140) ||
+      (site ? clip(`${route.slug} · ${site.title || site.siteName || ""}`, 140) : "");
+    const description =
+      clip(town?.seo?.description || town?.seoDescription, 300) ||
+      clip(town?.description, 300) ||
+      site?.description ||
+      "";
+    if (!title && !description) return null;
+    const patch = {
+      title,
+      description,
+      siteName: site?.siteName || clip(town?.name, 80),
+    };
+    Object.assign(
+      patch,
+      imagePatch(
+        origin,
+        town?.seo?.image || town?.seoImage || town?.heroImage || site?.hero || ""
+      ) || {}
+    );
+    return patch;
+  }
+
   if (route.kind !== "place" && route.kind !== "event") return null;
   const collection = route.kind === "place" ? "places" : "events";
   const sitePart = key || "default";
   const suffix = `${sitePart}/${collection}/${encodeURIComponent(route.slug)}`;
-  let share = entityShare(await fetchPublicJson(`${base}/api/public/${route.lang}/${suffix}`));
+  let share = entityShare(
+    await fetchPublicJson(`${base}/api/public/${route.lang}/${suffix}`, 1000, forward)
+  );
   if (!share && route.lang !== "hu") {
-    share = entityShare(await fetchPublicJson(`${base}/api/public/hu/${suffix}`));
+    share = entityShare(
+      await fetchPublicJson(`${base}/api/public/hu/${suffix}`, 1000, forward)
+    );
   }
   if (!share) return null;
   const patch = { title: share.title, description: share.description, type: share.type };
-  if (share.hero) {
-    const image = absoluteShareImage(origin, share.hero);
-    patch.image = image.url;
-    patch.imageWidth = image.width;
-    patch.imageHeight = image.height;
-  }
+  Object.assign(patch, imagePatch(origin, share.hero) || {});
   return patch;
 }
 
-export async function resolvePublicShare({ pathname, apiUrl, requestOrigin }) {
-  const route = parsePublicPath(pathname);
+async function loadPlatformShareDefaults(apiUrl, lang, forward) {
+  const base = String(apiUrl || "").replace(/\/$/, "");
+  if (!base) return null;
+  const data = await fetchPublicJson(
+    `${base}/api/public/${lang}/default/platform`,
+    800,
+    forward
+  );
+  if (!data) return null;
+  return {
+    shareImage: data.platform?.defaultShareImage || data.seo?.defaultImage || "",
+    siteName: clip(data.brand?.name, 80) || "HelloLocal",
+  };
+}
+
+/**
+ * Build share meta for one request: parse path → host-scope → i18n defaults →
+ * platform share image → entity enrich. Sets `notFound` when a slug entity has no content.
+ */
+export async function resolvePublicShare({ pathname, apiUrl, requestOrigin, requestHost, requestProto }) {
+  let route = parsePublicPath(pathname);
   const origin = publicOrigin(requestOrigin);
-  const path = String(pathname || "/").split("?")[0];
+  const host = requestHost || hostnameFromOrigin(requestOrigin);
+  const forward = host
+    ? { host, proto: requestProto || (String(requestOrigin || "").startsWith("http:") ? "http" : "https") }
+    : null;
+  if (forward?.host) {
+    const resolved = await resolveDomainHost(apiUrl, forward.host, forward);
+    if (resolved) route = applyHostScope(route, resolved);
+  }
+  const rawPath = String(pathname || "/").split("?")[0];
+  // Single canonical form: no trailing slash except site root.
+  const path =
+    rawPath !== "/" && rawPath.endsWith("/") ? rawPath.replace(/\/+$/, "") || "/" : rawPath;
   const canonical = path === "/" ? `${origin}/` : `${origin}${path.startsWith("/") ? path : `/${path}`}`;
   const defaults = copyFor(route, loadCopy(route.lang));
-  const image = absoluteShareImage(origin, null);
+  const platformDefaults = await loadPlatformShareDefaults(apiUrl, route.lang, forward);
+  const image = absoluteShareImage(origin, platformDefaults?.shareImage || null);
   let meta = {
     lang: route.lang,
     title: defaults.title,
@@ -392,10 +635,17 @@ export async function resolvePublicShare({ pathname, apiUrl, requestOrigin }) {
     imageWidth: image.width,
     imageHeight: image.height,
     type: defaults.type || "website",
-    siteName: "HelloLocal",
+    siteName: platformDefaults?.siteName || "HelloLocal",
+    origin,
+    notFound: false,
   };
-  const patch = await enrich(route, apiUrl, origin);
-  if (!patch) return meta;
+  const patch = await enrich(route, apiUrl, origin, forward);
+  const entityKinds = new Set(["place", "event", "collection", "town"]);
+  if (!patch) {
+    // Soft-404: slug entity routes with no content must not look like a thin 200.
+    if (entityKinds.has(route.kind) && route.slug) meta.notFound = true;
+    return meta;
+  }
   if (patch.title) meta.title = patch.title;
   if (patch.description) meta.description = patch.description;
   if (patch.siteName) meta.siteName = patch.siteName;
@@ -438,14 +688,20 @@ function removeMeta(html, attr, name) {
   return html.replace(pattern, "");
 }
 
+/**
+ * Inject / replace title, canonical, description, OG, and Twitter tags in the HTML shell.
+ * Empty fields remove stale tags; `meta.notFound` forces robots noindex,nofollow.
+ * SSR titles stay bare (no ` - siteName`); CSR `useSeo` adds the tab suffix.
+ */
 export function applySocialMeta(html, meta) {
   const lang = LOCALES[meta.lang] ? meta.lang : "hu";
   const locale = LOCALES[lang];
   const title = clip(meta.title, 140) || "HelloLocal";
   const description = clip(meta.description, 300);
-  const image = absoluteShareImage(publicOrigin(), meta.image);
+  const origin = meta.origin || publicOrigin(meta.url);
+  const image = absoluteShareImage(origin, meta.image);
   const imageUrl = image.url;
-  const url = meta.url || "https://hello-local.io/";
+  const url = meta.url || `${origin}/`;
   const type = meta.type || "website";
   const siteName = clip(meta.siteName, 80) || "HelloLocal";
   const width = meta.imageWidth || image.width || "";
@@ -475,6 +731,11 @@ export function applySocialMeta(html, meta) {
     out = out.replace(/<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i, canonical);
   } else {
     out = out.replace("</head>", `    ${canonical}\n  </head>`);
+  }
+  if (meta.notFound) {
+    const robots = metaTag("name", "robots", "noindex, nofollow");
+    if (findMeta(out, "name", "robots")) out = replaceMeta(out, "name", "robots", "noindex, nofollow");
+    else out = out.replace("</head>", `    ${robots}\n  </head>`);
   }
 
   const missing = [];

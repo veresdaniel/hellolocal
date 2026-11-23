@@ -1,5 +1,5 @@
 // src/pages/StaticPageDetailPage.tsx
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -7,7 +7,8 @@ import { useSiteContext } from "../app/site/useSiteContext";
 import { getStaticPage } from "../api/static-pages.api";
 import { getPlatformSettings } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
-import { generateWebPageSchema } from "../seo/schemaOrg";
+import { absoluteCanonical } from "../seo/canonical";
+import { resolveSeoFields, stripHtml } from "../seo/resolveSeoFields";
 import { PublicPageSkeleton } from "../components/PublicSkeleton";
 import { NotFoundPage } from "./NotFoundPage";
 import { hasVisibleHtml } from "../utils/hasVisibleHtml";
@@ -17,6 +18,7 @@ import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { ShortcodeRenderer } from "../components/ShortcodeRenderer";
 import { useAuth } from "../contexts/AuthContext";
 import { isSuperadmin } from "../utils/roleHelpers";
+import { usePublishedLanguages } from "../hooks/useContentLanguages";
 
 export function StaticPageDetailPage() {
   const { t } = useTranslation();
@@ -45,91 +47,84 @@ export function StaticPageDetailPage() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Helper to strip HTML
-  const stripHtml = (html: string | null | undefined): string => {
-    if (!html) return "";
-    return html
-      .replace(/<[^>]*>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  };
-
-  const pageUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${window.location.pathname}`.replace(/\/$/, "")
-      : "";
+  const pageUrl = absoluteCanonical();
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const languages = usePublishedLanguages();
   const robots =
     (staticPage?.seo?.indexable ?? platformSettings?.globalIndexable ?? platformSettings?.isCrawlable) ===
     false
       ? "noindex, nofollow"
       : "index, follow";
 
-  // Use SEO from data if available, otherwise use fallback
-  const seo = staticPage?.seo
-    ? {
-        ...staticPage.seo,
-        keywords: staticPage.seo.keywords || [],
-        canonical: pageUrl,
-        robots,
-        og: {
-          type: "article" as const,
-          title: staticPage.seo.og?.title || staticPage.seo.title,
-          description: staticPage.seo.og?.description || staticPage.seo.description,
-          image: staticPage.seo.og?.image || staticPage.seo.image,
-        },
-        twitter: {
-          card: staticPage.seo.image ? ("summary_large_image" as const) : ("summary" as const),
-          title: staticPage.seo.twitter?.title || staticPage.seo.title,
-          description: staticPage.seo.twitter?.description || staticPage.seo.description,
-          image: staticPage.seo.twitter?.image || staticPage.seo.image,
-        },
-        schemaOrg: {
-          type: "WebPage" as const,
-          data: {
-            name: staticPage.seo.title || staticPage.title,
-            description: stripHtml(staticPage.seo.description),
-            url: pageUrl,
-            inLanguage: safeLang,
-            isPartOf: platformSettings?.siteName
-              ? {
-                  name: platformSettings.siteName,
-                  url: siteUrl,
-                }
-              : undefined,
-          },
-        },
+  // Defer client SEO until content is ready so loading fallbacks do not clobber SSR.
+  const seo = useMemo(() => {
+    if (isLoading || !staticPage) return undefined;
+    const resolved = resolveSeoFields(
+      {
+        seoTitle: staticPage.seo?.title,
+        seoDescription: staticPage.seo?.description,
+        seoImage: staticPage.seo?.image,
+        title: staticPage.title,
+        description: staticPage.content,
+      },
+      {
+        title: t("public.staticPages.title"),
+        description: platformSettings?.seoDescription || t("public.staticPages.title"),
       }
-    : {
-        title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
-        description: platformSettings?.seoDescription || stripHtml(staticPage?.content) || "",
-        keywords: [],
-        canonical: pageUrl,
-        robots,
-        og: {
-          type: "article" as const,
-          title: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
-          description: platformSettings?.seoDescription || stripHtml(staticPage?.content) || "",
+    );
+    return {
+      title: resolved.title,
+      description: resolved.description,
+      image: resolved.image,
+      keywords: staticPage.seo?.keywords || [],
+      canonical: pageUrl,
+      robots,
+      og: {
+        type: "article" as const,
+        title: resolved.title,
+        description: resolved.description,
+        image: resolved.image,
+      },
+      twitter: {
+        card: (resolved.image ? "summary_large_image" : "summary") as
+          | "summary_large_image"
+          | "summary",
+        title: resolved.title,
+        description: resolved.description,
+        image: resolved.image,
+      },
+      schemaOrg: {
+        type: "WebPage" as const,
+        data: {
+          name: resolved.title,
+          description: stripHtml(resolved.description),
+          url: pageUrl,
+          inLanguage: safeLang,
+          isPartOf: platformSettings?.siteName
+            ? {
+                name: platformSettings.siteName,
+                url: siteUrl,
+              }
+            : undefined,
         },
-        schemaOrg: {
-          type: "WebPage" as const,
-          data: {
-            name: platformSettings?.seoTitle || staticPage?.title || t("public.staticPages.title"),
-            description: stripHtml(platformSettings?.seoDescription || staticPage?.content),
-            url: pageUrl,
-            inLanguage: safeLang,
-            isPartOf: platformSettings?.siteName
-              ? {
-                  name: platformSettings.siteName,
-                  url: siteUrl,
-                }
-              : undefined,
-          },
-        },
-      };
+      },
+    };
+  }, [
+    isLoading,
+    staticPage,
+    pageUrl,
+    robots,
+    safeLang,
+    siteUrl,
+    platformSettings?.seoDescription,
+    platformSettings?.siteName,
+    t,
+  ]);
 
   useSeo(seo, {
     siteName: platformSettings?.siteName,
+    languages,
+    lang: safeLang,
   });
 
   // Ref for HTML content container

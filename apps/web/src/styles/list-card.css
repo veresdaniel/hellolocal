@@ -55,10 +55,17 @@
   border-top: 3px solid var(--list-accent);
   overflow: hidden;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  /* Opacity/transform only — does not contribute to CLS. */
   animation: list-card-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
   transition:
     transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .list-card {
+    animation: none;
+  }
 }
 
 .list-card__media {

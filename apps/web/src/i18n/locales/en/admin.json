@@ -592,7 +592,14 @@
       "listIntroHint": "Optional text and image on the discovery list page, below the title and above search and filters. Hidden when empty.",
       "listIntroBody": "Intro text",
       "listIntroImage": "Intro image",
-      "uploadListIntroImage": "Upload intro image"
+      "uploadListIntroImage": "Upload intro image",
+      "seoHint": "Social share (Facebook, WhatsApp, etc.). Empty fields cascade automatically: title = name, description = short description, image = hero (then platform default).",
+      "refreshSocialPreview": "Refresh social preview",
+      "refreshSocialPreviewHint": "Asks Facebook to re-scrape this region’s public URL (Graph API). Needs FACEBOOK_APP_ID and FACEBOOK_APP_SECRET on the API; otherwise use Sharing Debugger manually.",
+      "facebookScrapeNotConfigured": "Facebook scrape is not configured. Set FACEBOOK_APP_ID and FACEBOOK_APP_SECRET on the API, or use Facebook Sharing Debugger → Scrape Again.",
+      "facebookScrapeOk": "Facebook refreshed the preview for {{url}}",
+      "facebookScrapeOkGeneric": "Facebook refreshed the social preview",
+      "facebookScrapeFailed": "Facebook could not refresh the social preview"
     },
     "features": {
       "title": "Features",
@@ -1114,6 +1121,10 @@
   "globalCrawlabilityDescription": "When this is off, no page can be indexed, even if that page is enabled on its own. When this is on, each place, event, region, town, page and collection follows its own switch.",
   "globalCrawlabilityEnabled": "Indexable (SEO)",
   "globalCrawlabilityUpdated": "Global crawl setting updated",
+  "landingCrawlability": "Platform landing indexing",
+  "landingCrawlabilityDescription": "Affects only the platform marketing landing (hellolocal.hu overview) — not region sites. Global indexing off still forces this off. Default: off (for gradual rollout).",
+  "landingCrawlabilityEnabled": "Landing indexable (SEO)",
+  "landingCrawlabilityUpdated": "Platform landing crawl setting updated",
   "features": "Features",
   "enableEvents": "Enable Events",
   "enableBlog": "Enable Blog",
@@ -1680,6 +1691,13 @@
     "help": "See it live opens this address. A full address, such as https://helloetyek.hu/hu, or a path, such as /en/regions. Empty keeps the region list.",
     "save": "Save demo address",
     "saved": "Demo address saved"
+  },
+  "defaultShareImage": {
+    "title": "Default social share image",
+    "help": "Platform Open Graph image when a region/page has no seoImage or hero. Full URL or path. Empty keeps the built-in /marketing/map-szeged.jpg.",
+    "save": "Save share image",
+    "saved": "Social share image saved",
+    "placeholder": "/marketing/map-szeged.jpg"
   },
   "geocode": {
     "suggest": "Suggest coordinates",

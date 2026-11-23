@@ -130,7 +130,8 @@ export class AppModule implements NestModule {
     // When UC is on, block public API data (admin/auth/health/gate stay open).
     consumer.apply(UnderConstructionLockMiddleware).forRoutes("*");
 
-    // Apply SEO injector middleware to all routes except API and admin
+    // Legacy/dev only: prod crawler HTML is apps/web/server.js (socialMeta.js).
+    // Middleware no-ops without FRONTEND_BUILD_PATH; host-scoped OG stays in sync.
     consumer.apply(SeoInjectorMiddleware).forRoutes("*");
   }
 }

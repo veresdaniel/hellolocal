@@ -24,15 +24,20 @@ import { isSupportedLang } from "../common/lang";
 import { randomBytes } from "crypto";
 import { CountryService } from "../country/country.service";
 
+/** Claims embedded in access JWTs. */
 export interface JwtPayload {
-  sub: string; // user id
+  /** User id */
+  sub: string;
   email: string;
   username: string;
   role: UserRole;
-  siteIds: string[]; // Array of site IDs the user belongs to
-  activeSiteId?: string | null; // Active site ID (null = visitor)
+  /** Site IDs the user belongs to */
+  siteIds: string[];
+  /** Active site ID (`null` = visitor / no admin site selected) */
+  activeSiteId?: string | null;
 }
 
+/** Login / register / refresh response shape returned to the SPA. */
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -49,6 +54,10 @@ export interface AuthResponse {
   };
 }
 
+/**
+ * Registration, login, password reset, token refresh, and Google OAuth user linking.
+ * Issues access + refresh JWTs; optional 2FA and admin event logging when those modules are present.
+ */
 @Injectable()
 export class AuthService {
   constructor(

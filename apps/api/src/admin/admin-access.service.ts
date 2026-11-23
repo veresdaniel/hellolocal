@@ -9,6 +9,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { RbacService } from "../auth/rbac.service";
 import { ensureRegionLink, removeRegionLink } from "./region-link";
 
+/** Membership target kind for unified access grants in admin. */
 export type AccessKind = "region" | "town" | "place";
 
 export interface CreateAccessGrantDto {
@@ -18,6 +19,10 @@ export interface CreateAccessGrantDto {
   role?: string;
 }
 
+/**
+ * Admin CRUD for region / town / place membership grants.
+ * Enforces superadmin vs region-admin (siteadmin) privileges; town grants are superadmin-only.
+ */
 @Injectable()
 export class AdminAccessService {
   constructor(
@@ -25,6 +30,10 @@ export class AdminAccessService {
     private readonly rbac: RbacService
   ) {}
 
+  /**
+   * Content scope for the actor plus whether they have a pending place signup.
+   * @returns RBAC content scope fields and `pendingSignup`
+   */
   async scope(userId: string) {
     const scope = await this.rbac.getContentScope(userId);
     const pending = await this.prisma.placeSignup.findFirst({
@@ -43,6 +52,10 @@ export class AdminAccessService {
     return user;
   }
 
+  /**
+   * All memberships the actor may see (region + place; town only for superadmin).
+   * Filtered to the actor's region scope unless unrestricted.
+   */
   async listGrants(actorId: string) {
     const actor = await this.actor(actorId);
     const scope = await this.rbac.getContentScope(actorId);
@@ -117,6 +130,11 @@ export class AdminAccessService {
     ];
   }
 
+  /**
+   * Create a membership if missing. Region grants also ensure the User↔Site region link.
+   * @throws ForbiddenException when the actor lacks privilege for the kind
+   * @throws NotFoundException when user or target is missing
+   */
   async createGrant(actorId: string, dto: CreateAccessGrantDto) {
     const actor = await this.actor(actorId);
     if (!dto.userId || !dto.targetId || !dto.kind) {
@@ -183,6 +201,10 @@ export class AdminAccessService {
     });
   }
 
+  /**
+   * Remove a membership by row id. Region deletes also drop the region link.
+   * @returns `{ ok: true }` on success
+   */
   async deleteGrant(actorId: string, kind: AccessKind, id: string) {
     const actor = await this.actor(actorId);
     if (kind === "town") {
@@ -209,6 +231,10 @@ export class AdminAccessService {
     return { ok: true };
   }
 
+  /**
+   * Town membership roster (superadmin only).
+   * @sideeffect Calls `rbac.requireTown` to assert access
+   */
   async listTownMembers(actorId: string, townId: string) {
     const actor = await this.actor(actorId);
     if (actor.role !== UserRole.superadmin) {

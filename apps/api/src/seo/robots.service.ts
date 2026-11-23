@@ -1,3 +1,6 @@
+/**
+ * Host-scoped robots.txt builder (proxied onto the public host by apps/web/server.js).
+ */
 import { Injectable } from "@nestjs/common";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
 import { isProductionSeoEnvironment } from "./public-path.util";
@@ -9,7 +12,9 @@ export class RobotsService {
 
   /**
    * Non-prod (local/staging/beta/devel): always Disallow all, no Sitemap line.
-   * Prod: allow crawl when platform crawlability is on; Sitemap: same-host only.
+   * Prod: allow crawl when global crawlability is on; Sitemap: same-host only.
+   * Unknown custom hosts and global-off → Disallow all (Sitemap line still listed in prod).
+   * @param scope From {@link SitemapScopeResolver} (Host / X-Forwarded-Host)
    */
   async buildRobotsTxt(scope: SitemapScope): Promise<string> {
     if (!isProductionSeoEnvironment()) {

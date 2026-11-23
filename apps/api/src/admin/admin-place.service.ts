@@ -137,6 +137,10 @@ export interface UpdatePlaceDto {
   galleryLimitOverride?: number | null;
 }
 
+/**
+ * Admin CRUD for places: translations, slugs, custom domains, GA, entitlements.
+ * Writes invalidate the sitemap cache; domain changes assert hostname uniqueness.
+ */
 @Injectable()
 export class AdminPlaceService {
   constructor(

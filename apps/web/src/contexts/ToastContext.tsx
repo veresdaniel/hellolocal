@@ -1,4 +1,6 @@
-// src/contexts/ToastContext.tsx
+/**
+ * Queued toast notifications (one visible at a time). Used across admin and public forms.
+ */
 import {
   createContext,
   useContext,

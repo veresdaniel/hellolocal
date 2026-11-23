@@ -1,4 +1,7 @@
-/** Cross-app role lists — keep aligned with Prisma enums. */
+/**
+ * Cross-app role lists and hierarchy ranks — keep aligned with Prisma enums.
+ * Higher hierarchy number means more privilege within that role family.
+ */
 
 export const USER_ROLES = ["superadmin", "admin", "editor", "viewer"] as const;
 export type UserRoleId = (typeof USER_ROLES)[number];
@@ -9,6 +12,7 @@ export type SiteRoleId = (typeof SITE_ROLES)[number];
 export const PLACE_ROLES = ["owner", "manager", "editor"] as const;
 export type PlaceRoleId = (typeof PLACE_ROLES)[number];
 
+/** Numeric rank for platform UserRole comparisons (viewer < … < superadmin). */
 export const USER_ROLE_HIERARCHY: Record<UserRoleId, number> = {
   viewer: 1,
   editor: 2,
@@ -16,6 +20,7 @@ export const USER_ROLE_HIERARCHY: Record<UserRoleId, number> = {
   superadmin: 4,
 };
 
+/** Numeric rank for SiteRole comparisons (viewer < editor < siteadmin). */
 export const SITE_ROLE_HIERARCHY: Record<SiteRoleId, number> = {
   viewer: 1,
   editor: 2,
@@ -31,10 +36,12 @@ export const SITE_ROLE_VIEWER: SiteRoleId = "viewer";
 export const SITE_ROLE_EDITOR: SiteRoleId = "editor";
 export const SITE_ROLE_SITEADMIN: SiteRoleId = "siteadmin";
 
+/** Type guard: value is a known platform UserRole id. */
 export function isUserRole(value: string): value is UserRoleId {
   return (USER_ROLES as readonly string[]).includes(value);
 }
 
+/** Type guard: value is a known SiteRole id. */
 export function isSiteRole(value: string): value is SiteRoleId {
   return (SITE_ROLES as readonly string[]).includes(value);
 }

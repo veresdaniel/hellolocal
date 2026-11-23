@@ -1,281 +1,163 @@
-# HelloLocal 🗺️
+# HelloLocal
 
-> Modern, többnyelvű helyi turisztikai platformvezető rendszer eseménykezeléssel és térkép integrációval.
+**Version:** [1.0.0-beta](CHANGELOG.md) · **License:** Proprietary — see [LICENSE](LICENSE)
 
-[![Version](https://img.shields.io/badge/version-0.1.0--beta-blue.svg)](CHANGELOG.md)
-[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+Multi-tenant local tourism platform for Hungarian regions and destinations (e.g. Etyek–Budai). Operators manage places, events, collections, and towns; visitors explore via map/list, custom domains, and multilingual public sites. Live production: [hello-local.io](https://hello-local.io).
 
-## 🌟 Főbb Funkciók
+---
 
-### Tartalom Kezelés
-- **Többnyelvű támogatás** (Magyar, Angol, Német)
-- **Helyek (Places) kezelése** - Kategóriák, címkék, ár sávok
-- **Események (Events)** - Időzített események, pinned funkció
-- **Rich Text Editor** - TipTap alapú WYSIWYG szerkesztő
-- **SEO optimalizáció** - Dinamikus meta tagek, slugok
+## What it does
 
-### Felhasználói Felület
-- **Interaktív térkép** - MapLibre GL alapú
-- **Drag-and-drop szűrők** - Pozíció megőrzéssel
-- **Események lista** - Real-time frissítések
-- **Reszponzív design** - Mobil-optimalizált
-- **Modern UI** - Inter font, gradiensek, árnyékok
+### Public experience
+- **Multi-tenant regions (Sites)** with path routing `/:lang/:siteKey/...` and optional **custom domains** for sites, towns, places, and collections
+- **Places & events** — map (MapLibre) and list views, filters, detail pages, galleries, rich text, social share
+- **Collections**, **static pages**, **legal pages**, **towns index**, platform **overview / landing**, **pricing / plans**
+- **i18n** — Hungarian, English, German (i18next); per-language slugs and **hreflang** alternates
+- **SEO & Open Graph** — SSR meta injection (`apps/web/server.js`), Schema.org/JSON-LD, chunked **sitemaps** + **robots.txt** scoped by hostname
+- **Under-construction** gate with staff / preview access to public pages
+- **Google Analytics 4** (consent-gated), platform and per-site measurement IDs
+- **Web Push** subscriptions (VAPID); visitor accounts / starring where enabled
+- Loading **skeletons** aimed at reducing CLS on public surfaces
 
-### Admin Funkciók
-- **Role-based hozzáférés** (superadmin, admin, editor, viewer)
-- **2FA autentikáció** - TOTP alapú
-- **Többbérlős (Multi-site)** rendszer - [Site Architecture dokumentáció](./docs/site-architecture.md)
-- **Automatikus slug generálás**
-- **Push értesítések** - Web Push API
+### Admin
+- Role-based access: superadmin, admin, editor, viewer (+ **2FA** TOTP)
+- CRUD for sites, domains, places, events, collections, towns, categories, tags, price bands, galleries, static/legal pages
+- Memberships, analytics dashboards, subscriptions / products, i18n & UI copy tools
+- App settings: SEO, map defaults, **GA**, **platform landing crawl** toggle, **Facebook social-preview refresh**
+- Plan entitlements for custom domains / aliases
 
-### Technikai Jellemzők
-- **SSR-ready** - SEO meta tagek server-side
-- **PWA támogatás** - Service Worker
-- **Real-time** - React Query cache invalidation
-- **I18n** - react-i18next
-- **Type-safe** - 100% TypeScript
+### Platform / ops
+- Hostname → tenant resolution (custom host first, then path site key)
+- Caddy **on-demand TLS** ask endpoint (`/api/caddy/ask`)
+- Domain-scoped crawl files proxied through the web SSR container
 
-## 🏗️ Technológiai Stack
+---
 
-### Frontend
-- **React 19** - UI framework
-- **Vite 7** - Build tool
-- **TypeScript 5.9** - Type safety
-- **React Router 7** - Routing
-- **TanStack Query 5** - Server state management
-- **MapLibre GL** - Maps
-- **TipTap** - Rich text editor
-- **i18next** - Internationalization
+## Tech stack
 
-### Backend
-- **NestJS 11** - Backend framework
-- **Prisma 7** - ORM
-- **PostgreSQL** - Database
-- **Passport JWT** - Authentication
-- **Web Push** - Notifications
-- **Node.js 18+** - Runtime
+| Layer | Stack |
+|--------|--------|
+| API | NestJS 11, Prisma 7, PostgreSQL (`@prisma/adapter-pg`), Passport JWT, bcrypt, optional reCAPTCHA / Web Push |
+| Web | React 19, Vite, TypeScript, React Router, TanStack Query, TipTap, MapLibre (`react-map-gl`), i18next, Zustand |
+| SSR | Node `apps/web/server.js` — bot SEO/OG injection, UC gate, sitemap/robots proxy |
+| Shared | `@hellolocal/shared` — cross-app paths/constants |
+| Data | PostgreSQL (local Docker or Neon / hosted) |
+| Deploy | Docker Compose, Caddy, GitHub Actions → Hetzner VPS |
 
-## 📋 Előfeltételek
+Engines: **Node ≥ 18**, **pnpm ≥ 10**. API production images use **Node 22** (Prisma 7).
 
-- **Node.js** 18.x vagy újabb
-- **pnpm** 10.x (javasolt package manager)
-- **PostgreSQL** 14.x vagy újabb
-- **Git**
+---
 
-## 🚀 Telepítés
+## Monorepo layout
 
-### 1. Repository klónozása
-
-```bash
-git clone <repository-url>
-cd hellolocal
+```
+hellolocal/
+├── apps/
+│   ├── api/          # NestJS API + Prisma
+│   └── web/          # Vite React SPA + server.js SSR
+├── packages/
+│   └── shared/       # @hellolocal/shared
+├── deploy/           # Caddyfile, compose, remote deploy scripts
+├── docs/             # Architecture, SEO, domain resolution, deploy notes
+├── scripts/          # local:dev / staging / live, version bump, hooks
+├── tests/            # Vitest unit / critical / integration
+├── docker-compose.yml
+├── CHANGELOG.md
+└── package.json      # workspaces root (product version)
 ```
 
-### 2. Függőségek telepítése
+Versioning: root + `apps/web` share the product version (commit hook bumps patch, keeps `-beta`). `apps/api` is aligned to **1.0.0-beta** for this release. `packages/shared` keeps its own package version (`0.1.0`).
+
+---
+
+## Setup
+
+### Prerequisites
+- Node 18+ (22 recommended to match API images)
+- pnpm 10+
+- PostgreSQL 14+ (or Docker Compose / Neon connection string)
+- Git
+
+### Install
 
 ```bash
 pnpm install
 ```
 
-### 3. Környezeti változók beállítása
+### Environment
 
-Hozd létre a `.env` fájlokat:
+Copy examples and fill values:
 
-**Backend** (`apps/api/.env`):
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/hellolocal"
+| File | Purpose |
+|------|---------|
+| `apps/api/.env` | From `apps/api/env.example` — `DATABASE_URL`, JWT, `FRONTEND_URL`, CORS, optional Facebook OG / VAPID / reCAPTCHA |
+| `apps/api/.env.staging` | From `apps/api/env.staging.example` — staging DB |
+| `apps/web/.env` | From `apps/web/env.example` — `VITE_API_URL`, VAPID, Cloudinary, reCAPTCHA site key |
+| Root `.env` | From `env.example` — Docker Compose ports/secrets |
+| `deploy/env.example` | Production / VPS compose |
 
-# JWT
-JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
-JWT_EXPIRES_IN="7d"
+Never point seed / migrate reset at staging or live databases.
 
-# Server
-PORT=3002
-FRONTEND_URL="http://localhost:5173"
-
-# Web Push (opcionális)
-VAPID_PUBLIC_KEY="your-vapid-public-key"
-VAPID_PRIVATE_KEY="your-vapid-private-key"
-VAPID_SUBJECT="mailto:your-email@example.com"
-```
-
-**Frontend** (`apps/web/.env`):
-```env
-VITE_API_URL=http://localhost:3002
-VITE_VAPID_PUBLIC_KEY=your-vapid-public-key
-```
-
-### 4. Adatbázis migrálás és seed
+### Database (local only)
 
 ```bash
 cd apps/api
-pnpm db:reset
+pnpm db:reset    # migrate + seed demo (127.0.0.1 only)
+# or: pnpm db:seed
 ```
 
-`db:reset` eldobja a helyi sémát, felteszi az egyetlen init migrációt, és betölti a demót.
-Meglévő sémán a tartalom újratöltése: `pnpm db:seed`. Csak a helyi `127.0.0.1` adatbázison.
+Seed loads a superadmin and sample region content when empty. Do not run against production.
 
-### 5. Fejlesztői szerverek indítása
+### Run locally
 
-Három helyi mód (párhuzamosan is futhatnak, külön portokon):
+Three parallel modes (separate ports):
 
 ```bash
-# Helyi docker/dev DB (apps/api/.env) — web 5173, API 3002
-pnpm local:dev
-
-# Staging / beta DB (apps/api/.env.staging) — web 5174, API 3003
-pnpm local:staging
-
-# Éles adatok böngészése — web 5175, /api → https://api.hello-local.io (Vite proxy)
-# Nincs helyi API production DATABASE_URL-lel. NE seed/migrate/truncate live ellen.
-pnpm local:live
+pnpm local:dev       # web :5173, API :3002 — apps/api/.env
+pnpm local:staging   # web :5174, API :3003 — .env.staging
+pnpm local:live      # web :5175, API proxied to production — no local live DB writes
 ```
 
-Külön terminálokban továbbra is:
+Or separately:
 
 ```bash
-pnpm run dev:api   # 3002
-pnpm run dev:web   # 5173
+pnpm dev:api
+pnpm dev:web
 ```
 
-Ha `http://localhost:5173/hu/etyek-budai` üres: a helyi adatbázisban nincs régió.
-Csak a helyi (127.0.0.1) adatbázison: `pnpm -C apps/api db:seed`.
-Staging, live és production URL ellen soha ne futtass seedet vagy resetet.
-
-## 📦 Production Build
-
-### Backend
-
-```bash
-cd apps/api
-pnpm run build
-pnpm start
-```
-
-### Frontend
-
-```bash
-cd apps/web
-pnpm run build
-pnpm preview  # Production preview
-```
-
-## 🐳 Docker Deployment
-
-### Docker Compose (legegyszerűbb)
-
-```bash
-docker-compose up -d
-```
-
-Ez elindítja:
-- PostgreSQL adatbázist
-- Backend API-t (port 3002)
-- Frontend-et (port 5173)
-
-### Egyedi Docker build
-
-```bash
-# Backend
-docker build -f apps/api/Dockerfile -t hellolocal-api .
-docker run -p 3002:3002 --env-file apps/api/.env hellolocal-api
-
-# Frontend
-docker build -f apps/web/Dockerfile -t hellolocal-web .
-docker run -p 5173:5173 hellolocal-web
-```
-
-## ☁️ Cloud Deployment
-
-**Live production**: Hetzner VPS (`hello-local.io`) via GitHub Actions SSH deploy — see `.github/workflows/deploy.yml` and `deploy/`.
-
-Push to `main` / `devel` triggers production/devel stacks; `staging` uses `deploy-beta.yml` for beta.
-
-Render.com is **retired** in this repo (`render.yaml` removed). Historical notes: [docs/deployment-render.md](docs/deployment-render.md) (deprecated). Delete leftover Render services in the dashboard manually.
-
-### Alternatívák (nem az éles stack)
-
-| Platform | Ár | Előnyök | Hátrányok |
-|----------|-----|---------|----------|
-| **Railway.app** | $5/hó után ingyenes | Egyszerű, gyors | Ingyenes limit kicsi |
-| **Fly.io** | $0-5/hó | Global edge, Docker | Bonyolultabb config |
-| **Vercel (Frontend)** | Ingyenes | Nagyon gyors, CDN | Csak frontend |
-| **Heroku** | $7/hó | Megbízható | Nincs ingyenes tier |
-| **VPS (egyéb)** | €4-5/hó | Teljes kontroll | Több setup munka |
-
-## 🔐 Alapértelmezett admin
-
-A seed és az üres adatbázis indulása a `super@example.com` superadmin fiókot tölti be (`admin` felhasználónév), és ha még nincs régió, az Etyek–Budai mintaadatot is: település, helyek, események, szövegek és fordítások. A jelszó a snapshotban tárolt hash. Meglévő régiót és superadmin jelszót nem ír felül.
-
-## 📚 Dokumentáció
-
-- [Fejlesztői útmutató](docs/readme_dev.md)
-- [API dokumentáció](docs/hellolocal-backend-api-first-brief.md)
-- [Frontend architektúra](docs/hellolocal-frontend-brief.md)
-- [Roadmap](docs/hellolocal-roadmap.md)
-- [Changelog](CHANGELOG.md)
-
-## 🧪 Tesztelés
-
-```bash
-# Unit tesztek (TODO)
-pnpm test
-
-# E2E tesztek (TODO)
-pnpm test:e2e
-```
-
-## 🛠️ Karbantartás
-
-### Slug generálás meglévő helyekhez
-
-```bash
-curl -X POST http://localhost:3002/api/admin/maintenance/generate-missing-slugs \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-### Adatbázis backup
-
-```bash
-pg_dump -h localhost -U user -d hellolocal > backup.sql
-```
-
-### Log monitoring
-
-Production környezetben nézd a Hetzner szerveren a Docker Compose logokat (`docker compose logs`), vagy a GitHub Actions Deploy workflow futásait.
-
-## 🤝 Közreműködés
-
-1. Fork-old a projektet
-2. Hozz létre egy feature branch-et (`git checkout -b feature/amazing-feature`)
-3. Commit-old a változásokat (`git commit -m 'feat: Add amazing feature'`)
-4. Push-old a branch-et (`git push origin feature/amazing-feature`)
-5. Nyiss egy Pull Request-et
-
-## 📄 Licenc
-
-Proprietary License - All Rights Reserved. Lásd [LICENSE](LICENSE) fájlt
-
-## 🐛 Ismert Problémák
-
-Lásd a [GitHub Issues](https://github.com/yourusername/hellolocal/issues) oldalt.
-
-## 💬 Támogatás
-
-- Email: support@hellolocal.com
-- Dokumentáció: [docs/](docs/)
-- Issues: [GitHub Issues](https://github.com/yourusername/hellolocal/issues)
-
-## 🎉 Köszönetnyilvánítás
-
-- [MapLibre GL](https://maplibre.org/)
-- [NestJS](https://nestjs.com/)
-- [React](https://react.dev/)
-- [Prisma](https://www.prisma.io/)
+Useful scripts: `pnpm build`, `pnpm test`, `pnpm test:critical`, `pnpm lint`, `pnpm format`.
 
 ---
 
-**HelloLocal** - Készítve ❤️ -vel
+## Deployment (high level)
 
+**Live stack:** Hetzner VPS + Docker Compose + Caddy (`deploy/`), deployed by GitHub Actions (`.github/workflows/deploy.yml`, `deploy-beta.yml`).
+
+- Push to `main` / `devel` → production / devel stacks
+- Staging / beta via beta workflow and `deploy/Caddyfile.beta`
+- TLS: Caddy; on-demand certs for custom domains after DNS points at the VPS and `/api/caddy/ask` allows the host
+- SEO: production indexing gated to the live platform host; beta/devel stay `Disallow: /`
+
+Local one-shot compose: `docker-compose up -d` (root). Production-oriented compose lives under `deploy/`.
+
+Render.com is **retired** in this repo. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) and [docs/domain-based-tenant-resolution.md](docs/domain-based-tenant-resolution.md).
+
+---
+
+## Documentation
+
+| Doc | Topic |
+|-----|--------|
+| [CHANGELOG.md](CHANGELOG.md) | Release notes |
+| [docs/frontend-seo-middleware.md](docs/frontend-seo-middleware.md) | SSR SEO, sitemaps, robots |
+| [docs/domain-based-tenant-resolution.md](docs/domain-based-tenant-resolution.md) | Host → site / entity |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deploy summary |
+| [docs/hellolocal-backend-api-first-brief.md](docs/hellolocal-backend-api-first-brief.md) | API brief |
+| [docs/hellolocal-frontend-brief.md](docs/hellolocal-frontend-brief.md) | Frontend brief |
+| [packages/shared/README.md](packages/shared/README.md) | Shared package conventions |
+
+---
+
+## License
+
+Proprietary — All Rights Reserved. See [LICENSE](LICENSE).

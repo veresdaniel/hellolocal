@@ -1,3 +1,7 @@
+/**
+ * Public loading placeholders sized to real layouts (list cards, detail bleed hero, overview).
+ * Intent: reserve space for the in-flight batch / first paint only — reduce CLS, not paint a fake full list.
+ */
 import type { CSSProperties } from "react";
 import "../styles/public-skeleton.css";
 
@@ -69,6 +73,11 @@ export function PublicCardSkeletonGrid({
 
 interface PublicPageSkeletonProps {
   withHero?: boolean;
+  /**
+   * Full-bleed 16:9 hero matching Place/Event/Collection detail pages.
+   * Avoids CLS when swapping the in-card hero stub for a real edge-to-edge hero.
+   */
+  bleedHero?: boolean;
   label?: string;
   className?: string;
 }
@@ -76,19 +85,21 @@ interface PublicPageSkeletonProps {
 /** Detail / legal / static content sheet while the page body loads. */
 export function PublicPageSkeleton({
   withHero = true,
+  bleedHero = false,
   label = "Loading",
   className,
 }: PublicPageSkeletonProps) {
   return (
     <div
-      className={`hl-skel-page${className ? ` ${className}` : ""}`}
+      className={`hl-skel-page${bleedHero ? " hl-skel-page--bleed" : ""}${className ? ` ${className}` : ""}`}
       role="status"
       aria-busy="true"
       aria-live="polite"
       aria-label={label}
     >
+      {bleedHero ? <div className="hl-skel hl-skel-page__bleed-hero" aria-hidden="true" /> : null}
       <div className="hl-skel-page__sheet">
-        {withHero ? <div className="hl-skel hl-skel-page__hero" /> : null}
+        {withHero && !bleedHero ? <div className="hl-skel hl-skel-page__hero" /> : null}
         <div className="hl-skel hl-skel-page__eyebrow" />
         <div className="hl-skel hl-skel-page__title" />
         <div className="hl-skel hl-skel-page__line" />

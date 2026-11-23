@@ -1,5 +1,7 @@
-// src/types/platformSettings.ts
-// Re-export from centralized enums
+/**
+ * Public platform settings DTO (mirrors API `/public/:lang/:siteKey/platform`).
+ * Includes SEO defaults and crawl flags used by CSR pages and SSR overview.
+ */
 import type { Lang } from "./enums";
 export type { Lang };
 
@@ -35,6 +37,8 @@ export type PlatformSettingsDto = {
     indexable: boolean;
     /** Master switch. Off forces every public page out of the index. */
     globalIndexable?: boolean;
+    /** Platform marketing landing (hellolocal.hu overview). */
+    landingIndexable?: boolean;
   };
 
   placeholders: {

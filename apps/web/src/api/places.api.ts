@@ -1,4 +1,7 @@
-// src/api/places.api.ts
+/**
+ * Public (unauthenticated) place/town/event/collection/platform API helpers.
+ * Uses `apiGetPublic` — no JWT. `siteKey` of `"default"` / omitted means implicit site.
+ */
 import { apiGetPublic } from "./client";
 import type { Place } from "../types/place";
 
@@ -9,6 +12,7 @@ export interface MapSettings {
   zoom: number | null;
 }
 
+/** Map center/zoom from the public platform payload (no separate map endpoint). */
 export function getMapSettings(lang: string, siteKey?: string): Promise<MapSettings> {
   // Map settings are part of platform settings
   // Use platform settings endpoint and extract map settings from it
@@ -41,13 +45,18 @@ export interface PlatformSettings extends PlatformSettingsDto {
   isCrawlable?: boolean; // Region home: global && site switch
   /** Master switch. Off forces every public page out of the index. */
   globalIndexable?: boolean;
+  /** Platform marketing landing (hellolocal.hu overview): global && platform.landingCrawlable. */
+  landingIndexable?: boolean;
   featureMatrix?: {
     planOverrides?: any;
     placePlanOverrides?: any;
   };
 }
 
-// Legacy function - maps to new API endpoint
+/**
+ * Public platform settings for a lang + siteKey (includes SEO defaults, crawl flags, brand).
+ * Maps DTO → legacy flat fields for older call sites.
+ */
 export function getPlatformSettings(
   lang: string,
   siteKey?: string,
@@ -75,6 +84,7 @@ export function getPlatformSettings(
     seoImage: dto.seoImage || null,
     isCrawlable: dto.seo.indexable,
     globalIndexable: dto.seo.globalIndexable ?? dto.seo.indexable,
+    landingIndexable: dto.seo.landingIndexable === true,
     featureMatrix: dto.featureMatrix,
   }));
 }

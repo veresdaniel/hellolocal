@@ -4,6 +4,10 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 import { ConfigService } from "@nestjs/config";
 import { AuthService, JwtPayload } from "../auth.service";
 
+/**
+ * Passport strategy: Bearer JWT → {@link AuthService.validateUser}.
+ * Requires `JWT_SECRET` in production; uses a weak default only in development.
+ */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
@@ -30,6 +34,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  /**
+   * Attach the DB user to `req.user` after signature verification.
+   * @throws UnauthorizedException when the user no longer exists or is inactive
+   */
   async validate(payload: JwtPayload) {
     const user = await this.authService.validateUser(payload);
     if (!user) {

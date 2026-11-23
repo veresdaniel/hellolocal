@@ -15,6 +15,7 @@ import { sanitizeSiteTheme } from "../common/public-theme-colors";
 import { SitemapService } from "../seo/sitemap.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { assertRegionNameAvailable } from "../common/unique-place-name";
+import { sanitizeImageUrl } from "../common/url-validation";
 
 export interface CreateSiteDto {
   slug: string;
@@ -84,6 +85,15 @@ export interface UpdateSiteDto {
   theme?: Record<string, unknown> | null;
 }
 
+/**
+ * Admin CRUD for regions (Site): languages, domains, branding, plan, GA, theme.
+ * Syncs SiteDomain rows and mirrors the primary host to Site.primaryDomain.
+ */
+/**
+ * Admin CRUD for regions (sites): SEO fields, custom domains, theme, GA, memberships.
+ * Domain writes invalidate sitemap cache. Auth/roles enforced by AdminController.
+ * Hungarian validation messages match the admin UI locale defaults.
+ */
 @Injectable()
 export class AdminSiteService {
   constructor(
@@ -501,6 +511,7 @@ export class AdminSiteService {
     const languages = publishedLanguages.length ? publishedLanguages : ["hu", "en", "de"];
 
     // Create site with translations. landing/listIntro columns optional until migrated.
+    // Empty SEO stays null — SSR/public share cascades from name / shortDescription / heroImage.
     const translationRows = dto.translations.map((t) => ({
       lang: t.lang,
       name: t.name,
@@ -510,9 +521,9 @@ export class AdminSiteService {
       landingHtml: t.landingHtml ?? null,
       listIntroHtml: t.listIntroHtml ?? null,
       listIntroImage: t.listIntroImage ?? null,
-      seoTitle: t.seoTitle ?? null,
-      seoDescription: t.seoDescription ?? null,
-      seoImage: t.seoImage ?? null,
+      seoTitle: t.seoTitle?.trim() || null,
+      seoDescription: t.seoDescription?.trim() || null,
+      seoImage: sanitizeImageUrl(t.seoImage?.trim()) || null,
       seoKeywords: t.seoKeywords ?? [],
     }));
     let countryId = dto.countryId;
@@ -926,7 +937,7 @@ export class AdminSiteService {
           heroImage: translation.heroImage ?? null,
           seoTitle: translation.seoTitle ?? null,
           seoDescription: translation.seoDescription ?? null,
-          seoImage: translation.seoImage ?? null,
+          seoImage: sanitizeImageUrl(translation.seoImage) || null,
           seoKeywords: translation.seoKeywords ?? [],
         };
         const landingPatch =

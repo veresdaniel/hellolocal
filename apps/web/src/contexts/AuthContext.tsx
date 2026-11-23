@@ -1,4 +1,7 @@
-// src/contexts/AuthContext.tsx
+/**
+ * Auth provider: loads JWT user from storage, exposes login/register/logout,
+ * and shows a session-expiration modal in admin areas (not public/auth pages).
+ */
 import { useEffect, ReactNode } from "react";
 import { AuthContext, type AuthContextType } from "./AuthContext.shared";
 import { useAuthStore } from "../stores/authStore";
@@ -7,6 +10,7 @@ import { SessionExpirationModal } from "../components/SessionExpirationModal";
 import { getTokenExpiration } from "../utils/tokenUtils";
 import { ACCESS_TOKEN_KEY } from "../constants/authStorage";
 
+/** Provide auth state + session warning modal to the app tree. */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const {
     user,

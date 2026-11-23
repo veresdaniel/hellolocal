@@ -100,6 +100,10 @@ export interface UpdateEventDto {
   lng?: number | null;
 }
 
+/**
+ * Admin CRUD for events: translations, slugs, custom domains, notifications, entitlements.
+ * Writes invalidate the sitemap cache.
+ */
 @Injectable()
 export class AdminEventService {
   constructor(
