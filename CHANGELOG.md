@@ -12,7 +12,7 @@ in prose as used in the product.
 
 ## [Unreleased]
 
-## [1.0.10-beta] - 2026-11-23
+## [1.0.11-beta] - 2026-11-23
 
 ### Fixed
 
