@@ -39,8 +39,8 @@ function socialPreviewAllowBlock(): string[] {
  * Landing-only rules for User-agent: * without end-of-URL `$` anchors.
  * Meta's crawler ignores `$` (Google extension) and then only sees `Disallow: /`,
  * which the Sharing Debugger surfaces as HTTP 403 even for facebookexternalhit
- * when its UA group is mis-applied. `Disallow: /*/` blocks nested paths while
- * still allowing `/`, `/hu`, `/en`, `/de`.
+ * when its UA group is mis-applied. Nested-path Disallow (`/` + `*` + `/`)
+ * blocks deeper URLs while still allowing `/`, `/hu`, `/en`, `/de`.
  */
 function landingOnlyStarBlock(): string[] {
   return [

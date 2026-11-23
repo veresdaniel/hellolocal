@@ -12,6 +12,13 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.12-beta] - 2026-11-23
+
+### Fixed
+
+- API Docker build: JSDoc in `robots.service.ts` no longer embeds `*/` (broke
+  `tsc` with a premature comment close).
+
 ## [1.0.11-beta] - 2026-11-23
 
 ### Fixed
