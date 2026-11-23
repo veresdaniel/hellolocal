@@ -220,11 +220,18 @@ function loadOverview(lang, override, messages) {
 }
 
 /**
- * Detect platform overview routes: `/:lang`, `/:lang/overview|attekintes|ueberblick`.
+ * Detect platform overview routes:
+ * `/`, `/:lang`, `/:lang/overview|attekintes|ueberblick`.
+ * Apex `/` uses the fallback language (same landing content as `/hu/attekintes`).
  * Returns the page language, or null when this path is not the marketing landing.
  */
 export function overviewLang(pathname) {
-  const parts = pathname.split("/").filter(Boolean);
+  const parts = String(pathname || "/")
+    .split("?")[0]
+    .split("/")
+    .filter(Boolean);
+  // Bare host root (https://hellolocal.hu/) — same landing as the overview page.
+  if (parts.length === 0) return FALLBACK_LANG;
   if (parts.length === 1 && OVERVIEW_SEGMENTS.has(parts[0])) return FALLBACK_LANG;
   // Language root is the public opener, the same landing as /:lang/<overview>.
   if (parts.length === 1 && LANGS.includes(parts[0])) return parts[0];
@@ -240,17 +247,47 @@ export function overviewLang(pathname) {
 }
 
 /**
+ * Public share / canonical URL for an overview request path.
+ * Apex and bare `/:lang` stay without the overview segment so sharing
+ * `https://hellolocal.hu` / `https://hellolocal.hu/hu` works.
+ */
+export function overviewShareUrl(origin, pathname, lang) {
+  const base = String(origin || "").replace(/\/$/, "");
+  const parts = String(pathname || "/")
+    .split("?")[0]
+    .split("/")
+    .filter(Boolean);
+  if (parts.length === 0) return `${base}/`;
+  if (parts.length === 1 && LANGS.includes(parts[0])) return `${base}/${parts[0]}`;
+  const code = LANGS.includes(lang) ? lang : FALLBACK_LANG;
+  return `${base}/${code}/${overviewSegment(code)}`;
+}
+
+/**
  * Render the platform overview into the SPA shell (body + head SEO/JSON-LD).
  * `shareImage` is admin/platform defaultShareImage; `indexable` gates robots (default off).
  */
 export function renderOverviewDocument(
   indexHtml,
-  { lang, origin, override, messages, languages, planOverrides, shareImage, indexable }
+  {
+    lang,
+    origin,
+    override,
+    messages,
+    languages,
+    planOverrides,
+    shareImage,
+    indexable,
+    pathname,
+    shareUrl,
+  }
 ) {
   origin = publicOrigin(origin);
   const copy = loadOverview(lang, override, messages);
   const published = Array.isArray(languages) && languages.length ? languages : LANGS;
-  const url = `${origin}/${lang}/${overviewSegment(lang)}`;
+  const url =
+    (shareUrl && String(shareUrl).trim()) ||
+    overviewShareUrl(origin, pathname || `/${lang}/${overviewSegment(lang)}`, lang);
   const configuredShare = String(shareImage || "").trim();
   const image = configuredShare
     ? /^https?:\/\//i.test(configuredShare)

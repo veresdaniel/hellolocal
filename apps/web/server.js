@@ -16,7 +16,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
-import { overviewLang, renderOverviewDocument } from './ssr/renderOverview.js';
+import { overviewLang, overviewShareUrl, renderOverviewDocument } from './ssr/renderOverview.js';
 import {
   applyAdminRobots,
   buildPublicContentHtml,
@@ -533,7 +533,8 @@ app.get('*', async (req, res, next) => {
   const requestOrigin = `${forwardProto}://${forwardHost || req.get('host') || 'localhost'}`;
   const customDomain = await resolveCustomDomain(forwardHost);
 
-  // Platform overview only on platform hosts. Custom domains use resolvePublicShare.
+  // Platform overview only on platform hosts (/, /:lang, /:lang/attekintes|…).
+  // Custom domains use resolvePublicShare.
   const overview = !customDomain ? overviewLang(req.path) : null;
   if (overview) {
     try {
@@ -550,6 +551,8 @@ app.get('*', async (req, res, next) => {
         renderOverviewDocument(html, {
           lang: overview,
           origin,
+          pathname: req.path,
+          shareUrl: overviewShareUrl(origin, req.path, overview),
           override,
           messages: uiCopy?.messages,
           languages: uiCopy?.languages,

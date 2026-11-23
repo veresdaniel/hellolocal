@@ -18,6 +18,8 @@ in prose as used in the product.
   radius; filter/events/services panels open above the bar (no drag on mobile).
 - **Show my location** control defaults just above the closed mobile dock bar
   when no device-specific position is persisted (`mapLocationControlPosition_mobile`).
+- Platform landing SSR / Open Graph also covers bare `https://hellolocal.hu/` and
+  `/:lang` (without requiring `/hu/attekintes`); `og:url` matches the shared path.
 
 ## [1.0.0-beta] - 2026-11-23
 
