@@ -12,6 +12,8 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.7-beta] - 2026-11-23
+
 ### Added
 
 - **Town admin SEO / Social** block (title, description, image, keywords) —
