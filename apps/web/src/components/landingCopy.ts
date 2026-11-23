@@ -141,10 +141,12 @@ export const LANDING_GROUPS: LandingGroup[] = [
 
 export const LANDING_FIELDS = LANDING_GROUPS.flatMap((group) => group.fields);
 
+// Clone: i18n `addResourceBundle(..., deep)` mutates the shared JSON module in
+ // place when DB UI copy loads — landingDefault must keep the bundled strings.
 const DEFAULTS: Record<UiLang, unknown> = {
-  hu: huPublic.overview,
-  en: enPublic.overview,
-  de: dePublic.overview,
+  hu: structuredClone(huPublic.overview),
+  en: structuredClone(enPublic.overview),
+  de: structuredClone(dePublic.overview),
 };
 
 export const LANDING_EDITOR_CHROME: Record<

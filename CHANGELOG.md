@@ -12,6 +12,13 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.16-beta] - 2026-11-23
+
+### Fixed
+
+- Free plan price note: clone bundled overview copy so i18n UI-copy deep-merge
+  cannot overwrite `landingDefault` with stale "első hónapban".
+
 ## [1.0.15-beta] - 2026-11-23
 
 ### Changed

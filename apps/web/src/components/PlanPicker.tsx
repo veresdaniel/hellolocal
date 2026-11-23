@@ -120,7 +120,7 @@ function PlanCard({
   const text = useLandingText(lang);
   const featured = id === "basic";
   const price = numbers.priceHuf <= 0 ? "0" : formatCount(numbers.priceHuf, lang);
-  // freeForever comes from locale JSON + freeTrialDays only (not admin UI copy).
+  // Locale JSON + freeTrialDays only (cloned defaults; ignore mutated i18n/DB copy).
   const priceNote =
     numbers.priceHuf <= 0
       ? fillCount(landingDefault(lang, "plans.freeForever"), freeTrialDays)
