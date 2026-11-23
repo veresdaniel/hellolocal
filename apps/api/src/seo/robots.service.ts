@@ -6,20 +6,49 @@ import { PlatformSettingsService } from "../platform-settings/platform-settings.
 import { isProductionSeoEnvironment } from "./public-path.util";
 import type { SitemapScope } from "./sitemap-scope";
 
+/**
+ * Link-preview crawlers. Facebook Sharing Debugger treats a blanket
+ * `Disallow: /` as a hard block (reports HTTP 403) even when the HTML itself
+ * is reachable — so these agents stay Allow'd when general indexing is off.
+ */
+const SOCIAL_PREVIEW_AGENTS = [
+  "facebookexternalhit",
+  "Facebot",
+  "Twitterbot",
+  "LinkedInBot",
+  "WhatsApp",
+  "Slackbot-LinkExpanding",
+  "Discordbot",
+  "TelegramBot",
+] as const;
+
+function socialPreviewAllowBlock(): string[] {
+  const lines: string[] = [
+    "# Social / link-preview crawlers (OG tags) — allowed even when indexing is off",
+  ];
+  for (const agent of SOCIAL_PREVIEW_AGENTS) {
+    lines.push(`User-agent: ${agent}`, "Allow: /", "");
+  }
+  return lines;
+}
+
 @Injectable()
 export class RobotsService {
   constructor(private readonly platformSettings: PlatformSettingsService) {}
 
   /**
-   * Non-prod (local/staging/beta/devel): always Disallow all, no Sitemap line.
+   * Non-prod (local/staging/beta/devel): Disallow all for search engines, but
+   * still Allow social preview bots so OG scrapers can be tested.
    * Prod: allow crawl when global crawlability is on; Sitemap: same-host only.
-   * Unknown custom hosts and global-off → Disallow all (Sitemap line still listed in prod).
+   * Unknown custom hosts and global-off → Disallow all for `*` (Sitemap line
+   * still listed in prod); social preview bots remain Allow'd.
    * @param scope From {@link SitemapScopeResolver} (Host / X-Forwarded-Host)
    */
   async buildRobotsTxt(scope: SitemapScope): Promise<string> {
     if (!isProductionSeoEnvironment()) {
       return [
         "# HelloLocal — non-production: indexing disabled",
+        ...socialPreviewAllowBlock(),
         "User-agent: *",
         "Disallow: /",
         "",
@@ -31,7 +60,8 @@ export class RobotsService {
 
     if (!crawlable || scope.kind === "unknown") {
       return [
-        "# HelloLocal — crawling disabled",
+        "# HelloLocal — crawling disabled (search engines)",
+        ...socialPreviewAllowBlock(),
         "User-agent: *",
         "Disallow: /",
         "",
