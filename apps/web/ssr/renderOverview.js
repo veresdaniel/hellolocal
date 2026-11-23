@@ -132,9 +132,9 @@ function renderPlanCards(copy, lang, planOverrides, freeTrialDays = 30) {
       const numbers = numbersById[id];
       if (!plan) return "";
       const grouped = String(numbers.priceHuf).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
-      const freeNote = fillCountWithFallback(
-        plans.freeForever || plans.freePrice || "",
-        bundledPlans.freeForever || bundledPlans.freePrice || "",
+      // Price note: locale JSON + freeTrialDays only (ignore stale DB UI copy).
+      const freeNote = fillCount(
+        bundledPlans.freeForever || bundledPlans.freePrice || plans.freePrice || "",
         trialDays
       );
       const price =

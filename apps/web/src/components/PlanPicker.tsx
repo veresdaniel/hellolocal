@@ -15,6 +15,7 @@ import {
   type PublicPlanNumbers,
 } from "./publicPlans";
 import { useLandingText } from "../hooks/useLandingText";
+import { fillCount, landingDefault } from "./landingCopy";
 import "../styles/plan-picker.css";
 
 const LOCALE: Record<Lang, string> = { hu: "hu-HU", en: "en-GB", de: "de-DE" };
@@ -119,9 +120,10 @@ function PlanCard({
   const text = useLandingText(lang);
   const featured = id === "basic";
   const price = numbers.priceHuf <= 0 ? "0" : formatCount(numbers.priceHuf, lang);
+  // freeForever comes from locale JSON + freeTrialDays only (not admin UI copy).
   const priceNote =
     numbers.priceHuf <= 0
-      ? text("plans.freeForever", { count: freeTrialDays })
+      ? fillCount(landingDefault(lang, "plans.freeForever"), freeTrialDays)
       : text("plans.priceUnit");
   const registerUrl = `${buildUrl({ lang, path: "admin/register" })}?plan=${id}`;
   const pitch =

@@ -12,6 +12,13 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.15-beta] - 2026-11-23
+
+### Changed
+
+- Admin public plans editor: removed editable "Ingyenes megjegyzés" (`plans.freeForever`);
+  the free price note is locale JSON + `freeTrialDays` only.
+
 ## [1.0.14-beta] - 2026-11-23
 
 ### Fixed
