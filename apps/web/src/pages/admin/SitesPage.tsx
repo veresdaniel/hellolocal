@@ -27,6 +27,7 @@ import {
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
+import { AdminImageField } from "../../components/AdminImageField";
 import { findTranslation } from "../../utils/langHelpers";
 import { regionAddress } from "../../app/urls";
 import type { Lang} from "../../types/enums";
@@ -537,63 +538,16 @@ export function SitesPage() {
                     />
                   </div>
 
-                  {/* Hero Image */}
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: 8,
-                        color: "var(--admin-primary)",
-                        fontWeight: 600,
-                        fontSize: "clamp(14px, 3.5vw, 16px)",
-                        fontFamily:
-                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}
-                    >
-                      {t("admin.heroImage")} ({selectedLang.toUpperCase()})
-                    </label>
-                    <input
-                      type="text"
-                      value={
-                        readLang(formData, "heroImage", selectedLang)
-                      }
-                      onChange={(e) => {
-                        setFormData(patchLang(formData, "heroImage", selectedLang, e.target.value));
-                      }}
-                      placeholder="https://example.com/image.jpg"
-                      style={{
-                        width: "100%",
-                        padding: "12px 16px",
-                        fontSize: "clamp(15px, 3.5vw, 16px)",
-                        fontFamily:
-                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        border: "2px solid var(--admin-primary-border)",
-                        borderRadius: 8,
-                        outline: "none",
-                        transition: "all 0.3s ease",
-                        boxSizing: "border-box",
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = "var(--admin-primary)";
-                        e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = "var(--admin-primary-border)";
-                        e.target.style.boxShadow = "none";
-                      }}
-                    />
-                    <div
-                      style={{
-                        fontSize: "clamp(13px, 3vw, 15px)",
-                        color: "#666",
-                        marginTop: 6,
-                        fontFamily:
-                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}
-                    >
-                      {t("admin.heroImageDescription")}
-                    </div>
-                  </div>
+                  <AdminImageField
+                    label={`${t("admin.heroImage")} (${selectedLang.toUpperCase()})`}
+                    value={readLang(formData, "heroImage", selectedLang)}
+                    onChange={(url) =>
+                      setFormData(patchLang(formData, "heroImage", selectedLang, url))
+                    }
+                    folder="sites/hero"
+                    placeholder="https://example.com/image.jpg"
+                    description={t("admin.heroImageDescription")}
+                  />
                 </div>
               )}
             </LanguageAwareForm>

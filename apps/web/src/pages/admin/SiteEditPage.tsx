@@ -4,7 +4,7 @@
  * empty values cascade automatically from name / shortDescription / heroImage at SSR + CSR.
  * Saving triggers a best-effort Facebook OG re-scrape when API credentials are configured.
  */
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext } from "react";
 import { appendExtraLanguages, mergeTranslations, patchLang, readLang } from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
@@ -25,7 +25,7 @@ import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { AiAssistantPanel } from "../../components/AiAssistantPanel";
 import { LANG_VALUES, type Lang } from "../../types/enums";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
-import { uploadService } from "../../services/upload/uploadService";
+import { AdminImageField } from "../../components/AdminImageField";
 import { MapComponent } from "../../components/MapComponent";
 import {
   getSite,
@@ -724,10 +724,6 @@ function OverviewTab({
 }) {
   const { t } = useTranslation();
   const { showToast } = useToast();
-  const heroFileRef = useRef<HTMLInputElement>(null);
-  const listIntroFileRef = useRef<HTMLInputElement>(null);
-  const [heroUploading, setHeroUploading] = useState(false);
-  const [listIntroUploading, setListIntroUploading] = useState(false);
   const [facebookRefreshing, setFacebookRefreshing] = useState(false);
 
   const handleRefreshSocialPreview = async () => {
@@ -981,87 +977,15 @@ function OverviewTab({
               >
                 {t("admin.siteEdit.overview.landingHint")}
               </p>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 8,
-                  fontWeight: 500,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {t("admin.heroImage")} ({selectedLang.toUpperCase()})
-              </label>
-              <input
-                type="text"
+              <AdminImageField
+                label={`${t("admin.heroImage")} (${selectedLang.toUpperCase()})`}
                 value={readLang(formData, "heroImage", selectedLang)}
-                onChange={(e) => {
-                  setFormData(patchLang(formData, "heroImage", selectedLang, e.target.value));
-                }}
+                onChange={(url) =>
+                  setFormData(patchLang(formData, "heroImage", selectedLang, url))
+                }
+                folder="sites/hero"
                 placeholder="https://..."
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 6,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  boxSizing: "border-box",
-                }}
               />
-              <input
-                ref={heroFileRef}
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={async (event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (!file) return;
-                  setHeroUploading(true);
-                  try {
-                    const url = await uploadService.uploadImage(file, { folder: "sites/hero" });
-                    setFormData((current: typeof formData) =>
-                      patchLang(current, "heroImage", selectedLang, url)
-                    );
-                  } catch (error) {
-                    showToast(
-                      error instanceof Error ? error.message : t("admin.errors.updateSiteFailed"),
-                      "error"
-                    );
-                  } finally {
-                    setHeroUploading(false);
-                  }
-                }}
-              />
-              <button
-                type="button"
-                disabled={heroUploading}
-                onClick={() => heroFileRef.current?.click()}
-                style={{
-                  marginTop: 8,
-                  padding: "8px 16px",
-                  background: "var(--admin-primary)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 6,
-                  cursor: heroUploading ? "not-allowed" : "pointer",
-                  fontWeight: 600,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {heroUploading ? t("admin.common.uploading") : t("admin.siteEdit.overview.uploadHero")}
-              </button>
-              {readLang(formData, "heroImage", selectedLang) ? (
-                <img
-                  src={readLang(formData, "heroImage", selectedLang)}
-                  alt=""
-                  style={{ marginTop: 8, maxWidth: "100%", maxHeight: 200, borderRadius: 6, display: "block" }}
-                />
-              ) : null}
               <label
                 style={{
                   display: "block",
@@ -1124,89 +1048,15 @@ function OverviewTab({
               >
                 {t("admin.siteEdit.overview.listIntroHint")}
               </p>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 8,
-                  fontWeight: 500,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {t("admin.siteEdit.overview.listIntroImage")} ({selectedLang.toUpperCase()})
-              </label>
-              <input
-                type="text"
+              <AdminImageField
+                label={`${t("admin.siteEdit.overview.listIntroImage")} (${selectedLang.toUpperCase()})`}
                 value={readLang(formData, "listIntroImage", selectedLang)}
-                onChange={(e) => {
-                  setFormData(patchLang(formData, "listIntroImage", selectedLang, e.target.value));
-                }}
+                onChange={(url) =>
+                  setFormData(patchLang(formData, "listIntroImage", selectedLang, url))
+                }
+                folder="sites/list-intro"
                 placeholder="https://..."
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 6,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  boxSizing: "border-box",
-                }}
               />
-              <input
-                ref={listIntroFileRef}
-                type="file"
-                accept="image/*"
-                style={{ display: "none" }}
-                onChange={async (event) => {
-                  const file = event.target.files?.[0];
-                  event.target.value = "";
-                  if (!file) return;
-                  setListIntroUploading(true);
-                  try {
-                    const url = await uploadService.uploadImage(file, { folder: "sites/list-intro" });
-                    setFormData((current: typeof formData) =>
-                      patchLang(current, "listIntroImage", selectedLang, url)
-                    );
-                  } catch (error) {
-                    showToast(
-                      error instanceof Error ? error.message : t("admin.errors.updateSiteFailed"),
-                      "error"
-                    );
-                  } finally {
-                    setListIntroUploading(false);
-                  }
-                }}
-              />
-              <button
-                type="button"
-                disabled={listIntroUploading}
-                onClick={() => listIntroFileRef.current?.click()}
-                style={{
-                  marginTop: 8,
-                  padding: "8px 16px",
-                  background: "var(--admin-primary)",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 6,
-                  cursor: listIntroUploading ? "not-allowed" : "pointer",
-                  fontWeight: 600,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {listIntroUploading
-                  ? t("admin.common.uploading")
-                  : t("admin.siteEdit.overview.uploadListIntroImage")}
-              </button>
-              {readLang(formData, "listIntroImage", selectedLang) ? (
-                <img
-                  src={readLang(formData, "listIntroImage", selectedLang)}
-                  alt=""
-                  style={{ marginTop: 8, maxWidth: "100%", maxHeight: 200, borderRadius: 6, display: "block" }}
-                />
-              ) : null}
               <label
                 style={{
                   display: "block",
@@ -1337,62 +1187,16 @@ function OverviewTab({
                     }}
                   />
                 </div>
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      fontWeight: 500,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {t("admin.seoImage") || t("admin.seoImagePlaceholder")}
-                  </label>
-                  <input
-                    type="text"
-                    value={readLang(formData, "seoImage", selectedLang)}
-                    onChange={(e) => {
-                      setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
-                    }}
-                    placeholder={t("admin.seoImagePlaceholder")}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: 6,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                  <p
-                    style={{
-                      margin: "6px 0 0",
-                      color: "#6b7280",
-                      fontSize: 13,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {t("admin.seoImageHint")}
-                  </p>
-                  {readLang(formData, "seoImage", selectedLang) ? (
-                    <img
-                      src={readLang(formData, "seoImage", selectedLang)}
-                      alt=""
-                      style={{
-                        marginTop: 8,
-                        maxWidth: "100%",
-                        maxHeight: 160,
-                        borderRadius: 6,
-                        display: "block",
-                      }}
-                    />
-                  ) : null}
-                </div>
+                <AdminImageField
+                  label={t("admin.seoImage") || t("admin.seoImagePlaceholder")}
+                  value={readLang(formData, "seoImage", selectedLang)}
+                  onChange={(url) =>
+                    setFormData(patchLang(formData, "seoImage", selectedLang, url))
+                  }
+                  folder="sites/seo"
+                  placeholder={t("admin.seoImagePlaceholder")}
+                  description={t("admin.seoImageHint")}
+                />
                 <div>
                   <label
                     style={{
@@ -2507,83 +2311,22 @@ function AppearanceTab({
             </div>
           )}
 
-          {/* Logo override */}
-          <div style={{ marginBottom: 24 }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 8,
-                fontWeight: 500,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              {t("admin.siteEdit.appearance.logoUrl")} (
-              {t("admin.siteEdit.appearance.override")})
-            </label>
-            <input
-              type="text"
-              value={formData.logoUrl}
-              onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
-              placeholder={brand?.logoUrl || "https://..."}
-              style={{
-                width: "100%",
-                maxWidth: 600,
-                padding: "8px 12px",
-                border: "1px solid #d1d5db",
-                borderRadius: 6,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            />
-            {formData.logoUrl && (
-              <img
-                src={formData.logoUrl}
-                alt="Logo preview"
-                style={{ marginTop: 8, maxHeight: 60, borderRadius: 6 }}
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-            )}
-          </div>
+          <AdminImageField
+            label={`${t("admin.siteEdit.appearance.logoUrl")} (${t("admin.siteEdit.appearance.override")})`}
+            value={formData.logoUrl}
+            onChange={(url) => setFormData({ ...formData, logoUrl: url })}
+            folder="sites/logo"
+            placeholder={brand?.logoUrl || "https://..."}
+          />
 
-          {/* Favicon override */}
-          <div style={{ marginBottom: 24 }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 8,
-                fontWeight: 500,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              {t("admin.siteEdit.appearance.faviconUrl")} (
-              {t("admin.siteEdit.appearance.override")})
-            </label>
-            <input
-              type="text"
-              value={formData.faviconUrl}
-              onChange={(e) => setFormData({ ...formData, faviconUrl: e.target.value })}
-              placeholder={brand?.faviconUrl || "https://..."}
-              style={{
-                width: "100%",
-                maxWidth: 600,
-                padding: "8px 12px",
-                border: "1px solid #d1d5db",
-                borderRadius: 6,
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            />
-          </div>
+          <AdminImageField
+            label={`${t("admin.siteEdit.appearance.faviconUrl")} (${t("admin.siteEdit.appearance.override")})`}
+            value={formData.faviconUrl}
+            onChange={(url) => setFormData({ ...formData, faviconUrl: url })}
+            folder="sites/favicon"
+            placeholder={brand?.faviconUrl || "https://..."}
+          />
 
-          {/* Placeholder images */}
           <div style={{ marginTop: 32 }}>
             <h4
               style={{
@@ -2597,100 +2340,27 @@ function AppearanceTab({
             >
               {t("admin.siteEdit.appearance.placeholders")}
             </h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    fontWeight: 500,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {t("admin.siteEdit.appearance.placeholderCard")}
-                </label>
-                <input
-                  type="text"
-                  value={formData.placeholderCard}
-                  onChange={(e) => setFormData({ ...formData, placeholderCard: e.target.value })}
-                  placeholder="https://..."
-                  style={{
-                    width: "100%",
-                    maxWidth: 600,
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: 6,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    fontWeight: 500,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {t("admin.siteEdit.appearance.placeholderHero")}
-                </label>
-                <input
-                  type="text"
-                  value={formData.placeholderHero}
-                  onChange={(e) => setFormData({ ...formData, placeholderHero: e.target.value })}
-                  placeholder="https://..."
-                  style={{
-                    width: "100%",
-                    maxWidth: 600,
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: 6,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    fontWeight: 500,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {t("admin.siteEdit.appearance.placeholderEventCard")}
-                </label>
-                <input
-                  type="text"
-                  value={formData.placeholderEventCard}
-                  onChange={(e) =>
-                    setFormData({ ...formData, placeholderEventCard: e.target.value })
-                  }
-                  placeholder="https://..."
-                  style={{
-                    width: "100%",
-                    maxWidth: 600,
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: 6,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                />
-              </div>
-            </div>
+            <AdminImageField
+              label={t("admin.siteEdit.appearance.placeholderCard")}
+              value={formData.placeholderCard}
+              onChange={(url) => setFormData({ ...formData, placeholderCard: url })}
+              folder="sites/placeholder-card"
+              placeholder="https://..."
+            />
+            <AdminImageField
+              label={t("admin.siteEdit.appearance.placeholderHero")}
+              value={formData.placeholderHero}
+              onChange={(url) => setFormData({ ...formData, placeholderHero: url })}
+              folder="sites/placeholder-hero"
+              placeholder="https://..."
+            />
+            <AdminImageField
+              label={t("admin.siteEdit.appearance.placeholderEventCard")}
+              value={formData.placeholderEventCard}
+              onChange={(url) => setFormData({ ...formData, placeholderEventCard: url })}
+              folder="sites/placeholder-event"
+              placeholder="https://..."
+            />
           </div>
 
           <button

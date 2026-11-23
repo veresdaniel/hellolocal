@@ -32,7 +32,9 @@ export type Place = {
   description?: string;
 
   heroImage?: string;
-  /** Optional map popup image; UI falls back to heroImage when unset. */
+  /** Optional list/grid card image; UI falls back to heroImage when unset. */
+  cardImage?: string;
+  /** Optional map popup image; UI falls back to cardImage/heroImage when unset. */
   mapImage?: string;
   gallery?: string[];
 

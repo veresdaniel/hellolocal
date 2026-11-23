@@ -530,7 +530,9 @@ model Place {
 
   // Media + discoverability
   heroImage String?
-  // Optional image for map marker popovers; falls back to heroImage when null.
+  // Optional list/grid card image; falls back to heroImage when null.
+  cardImage String?
+  // Optional image for map marker popovers; falls back to cardImage/heroImage when null.
   mapImage String?
 
   // Single primary custom hostname for this place (no SiteDomain-style subdomain list).

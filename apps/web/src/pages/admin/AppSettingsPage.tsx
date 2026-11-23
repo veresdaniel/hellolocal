@@ -56,6 +56,7 @@ import {
 import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEditor";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
+import { AdminImageField } from "../../components/AdminImageField";
 
 const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
 const PLATFORM_HOST_SETTING_KEY = "platform.publicHost";
@@ -1508,36 +1509,13 @@ export function AppSettingsPage() {
           <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
             {t("admin.defaultShareImage.help")}
           </p>
-          <input
-            autoComplete="off"
-            spellCheck={false}
-            placeholder={t("admin.defaultShareImage.placeholder")}
+          <AdminImageField
+            label={t("common.image")}
             value={defaultShareImage}
-            onChange={(event) => setDefaultShareImage(event.target.value)}
-            style={{
-              display: "block",
-              width: "min(100%, 560px)",
-              minHeight: 42,
-              padding: "0 12px",
-              border: "1px solid #d9d3e4",
-              borderRadius: 8,
-              font: "inherit",
-              boxSizing: "border-box",
-            }}
+            onChange={setDefaultShareImage}
+            folder="platform/share"
+            placeholder={t("admin.defaultShareImage.placeholder")}
           />
-          {defaultShareImage.trim() ? (
-            <img
-              src={defaultShareImage.trim()}
-              alt=""
-              style={{
-                marginTop: 12,
-                maxWidth: "min(100%, 320px)",
-                maxHeight: 160,
-                borderRadius: 8,
-                display: "block",
-              }}
-            />
-          ) : null}
           <div style={{ marginTop: 12 }}>
             <button
               type="button"

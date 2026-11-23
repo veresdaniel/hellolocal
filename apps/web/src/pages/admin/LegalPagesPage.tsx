@@ -18,6 +18,7 @@ import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
 import { CrawlableToggle } from "../../components/CrawlableToggle";
+import { AdminImageField } from "../../components/AdminImageField";
 import {
   AdminResponsiveTable,
   type TableColumn,
@@ -848,35 +849,15 @@ export function LegalPagesPage() {
                     </small>
                   </div>
 
-                  <div style={{ marginBottom: 16 }}>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: 4,
-                        fontFamily:
-                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}
-                    >
-                      SEO {t("common.image")}
-                    </label>
-                    <input
-                      type="url"
-                      value={
-                        readLang(formData, "seoImage", selectedLang)
-                      }
-                      onChange={(e) => {
-                        setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
-                      }}
-                      placeholder={t("admin.seoImagePlaceholder") || "SEO image URL"}
-                      style={{
-                        width: "100%",
-                        padding: 8,
-                        fontSize: 16,
-                        border: "1px solid #ddd",
-                        borderRadius: 4,
-                      }}
-                    />
-                  </div>
+                  <AdminImageField
+                    label={`SEO ${t("common.image")}`}
+                    value={readLang(formData, "seoImage", selectedLang)}
+                    onChange={(url) =>
+                      setFormData(patchLang(formData, "seoImage", selectedLang, url))
+                    }
+                    folder="legal-pages/seo"
+                    placeholder={t("admin.seoImagePlaceholder") || "SEO image URL"}
+                  />
 
                   <div style={{ marginBottom: 0 }}>
                     <label

@@ -13,6 +13,7 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
+import { AdminImageField } from "../../components/AdminImageField";
 import {
   getCollection,
   createCollection,
@@ -994,48 +995,15 @@ function ContentTab({
               />
             </div>
 
-            {/* Hero Image */}
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 8,
-                  fontWeight: 600,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  color: "#374151",
-                }}
-              >
-                {t("admin.collections.heroImage")} ({selectedLang.toUpperCase()})
-              </label>
-              <input
-                type="text"
-                value={
-                  readLang(formData, "heroImage", selectedLang)
-                }
-                onChange={(e) => {
-                  setFormData(patchLang(formData, "heroImage", selectedLang, e.target.value));
-                }}
-                placeholder="https://example.com/image.jpg"
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 6,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  transition: "border-color 0.2s ease",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "var(--admin-primary)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "#d1d5db";
-                }}
-              />
-            </div>
+            <AdminImageField
+              label={`${t("admin.collections.heroImage")} (${selectedLang.toUpperCase()})`}
+              value={readLang(formData, "heroImage", selectedLang)}
+              onChange={(url) =>
+                setFormData(patchLang(formData, "heroImage", selectedLang, url))
+              }
+              folder="collections/hero"
+              placeholder="https://example.com/image.jpg"
+            />
 
             {/* SEO Fields */}
             <div
@@ -1144,47 +1112,15 @@ function ContentTab({
                   />
                 </div>
 
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      fontWeight: 600,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      color: "#374151",
-                    }}
-                  >
-                    {t("admin.collections.seoImage")}
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      readLang(formData, "seoImage", selectedLang)
-                    }
-                    onChange={(e) => {
-                      setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
-                    }}
-                    placeholder="https://example.com/seo-image.jpg"
-                    style={{
-                      width: "100%",
-                      padding: "10px 14px",
-                      border: "1px solid #d1d5db",
-                      borderRadius: 6,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      transition: "border-color 0.2s ease",
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "var(--admin-primary)";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "#d1d5db";
-                    }}
-                  />
-                </div>
+                <AdminImageField
+                  label={t("admin.collections.seoImage")}
+                  value={readLang(formData, "seoImage", selectedLang)}
+                  onChange={(url) =>
+                    setFormData(patchLang(formData, "seoImage", selectedLang, url))
+                  }
+                  folder="collections/seo"
+                  placeholder="https://example.com/seo-image.jpg"
+                />
 
                 <div>
                   <label

@@ -1,5 +1,5 @@
 // src/pages/admin/PlacePriceListPage.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -11,9 +11,11 @@ import { AdminPageHeader } from "../../components/AdminPageHeader";
 import {
   getPlace,
   getPlacePriceList,
+  getPlatformCurrencies,
   updatePlacePriceList,
   type PriceListBlock,
   type PriceList,
+  type PlatformCurrency,
 } from "../../api/admin.api";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { formatMoney } from "../../utils/formatMoney";
@@ -43,6 +45,11 @@ export function PlacePriceListPage() {
   const { data: platformSettings } = usePlatformSettings({
     lang: lang || "hu",
     siteKey: "",
+  });
+
+  const { data: platformCurrencies = [] } = useQuery({
+    queryKey: ["platformCurrencies"],
+    queryFn: getPlatformCurrencies,
   });
 
   // Load place data
@@ -187,6 +194,20 @@ export function PlacePriceListPage() {
   const platformLocale = (platformSettings as any)?.platform?.locale || "hu-HU";
   const platformCurrency = (platformSettings as any)?.platform?.currency || "HUF";
 
+  const currencyOptions = useMemo((): PlatformCurrency[] => {
+    const list = [...platformCurrencies];
+    const current = (currency || "").trim();
+    if (current && !list.some((c) => c.code === current)) {
+      list.unshift({
+        code: current,
+        name: current,
+        plural: current,
+        symbol: null,
+      });
+    }
+    return list;
+  }, [platformCurrencies, currency]);
+
   if (isLoadingPlace || isLoadingPriceList) {
     return null;
   }
@@ -313,9 +334,8 @@ export function PlacePriceListPage() {
               >
                 {t("admin.currency")}
               </label>
-              <input
-                type="text"
-                value={currency}
+              <select
+                value={currency || platformCurrency}
                 onChange={(e) => {
                   setCurrency(e.target.value);
                   setHasUnsavedChanges(true);
@@ -327,9 +347,22 @@ export function PlacePriceListPage() {
                   borderRadius: 8,
                   fontSize: "clamp(14px, 3.5vw, 16px)",
                   fontFamily: "'Inter', system-ui, sans-serif",
+                  background: "#fff",
                 }}
-                placeholder="HUF"
-              />
+              >
+                {currencyOptions.length === 0 ? (
+                  <option value={currency || platformCurrency}>
+                    {currency || platformCurrency}
+                  </option>
+                ) : (
+                  currencyOptions.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.code}
+                      {c.symbol ? ` (${c.symbol})` : ""} — {c.name}
+                    </option>
+                  ))
+                )}
+              </select>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <input

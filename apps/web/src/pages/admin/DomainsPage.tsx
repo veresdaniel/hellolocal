@@ -20,6 +20,7 @@ import {
   type CardField,
 } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { AdminImageField } from "../../components/AdminImageField";
 import { isValidImageUrl } from "../../utils/urlValidation";
 
 export function DomainsPage() {
@@ -333,24 +334,12 @@ export function DomainsPage() {
             </div>
 
             <div>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                {t("admin.logoUrl")}
-              </label>
-              <input
-                type="text"
+              <AdminImageField
+                label={t("admin.logoUrl")}
                 value={formData.logoUrl}
-                onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
+                onChange={(url) => setFormData({ ...formData, logoUrl: url })}
+                folder="brands/logo"
                 placeholder="https://example.com/logo.png"
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.logoUrl ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
-                  borderRadius: 8,
-                  boxSizing: "border-box",
-                }}
               />
               {formErrors.logoUrl && (
                 <p
@@ -368,24 +357,12 @@ export function DomainsPage() {
             </div>
 
             <div>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                {t("admin.faviconUrl")}
-              </label>
-              <input
-                type="text"
+              <AdminImageField
+                label={t("admin.faviconUrl")}
                 value={formData.faviconUrl}
-                onChange={(e) => setFormData({ ...formData, faviconUrl: e.target.value })}
+                onChange={(url) => setFormData({ ...formData, faviconUrl: url })}
+                folder="brands/favicon"
                 placeholder="https://example.com/favicon.ico"
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.faviconUrl ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
-                  borderRadius: 8,
-                  boxSizing: "border-box",
-                }}
               />
               {formErrors.faviconUrl && (
                 <p
@@ -418,28 +395,14 @@ export function DomainsPage() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                    {t("admin.defaultPlaceholderCardImage")}
-                  </label>
-                  <input
-                    type="text"
+                  <AdminImageField
+                    label={t("admin.defaultPlaceholderCardImage")}
                     value={formData.defaultPlaceholderCardImage}
-                    onChange={(e) =>
-                      setFormData({ ...formData, defaultPlaceholderCardImage: e.target.value })
+                    onChange={(url) =>
+                      setFormData({ ...formData, defaultPlaceholderCardImage: url })
                     }
+                    folder="brands/placeholder-card"
                     placeholder="https://example.com/placeholder-card.jpg"
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.defaultPlaceholderCardImage
-                        ? "2px solid #dc3545"
-                        : "2px solid var(--admin-primary-border)",
-                      borderRadius: 8,
-                      boxSizing: "border-box",
-                    }}
                   />
                   {formErrors.defaultPlaceholderCardImage && (
                     <p
@@ -457,31 +420,14 @@ export function DomainsPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                    {t("admin.defaultPlaceholderDetailHeroImage")}
-                  </label>
-                  <input
-                    type="text"
+                  <AdminImageField
+                    label={t("admin.defaultPlaceholderDetailHeroImage")}
                     value={formData.defaultPlaceholderDetailHeroImage}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        defaultPlaceholderDetailHeroImage: e.target.value,
-                      })
+                    onChange={(url) =>
+                      setFormData({ ...formData, defaultPlaceholderDetailHeroImage: url })
                     }
+                    folder="brands/placeholder-hero"
                     placeholder="https://example.com/placeholder-hero.jpg"
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.defaultPlaceholderDetailHeroImage
-                        ? "2px solid #dc3545"
-                        : "2px solid var(--admin-primary-border)",
-                      borderRadius: 8,
-                      boxSizing: "border-box",
-                    }}
                   />
                   {formErrors.defaultPlaceholderDetailHeroImage && (
                     <p
@@ -499,28 +445,14 @@ export function DomainsPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                    {t("admin.defaultEventPlaceholderCardImage")}
-                  </label>
-                  <input
-                    type="text"
+                  <AdminImageField
+                    label={t("admin.defaultEventPlaceholderCardImage")}
                     value={formData.defaultEventPlaceholderCardImage}
-                    onChange={(e) =>
-                      setFormData({ ...formData, defaultEventPlaceholderCardImage: e.target.value })
+                    onChange={(url) =>
+                      setFormData({ ...formData, defaultEventPlaceholderCardImage: url })
                     }
+                    folder="brands/placeholder-event"
                     placeholder="https://example.com/placeholder-event.jpg"
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.defaultEventPlaceholderCardImage
-                        ? "2px solid #dc3545"
-                        : "2px solid var(--admin-primary-border)",
-                      borderRadius: 8,
-                      boxSizing: "border-box",
-                    }}
                   />
                   {formErrors.defaultEventPlaceholderCardImage && (
                     <p
@@ -538,24 +470,12 @@ export function DomainsPage() {
                 </div>
 
                 <div>
-                  <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                    {t("admin.domainBadgeIcon")}
-                  </label>
-                  <input
-                    type="text"
+                  <AdminImageField
+                    label={t("admin.domainBadgeIcon")}
                     value={formData.brandBadgeIcon}
-                    onChange={(e) => setFormData({ ...formData, brandBadgeIcon: e.target.value })}
+                    onChange={(url) => setFormData({ ...formData, brandBadgeIcon: url })}
+                    folder="brands/badge"
                     placeholder="https://example.com/badge-icon.png"
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      border: formErrors.brandBadgeIcon ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
-                      borderRadius: 8,
-                      boxSizing: "border-box",
-                    }}
                   />
                   {formErrors.brandBadgeIcon && (
                     <p

@@ -92,9 +92,9 @@ export function PlaceCard({ place }: PlaceCardProps) {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Determine which image to use: place image or default placeholder
-  // Sanitize URLs to prevent XSS attacks
+  // Prefer dedicated card image, then hero, then platform placeholder
   const imageUrl =
+    sanitizeImageUrl(place.cardImage) ||
     sanitizeImageUrl(place.heroImage) ||
     sanitizeImageUrl(platformSettings?.defaultPlaceholderCardImage) ||
     null;

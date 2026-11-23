@@ -12,6 +12,18 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+### Added
+
+- Place `cardImage` field (list/card view); CDN upload for hero / card / map images
+  in place admin; seed sample card + hero images in snapshot.
+- Shared `AdminImageField` (CDN) wired across admin image inputs (places, events,
+  towns, collections, sites, brands/domains, SEO images, products, share image).
+
+### Changed
+
+- Place price list: currency is a dropdown of catalog currencies (not free text).
+- PlaceCard / map popup prefer cardImage before heroImage fallback.
+
 ## [1.0.26-beta] - 2026-11-23
 
 ### Added

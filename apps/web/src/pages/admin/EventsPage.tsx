@@ -40,6 +40,7 @@ import { findTranslation } from "../../utils/langHelpers";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
 import { DomainInput } from "../../components/DomainInput";
+import { AdminImageField } from "../../components/AdminImageField";
 import type { Lang } from "../../types/enums";
 import { buildPublicUrl } from "../../app/urls";
 import { useToast } from "../../contexts/ToastContext";
@@ -1254,34 +1255,19 @@ export function EventsPage() {
                     </small>
                   </div>
 
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4 }}>
-                      SEO {t("common.image")}
-                    </label>
-                    <input
-                      type="url"
-                      value={
-                        readLang(formData, "seoImage", selectedLang)
-                      }
-                      onChange={(e) => {
-                        setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
-                      }}
-                      placeholder={
-                        t("admin.seoImagePlaceholder") ||
-                        "SEO image URL (leave empty for hero image)"
-                      }
-                      style={{
-                        width: "100%",
-                        padding: 8,
-                        fontSize: 16,
-                        border: "1px solid #ddd",
-                        borderRadius: 4,
-                      }}
-                    />
-                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
-                      {t("admin.seoImageHint") || "If empty, hero image will be used"}
-                    </small>
-                  </div>
+                  <AdminImageField
+                    label={`SEO ${t("common.image")}`}
+                    value={readLang(formData, "seoImage", selectedLang)}
+                    onChange={(url) =>
+                      setFormData(patchLang(formData, "seoImage", selectedLang, url))
+                    }
+                    folder="events/seo"
+                    placeholder={
+                      t("admin.seoImagePlaceholder") ||
+                      "SEO image URL (leave empty for hero image)"
+                    }
+                    description={t("admin.seoImageHint") || "If empty, hero image will be used"}
+                  />
 
                   <div style={{ marginBottom: 0 }}>
                     <label style={{ display: "block", marginBottom: 4 }}>
@@ -1568,37 +1554,13 @@ export function EventsPage() {
                   />
                 </div>
 
-                {/* Hero Image */}
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      color: "var(--admin-primary)",
-                      fontWeight: 600,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {t("admin.heroImage")}
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.heroImage}
-                    onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
-                    style={{
-                      width: "100%",
-                      padding: 12,
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      border: "1px solid #ddd",
-                      borderRadius: 4,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                    placeholder={t("admin.urlPlaceholder")}
-                  />
-                </div>
+                <AdminImageField
+                  label={t("admin.heroImage")}
+                  value={formData.heroImage}
+                  onChange={(url) => setFormData({ ...formData, heroImage: url })}
+                  folder="events/hero"
+                  placeholder={t("admin.urlPlaceholder")}
+                />
 
                 {/* Checkboxes */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

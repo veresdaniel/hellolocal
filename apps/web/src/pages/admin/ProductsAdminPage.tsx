@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -18,7 +18,7 @@ import {
   type AdminProduct,
   type ProductWriteInput,
 } from "../../api/products.api";
-import { uploadService } from "../../services/upload/uploadService";
+import { AdminImageField } from "../../components/AdminImageField";
 import { LANG_VALUES, type Lang } from "../../app/config";
 import "../../styles/products.css";
 
@@ -109,11 +109,9 @@ export function ProductsAdminPage() {
   } = useAdminHierarchyFilters();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [langTab, setLangTab] = useState<Lang>("hu");
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [categoryFilter, setCategoryFilter] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
@@ -248,20 +246,6 @@ export function ProductsAdminPage() {
       }
     } catch (error) {
       showToast(error instanceof Error ? error.message : t("admin.catalog.saveFailed"), "error");
-    }
-  }
-
-  async function onFile(file: File | undefined) {
-    if (!file || !draft) return;
-    setUploading(true);
-    try {
-      const url = await uploadService.uploadImage(file, { folder: "products" });
-      patchDraft({ imageUrl: url });
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : t("admin.catalog.saveFailed"), "error");
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -445,36 +429,13 @@ export function ProductsAdminPage() {
             </div>
           </div>
 
-          <div className="catalog-admin__field">
-            <label htmlFor="catalog-image-url">{t("admin.catalog.image")}</label>
-            <div className="catalog-admin__image-row">
-              <input
-                id="catalog-image-url"
-                value={draft.imageUrl}
-                placeholder="https://"
-                onChange={(event) => patchDraft({ imageUrl: event.target.value })}
-              />
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                hidden
-                disabled={uploading}
-                onChange={(event) => void onFile(event.target.files?.[0])}
-              />
-              <button
-                type="button"
-                className="catalog-admin__upload"
-                disabled={uploading}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {uploading ? t("admin.common.uploading") : t("admin.catalog.uploadImage")}
-              </button>
-            </div>
-            {draft.imageUrl ? (
-              <img className="catalog-admin__preview" src={draft.imageUrl} alt="" />
-            ) : null}
-          </div>
+          <AdminImageField
+            label={t("admin.catalog.image")}
+            value={draft.imageUrl}
+            onChange={(url) => patchDraft({ imageUrl: url })}
+            folder="products"
+            placeholder="https://"
+          />
 
           <div className="catalog-admin__grid catalog-admin__grid--meta">
             <div className="catalog-admin__field">

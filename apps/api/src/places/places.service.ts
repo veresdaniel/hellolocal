@@ -500,6 +500,7 @@ export class PlacesService {
         shortDescription: placeTranslation?.shortDescription ?? null, // HTML - for list view cards
         description: placeTranslation?.description ?? null,
         heroImage: p.heroImage ?? null,
+        cardImage: p.cardImage ?? null,
         mapImage: p.mapImage ?? null,
         gallery: galleryImages,
         location: { lat: p.lat ?? null, lng: p.lng ?? null },
@@ -750,6 +751,7 @@ export class PlacesService {
       shortDescription: placeTranslation?.shortDescription ?? null,
       description: placeTranslation?.description ?? null,
       heroImage: place.heroImage ?? null,
+      cardImage: place.cardImage ?? null,
       mapImage: place.mapImage ?? null,
       location: { lat: place.lat ?? null, lng: place.lng ?? null },
       contact: {

@@ -80,6 +80,7 @@ export interface CreatePlaceDto {
   isActive?: boolean;
   isCrawlable?: boolean;
   heroImage?: string | null;
+  cardImage?: string | null;
   mapImage?: string | null;
   lat?: number | string | null; // Can be string from HTTP requests
   lng?: number | string | null; // Can be string from HTTP requests
@@ -125,6 +126,7 @@ export interface UpdatePlaceDto {
   isActive?: boolean;
   isCrawlable?: boolean;
   heroImage?: string | null;
+  cardImage?: string | null;
   mapImage?: string | null;
   lat?: number | string | null; // Can be string from HTTP requests
   lng?: number | string | null; // Can be string from HTTP requests
@@ -413,6 +415,7 @@ export class AdminPlaceService {
           featuredUntil: true,
           galleryLimitOverride: true,
           heroImage: true,
+          cardImage: true,
           mapImage: true,
           lat: true,
           lng: true,
@@ -859,6 +862,7 @@ export class AdminPlaceService {
     }
     if (restData.priceBandId !== undefined) updateData.priceBandId = restData.priceBandId;
     if (restData.heroImage !== undefined) updateData.heroImage = restData.heroImage;
+    if (restData.cardImage !== undefined) updateData.cardImage = restData.cardImage;
     if (restData.mapImage !== undefined) updateData.mapImage = restData.mapImage;
     // Gallery is now managed via Gallery entities and shortcodes, not place.gallery array
     if (restData.isActive !== undefined) updateData.isActive = restData.isActive;

@@ -20,6 +20,7 @@ import { CoordinateSuggestion } from "../../components/CoordinateSuggestion";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
 import { DomainInput } from "../../components/DomainInput";
 import { CrawlableToggle } from "../../components/CrawlableToggle";
+import { AdminImageField } from "../../components/AdminImageField";
 import { findTranslation } from "../../utils/langHelpers";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import type { Lang} from "../../types/enums";
@@ -626,35 +627,15 @@ export function TownsPage() {
                   />
                 </div>
 
-                <div style={{ marginBottom: 16 }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 4,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {t("admin.heroImage")}
-                  </label>
-                  <input
-                    type="text"
-                    value={
-                      readLang(formData, "heroImage", selectedLang)
-                    }
-                    onChange={(e) => {
-                      setFormData(patchLang(formData, "heroImage", selectedLang, e.target.value));
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: 8,
-                      fontSize: 16,
-                      border: "1px solid #ddd",
-                      borderRadius: 4,
-                    }}
-                    placeholder={t("admin.urlPlaceholder")}
-                  />
-                </div>
+                <AdminImageField
+                  label={t("admin.heroImage")}
+                  value={readLang(formData, "heroImage", selectedLang)}
+                  onChange={(url) =>
+                    setFormData(patchLang(formData, "heroImage", selectedLang, url))
+                  }
+                  folder="towns/hero"
+                  placeholder={t("admin.urlPlaceholder")}
+                />
 
                 <div
                   style={{
@@ -768,32 +749,19 @@ export function TownsPage() {
                     </small>
                   </div>
 
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4 }}>
-                      {t("admin.seoImage") || t("admin.seoImagePlaceholder")}
-                    </label>
-                    <input
-                      type="url"
-                      value={readLang(formData, "seoImage", selectedLang)}
-                      onChange={(e) => {
-                        setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
-                      }}
-                      placeholder={
-                        t("admin.seoImagePlaceholder") ||
-                        "SEO image URL (leave empty for hero image)"
-                      }
-                      style={{
-                        width: "100%",
-                        padding: 8,
-                        fontSize: 16,
-                        border: "1px solid #ddd",
-                        borderRadius: 4,
-                      }}
-                    />
-                    <small style={{ color: "#665d78", fontSize: 12, marginTop: 4, display: "block" }}>
-                      {t("admin.seoImageHint") || "If empty, hero image will be used"}
-                    </small>
-                  </div>
+                  <AdminImageField
+                    label={t("admin.seoImage") || t("admin.seoImagePlaceholder")}
+                    value={readLang(formData, "seoImage", selectedLang)}
+                    onChange={(url) =>
+                      setFormData(patchLang(formData, "seoImage", selectedLang, url))
+                    }
+                    folder="towns/seo"
+                    placeholder={
+                      t("admin.seoImagePlaceholder") ||
+                      "SEO image URL (leave empty for hero image)"
+                    }
+                    description={t("admin.seoImageHint") || "If empty, hero image will be used"}
+                  />
 
                   <div style={{ marginBottom: 0 }}>
                     <label style={{ display: "block", marginBottom: 4 }}>

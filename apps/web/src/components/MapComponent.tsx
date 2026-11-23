@@ -63,8 +63,9 @@ interface MapComponentProps {
     lng: number;
     name?: string;
     category?: string | null;
-    /** Optional map-card image; falls back to heroImage. */
+    /** Optional map-card image; falls back to cardImage, then heroImage. */
     mapImage?: string | null;
+    cardImage?: string | null;
     heroImage?: string | null;
     onClick?: () => void;
     distance?: number; // Distance in km from user location
@@ -1510,7 +1511,10 @@ export function MapComponent({
           const destinationReady = Number.isFinite(marker.lat) && Number.isFinite(marker.lng);
           const showDirections = destinationReady && showEnhancedCard;
           const cardImageUrl = showEnhancedCard
-            ? sanitizeImageUrl(marker.mapImage) || sanitizeImageUrl(marker.heroImage) || null
+            ? sanitizeImageUrl(marker.mapImage) ||
+                sanitizeImageUrl(marker.cardImage) ||
+                sanitizeImageUrl(marker.heroImage) ||
+                null
             : null;
 
           return (

@@ -230,6 +230,7 @@ export function ExplorePage() {
     name: place.name,
     category: place.category,
     mapImage: place.mapImage ?? null,
+    cardImage: place.cardImage ?? null,
     heroImage: place.heroImage ?? null,
     onClick: place.slug
       ? () => {

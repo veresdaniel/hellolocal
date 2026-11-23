@@ -48,6 +48,7 @@ import { CoordinateSuggestion } from "../../components/CoordinateSuggestion";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
 import { PlaceBillingSection } from "../../components/PlaceBillingSection";
 import { PlaceMembersPanel } from "../../components/PlaceMembersPanel";
+import { AdminImageField } from "../../components/AdminImageField";
 import { FloorplanEditor } from "../../components/FloorplanEditor";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
@@ -72,6 +73,7 @@ interface Place {
   isFeatured?: boolean;
   featuredUntil?: string | null;
   heroImage: string | null;
+  cardImage?: string | null;
   mapImage?: string | null;
   customDomain?: string | null;
   domainLang?: string | null;
@@ -290,6 +292,7 @@ export function PlacesPage() {
     seoKeywordsEn: [] as string[],
     seoKeywordsDe: [] as string[],
     heroImage: "",
+    cardImage: "",
     mapImage: "",
     lat: "",
     lng: "",
@@ -624,6 +627,7 @@ export function PlacesPage() {
         translations,
         openingHours: formData.openingHours,
         heroImage: formData.heroImage || null,
+        cardImage: formData.cardImage || null,
         mapImage: formData.mapImage || null,
         lat: formData.lat ? parseFloat(formData.lat) : null,
         lng: formData.lng ? parseFloat(formData.lng) : null,
@@ -764,6 +768,7 @@ export function PlacesPage() {
           })(),
           openingHours: formData.openingHours,
           heroImage: formData.heroImage || null,
+          cardImage: formData.cardImage || null,
           mapImage: formData.mapImage || null,
           lat: formData.lat ? parseFloat(formData.lat) : null,
           lng: formData.lng ? parseFloat(formData.lng) : null,
@@ -911,6 +916,7 @@ export function PlacesPage() {
       seoKeywordsEn: en?.seoKeywords || [],
       seoKeywordsDe: de?.seoKeywords || [],
       heroImage: place.heroImage || "",
+      cardImage: place.cardImage || "",
       mapImage: place.mapImage || "",
       lat: place.lat?.toString() || "",
       lng: place.lng?.toString() || "",
@@ -986,6 +992,7 @@ export function PlacesPage() {
       seoKeywordsEn: [],
       seoKeywordsDe: [],
       heroImage: "",
+      cardImage: "",
       mapImage: "",
       lat: "",
       lng: "",
@@ -1101,6 +1108,7 @@ export function PlacesPage() {
           seoKeywordsEn: [],
           seoKeywordsDe: [],
           heroImage: "",
+          cardImage: "",
           mapImage: "",
           lat: "",
           lng: "",
@@ -1747,33 +1755,16 @@ export function PlacesPage() {
                         </small>
                       </div>
 
-                      <div style={{ marginBottom: 16 }}>
-                        <label style={labelStyle}>SEO {t("common.image")}</label>
-                        <input
-                          type="url"
-                          value={
-                            readLang(formData, "seoImage", selectedLang)
-                          }
-                          onChange={(e) => {
-                            setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
-                          }}
-                          placeholder={t("admin.seoImagePlaceholder")}
-                          style={{
-                            width: "100%",
-                            padding: 12,
-                            fontSize: "clamp(15px, 3.5vw, 16px)",
-                            border: "1px solid #ddd",
-                            borderRadius: 4,
-                            fontFamily:
-                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                          }}
-                        />
-                        <small
-                          style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}
-                        >
-                          {t("admin.seoImageHint")}
-                        </small>
-                      </div>
+                      <AdminImageField
+                        label={`SEO ${t("common.image")}`}
+                        value={readLang(formData, "seoImage", selectedLang)}
+                        onChange={(url) =>
+                          setFormData(patchLang(formData, "seoImage", selectedLang, url))
+                        }
+                        folder="places/seo"
+                        placeholder={t("admin.seoImagePlaceholder")}
+                        description={t("admin.seoImageHint")}
+                      />
 
                       <div style={{ marginBottom: 0 }}>
                         <label style={labelStyle}>{t("admin.seoKeywords")}</label>
@@ -2119,55 +2110,31 @@ export function PlacesPage() {
               onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
             />
 
-            {/* Hero kép teljes szélességben */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>{t("admin.heroImageUrl")}</label>
-              <input
-                type="url"
-                value={formData.heroImage}
-                onChange={(e) => setFormData({ ...formData, heroImage: e.target.value })}
-                style={{
-                  width: "100%",
-                  padding: 12,
-                  fontSize: "clamp(15px, 3.5vw, 16px)",
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              />
-            </div>
+            <AdminImageField
+              label={t("admin.heroImageUrl")}
+              value={formData.heroImage}
+              onChange={(url) => setFormData({ ...formData, heroImage: url })}
+              folder="places/hero"
+              description={t("admin.heroImageDescription")}
+            />
 
-            {/* Optional map-card image (falls back to hero) */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>{t("admin.mapImageUrl")}</label>
-              <input
-                type="url"
-                value={formData.mapImage}
-                onChange={(e) => setFormData({ ...formData, mapImage: e.target.value })}
-                placeholder={t("admin.mapImagePlaceholder")}
-                style={{
-                  width: "100%",
-                  padding: 12,
-                  fontSize: "clamp(15px, 3.5vw, 16px)",
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              />
-              <div
-                style={{
-                  marginTop: 6,
-                  fontSize: 13,
-                  color: "var(--admin-muted)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {t("admin.mapImageDescription")}
-              </div>
-            </div>
+            <AdminImageField
+              label={t("admin.cardImageUrl")}
+              value={formData.cardImage}
+              onChange={(url) => setFormData({ ...formData, cardImage: url })}
+              folder="places/card"
+              placeholder={t("admin.cardImagePlaceholder")}
+              description={t("admin.cardImageDescription")}
+            />
+
+            <AdminImageField
+              label={t("admin.mapImageUrl")}
+              value={formData.mapImage}
+              onChange={(url) => setFormData({ ...formData, mapImage: url })}
+              folder="places/map"
+              placeholder={t("admin.mapImagePlaceholder")}
+              description={t("admin.mapImageDescription")}
+            />
 
             {/* Billing/Plan fields - visible to everyone, but modification disabled for editors */}
             {editingId && (
