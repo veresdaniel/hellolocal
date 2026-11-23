@@ -7,12 +7,15 @@ import { isProductionSeoEnvironment, PUBLIC_LANGS } from "./public-path.util";
 import type { SitemapScope } from "./sitemap-scope";
 
 /**
- * OG / share scrapers. Meta's Sharing Debugger treats `Disallow: /` as HTTP 403
- * and often ignores `$` Allow anchors — give these UAs an explicit Allow group.
+ * OG / share scrapers. Meta's Sharing Debugger treats a matching `Disallow`
+ * as HTTP 403 — give these UAs an explicit Allow group (and empty Disallow,
+ * which some Meta parsers accept more reliably than Allow alone).
  */
 const SOCIAL_PREVIEW_BOTS = [
   "facebookexternalhit",
   "Facebot",
+  "meta-externalagent",
+  "meta-externalfetcher",
   "Twitterbot",
   "LinkedInBot",
   "WhatsApp",
@@ -26,9 +29,26 @@ function socialPreviewAllowBlock(): string[] {
     "# Social / OG preview scrapers (Meta reports robots Disallow as 403)",
   ];
   for (const ua of SOCIAL_PREVIEW_BOTS) {
-    lines.push(`User-agent: ${ua}`, "Allow: /", "");
+    // Empty Disallow = allow all for this UA (legacy Meta-friendly form).
+    lines.push(`User-agent: ${ua}`, "Allow: /", "Disallow:", "");
   }
   return lines;
+}
+
+/**
+ * Landing-only rules for User-agent: * without end-of-URL `$` anchors.
+ * Meta's crawler ignores `$` (Google extension) and then only sees `Disallow: /`,
+ * which the Sharing Debugger surfaces as HTTP 403 even for facebookexternalhit
+ * when its UA group is mis-applied. `Disallow: /*/` blocks nested paths while
+ * still allowing `/`, `/hu`, `/en`, `/de`.
+ */
+function landingOnlyStarBlock(): string[] {
+  return [
+    "User-agent: *",
+    "Allow: /",
+    "Disallow: /*/",
+    ...PUBLIC_LANGS.flatMap((lang) => [`Disallow: /${lang}/`]),
+  ];
 }
 
 @Injectable()
@@ -37,12 +57,15 @@ export class RobotsService {
 
   /**
    * Non-prod (local/staging/beta/devel): always Disallow all, no Sitemap line.
-   * Prod platform host:
+   * Prod:
    * - Global on → Allow / (admin/api still Disallow)
-   * - Global off + landing on → Allow only apex + `/:lang` landings (rest Disallow);
-   *   social preview bots get Allow: / so Facebook/LinkedIn can scrape OG
-   * - Global off + landing off → Disallow all
-   * Custom/unknown hosts follow global only (landing switch is platform marketing only).
+   * - Global off + platform landing on → * may crawl apex + `/:lang` only;
+   *   every other path stays Disallow for search bots
+   * - Global off otherwise → * Disallow all
+   * Social / OG scrapers always get Allow: / on known hosts when * is restricted,
+   * so Facebook can preview any shared URL (landing, list, place, custom domain) —
+   * not only the marketing landing.
+   * Unknown hosts: Disallow all (no social exception).
    * @param scope From {@link SitemapScopeResolver} (Host / X-Forwarded-Host)
    */
   async buildRobotsTxt(scope: SitemapScope): Promise<string> {
@@ -70,23 +93,22 @@ export class RobotsService {
       ].join("\n");
     }
 
-    // Platform marketing landing may stay crawlable while global content indexing is off.
+    // Search indexing off: keep * tight, but always let OG scrapers fetch any path
+    // (platform + custom domains — place/event/list shares, not just the landing).
     if (!globalOn) {
       if (scope.kind === "platform" && landingOn) {
         return [
           "# HelloLocal robots.txt — platform landing only (global indexing off)",
           ...socialPreviewAllowBlock(),
-          "User-agent: *",
-          "Allow: /$",
-          ...PUBLIC_LANGS.map((lang) => `Allow: /${lang}$`),
-          "Disallow: /",
+          ...landingOnlyStarBlock(),
           "",
           sitemapLine,
           "",
         ].join("\n");
       }
       return [
-        "# HelloLocal — crawling disabled",
+        "# HelloLocal — crawling disabled (social OG scrapers allowed)",
+        ...socialPreviewAllowBlock(),
         "User-agent: *",
         "Disallow: /",
         "",

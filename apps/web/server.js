@@ -98,10 +98,60 @@ function readShell() {
 }
 
 /**
+ * Honor `Range: bytes=…` for small text bodies (robots.txt).
+ * Meta's Sharing Debugger intermittently treats a full 200 robots response as
+ * blocked (surfaces as HTTP 403) but accepts 206 Partial Content — see Meta
+ * community threads on facebookexternalhit + robots.txt.
+ */
+function sendTextWithOptionalRange(req, res, body, contentType, cacheControl) {
+  const buf = Buffer.from(body, 'utf8');
+  const total = buf.length;
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', cacheControl);
+  res.setHeader('Accept-Ranges', 'bytes');
+
+  const range = req.get('range');
+  if (!range) {
+    res.setHeader('Content-Length', String(total));
+    return res.status(200).send(buf);
+  }
+
+  const match = /^bytes=(\d*)-(\d*)$/i.exec(String(range).trim());
+  if (!match) {
+    res.setHeader('Content-Range', `bytes */${total}`);
+    return res.status(416).end();
+  }
+
+  let start = match[1] === '' ? undefined : Number(match[1]);
+  let end = match[2] === '' ? undefined : Number(match[2]);
+  if (start === undefined && end === undefined) {
+    res.setHeader('Content-Range', `bytes */${total}`);
+    return res.status(416).end();
+  }
+  if (start === undefined) {
+    // suffix: bytes=-N
+    const suffix = end;
+    start = Math.max(0, total - suffix);
+    end = total - 1;
+  } else if (end === undefined || end >= total) {
+    end = total - 1;
+  }
+  if (start < 0 || start >= total || end < start) {
+    res.setHeader('Content-Range', `bytes */${total}`);
+    return res.status(416).end();
+  }
+
+  const slice = buf.subarray(start, end + 1);
+  res.setHeader('Content-Range', `bytes ${start}-${end}/${total}`);
+  res.setHeader('Content-Length', String(slice.length));
+  return res.status(206).send(slice);
+}
+
+/**
  * Proxy robots/sitemap text from the API onto the public host.
  * Forwards X-Forwarded-Host so sitemap scope matches the visitor's domain.
  */
-async function proxyApiText(apiPath, req, res, contentType) {
+async function proxyApiText(apiPath, req, res, contentType, { honorRange = false } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
@@ -123,8 +173,12 @@ async function proxyApiText(apiPath, req, res, contentType) {
       return;
     }
     const body = await response.text();
+    const cacheControl = response.headers.get('cache-control') || 'public, max-age=60';
+    if (honorRange) {
+      return sendTextWithOptionalRange(req, res, body, contentType, cacheControl);
+    }
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', response.headers.get('cache-control') || 'public, max-age=60');
+    res.setHeader('Cache-Control', cacheControl);
     res.send(body);
   } catch (error) {
     console.error(`[SEO] Proxy failed for ${apiPath}: ${error.message}`);
@@ -214,7 +268,9 @@ app.get('/robots.txt', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(503).send('User-agent: *\nDisallow: /\n');
   }
-  return proxyApiText('/api/seo/robots.txt', req, res, 'text/plain; charset=utf-8');
+  return proxyApiText('/api/seo/robots.txt', req, res, 'text/plain; charset=utf-8', {
+    honorRange: true,
+  });
 });
 
 app.get('/sitemap.xml', async (req, res) => {

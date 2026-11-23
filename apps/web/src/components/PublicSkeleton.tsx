@@ -11,16 +11,16 @@ interface ListCardSkeletonProps {
   className?: string;
 }
 
-/** Single cream card placeholder matching list-card proportions. */
+/** Single cream card placeholder matching `.list-card` media + body min-heights. */
 export function ListCardSkeleton({ className }: ListCardSkeletonProps) {
   return (
     <div className={`hl-skel-card${className ? ` ${className}` : ""}`} aria-hidden="true">
       <div className="hl-skel-card__media" />
       <div className="hl-skel-card__body">
         <div className="hl-skel hl-skel-card__title" />
-        <div className="hl-skel hl-skel-card__title-2" />
-        <div className="hl-skel hl-skel-card__line" />
-        <div className="hl-skel hl-skel-card__line hl-skel-card__line--short" />
+        <div className="hl-skel hl-skel-card__meta" />
+        <div className="hl-skel hl-skel-card__copy" />
+        <div className="hl-skel hl-skel-card__extra" />
         <div className="hl-skel hl-skel-card__footer" />
       </div>
     </div>
@@ -66,6 +66,46 @@ export function PublicCardSkeletonGrid({
       {Array.from({ length: safeCount }, (_, i) => (
         <ListCardSkeleton key={`hl-skel-card-${i}`} />
       ))}
+      <span className="hl-skel-visually-hidden">{label}</span>
+    </div>
+  );
+}
+
+interface PublicListSkeletonProps {
+  label?: string;
+  cardCount?: number;
+  className?: string;
+}
+
+/**
+ * Explore list first-paint shell (header spacer + title + search + filters + cards).
+ * Prefer this over {@link PublicPageSkeleton} on custom-domain /:lang list routes —
+ * the detail hero sheet caused large CLS before PlacesListView mounted.
+ */
+export function PublicListSkeleton({
+  label = "Loading",
+  cardCount = 6,
+  className,
+}: PublicListSkeletonProps) {
+  return (
+    <div
+      className={`hl-skel-list${className ? ` ${className}` : ""}`}
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label={label}
+    >
+      <div className="hl-skel-list__inner hl-public-width">
+        <div className="hl-skel hl-skel--on-dark hl-skel-list__title" />
+        <div className="hl-skel hl-skel--on-dark hl-skel-list__search" />
+        <div className="hl-skel-list__filters" aria-hidden="true">
+          <div className="hl-skel hl-skel-list__chip" />
+          <div className="hl-skel hl-skel-list__chip" />
+          <div className="hl-skel hl-skel-list__chip hl-skel-list__chip--wide" />
+          <div className="hl-skel hl-skel-list__chip" />
+        </div>
+        <PublicCardSkeletonGrid count={cardCount} variant="places" label={label} />
+      </div>
       <span className="hl-skel-visually-hidden">{label}</span>
     </div>
   );

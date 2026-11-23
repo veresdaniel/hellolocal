@@ -12,6 +12,18 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.10-beta] - 2026-11-23
+
+### Fixed
+
+- Facebook / social OG scrapers: when global indexing is off, `robots.txt` now
+  allowlists preview bots on **every known host** (platform + custom domains),
+  not only the marketing landing — so shared place/list/event URLs scrape too.
+  Drop `$` Allow anchors (Meta ignores them), allowlist `meta-externalagent` /
+  `meta-externalfetcher`, and serve `robots.txt` as **206** on `Range` (Meta quirk).
+- Custom-domain list first paint CLS: list-shaped skeleton + card body heights
+  matching real `.list-card` instead of a detail-hero sheet.
+
 ## [1.0.9-beta] - 2026-11-23
 
 ### Added

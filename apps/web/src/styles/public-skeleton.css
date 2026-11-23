@@ -73,34 +73,102 @@
 .hl-skel-card__body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  flex: 1 1 auto;
+  gap: 0;
   padding: clamp(16px, 1.2vw, 22px);
+  /* Match `.list-card__body` reserved block so skel → real cards do not grow. */
+  min-height: calc(2.5em + 8px + 22px + 10px + 2.9em + 10px + 22px + 14px + 52px);
 }
 
 .hl-skel-card__title {
-  height: 1.25em;
-  width: 78%;
+  margin: 0;
+  width: 85%;
+  min-height: 2.5em;
+  height: 2.5em;
+}
+
+.hl-skel-card__meta {
+  margin-top: 8px;
+  width: 55%;
   min-height: 22px;
+  height: 22px;
 }
 
-.hl-skel-card__title-2 {
-  height: 1.25em;
-  width: 52%;
-}
-
-.hl-skel-card__line {
-  height: 16px;
+.hl-skel-card__copy {
+  margin-top: 10px;
   width: 100%;
+  min-height: 2.9em;
+  height: 2.9em;
 }
 
-.hl-skel-card__line--short {
-  width: 64%;
+.hl-skel-card__extra {
+  margin-top: 10px;
+  width: 42%;
+  min-height: 22px;
+  height: 22px;
 }
 
 .hl-skel-card__footer {
-  margin-top: 4px;
-  height: 16px;
-  width: 36%;
+  margin-top: auto;
+  padding-top: 14px;
+  width: 48%;
+  min-height: 52px;
+  height: 52px;
+}
+
+/* Explore list shell (custom-domain /:lang) — mirrors `.places-discover` chrome. */
+.hl-skel-list {
+  min-height: 100vh;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.hl-skel-list__inner {
+  padding: clamp(68px, 7vw, 80px) var(--hl-public-pad-x, 16px) 32px;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.hl-skel-list__title {
+  margin: 0 0 16px;
+  width: min(70%, 420px);
+  min-height: 1.2em;
+  height: clamp(28px, 2.2vw, 44px);
+  border-radius: 8px;
+}
+
+.hl-skel-list__search {
+  margin: 0 0 16px;
+  height: 44px;
+  width: 100%;
+  max-width: 520px;
+  border-radius: 12px;
+}
+
+.hl-skel-list__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 10px;
+  margin: 0 0 24px;
+  padding: 14px;
+  min-height: 168px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: var(--hl-card, #fffdf9);
+  border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+}
+
+.hl-skel-list__chip {
+  height: 36px;
+  width: 88px;
+  border-radius: 999px;
+}
+
+.hl-skel-list__chip--wide {
+  width: 120px;
 }
 
 .hl-skel-grid {

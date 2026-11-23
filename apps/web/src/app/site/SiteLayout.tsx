@@ -10,7 +10,7 @@ import { usePlatformSettings } from "./usePlatformSettings";
 import { PlatformSettingsProvider } from "../../context/PlatformSettingsContext";
 import { useFavicon } from "../../hooks/useFavicon";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { PublicPageSkeleton } from "../../components/PublicSkeleton";
+import { PublicListSkeleton } from "../../components/PublicSkeleton";
 import { ErrorState } from "../../components/ErrorState";
 import { NotFoundPage } from "../../pages/NotFoundPage";
 import { useTranslation } from "react-i18next";
@@ -111,7 +111,7 @@ export function SiteLayout() {
   if (customHost && scope.status === "loading") {
     return (
       <div className="hl-public" style={{ minHeight: "100vh" }}>
-        <PublicPageSkeleton withHero label={t("common.loading")} />
+        <PublicListSkeleton label={t("common.loading")} />
       </div>
     );
   }
@@ -171,7 +171,7 @@ export function SiteLayout() {
   if (isLoading) {
     return (
       <div className="hl-public" style={{ minHeight: "100vh" }}>
-        <PublicPageSkeleton withHero label={t("common.loading")} />
+        <PublicListSkeleton label={t("common.loading")} />
       </div>
     );
   }
@@ -281,7 +281,7 @@ function SiteLayoutContent({
       {/* ide később jöhet Header, site alapján brandelt */}
       <div id="public-main" tabIndex={-1} style={{ flex: "1 0 auto" }}>
         <InsideSiteChrome.Provider value={true}>
-          <Suspense fallback={<PublicPageSkeleton withHero label={t("common.loading")} />}>
+          <Suspense fallback={<PublicListSkeleton label={t("common.loading")} />}>
             <Outlet context={{ lang, siteKey, platform }} />
           </Suspense>
         </InsideSiteChrome.Provider>

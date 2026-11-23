@@ -36,7 +36,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { NotFoundPage } from "./NotFoundPage";
 import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
 import { BREAKPOINTS } from "../utils/viewport";
-import { PublicPageSkeleton } from "../components/PublicSkeleton";
+import { PublicListSkeleton } from "../components/PublicSkeleton";
 import { ErrorState } from "../components/ErrorState";
 import { useFiltersStore } from "../stores/useFiltersStore";
 import { useViewStore } from "../stores/useViewStore";
@@ -835,7 +835,8 @@ export function HomePage() {
   // Single-settlement sites (Szeged) keep current landing / map behavior.
   if (!landingDismissed && !pathTown && !regionMap) {
     if (isLoadingPlatformSettings || isLoadingTowns) {
-      return <PublicPageSkeleton withHero label={t("common.loading")} />;
+      // List-shaped shell: custom domains usually open the explore list, not a detail hero sheet.
+      return <PublicListSkeleton label={t("common.loading")} />;
     }
     const landing = readSiteLanding(platformSettings?.site);
     const isRegion = !!townsPayload?.isRegion && (townsPayload.towns?.length || 0) > 1;
