@@ -3,7 +3,7 @@
  * overlays, and filter-aware marker cards. Used by explore and detail pages.
  */
 // src/components/MapComponent.tsx
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useLayoutEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Map as ReactMapGl, Marker, Source, Layer } from "react-map-gl/maplibre";
 import type { MapRef } from "react-map-gl/maplibre";
@@ -402,17 +402,33 @@ export function MapComponent({
   // Constants for location control positioning
   const LOCATION_CONTROL_DESKTOP_BOTTOM = 100;
   const LOCATION_CONTROL_DESKTOP_LEFT = 16;
-  const LOCATION_CONTROL_MOBILE_BOTTOM = 80;
+  /** Gap above the closed mobile map dock when no saved position. */
+  const LOCATION_CONTROL_MOBILE_GAP = 8;
+  /** Fallback when `.map-dock__bar` is not measured yet (~bar without safe-area). */
+  const LOCATION_CONTROL_MOBILE_BAR_FALLBACK = 56;
   const LOCATION_CONTROL_MOBILE_LEFT = 12;
   const LOCATION_CONTROL_MAX_WIDTH = 200; // Maximum width for position calculation
+  const LOCATION_CONTROL_STORAGE_PREFIX = "mapLocationControlPosition_";
 
-  // Default positions: bal lent (bottom left) - using bottom instead of top
   const defaultPositionDesktop = {
     bottom: LOCATION_CONTROL_DESKTOP_BOTTOM,
     left: LOCATION_CONTROL_DESKTOP_LEFT,
   };
+
+  /** Mobile default: sit just above the closed edge-to-edge map dock bar. */
+  const measureMobileLocationDefault = (
+    mapRoot: Element | null | undefined
+  ): { bottom: number; left: number } => {
+    const bar = mapRoot?.querySelector<HTMLElement>(".map-dock__bar");
+    const barHeight = bar?.offsetHeight || LOCATION_CONTROL_MOBILE_BAR_FALLBACK;
+    return {
+      bottom: barHeight + LOCATION_CONTROL_MOBILE_GAP,
+      left: LOCATION_CONTROL_MOBILE_LEFT,
+    };
+  };
+
   const defaultPositionMobile = {
-    bottom: LOCATION_CONTROL_MOBILE_BOTTOM,
+    bottom: LOCATION_CONTROL_MOBILE_BAR_FALLBACK + LOCATION_CONTROL_MOBILE_GAP,
     left: LOCATION_CONTROL_MOBILE_LEFT,
   };
 
@@ -420,7 +436,7 @@ export function MapComponent({
   const [locationControlPosition, setLocationControlPosition] = useState(() => {
     if (typeof window === "undefined") return defaultPositionDesktop;
     const deviceKey = isDesktop ? "desktop" : "mobile";
-    const saved = localStorage.getItem(`mapLocationControlPosition_${deviceKey}`);
+    const saved = localStorage.getItem(`${LOCATION_CONTROL_STORAGE_PREFIX}${deviceKey}`);
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -439,39 +455,72 @@ export function MapComponent({
   const locationControlRef = useRef<HTMLDivElement>(null);
   const dragStartPosLocationControlRef = useRef({ x: 0, y: 0 });
   const locationMovedRef = useRef(false);
+  /** Latest mobile default (dock-aware); used so we don't persist the automatic slot. */
+  const defaultMobilePosRef = useRef(defaultPositionMobile);
 
   // Load position when device type changes
   useEffect(() => {
     const deviceKey = isDesktop ? "desktop" : "mobile";
-    const saved = localStorage.getItem(`mapLocationControlPosition_${deviceKey}`);
+    const saved = localStorage.getItem(`${LOCATION_CONTROL_STORAGE_PREFIX}${deviceKey}`);
     if (saved) {
       try {
         const savedPos = JSON.parse(saved);
         setLocationControlPosition(savedPos);
+        return;
       } catch {
-        setLocationControlPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
+        // fall through to default
       }
-    } else {
-      setLocationControlPosition(isDesktop ? defaultPositionDesktop : defaultPositionMobile);
     }
+    if (isDesktop) {
+      setLocationControlPosition(defaultPositionDesktop);
+      return;
+    }
+    const next = measureMobileLocationDefault(locationControlRef.current?.parentElement);
+    defaultMobilePosRef.current = next;
+    setLocationControlPosition(next);
   }, [isDesktop]);
+
+  // Mobile + no persisted position: keep the control above the closed map dock.
+  useLayoutEffect(() => {
+    if (hideLocationButton || isDesktop) return;
+    const storageKey = `${LOCATION_CONTROL_STORAGE_PREFIX}mobile`;
+    if (localStorage.getItem(storageKey)) return;
+
+    const apply = () => {
+      if (localStorage.getItem(storageKey)) return;
+      const next = measureMobileLocationDefault(locationControlRef.current?.parentElement);
+      defaultMobilePosRef.current = next;
+      setLocationControlPosition((current) =>
+        current.bottom === next.bottom && current.left === next.left ? current : next
+      );
+    };
+    apply();
+    const t0 = window.setTimeout(apply, 0);
+    const t1 = window.setTimeout(apply, 120);
+    window.addEventListener("resize", apply);
+    return () => {
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+      window.removeEventListener("resize", apply);
+    };
+  }, [hideLocationButton, isDesktop]);
 
   // Save position to localStorage (device-specific)
   useEffect(() => {
     const deviceKey = isDesktop ? "desktop" : "mobile";
-    const defaultPos = isDesktop ? defaultPositionDesktop : defaultPositionMobile;
+    const defaultPos = isDesktop ? defaultPositionDesktop : defaultMobilePosRef.current;
     // Only save if position differs from default (user has moved it)
     if (
       locationControlPosition.bottom !== defaultPos.bottom ||
       locationControlPosition.left !== defaultPos.left
     ) {
       localStorage.setItem(
-        `mapLocationControlPosition_${deviceKey}`,
+        `${LOCATION_CONTROL_STORAGE_PREFIX}${deviceKey}`,
         JSON.stringify(locationControlPosition)
       );
     } else {
       // Remove saved position if it's back to default
-      localStorage.removeItem(`mapLocationControlPosition_${deviceKey}`);
+      localStorage.removeItem(`${LOCATION_CONTROL_STORAGE_PREFIX}${deviceKey}`);
     }
   }, [locationControlPosition, isDesktop]);
 

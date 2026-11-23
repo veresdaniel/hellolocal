@@ -10,6 +10,15 @@ and this project adheres to
 Product / domain names (HelloLocal, hello-local.io, Etyek–Budai, etc.) appear
 in prose as used in the product.
 
+## [Unreleased]
+
+### Changed
+
+- Mobile explore **map dock** pins edge-to-edge at the bottom with no pill
+  radius; filter/events/services panels open above the bar (no drag on mobile).
+- **Show my location** control defaults just above the closed mobile dock bar
+  when no device-specific position is persisted (`mapLocationControlPosition_mobile`).
+
 ## [1.0.0-beta] - 2026-11-23
 
 First named **1.0.0-beta** product release. Package versions had auto-bumped

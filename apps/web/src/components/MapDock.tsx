@@ -139,12 +139,17 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
       lastMobile = isMobile;
       placed = true;
       setMobile(isMobile);
+      // Mobile: CSS pins the dock edge-to-edge at the bottom (no drag position).
+      if (isMobile) {
+        setPos(null);
+        return;
+      }
       const parentBox = parent.getBoundingClientRect();
-      const width = isMobile ? Math.max(280, parentBox.width - 16) : dock.offsetWidth || 360;
+      const width = dock.offsetWidth || 360;
       const height = dock.offsetHeight || 56;
       const barHeight = dock.querySelector<HTMLElement>(".map-dock__bar")?.offsetHeight || height;
       const toggle = parent.querySelector<HTMLElement>("[data-map-list-toggle]");
-      const toggleBox = !isMobile && toggle ? toggle.getBoundingClientRect() : null;
+      const toggleBox = toggle ? toggle.getBoundingClientRect() : null;
       const besideToggle =
         toggleBox && toggleBox.width > 0
           ? {
@@ -152,16 +157,13 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
               top: toggleBox.top - parentBox.top + (toggleBox.height - barHeight) / 2,
             }
           : null;
-      const fallback = isMobile
-        ? { left: 8, top: Math.max(8, parentBox.height - height - 8) }
-        : (besideToggle ?? { left: Math.max(8, parentBox.width - width - 16), top: 16 });
+      const fallback =
+        besideToggle ?? { left: Math.max(8, parentBox.width - width - 16), top: 16 };
       setPos((current) => {
-        const saved = readPosition(isMobile);
+        const saved = readPosition(false);
         // A saved drag stays put. The default row is recomputed so it keeps sitting beside the list button.
         const base = saved && !crossed && current ? current : (saved ?? fallback);
-        const clamped = clampPosition(base, parentBox.width, parentBox.height, width, height);
-        // Mobile: full-width dock — keep left edge fixed, allow vertical offset only.
-        return isMobile ? { left: 8, top: clamped.top } : clamped;
+        return clampPosition(base, parentBox.width, parentBox.height, width, height);
       });
     };
     place();
@@ -170,9 +172,10 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
   }, []);
 
   useLayoutEffect(() => {
+    if (mobile || !panel) return;
     const dock = dockRef.current;
     const parent = dock?.parentElement;
-    if (!dock || !parent || !panel) return;
+    if (!dock || !parent) return;
     const parentBox = parent.getBoundingClientRect();
     const dockBox = dock.getBoundingClientRect();
     const overflow = dockBox.bottom - (parentBox.bottom - 8);
@@ -181,7 +184,7 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
         current ? { ...current, top: Math.max(8, current.top - overflow) } : current
       );
     }
-  }, [panel]);
+  }, [panel, mobile]);
 
   const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", props.lang, siteKey],
@@ -220,7 +223,8 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
   mobileRef.current = mobile;
 
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0 || !pos) return;
+    // Mobile dock is CSS-pinned; desktop only is draggable.
+    if (event.button !== 0 || !pos || mobileRef.current) return;
     dragRef.current = {
       id: event.pointerId,
       x: event.clientX,
@@ -242,14 +246,12 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
       drag.moved = true;
       setDragging(true);
       const parentBox = parent.getBoundingClientRect();
-      const isMobile = mobileRef.current;
-      const width = isMobile
-        ? Math.max(280, parentBox.width - 16)
-        : dockRef.current?.offsetWidth || 320;
+      if (mobileRef.current) return;
+      const width = dockRef.current?.offsetWidth || 320;
       const height = dockRef.current?.offsetHeight || 56;
       const next = clampPosition(
         {
-          left: isMobile ? 8 : drag.left + dx,
+          left: drag.left + dx,
           top: drag.top + dy,
         },
         parentBox.width,
@@ -257,7 +259,7 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
         width,
         height
       );
-      setPos(isMobile ? { left: 8, top: next.top } : next);
+      setPos(next);
     };
     const onPointerUp = (event: PointerEvent) => {
       const drag = dragRef.current;
@@ -269,17 +271,15 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
       window.setTimeout(() => {
         suppressClick.current = false;
       }, 0);
+      if (mobileRef.current) return;
       const parent = dockRef.current?.parentElement;
       if (!parent) return;
       const parentBox = parent.getBoundingClientRect();
-      const isMobile = mobileRef.current;
-      const width = isMobile
-        ? Math.max(280, parentBox.width - 16)
-        : dockRef.current?.offsetWidth || 320;
+      const width = dockRef.current?.offsetWidth || 320;
       const height = dockRef.current?.offsetHeight || 56;
       const next = clampPosition(
         {
-          left: isMobile ? 8 : drag.left + (event.clientX - drag.x),
+          left: drag.left + (event.clientX - drag.x),
           top: drag.top + (event.clientY - drag.y),
         },
         parentBox.width,
@@ -287,9 +287,8 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
         width,
         height
       );
-      const saved = isMobile ? { left: 8, top: next.top } : next;
-      setPos(saved);
-      savePosition(isMobile, saved);
+      setPos(next);
+      savePosition(false, next);
     };
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
@@ -313,13 +312,12 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
       ref={dockRef}
       className={`map-dock${mobile ? " map-dock--mobile" : ""}${dragging ? " is-dragging" : ""}`}
       style={
-        pos
+        !mobile && pos
           ? {
               left: pos.left,
               top: pos.top,
               right: "auto",
               bottom: "auto",
-              ...(mobile ? { width: "calc(100% - 16px)", maxWidth: "none" } : null),
             }
           : undefined
       }
