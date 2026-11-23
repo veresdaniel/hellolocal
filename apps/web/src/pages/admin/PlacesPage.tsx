@@ -824,6 +824,44 @@ export function PlacesPage() {
     }
   };
 
+  /** List-row publish toggle: free-plan activate is superadmin-only (same as edit form). */
+  const canTogglePlaceActive = (place: Place): boolean => {
+    if (!currentUser) return false;
+    if (isSuperadmin(currentUser.role)) return true;
+    if (!(isAdmin(currentUser.role as UserRole) || isSiteAdmin)) return false;
+    if (!place.isActive && place.plan === "free") return false;
+    return true;
+  };
+
+  const handleTogglePlaceActive = async (place: Place) => {
+    if (!canTogglePlaceActive(place)) {
+      showToast(t("admin.placeFreeNeedsSuperadmin"), "error");
+      return;
+    }
+    const next = !place.isActive;
+    const ownerSuspended =
+      Boolean(place.owner) &&
+      place.owner!.role !== "superadmin" &&
+      place.owner!.isActive === false;
+    if (ownerSuspended && next) {
+      showToast(t("admin.placeOwnerSuspended"), "error");
+      return;
+    }
+    try {
+      await updatePlace(place.id, { isActive: next }, selectedSiteId || undefined);
+      setPlaces((current) =>
+        current.map((row) => (row.id === place.id ? { ...row, isActive: next } : row))
+      );
+      notifyEntityChanged("places");
+      showToast(
+        next ? t("admin.messages.placeActivated") : t("admin.messages.placeDeactivated"),
+        "success"
+      );
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.updatePlaceFailed"), "error");
+    }
+  };
+
   const startEdit = (place: Place) => {
     setEditingId(place.id);
     checkPlaceRole(place.id);
@@ -2625,6 +2663,20 @@ export function PlacesPage() {
           onAnalytics={(place) =>
             navigate(`/${i18n.language || "hu"}/admin/places/${place.id}/analytics`)
           }
+          onStatus={
+            currentUser?.role === "superadmin" ||
+            currentUser?.role === "admin" ||
+            isSiteAdmin
+              ? (place) => void handleTogglePlaceActive(place)
+              : undefined
+          }
+          shouldShowStatus={canTogglePlaceActive}
+          statusKind={(place) => (place.isActive ? "deactivate" : "activate")}
+          statusLabel={(place) => {
+            const awaiting = place.plan === "free" && !place.isActive;
+            if (place.isActive) return t("admin.placeDeactivate");
+            return awaiting ? t("admin.placeApprove") : t("admin.placeActivate");
+          }}
           onEdit={startEdit}
           onView={(place) => {
             const currentLang = (i18n.language || "hu").split("-")[0] as Lang;

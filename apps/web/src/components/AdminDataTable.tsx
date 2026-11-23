@@ -35,7 +35,9 @@ export type AdminDataTableProps<T> = {
   onView?: (item: T) => void;
   onAnalytics?: (item: T) => void;
   onStatus?: (item: T) => void;
-  statusLabel?: string;
+  statusLabel?: string | ((item: T) => string);
+  statusKind?: (item: T) => "activate" | "deactivate";
+  showStatus?: (item: T) => boolean;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   showView?: (item: T) => boolean;
@@ -62,6 +64,8 @@ export function AdminDataTable<T>({
   onAnalytics,
   onStatus,
   statusLabel,
+  statusKind,
+  showStatus,
   onEdit,
   onDelete,
   showView,
@@ -266,8 +270,17 @@ export function AdminDataTable<T>({
                                 : undefined
                             }
                             onAnalytics={onAnalytics ? () => onAnalytics(item) : undefined}
-                            onStatus={onStatus ? () => onStatus(item) : undefined}
-                            statusLabel={statusLabel}
+                            onStatus={
+                              onStatus && (!showStatus || showStatus(item))
+                                ? () => onStatus(item)
+                                : undefined
+                            }
+                            statusLabel={
+                              typeof statusLabel === "function"
+                                ? statusLabel(item)
+                                : statusLabel
+                            }
+                            statusKind={statusKind?.(item)}
                             onEdit={onEdit ? () => onEdit(item) : undefined}
                             onDelete={onDelete ? () => onDelete(item) : undefined}
                           />

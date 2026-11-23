@@ -48,6 +48,10 @@ export interface AdminResponsiveTableProps<T> {
   onDelete: (item: T) => void;
   onView?: (item: T) => void; // Optional: view button (magnifying glass icon)
   onAnalytics?: (item: T) => void;
+  onStatus?: (item: T) => void;
+  statusLabel?: string | ((item: T) => string);
+  statusKind?: (item: T) => "activate" | "deactivate";
+  shouldShowStatus?: (item: T) => boolean;
   shouldShowView?: (item: T) => boolean; // Optional: condition to show view button
 
   // Pagination (optional - only for desktop)
@@ -81,6 +85,10 @@ export function AdminResponsiveTable<T>({
   onDelete,
   onView,
   onAnalytics,
+  onStatus,
+  statusLabel,
+  statusKind,
+  shouldShowStatus,
   shouldShowView,
   pagination,
   isLoading = false,
@@ -200,6 +208,10 @@ export function AdminResponsiveTable<T>({
           onDelete={onDelete}
           onView={onView}
           onAnalytics={onAnalytics}
+          onStatus={onStatus}
+          statusLabel={statusLabel}
+          statusKind={statusKind}
+          showStatus={shouldShowStatus}
           showView={shouldShowView}
         />
       )}

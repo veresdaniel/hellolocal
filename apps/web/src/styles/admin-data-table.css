@@ -194,6 +194,28 @@
   color: var(--admin-danger-hover, #b91c1c);
 }
 
+.admin-row-actions__btn--status-on {
+  border-color: #059669;
+  color: #059669;
+}
+
+.admin-row-actions__btn--status-on:hover {
+  background: #ecfdf5;
+  border-color: #047857;
+  color: #047857;
+}
+
+.admin-row-actions__btn--status-off {
+  border-color: #6b7280;
+  color: #4b5563;
+}
+
+.admin-row-actions__btn--status-off:hover {
+  background: #f3f4f6;
+  border-color: #374151;
+  color: #111827;
+}
+
 .admin-row-actions__btn svg {
   stroke: currentColor;
 }

@@ -1,10 +1,14 @@
 import { useTranslation } from "react-i18next";
 
+export type AdminStatusKind = "activate" | "deactivate";
+
 type AdminRowActionsProps = {
   onView?: () => void;
   onAnalytics?: () => void;
   onStatus?: () => void;
   statusLabel?: string;
+  /** activate = check (approve/publish), deactivate = pause (unpublish). */
+  statusKind?: AdminStatusKind;
   onEdit?: () => void;
   onDelete?: () => void;
 };
@@ -39,11 +43,20 @@ function IconAnalytics() {
   );
 }
 
-function IconStatus() {
+function IconActivate() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <circle cx="12" cy="12" r="8" />
-      <path d="M12 8v5l3 2" />
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.5 12.5 11 15l4.5-5.5" />
+    </svg>
+  );
+}
+
+function IconDeactivate() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 12h6" />
     </svg>
   );
 }
@@ -59,9 +72,21 @@ function IconDelete() {
   );
 }
 
-export function AdminRowActions({ onView, onAnalytics, onStatus, statusLabel, onEdit, onDelete }: AdminRowActionsProps) {
+export function AdminRowActions({
+  onView,
+  onAnalytics,
+  onStatus,
+  statusLabel,
+  statusKind = "activate",
+  onEdit,
+  onDelete,
+}: AdminRowActionsProps) {
   const { t } = useTranslation();
   if (!onView && !onAnalytics && !onStatus && !onEdit && !onDelete) return null;
+
+  const statusTitle =
+    statusLabel ||
+    (statusKind === "deactivate" ? t("admin.placeDeactivate") : t("admin.placeActivate"));
 
   return (
     <div className="admin-row-actions">
@@ -76,8 +101,18 @@ export function AdminRowActions({ onView, onAnalytics, onStatus, statusLabel, on
         </button>
       ) : null}
       {onStatus ? (
-        <button type="button" className="admin-row-actions__btn" onClick={onStatus} title={statusLabel || t("admin.siteStatus.title")} aria-label={statusLabel || t("admin.siteStatus.title")}>
-          <IconStatus />
+        <button
+          type="button"
+          className={
+            statusKind === "deactivate"
+              ? "admin-row-actions__btn admin-row-actions__btn--status-off"
+              : "admin-row-actions__btn admin-row-actions__btn--status-on"
+          }
+          onClick={onStatus}
+          title={statusTitle}
+          aria-label={statusTitle}
+        >
+          {statusKind === "deactivate" ? <IconDeactivate /> : <IconActivate />}
         </button>
       ) : null}
       {onEdit ? (

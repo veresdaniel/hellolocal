@@ -12,6 +12,13 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.26-beta] - 2026-11-23
+
+### Added
+
+- Places admin list: approve / activate / deactivate toggle in row actions
+  (check vs pause icon). Free-plan publish remains superadmin-only.
+
 ## [1.0.25-beta] - 2026-11-23
 
 ### Changed
