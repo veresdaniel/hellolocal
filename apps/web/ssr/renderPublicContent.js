@@ -203,9 +203,10 @@ function renderRegionBody(lang, siteKey, platform, places, events, labels, townS
     .filter(Boolean)
     .join("");
   const heading = townSlug ? `${plainText(townSlug)} · ${title}` : title;
+  // No "Régiók → /:lang" crumb: on custom domains /:lang is this home; on the
+  // platform host that path is the marketing overview, not the region list.
   return `
     <main>
-      <p><a href="/${lang}">${escapeHtml(labels.regions)}</a></p>
       <h1>${escapeHtml(heading)}</h1>
       ${paragraph(lead, 500)}
       ${
