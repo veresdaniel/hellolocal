@@ -25,6 +25,7 @@ import {
   PLATFORM_LANDING_CRAWLABLE_DEFAULT,
   PLATFORM_LANDING_CRAWLABLE_KEY,
 } from "../common/platform-landing-crawlable";
+import { FREE_TRIAL_DAYS_KEY, parseFreeTrialDays } from "../common/free-trial";
 
 const SECRET_SETTING_KEYS = new Set([CONTENT_DRAFT_API_KEY, UC_ACCESS_TOKEN_KEY]);
 /** Secrets encrypted at rest with APP_SECRET/JWT_SECRET (AES-GCM). */
@@ -246,5 +247,23 @@ export class AdminAppSettingsService {
     });
     this.sitemapService.invalidate();
     return saved;
+  }
+
+  /** Free-plan trial length in days before the owner account is auto-suspended. */
+  async getFreeTrialDays(): Promise<number> {
+    const setting = await this.prisma.appSetting.findUnique({
+      where: { key: FREE_TRIAL_DAYS_KEY },
+    });
+    return parseFreeTrialDays(setting?.value);
+  }
+
+  async setFreeTrialDays(days: number) {
+    const value = String(parseFreeTrialDays(days));
+    return this.upsert(FREE_TRIAL_DAYS_KEY, {
+      value,
+      type: "number",
+      description:
+        "Free-plan trial days after registration; when validUntil elapses the owner is auto-suspended.",
+    });
   }
 }

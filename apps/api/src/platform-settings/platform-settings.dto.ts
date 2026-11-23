@@ -78,6 +78,8 @@ export type PlatformSettingsDto = {
     weekStartsOn: number; // 0 = Sunday, 1 = Monday
     /** Platform-wide OG/share image fallback (AppSetting). */
     defaultShareImage?: string | null;
+    /** Free-plan trial days before auto-suspend (shown on pricing). */
+    freeTrialDays?: number;
   };
 
   /**

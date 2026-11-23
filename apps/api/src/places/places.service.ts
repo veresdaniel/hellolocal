@@ -11,6 +11,10 @@ import { assignMissingSlugs, fallbackSlug } from "../slug/slug.helper";
 import { resolveGaMeasurementId } from "../common/ga-measurement-id";
 import { SlugResolverService } from "../slug/slug-resolver.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
+import {
+  isOwnerAccountPubliclyVisible,
+  placeOwnerPubliclyVisible,
+} from "../common/owner-visibility";
 
 type ListArgs = {
   lang: string;
@@ -57,6 +61,7 @@ export class PlacesService {
     const baseWhere: Prisma.PlaceWhereInput = {
       siteId: site.siteId,
       isActive: true, // Only return active places
+      AND: [placeOwnerPubliclyVisible()],
     };
 
     // Collect category and price band IDs for OR logic
@@ -556,7 +561,12 @@ export class PlacesService {
   /** Active child “local service” places under a parent place, with primary slugs. */
   private async localServices(siteId: string, lang: Lang, placeId: string) {
     const rows = await this.prisma.place.findMany({
-      where: { siteId, parentPlaceId: placeId, isActive: true },
+      where: {
+        siteId,
+        parentPlaceId: placeId,
+        isActive: true,
+        AND: [placeOwnerPubliclyVisible()],
+      },
       include: {
         translations: true,
         category: { include: { translations: true } },
@@ -604,6 +614,7 @@ export class PlacesService {
     const place = await this.prisma.place.findUnique({
       where: { id: args.placeId },
       include: {
+        owner: { select: { isActive: true, role: true } },
         town: {
           select: {
             id: true,
@@ -641,7 +652,12 @@ export class PlacesService {
       },
     });
 
-    if (!place || !place.isActive || place.siteId !== site.siteId) {
+    if (
+      !place ||
+      !place.isActive ||
+      place.siteId !== site.siteId ||
+      !isOwnerAccountPubliclyVisible(place.owner)
+    ) {
       throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_PLACE);
     }
 

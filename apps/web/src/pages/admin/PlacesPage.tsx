@@ -67,6 +67,8 @@ interface Place {
   isActive: boolean;
   isCrawlable?: boolean;
   plan?: "free" | "basic" | "pro";
+  ownerId?: string | null;
+  owner?: { id: string; isActive: boolean; role: string; email?: string } | null;
   isFeatured?: boolean;
   featuredUntil?: string | null;
   heroImage: string | null;
@@ -382,8 +384,11 @@ export function PlacesPage() {
   // Helper functions for permission checks
   const canModifyPublish = (): boolean => {
     if (!currentUser) return false;
-    if (isSuperadmin(currentUser.role) || isAdmin(currentUser.role as UserRole)) return true;
-    if (isSiteAdmin) return true;
+    if (isSuperadmin(currentUser.role)) return true;
+    const freeNeedsApproval = formData.plan === "free" && !formData.isActive;
+    // Free-plan publish (off → on) is superadmin-only; others may unpublish or edit paid.
+    if (freeNeedsApproval) return false;
+    if (isAdmin(currentUser.role as UserRole) || isSiteAdmin) return true;
     return currentPlaceRole === "owner" || currentPlaceRole === "manager";
   };
 
@@ -2050,10 +2055,23 @@ export function PlacesPage() {
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
-                    {formData.isActive
-                      ? t("admin.placeActiveDescription")
-                      : t("admin.placeInactiveDescription")}
+                    {formData.plan === "free" && !formData.isActive
+                      ? t("admin.placeAwaitingApprovalDescription")
+                      : formData.isActive
+                        ? t("admin.placeActiveDescription")
+                        : t("admin.placeInactiveDescription")}
                   </div>
+                  {formData.plan === "free" && !formData.isActive && !isSuperadmin(currentUser?.role) ? (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        fontSize: "clamp(13px, 3.2vw, 14px)",
+                        opacity: 0.95,
+                      }}
+                    >
+                      {t("admin.placeFreeNeedsSuperadmin")}
+                    </div>
+                  ) : null}
                 </div>
               </label>
             </div>
@@ -2289,24 +2307,44 @@ export function PlacesPage() {
                   {
                     key: "status",
                     label: t("admin.table.status"),
-                    render: (place) => (
-                      <span
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: 4,
-                          background: place.isActive
+                    render: (place) => {
+                      const ownerSuspended =
+                        Boolean(place.owner) &&
+                        place.owner!.role !== "superadmin" &&
+                        place.owner!.isActive === false;
+                      const awaiting =
+                        place.plan === "free" && !place.isActive && !ownerSuspended;
+                      const label = ownerSuspended
+                        ? t("admin.placeOwnerSuspended")
+                        : awaiting
+                          ? t("admin.placeAwaitingApproval")
+                          : place.isActive
+                            ? t("common.active")
+                            : t("common.inactive");
+                      const bg = ownerSuspended
+                        ? "#b45309"
+                        : awaiting
+                          ? "#2563eb"
+                          : place.isActive
                             ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-                            : "#6c757d",
-                          color: "var(--hl-on-dark-strong, #ffffff)",
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
-                          fontWeight: 600,
-                          fontFamily:
-                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        }}
-                      >
-                        {place.isActive ? t("common.active") : t("common.inactive")}
-                      </span>
-                    ),
+                            : "#6c757d";
+                      return (
+                        <span
+                          style={{
+                            padding: "4px 8px",
+                            borderRadius: 4,
+                            background: bg,
+                            color: "var(--hl-on-dark-strong, #ffffff)",
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            fontWeight: 600,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {label}
+                        </span>
+                      );
+                    },
                   },
                 ]
               : []),
@@ -2541,25 +2579,45 @@ export function PlacesPage() {
               ? [
                   {
                     key: "status",
-                    render: (place) => (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          padding: "6px 12px",
-                          borderRadius: 6,
-                          background: place.isActive
+                    render: (place) => {
+                      const ownerSuspended =
+                        Boolean(place.owner) &&
+                        place.owner!.role !== "superadmin" &&
+                        place.owner!.isActive === false;
+                      const awaiting =
+                        place.plan === "free" && !place.isActive && !ownerSuspended;
+                      const label = ownerSuspended
+                        ? t("admin.placeOwnerSuspended")
+                        : awaiting
+                          ? t("admin.placeAwaitingApproval")
+                          : place.isActive
+                            ? t("common.active")
+                            : t("common.inactive");
+                      const bg = ownerSuspended
+                        ? "#b45309"
+                        : awaiting
+                          ? "#2563eb"
+                          : place.isActive
                             ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
-                            : "#6c757d",
-                          color: "var(--hl-on-dark-strong, #ffffff)",
-                          fontSize: "clamp(14px, 3.5vw, 16px)",
-                          fontWeight: 600,
-                          fontFamily:
-                            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                        }}
-                      >
-                        {place.isActive ? t("common.active") : t("common.inactive")}
-                      </span>
-                    ),
+                            : "#6c757d";
+                      return (
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "6px 12px",
+                            borderRadius: 6,
+                            background: bg,
+                            color: "var(--hl-on-dark-strong, #ffffff)",
+                            fontSize: "clamp(14px, 3.5vw, 16px)",
+                            fontWeight: 600,
+                            fontFamily:
+                              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                          }}
+                        >
+                          {label}
+                        </span>
+                      );
+                    },
                   },
                 ]
               : []),

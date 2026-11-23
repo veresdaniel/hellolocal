@@ -216,7 +216,7 @@
       "free": {
         "name": "Be seen",
         "kicker": "For a private customer",
-        "pitch": "One workshop, cellar, or service. Your own domain starts with the next plan.",
+        "pitch": "One workshop, cellar, or service. {{count}}-day trial; then suspended until you upgrade. Your own domain starts with the next plan.",
         "domain": "Own domain from the next plan",
         "cta": "Register free"
       },
@@ -315,7 +315,7 @@
     "plans": {
       "free": {
         "name": "Free",
-        "description": "Entry level, trial"
+        "description": "Entry trial — {{days}} days, then suspended"
       },
       "basic": {
         "name": "Basic",

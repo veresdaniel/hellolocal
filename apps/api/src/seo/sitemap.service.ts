@@ -25,6 +25,7 @@ import {
   PLATFORM_LANDING_CRAWLABLE_DEFAULT,
   PLATFORM_LANDING_CRAWLABLE_KEY,
 } from "../common/platform-landing-crawlable";
+import { placeOwnerPubliclyVisible } from "../common/owner-visibility";
 
 export type SitemapUrl = {
   loc: string;
@@ -433,6 +434,7 @@ ${entries}
             id: { in: unique },
             isActive: true,
             isCrawlable: true,
+            AND: [placeOwnerPubliclyVisible()],
             ...(excludeOwnCustomDomain ? { customDomain: null } : {}),
           },
           select: { id: true },
@@ -441,7 +443,15 @@ ${entries}
       }
       case SlugEntityType.event: {
         const rows = await this.prisma.event.findMany({
-          where: { id: { in: unique }, isActive: true, isCrawlable: true },
+          where: {
+            id: { in: unique },
+            isActive: true,
+            isCrawlable: true,
+            place: {
+              isActive: true,
+              AND: [placeOwnerPubliclyVisible()],
+            },
+          },
           select: { id: true },
         });
         return new Set(rows.map((r) => r.id));
@@ -581,7 +591,12 @@ ${entries}
     scope: Extract<SitemapScope, { kind: "place" }>
   ): Promise<SitemapUrl[]> {
     const place = await this.prisma.place.findFirst({
-      where: { id: scope.placeId, isActive: true, isCrawlable: true },
+      where: {
+        id: scope.placeId,
+        isActive: true,
+        isCrawlable: true,
+        AND: [placeOwnerPubliclyVisible()],
+      },
       select: {
         updatedAt: true,
         site: {

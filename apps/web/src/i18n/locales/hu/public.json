@@ -216,7 +216,7 @@
       "free": {
         "name": "Látszódj",
         "kicker": "Magánszemélynek",
-        "pitch": "Egy műhely, pince vagy szolgáltatás. Saját domain a következő csomagtól.",
+        "pitch": "Egy műhely, pince vagy szolgáltatás. {{count}} nap próba; utána szüneteltetés, amíg nem váltasz csomagot. Saját domain a következő csomagtól.",
         "domain": "Saját domain a következő csomagtól",
         "cta": "Ingyenesen"
       },
@@ -315,7 +315,7 @@
     "plans": {
       "free": {
         "name": "Free",
-        "description": "Belépő, kipróbálás"
+        "description": "Belépő, kipróbálás — {{days}} napig, utána szüneteltetés"
       },
       "basic": {
         "name": "Alap",

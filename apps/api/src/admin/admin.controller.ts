@@ -1920,6 +1920,22 @@ export class AdminController {
     return { isCrawlable };
   }
 
+  /** Free-plan trial length (days) before auto-suspend. */
+  @Get("/app-settings/free-trial-days")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async getFreeTrialDays() {
+    const days = await this.appSettingsService.getFreeTrialDays();
+    return { days };
+  }
+
+  @Put("/app-settings/free-trial-days")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async setFreeTrialDays(@Body() dto: { days: number }) {
+    await this.appSettingsService.setFreeTrialDays(Number(dto.days));
+    const days = await this.appSettingsService.getFreeTrialDays();
+    return { days };
+  }
+
   @Get("/app-settings")
   @Roles(UserRole.superadmin, UserRole.admin)
   async getAppSettings() {

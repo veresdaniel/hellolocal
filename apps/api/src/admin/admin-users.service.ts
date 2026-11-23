@@ -1,5 +1,7 @@
 import {
   Injectable,
+  Inject,
+  forwardRef,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
@@ -9,6 +11,8 @@ import { UserRole } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { ensureRegionLink, replaceRegionLinks } from "./region-link";
+import { AdminPlaceService } from "./admin-place.service";
+import { SitemapService } from "../seo/sitemap.service";
 
 export interface UpdateUserRoleDto {
   role: UserRole;
@@ -38,7 +42,12 @@ export interface UpdateUserDto {
 
 @Injectable()
 export class AdminUsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => AdminPlaceService))
+    private readonly placeService: AdminPlaceService,
+    private readonly sitemapService: SitemapService
+  ) {}
 
   async findAll(siteId?: string) {
     const where: { sites?: { some: { siteId: string } } } = {};
@@ -312,6 +321,10 @@ export class AdminUsersService {
     return user;
   }
 
+  /**
+   * Delete a non-superadmin user and cascade-delete places they own
+   * (events / products under those places via {@link AdminPlaceService.remove}).
+   */
   async remove(id: string, currentUserRole: UserRole) {
     if (currentUserRole !== UserRole.superadmin) {
       throw new ForbiddenException("Only superadmin can delete users");
@@ -320,8 +333,21 @@ export class AdminUsersService {
     if (user.role === UserRole.superadmin) {
       throw new BadRequestException("Cannot delete a superadmin user");
     }
+
+    const ownedPlaces = await this.prisma.place.findMany({
+      where: { ownerId: id },
+      select: { id: true, siteId: true },
+    });
+    for (const place of ownedPlaces) {
+      await this.placeService.remove(place.id, place.siteId);
+    }
+
     await this.prisma.user.delete({ where: { id } });
-    return { message: "User deleted successfully" };
+    this.sitemapService.invalidate();
+    return {
+      message: "User deleted successfully",
+      deletedPlaceCount: ownedPlaces.length,
+    };
   }
 
   async updateUserWithSites(
@@ -352,6 +378,16 @@ export class AdminUsersService {
       }
     }
 
+    if (dto.isActive === false) {
+      const target = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      if (target?.role === UserRole.superadmin) {
+        throw new BadRequestException("Cannot suspend a superadmin user");
+      }
+    }
+
     const updateData: Partial<UpdateUserDto> = {};
     if (dto.firstName !== undefined) updateData.firstName = dto.firstName;
     if (dto.lastName !== undefined) updateData.lastName = dto.lastName;
@@ -366,6 +402,11 @@ export class AdminUsersService {
       await replaceRegionLinks(this.prisma, userId, dto.siteIds);
     }
 
-    return this.updateUser(userId, updateData);
+    const updated = await this.updateUser(userId, updateData);
+    // Suspension hides owned places on public surfaces via owner-visibility filters.
+    if (dto.isActive !== undefined) {
+      this.sitemapService.invalidate();
+    }
+    return updated;
   }
 }

@@ -90,7 +90,13 @@ export function PlanPicker({ lang }: { lang: Lang }) {
       <p>{text("plansLead")}</p>
       <div className="plan-picker__grid">
         {PUBLIC_PLAN_IDS.filter((id) => enabled[id]).map((id) => (
-          <PlanCard key={id} id={id} lang={lang} numbers={plans[id]} />
+          <PlanCard
+            key={id}
+            id={id}
+            lang={lang}
+            numbers={plans[id]}
+            freeTrialDays={data?.platform?.freeTrialDays ?? 30}
+          />
         ))}
         {enabled.municipal ? <MunicipalCard lang={lang} onOpen={() => setQuoteOpen(true)} /> : null}
       </div>
@@ -103,16 +109,22 @@ function PlanCard({
   id,
   lang,
   numbers,
+  freeTrialDays,
 }: {
   id: PublicPlanId;
   lang: Lang;
   numbers: PublicPlanNumbers;
+  freeTrialDays: number;
 }) {
   const text = useLandingText(lang);
   const featured = id === "basic";
   const price = numbers.priceHuf <= 0 ? "0" : formatCount(numbers.priceHuf, lang);
   const priceNote = numbers.priceHuf <= 0 ? text("plans.freeForever") : text("plans.priceUnit");
   const registerUrl = `${buildUrl({ lang, path: "admin/register" })}?plan=${id}`;
+  const pitch =
+    id === "free"
+      ? text("plans.free.pitch", { count: freeTrialDays })
+      : text(`plans.${id}.pitch`);
 
   return (
     <article className={`plan-picker__card${featured ? " is-featured" : ""} plan-picker__card--${id}`}>
@@ -125,7 +137,7 @@ function PlanCard({
         <span>{price}</span>
         <small>{priceNote}</small>
       </p>
-      <p className="plan-picker__pitch">{text(`plans.${id}.pitch`)}</p>
+      <p className="plan-picker__pitch">{pitch}</p>
       <ul>
         <li className="is-domain">{text(`plans.${id}.domain`)}</li>
         {planBullets(numbers, lang, text).map((line) => (

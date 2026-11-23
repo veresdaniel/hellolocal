@@ -662,11 +662,12 @@ export function PricingPage() {
     );
   };
 
+  const freeTrialDays = platformSettings?.platform?.freeTrialDays ?? 30;
   const plans: Array<{ tier: PlanTier; name: string; description: string; highlight?: boolean }> = [
     {
       tier: "free",
       name: t("public.pricing.plans.free.name"),
-      description: t("public.pricing.plans.free.description"),
+      description: t("public.pricing.plans.free.description", { days: freeTrialDays }),
     },
     {
       tier: "basic",

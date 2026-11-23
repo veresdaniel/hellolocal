@@ -176,7 +176,7 @@ export function UsersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("admin.confirmations.deleteUser"))) return;
+    if (!confirm(t("admin.confirmations.deleteUserWithContent"))) return;
 
     try {
       await deleteUser(id);
@@ -628,11 +628,17 @@ export function UsersPage() {
                 <input
                   type="checkbox"
                   checked={formData.isActive}
+                  disabled={editingId ? users.find((u) => u.id === editingId)?.role === "superadmin" : false}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                   style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
                 />
-                <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
+                <span style={{ color: "#333", fontWeight: 500 }}>
+                  {formData.isActive ? t("admin.userActive") : t("admin.userSuspended")}
+                </span>
               </label>
+              <p style={{ color: "var(--admin-muted)", fontSize: 13, margin: "8px 0 0" }}>
+                {t("admin.userActiveHint")}
+              </p>
             </div>
           </div>
 
@@ -903,7 +909,7 @@ export function UsersPage() {
                     fontWeight: 600,
                   }}
                 >
-                  {user.isActive ? t("common.active") : t("common.inactive")}
+                  {user.isActive ? t("admin.userActive") : t("admin.userSuspended")}
                 </span>
               ),
             },
@@ -983,7 +989,7 @@ export function UsersPage() {
                     fontWeight: 600,
                   }}
                 >
-                  {user.isActive ? t("common.active") : t("common.inactive")}
+                  {user.isActive ? t("admin.userActive") : t("admin.userSuspended")}
                 </span>
               ),
             },

@@ -343,6 +343,7 @@ export class AdminPlaceService {
     if (accessWhere) where.AND = [accessWhere];
 
     const include = {
+      owner: { select: { id: true, isActive: true, role: true, email: true } },
       category: {
         include: {
           translations: true,
@@ -557,6 +558,16 @@ export class AdminPlaceService {
     await this.assertTownForSite(dto.siteId, dto.townId);
     await this.assertParentPlace(dto.siteId, parentPlaceId);
     await this.entitlementsService.assertCanAddPlace(actorUserId, dto.siteId, dto.isActive === true);
+    const createPlan = (dto.plan as PlacePlanType) || "free";
+    if (dto.isActive === true && createPlan === "free" && actorUserId) {
+      const actor = await this.prisma.user.findUnique({
+        where: { id: actorUserId },
+        select: { role: true },
+      });
+      if (actor?.role !== UserRole.superadmin) {
+        throw new ForbiddenException("Free-plan places require superadmin approval to publish");
+      }
+    }
     if (customDomainRaw !== undefined && String(customDomainRaw ?? "").trim()) {
       await this.assertPlaceDomainEntitlement(dto.siteId);
     }
@@ -766,9 +777,16 @@ export class AdminPlaceService {
 
     // RBAC: Check permissions for restricted fields
     if (userId) {
-      // Check if user can modify isActive (publish/activate)
-      if (dto.isActive !== undefined && !(await this.canModifyPlacePublish(userId, id, siteId))) {
-        throw new ForbiddenException("Editor cannot modify place publish status");
+      // Check if user can modify isActive (publish/activate); free → true is superadmin-only
+      if (
+        dto.isActive !== undefined &&
+        !(await this.canModifyPlacePublish(userId, id, siteId, dto.isActive))
+      ) {
+        throw new ForbiddenException(
+          dto.isActive === true
+            ? "Free-plan places require superadmin approval to publish"
+            : "Editor cannot modify place publish status"
+        );
       }
 
       // Check if user can modify SEO fields (slug management)
@@ -1088,24 +1106,33 @@ export class AdminPlaceService {
   }
 
   /**
-   * Check if user can modify place publish status (isActive)
-   * Permission: owner ✅, manager ✅, editor ❌
+   * Check if user can modify place publish status (isActive).
+   * Free-plan publish (→ true) is superadmin-only. Unpublish / paid publish: owner/manager/siteadmin.
    */
   private async canModifyPlacePublish(
     userId: string,
     placeId: string,
-    siteId: string
+    siteId: string,
+    nextIsActive?: boolean
   ): Promise<boolean> {
-    // Check global user role
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { role: true },
     });
 
     if (!user) return false;
-
-    // Superadmin and tenantadmin can always modify
     if (user.role === UserRole.superadmin) return true;
+
+    const place = await this.prisma.place.findUnique({
+      where: { id: placeId },
+      select: { plan: true, isActive: true },
+    });
+    if (!place) return false;
+
+    // Free places need superadmin approval before they appear publicly.
+    if (place.plan === "free" && nextIsActive === true && place.isActive !== true) {
+      return false;
+    }
 
     const siteMembership = await this.prisma.siteMembership.findUnique({
       where: {
@@ -1117,8 +1144,8 @@ export class AdminPlaceService {
     });
 
     if (siteMembership?.role === SiteRole.siteadmin) return true;
+    if (user.role === UserRole.admin) return true;
 
-    // Check place membership
     const placeMembership = await this.prisma.placeMembership.findUnique({
       where: {
         placeId_userId: {
@@ -1130,7 +1157,6 @@ export class AdminPlaceService {
 
     if (!placeMembership) return false;
 
-    // Owner and manager can modify, editor cannot
     return placeMembership.role === PlaceRole.owner || placeMembership.role === PlaceRole.manager;
   }
 

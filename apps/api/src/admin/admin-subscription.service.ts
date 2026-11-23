@@ -3,6 +3,11 @@ import { PrismaService } from "../prisma/prisma.service";
 import { SubscriptionPlan, SubscriptionStatus, BillingPeriod } from "@prisma/client";
 import { VisitorLadderService } from "../visitor-ladder/visitor-ladder.service";
 import { ladderPlanToSitePlan, stepForMeter } from "../visitor-ladder/visitor-ladder";
+import {
+  isPaidPlacePlan,
+  reactivatePlaceAfterPaidAccess,
+  subscriptionPlanToPlacePlan,
+} from "../common/reactivate-place-owner";
 
 export interface SubscriptionListItem {
   scope: "site" | "place";
@@ -758,6 +763,28 @@ export class AdminSubscriptionService {
           },
         });
 
+        const effectivePlan = dto.plan !== undefined ? dto.plan : oldSubscription.plan;
+        const effectiveStatus =
+          dto.status !== undefined ? dto.status : oldSubscription.status;
+        if (dto.plan !== undefined) {
+          await this.prisma.place.update({
+            where: { id: subscription.placeId },
+            data: { plan: subscriptionPlanToPlacePlan(dto.plan) },
+          });
+        }
+
+        // Paid plan / ACTIVE status: clear owner suspension and publish place.
+        const paidAccess =
+          isPaidPlacePlan(effectivePlan) &&
+          (planChanged ||
+            effectiveStatus === SubscriptionStatus.ACTIVE ||
+            (statusChanged && dto.status === SubscriptionStatus.ACTIVE));
+        if (paidAccess && effectiveStatus === SubscriptionStatus.ACTIVE) {
+          await reactivatePlaceAfterPaidAccess(this.prisma, subscription.placeId, {
+            activatePlace: true,
+          });
+        }
+
         // Create history entry
         await this.createHistoryEntry({
           scope: "place",
@@ -868,7 +895,12 @@ export class AdminSubscriptionService {
 
         const updated = await this.prisma.placeSubscription.update({
           where: { id },
-          data: { validUntil: newValidUntil },
+          data: {
+            validUntil: newValidUntil,
+            ...(isPaidPlacePlan(subscription.plan)
+              ? { status: SubscriptionStatus.ACTIVE, statusChangedAt: new Date() }
+              : {}),
+          },
           include: {
             place: {
               include: {
@@ -878,6 +910,12 @@ export class AdminSubscriptionService {
           },
         });
 
+        if (isPaidPlacePlan(subscription.plan)) {
+          await reactivatePlaceAfterPaidAccess(this.prisma, subscription.placeId, {
+            activatePlace: true,
+          });
+        }
+
         // Create history entry
         await this.createHistoryEntry({
           scope: "place",
@@ -886,7 +924,7 @@ export class AdminSubscriptionService {
           oldPlan: subscription.plan,
           newPlan: subscription.plan,
           oldStatus: subscription.status,
-          newStatus: subscription.status,
+          newStatus: updated.status,
           oldValidUntil,
           newValidUntil,
           paymentDueDate: newValidUntil,

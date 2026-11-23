@@ -31,6 +31,7 @@ import { LanguageSelectOptions } from "../../components/LanguageSelectOptions";
 import { UnderConstructionSettings } from "../../components/UnderConstructionSettings";
 import { GlobalCrawlabilityCard } from "../../components/GlobalCrawlabilityCard";
 import { LandingCrawlabilityCard } from "../../components/LandingCrawlabilityCard";
+import { FreeTrialDaysCard } from "../../components/FreeTrialDaysCard";
 import { VisitorLadderSettings } from "../../components/VisitorLadderSettings";
 import type { PublicPlanId, PublicPlanNumbers } from "../../components/publicPlans";
 import { DEFAULT_LANG, HAS_MULTIPLE_SITES, isLang } from "../../app/config";
@@ -1094,6 +1095,8 @@ export function AppSettingsPage() {
       {userIsSuperadmin && <GlobalCrawlabilityCard />}
 
       {userIsSuperadmin && <LandingCrawlabilityCard />}
+
+      {userIsSuperadmin && <FreeTrialDaysCard />}
 
       {userIsSuperadmin && <UnderConstructionSettings adminLang={adminLang} />}
 

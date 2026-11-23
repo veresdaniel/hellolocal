@@ -615,6 +615,15 @@ export function setLandingCrawlability(isCrawlable: boolean) {
   });
 }
 
+/** Free-plan trial days before auto-suspend. */
+export function getFreeTrialDays() {
+  return apiGet<{ days: number }>("/admin/app-settings/free-trial-days");
+}
+
+export function setFreeTrialDays(days: number) {
+  return apiPut<{ days: number }>("/admin/app-settings/free-trial-days", { days });
+}
+
 // Domains (admin UI). Prisma/API entity remains Brand; REST path stays /admin/brands.
 export interface Brand {
   id: string;

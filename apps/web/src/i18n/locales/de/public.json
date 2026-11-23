@@ -216,7 +216,7 @@
       "free": {
         "name": "Werde sichtbar",
         "kicker": "Für Privatkunden",
-        "pitch": "Eine Werkstatt, ein Keller oder ein Dienst. Die eigene Domain gibt es ab dem nächsten Paket.",
+        "pitch": "Eine Werkstatt, ein Keller oder ein Dienst. {{count}} Tage Testphase; danach Pause, bis du upgradest. Die eigene Domain gibt es ab dem nächsten Paket.",
         "domain": "Eigene Domain ab dem nächsten Paket",
         "cta": "Kostenlos"
       },
@@ -315,7 +315,7 @@
     "plans": {
       "free": {
         "name": "Free",
-        "description": "Einstiegslevel, Testversion"
+        "description": "Einstiegstest — {{days}} Tage, danach Pause"
       },
       "basic": {
         "name": "Basic",

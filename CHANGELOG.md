@@ -12,6 +12,35 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.9-beta] - 2026-11-23
+
+### Added
+
+- **Free-plan trial days** (`platform.freeTrialDays`, default 30): admin App
+  Settings control; free signup creates `PlaceSubscription` with `validUntil`;
+  daily cron auto-suspends the owner when the trial ends; pricing / plan cards
+  show the configured length.
+- **Paid plan apply / renew**: upgrading free→paid (or setting place subscription
+  ACTIVE / extending a paid plan) unsuspends the owner and sets the place
+  `isActive` so list/map content returns.
+
+### Changed
+
+- User **suspend** (`isActive=false`): owned places/events stay out of public
+  list, map, detail, and sitemap (superadmin accounts cannot be suspended;
+  their content is never hidden by this rule).
+- User **delete** (superadmin only): cascade-deletes places the user owns
+  (and related events); superadmin users still cannot be deleted.
+- **Free-plan** places require **superadmin** publish approval; owners/managers
+  cannot turn visibility on. Admin place list shows awaiting-approval /
+  owner-suspended badges; user form labels suspend clearly.
+
+### Fixed
+
+- Facebook / social OG scrapers no longer see a synthetic **403** when global
+  crawl is off but platform landing is on — `robots.txt` allowlists
+  `facebookexternalhit` (and peers); Meta ignores `$` Allow + `Disallow: /`.
+
 ## [1.0.8-beta] - 2026-11-23
 
 ### Changed

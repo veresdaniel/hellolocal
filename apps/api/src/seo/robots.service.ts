@@ -6,6 +6,31 @@ import { PlatformSettingsService } from "../platform-settings/platform-settings.
 import { isProductionSeoEnvironment, PUBLIC_LANGS } from "./public-path.util";
 import type { SitemapScope } from "./sitemap-scope";
 
+/**
+ * OG / share scrapers. Meta's Sharing Debugger treats `Disallow: /` as HTTP 403
+ * and often ignores `$` Allow anchors — give these UAs an explicit Allow group.
+ */
+const SOCIAL_PREVIEW_BOTS = [
+  "facebookexternalhit",
+  "Facebot",
+  "Twitterbot",
+  "LinkedInBot",
+  "WhatsApp",
+  "TelegramBot",
+  "Slackbot",
+  "Discordbot",
+] as const;
+
+function socialPreviewAllowBlock(): string[] {
+  const lines: string[] = [
+    "# Social / OG preview scrapers (Meta reports robots Disallow as 403)",
+  ];
+  for (const ua of SOCIAL_PREVIEW_BOTS) {
+    lines.push(`User-agent: ${ua}`, "Allow: /", "");
+  }
+  return lines;
+}
+
 @Injectable()
 export class RobotsService {
   constructor(private readonly platformSettings: PlatformSettingsService) {}
@@ -14,7 +39,8 @@ export class RobotsService {
    * Non-prod (local/staging/beta/devel): always Disallow all, no Sitemap line.
    * Prod platform host:
    * - Global on → Allow / (admin/api still Disallow)
-   * - Global off + landing on → Allow only apex + `/:lang` landings (rest Disallow)
+   * - Global off + landing on → Allow only apex + `/:lang` landings (rest Disallow);
+   *   social preview bots get Allow: / so Facebook/LinkedIn can scrape OG
    * - Global off + landing off → Disallow all
    * Custom/unknown hosts follow global only (landing switch is platform marketing only).
    * @param scope From {@link SitemapScopeResolver} (Host / X-Forwarded-Host)
@@ -49,6 +75,7 @@ export class RobotsService {
       if (scope.kind === "platform" && landingOn) {
         return [
           "# HelloLocal robots.txt — platform landing only (global indexing off)",
+          ...socialPreviewAllowBlock(),
           "User-agent: *",
           "Allow: /$",
           ...PUBLIC_LANGS.map((lang) => `Allow: /${lang}$`),

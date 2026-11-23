@@ -1,11 +1,15 @@
 // apps/api/src/billing/billing.service.ts
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { PlacePlan, SitePlan, SubscriptionPlan } from "@prisma/client";
+import { PlacePlan, SitePlan, SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 import { getPlaceLimits, type PlaceLimits } from "../config/place-limits.config";
 import { getSiteLimits, type SiteLimits } from "../config/site-limits.config";
 import { VisitorLadderService, type VisitorLadderSnapshot } from "../visitor-ladder/visitor-ladder.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
+import {
+  isPaidPlacePlan,
+  reactivatePlaceAfterPaidAccess,
+} from "../common/reactivate-place-owner";
 
 // Helper function to convert PlacePlan to SubscriptionPlan
 function sitePlanToSubscriptionPlan(plan: SitePlan): SubscriptionPlan {
@@ -264,6 +268,10 @@ export class BillingService {
     if (planChanged) {
       subscriptionData.statusChangedAt = new Date();
       subscriptionData.plan = newSubscriptionPlan;
+      // Paid upgrade clears trial suspension; keep free→free as-is.
+      if (isPaidPlacePlan(newPlan)) {
+        subscriptionData.status = SubscriptionStatus.ACTIVE;
+      }
 
       // If plan changed and validUntil is not explicitly set, set to first day of next month
       if (data.validUntil === undefined) {
@@ -294,6 +302,7 @@ export class BillingService {
       create: {
         placeId,
         plan: newSubscriptionPlan,
+        status: SubscriptionStatus.ACTIVE,
         validUntil: createValidUntil,
         priceCents: data.priceCents ?? null,
         currency: data.currency ?? null,
@@ -311,6 +320,11 @@ export class BillingService {
         updatedAt: true,
       },
     });
+
+    // Free → paid (or any paid plan apply): unsuspend owner and publish place.
+    if (planChanged && isPaidPlacePlan(newPlan)) {
+      await reactivatePlaceAfterPaidAccess(this.prisma, placeId, { activatePlace: true });
+    }
 
     // Create history entry if plan changed
     // Only create history if plan actually changed (not on first creation unless plan is different from default)

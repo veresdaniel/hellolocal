@@ -7,6 +7,7 @@ import { resolveGaMeasurementId } from "../common/ga-measurement-id";
 import { assignMissingSlugs, generateSlug } from "../slug/slug.helper";
 import { allowsCrawl } from "../seo/crawlability";
 import { CrawlabilityService } from "../seo/crawlability.service";
+import { placeOwnerPubliclyVisible } from "../common/owner-visibility";
 
 type ListTownsArgs = {
   lang: string;
@@ -47,7 +48,13 @@ export class TownsPublicService {
       },
       include: {
         translations: true,
-        _count: { select: { places: { where: { isActive: true } } } },
+        _count: {
+          select: {
+            places: {
+              where: { isActive: true, AND: [placeOwnerPubliclyVisible()] },
+            },
+          },
+        },
       },
       orderBy: { createdAt: "asc" },
     });

@@ -11,6 +11,7 @@ import { UiCopyService } from "../ui-copy/ui-copy.service";
 import { alignPlanMatrixAndPublicPlans } from "./plan-matrix-sync";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { allowsCrawl } from "../seo/crawlability";
+import { FREE_TRIAL_DAYS_KEY, parseFreeTrialDays } from "../common/free-trial";
 import {
   DEFAULT_SHARE_IMAGE_KEY,
   FALLBACK_SHARE_IMAGE_PATH,
@@ -435,6 +436,7 @@ export class PlatformSettingsService {
     timeFormat: "24h" | "12h";
     weekStartsOn: number;
     defaultShareImage: string | null;
+    freeTrialDays: number;
   }> {
     // Get platform settings from AppSetting
     const [
@@ -443,12 +445,14 @@ export class PlatformSettingsService {
       timeFormatSetting,
       weekStartsOnSetting,
       shareImageSetting,
+      freeTrialSetting,
     ] = await Promise.all([
       this.prisma.appSetting.findUnique({ where: { key: "platform.locale" } }),
       this.prisma.appSetting.findUnique({ where: { key: "platform.currency" } }),
       this.prisma.appSetting.findUnique({ where: { key: "platform.timeFormat" } }),
       this.prisma.appSetting.findUnique({ where: { key: "platform.weekStartsOn" } }),
       this.prisma.appSetting.findUnique({ where: { key: DEFAULT_SHARE_IMAGE_KEY } }),
+      this.prisma.appSetting.findUnique({ where: { key: FREE_TRIAL_DAYS_KEY } }),
     ]);
 
     const configuredShare = normalizeShareImageUrl(shareImageSetting?.value);
@@ -458,6 +462,7 @@ export class PlatformSettingsService {
       timeFormat: (timeFormatSetting?.value === "12h" ? "12h" : "24h") as "24h" | "12h",
       weekStartsOn: weekStartsOnSetting?.value ? parseInt(weekStartsOnSetting.value, 10) : 1,
       defaultShareImage: configuredShare || FALLBACK_SHARE_IMAGE_PATH,
+      freeTrialDays: parseFreeTrialDays(freeTrialSetting?.value),
     };
   }
 

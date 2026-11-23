@@ -10,6 +10,10 @@ import { SlugResolverService } from "../slug/slug-resolver.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { allowsCrawl } from "../seo/crawlability";
 import { CrawlabilityService } from "../seo/crawlability.service";
+import {
+  eventPlaceOwnerPubliclyVisible,
+  isOwnerAccountPubliclyVisible,
+} from "../common/owner-visibility";
 
 /** Event pin, or the parent place pin when the event has no coordinates of its own. */
 function mapLocation(
@@ -57,10 +61,16 @@ export class EventsService {
     const where: Prisma.EventWhereInput = {
       siteId: site.siteId,
       isActive: true,
-      // Only show events that haven't ended yet
-      // If event has endDate, it must be in the future
-      // If no endDate, check startDate (must be in the future)
-      OR: [{ endDate: { gte: now } }, { AND: [{ endDate: null }, { startDate: { gte: now } }] }],
+      AND: [
+        // Only show events that haven't ended yet
+        {
+          OR: [
+            { endDate: { gte: now } },
+            { AND: [{ endDate: null }, { startDate: { gte: now } }] },
+          ],
+        },
+        eventPlaceOwnerPubliclyVisible(),
+      ],
     };
 
     if (args.category) {
@@ -311,6 +321,7 @@ export class EventsService {
         site: { select: { gaMeasurementId: true } },
         place: {
           include: {
+            owner: { select: { isActive: true, role: true } },
             translations: true,
             town: {
               select: {
@@ -348,7 +359,13 @@ export class EventsService {
       },
     });
 
-    if (!event || !event.isActive || event.siteId !== site.siteId) {
+    if (
+      !event ||
+      !event.isActive ||
+      event.siteId !== site.siteId ||
+      !event.place?.isActive ||
+      !isOwnerAccountPubliclyVisible(event.place.owner)
+    ) {
       throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_EVENT);
     }
 

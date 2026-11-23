@@ -4,11 +4,16 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { PlaceRole, PlaceSignupStatus, UserRole } from "@prisma/client";
+import { PlaceRole, PlaceSignupStatus, SubscriptionPlan, SubscriptionStatus, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeDomainHost } from "../common/domain-host";
 import { assertRegionNameAvailable } from "../common/unique-place-name";
 import { EntitlementsService } from "../entitlements/entitlements.service";
+import {
+  FREE_TRIAL_DAYS_KEY,
+  freeTrialValidUntil,
+  parseFreeTrialDays,
+} from "../common/free-trial";
 
 export type CountryDomainInput = {
   domain: string;
@@ -522,6 +527,11 @@ export class CountryService {
     }
     const placeName = `${firstName} ${lastName}`.trim() || "Hely";
     await this.entitlementsService.assertCustomerPlaceAllowance(userId);
+    const trialSetting = await this.prisma.appSetting.findUnique({
+      where: { key: FREE_TRIAL_DAYS_KEY },
+    });
+    const trialDays = parseFreeTrialDays(trialSetting?.value);
+    const now = new Date();
     const place = await this.prisma.place.create({
       data: {
         siteId: town.siteId,
@@ -535,6 +545,15 @@ export class CountryService {
         },
         memberships: {
           create: { userId, role: PlaceRole.owner },
+        },
+        subscription: {
+          create: {
+            plan: SubscriptionPlan.FREE,
+            status: SubscriptionStatus.ACTIVE,
+            validUntil: freeTrialValidUntil(now, trialDays),
+            statusChangedAt: now,
+            note: `Free trial (${trialDays} days)`,
+          },
         },
       },
     });
