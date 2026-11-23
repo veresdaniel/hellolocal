@@ -520,6 +520,11 @@
   "featureMatrixDescription": "Konfigurieren Sie Feature-Limits und -Funktionen für jeden Abonnementplan. Lassen Sie Felder leer, um Standardwerte zu verwenden.",
   "placeFeatureMatrix": "Standort-Abonnement-Matrix-Konfiguration",
   "placeFeatureMatrixDescription": "Konfigurieren Sie Feature-Limits und -Funktionen für jeden Standort-Abonnementplan (free, basic, pro). Lassen Sie Felder leer, um Standardwerte zu verwenden.",
+  "placeMatrix": {
+    "images": "Anzahl der Bilder",
+    "events": "Ereignisse / Ort",
+    "featured": "Hervorgehobene Platzierung"
+  },
   "resetToDefaults": "Auf Standardwerte zurücksetzen",
   "overridden": "Überschrieben",
   "siteName": "Seitenname",

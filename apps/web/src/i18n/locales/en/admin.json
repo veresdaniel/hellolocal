@@ -521,6 +521,11 @@
   "featureMatrixDescription": "Configure feature limits and capabilities for each subscription plan. Leave fields empty to use default values.",
   "placeFeatureMatrix": "Place Subscription Matrix Configuration",
   "placeFeatureMatrixDescription": "Configure feature limits and capabilities for each place subscription plan (free, basic, pro). Leave fields empty to use default values.",
+  "placeMatrix": {
+    "images": "Number of images",
+    "events": "Events / place",
+    "featured": "Featured placement"
+  },
   "resetToDefaults": "Reset to Defaults",
   "overridden": "Overridden",
   "siteName": "Region Name",

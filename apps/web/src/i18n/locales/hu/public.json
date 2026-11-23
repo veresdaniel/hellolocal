@@ -368,7 +368,7 @@
       "featuredPlacement": "Kiemelt megjelenés",
       "placeTitle": "Helyszín csomagok",
       "placeSubtitle": "Válassz egy csomagot a helyszíned számára",
-      "eventsPerPlace": "{{count}} esemény / hely"
+      "eventsPerPlace": "Események / hely"
     },
     "featureMatrix": {
       "feature": "Funkció"

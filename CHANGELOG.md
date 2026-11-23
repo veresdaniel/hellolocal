@@ -12,6 +12,15 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.19-beta] - 2026-11-23
+
+### Fixed
+
+- Place subscription matrix admin label: show “Events / place” instead of raw
+  `{{count}}` from the public pricing string.
+- Admin login first-click “too fast” form shield: lower min dwell to 800ms and
+  wait client-side before submit so password-manager autofill works.
+
 ## [1.0.18-beta] - 2026-11-23
 
 ### Added

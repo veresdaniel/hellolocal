@@ -550,6 +550,11 @@
   "featureMatrixDescription": "Konfiguráld a feature limiteket és képességeket minden előfizetési csomaghoz. Hagyd üresen a mezőket az alapértelmezett értékek használatához.",
   "placeFeatureMatrix": "Helyszín Előfizetési Mátrix Konfiguráció",
   "placeFeatureMatrixDescription": "Konfiguráld a feature limiteket és képességeket minden helyszín előfizetési csomaghoz (free, basic, pro). Hagyd üresen a mezőket az alapértelmezett értékek használatához.",
+  "placeMatrix": {
+    "images": "Képek száma",
+    "events": "Események / hely",
+    "featured": "Kiemelt megjelenés"
+  },
   "resetToDefaults": "Alapértelmezett értékekre visszaállítás",
   "overridden": "Felülírva",
   "siteName": "Oldal neve",

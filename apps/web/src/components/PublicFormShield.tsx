@@ -18,6 +18,9 @@ declare global {
   }
 }
 
+/** Must stay ≥ API `PUBLIC_FORM_MIN_MS` (apps/api/src/common/public-form-shield.ts). */
+const FORM_MIN_MS = 800;
+
 const siteKey = () => (import.meta.env.VITE_RECAPTCHA_SITE_KEY || "").trim();
 
 let scriptPromise: Promise<void> | null = null;
@@ -52,6 +55,13 @@ export function usePublicFormShield(action: string) {
   }, [key]);
 
   const payload = async (): Promise<PublicFormShieldPayload> => {
+    // Wait out the min dwell so the first click never trips public_form_too_fast
+    // (common with password-manager autofill on admin login).
+    const wait = FORM_MIN_MS - (Date.now() - startedAt.current);
+    if (wait > 0) {
+      await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+
     let recaptchaToken: string | undefined;
     if (key) {
       try {

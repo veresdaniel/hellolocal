@@ -368,7 +368,7 @@
       "featuredPlacement": "Hervorgehobene Platzierung",
       "placeTitle": "Standort-Pakete",
       "placeSubtitle": "Wählen Sie ein Paket für Ihren Standort",
-      "eventsPerPlace": "{{count}} Ereignisse / Ort"
+      "eventsPerPlace": "Ereignisse / Ort"
     },
     "featureMatrix": {
       "feature": "Funktion"

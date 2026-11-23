@@ -2600,17 +2600,17 @@ function PlaceFeatureMatrixEditor({
 
   const features = [
     {
-      name: t("public.pricing.features.placeImages"),
+      name: t("admin.placeMatrix.images"),
       field: "images",
       type: "number",
     },
     {
-      name: t("public.pricing.features.eventsPerPlace"),
+      name: t("admin.placeMatrix.events"),
       field: "events",
       type: "number",
     },
     {
-      name: t("public.pricing.features.featuredPlacement"),
+      name: t("admin.placeMatrix.featured"),
       field: "featured",
       type: "boolean",
     },

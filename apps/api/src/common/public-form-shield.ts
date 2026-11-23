@@ -1,7 +1,10 @@
 import { BadRequestException } from "@nestjs/common";
 
-/** Instant scripted posts are rejected. Humans need a short pause after the form appears. */
-export const PUBLIC_FORM_MIN_MS = 2500;
+/**
+ * Instant scripted posts are rejected. Keep this short: password managers +
+ * autofill often submit login within ~1s of paint; 2.5s made the first click fail.
+ */
+export const PUBLIC_FORM_MIN_MS = 800;
 const MAX_AGE_MS = 2 * 60 * 60 * 1000;
 const CLOCK_SKEW_MS = 15_000;
 

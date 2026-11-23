@@ -368,7 +368,7 @@
       "featuredPlacement": "Featured placement",
       "placeTitle": "Location Plans",
       "placeSubtitle": "Choose a plan for your location",
-      "eventsPerPlace": "{{count}} events / place"
+      "eventsPerPlace": "Events / place"
     },
     "featureMatrix": {
       "feature": "Feature"
