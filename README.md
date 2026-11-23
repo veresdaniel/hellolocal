@@ -9,6 +9,7 @@ Multi-tenant local tourism platform for Hungarian regions and destinations (e.g.
 ## What it does
 
 ### Public experience
+
 - **Multi-tenant regions (Sites)** with path routing `/:lang/:siteKey/...` and optional **custom domains** for sites, towns, places, and collections
 - **Places & events** — map (MapLibre) and list views, filters, detail pages, galleries, rich text, social share
 - **Collections**, **static pages**, **legal pages**, **towns index**, platform **overview / landing**, **pricing / plans**
@@ -20,6 +21,7 @@ Multi-tenant local tourism platform for Hungarian regions and destinations (e.g.
 - Loading **skeletons** aimed at reducing CLS on public surfaces
 
 ### Admin
+
 - Role-based access: superadmin, admin, editor, viewer (+ **2FA** TOTP)
 - CRUD for sites, domains, places, events, collections, towns, categories, tags, price bands, galleries, static/legal pages
 - Memberships, analytics dashboards, subscriptions / products, i18n & UI copy tools
@@ -27,6 +29,7 @@ Multi-tenant local tourism platform for Hungarian regions and destinations (e.g.
 - Plan entitlements for custom domains / aliases
 
 ### Platform / ops
+
 - Hostname → tenant resolution (custom host first, then path site key)
 - Caddy **on-demand TLS** ask endpoint (`/api/caddy/ask`)
 - Domain-scoped crawl files proxied through the web SSR container
@@ -36,7 +39,7 @@ Multi-tenant local tourism platform for Hungarian regions and destinations (e.g.
 ## Tech stack
 
 | Layer | Stack |
-|--------|--------|
+| --- | --- |
 | API | NestJS 11, Prisma 7, PostgreSQL (`@prisma/adapter-pg`), Passport JWT, bcrypt, optional reCAPTCHA / Web Push |
 | Web | React 19, Vite, TypeScript, React Router, TanStack Query, TipTap, MapLibre (`react-map-gl`), i18next, Zustand |
 | SSR | Node `apps/web/server.js` — bot SEO/OG injection, UC gate, sitemap/robots proxy |
@@ -50,7 +53,7 @@ Engines: **Node ≥ 18**, **pnpm ≥ 10**. API production images use **Node 22**
 
 ## Monorepo layout
 
-```
+```text
 hellolocal/
 ├── apps/
 │   ├── api/          # NestJS API + Prisma
@@ -73,6 +76,7 @@ Versioning: root + `apps/web` share the product version (commit hook bumps patch
 ## Setup
 
 ### Prerequisites
+
 - Node 18+ (22 recommended to match API images)
 - pnpm 10+
 - PostgreSQL 14+ (or Docker Compose / Neon connection string)
@@ -89,7 +93,7 @@ pnpm install
 Copy examples and fill values:
 
 | File | Purpose |
-|------|---------|
+| --- | --- |
 | `apps/api/.env` | From `apps/api/env.example` — `DATABASE_URL`, JWT, `FRONTEND_URL`, CORS, optional Facebook OG / VAPID / reCAPTCHA |
 | `apps/api/.env.staging` | From `apps/api/env.staging.example` — staging DB |
 | `apps/web/.env` | From `apps/web/env.example` — `VITE_API_URL`, VAPID, Cloudinary, reCAPTCHA site key |
@@ -147,7 +151,7 @@ Render.com is **retired** in this repo. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT
 ## Documentation
 
 | Doc | Topic |
-|-----|--------|
+| --- | --- |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes |
 | [docs/frontend-seo-middleware.md](docs/frontend-seo-middleware.md) | SSR SEO, sitemaps, robots |
 | [docs/domain-based-tenant-resolution.md](docs/domain-based-tenant-resolution.md) | Host → site / entity |

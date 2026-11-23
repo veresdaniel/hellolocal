@@ -2,73 +2,114 @@
 
 All notable changes to HelloLocal are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on
+[Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Product / domain names (HelloLocal, hello-local.io, Etyek–Budai, etc.) appear in prose as used in the product.
+Product / domain names (HelloLocal, hello-local.io, Etyek–Budai, etc.) appear
+in prose as used in the product.
 
 ## [1.0.0-beta] - 2026-11-23
 
-First named **1.0.0-beta** product release. Package versions had auto-bumped through the `1.0.x-beta` line (root/web); this release resets the documented product version to **1.0.0-beta**. Consolidates work since **0.1.0-beta**, including multi-domain hosting, SEO/social/SSR hardening, under-construction, admin/plans, and current uncommitted CLS / social-preview / landing-crawl / security polish.
+First named **1.0.0-beta** product release. Package versions had auto-bumped
+through the `1.0.x-beta` line (root/web); this release resets the documented
+product version to **1.0.0-beta**. Consolidates work since **0.1.0-beta**,
+including multi-domain hosting, SEO/social/SSR hardening, under-construction,
+admin/plans, and current uncommitted CLS / social-preview / landing-crawl /
+security polish.
 
 ### Added
 
-- **Multi-tenant regions (Sites)** with path-based (`/:lang/:siteKey`) and **custom-domain** hosting for sites, towns, places, and collections; plan-gated domain entitlements.
-- **Caddy on-demand TLS** via `GET /api/caddy/ask` so new hostnames can obtain certificates without redeploy.
-- **Domain-scoped SEO crawl files**: per-host `robots.txt` and chunked `sitemap.xml` (static, sites, places, events, towns, pages, collections), with cache invalidation on admin writes.
-- **SSR social / Open Graph meta** in `apps/web/server.js` and related SSR helpers (`socialMeta`, overview JSON-LD, under-construction gate HTML).
-- **Facebook Graph OG scrape** service for admin “Refresh social preview” (and post-SEO-save), gated by `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET`.
-- **Platform landing crawl toggle** (`platform.landingCrawlable`) so the marketing overview can stay out of the index until enabled.
+- **Multi-tenant regions (Sites)** with path-based (`/:lang/:siteKey`) and
+  **custom-domain** hosting for sites, towns, places, and collections;
+  plan-gated domain entitlements.
+- **Caddy on-demand TLS** via `GET /api/caddy/ask` so new hostnames can obtain
+  certificates without redeploy.
+- **Domain-scoped SEO crawl files**: per-host `robots.txt` and chunked
+  `sitemap.xml` (static, sites, places, events, towns, pages, collections),
+  with cache invalidation on admin writes.
+- **SSR social / Open Graph meta** in `apps/web/server.js` and related SSR
+  helpers (`socialMeta`, overview JSON-LD, under-construction gate HTML).
+- **Facebook Graph OG scrape** service for admin “Refresh social preview”
+  (and post-SEO-save), gated by `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET`.
+- **Platform landing crawl toggle** (`platform.landingCrawlable`) so the
+  marketing overview can stay out of the index until enabled.
 - **hreflang / language alternates** for public pages (client + SSR overview).
-- **Under-construction (UC)** mode with staff/UC-preview access to public pages while visitors see the gate.
-- **Curated collections**, static pages, legal pages, towns index, pricing/plans surfaces, and visitor-oriented auth flows (visitor users / starring).
-- **`@hellolocal/shared`** package for cross-app constants, API paths, and UC helpers.
-- **Google Analytics 4** (consent-gated) with platform and site measurement-ID settings.
-- **Admin** expansions: domains, countries, memberships, analytics dashboards, subscriptions/products, i18n/UI copy, site status / cache tools, landing-crawlability card, social preview refresh.
-- **Hetzner + Docker Compose + Caddy** production/devel/beta deploy paths (GitHub Actions); Render.com path retired.
-- **Public loading skeletons** (`PublicSkeleton`, `ImageWithSkeleton`) to reduce layout shift (CLS) on lists and detail surfaces.
-- **Cloudinary-aware share/SEO image** helpers and default share image resolution.
-- Unit coverage for Facebook OG scrape, social meta, and overview JSON-LD (new test files in tree).
+- **Under-construction (UC)** mode with staff/UC-preview access to public
+  pages while visitors see the gate.
+- **Curated collections**, static pages, legal pages, towns index,
+  pricing/plans surfaces, and visitor-oriented auth flows (visitor users /
+  starring).
+- **`@hellolocal/shared`** package for cross-app constants, API paths, and UC
+  helpers.
+- **Google Analytics 4** (consent-gated) with platform and site
+  measurement-ID settings.
+- **Admin** expansions: domains, countries, memberships, analytics
+  dashboards, subscriptions/products, i18n/UI copy, site status / cache tools,
+  landing-crawlability card, social preview refresh.
+- **Hetzner + Docker Compose + Caddy** production/devel/beta deploy paths
+  (GitHub Actions); Render.com path retired.
+- **Public loading skeletons** (`PublicSkeleton`, `ImageWithSkeleton`) to
+  reduce layout shift (CLS) on lists and detail surfaces.
+- **Cloudinary-aware share/SEO image** helpers and default share image
+  resolution.
+- Unit coverage for Facebook OG scrape, social meta, and overview JSON-LD
+  (new test files in tree).
 
 ### Changed
 
-- Production crawl gating uses live platform host (`hello-local.io`); beta/devel/local stay non-indexable.
-- Site resolution order: custom hostname → path site key → unscoped; mirrored for SPA bootstrap via domain resolve API.
-- Web production SSR image hardened (languages catalog, locale loading); map chunk points at `react-map-gl/maplibre`.
-- API production images build on **Node 22** (Prisma 7); monorepo engines remain Node ≥18 / pnpm ≥10.
-- Centralized magic strings into `@hellolocal/shared`; admin and public SEO field resolution refactored for consistency.
-- Map / mobile UX refinements; rate limits and CORS/deploy hardening iterated for live traffic.
+- Production crawl gating uses live platform host (`hello-local.io`);
+  beta/devel/local stay non-indexable.
+- Site resolution order: custom hostname → path site key → unscoped; mirrored
+  for SPA bootstrap via domain resolve API.
+- Web production SSR image hardened (languages catalog, locale loading); map
+  chunk points at `react-map-gl/maplibre`.
+- API production images build on **Node 22** (Prisma 7); monorepo engines
+  remain Node ≥18 / pnpm ≥10.
+- Centralized magic strings into `@hellolocal/shared`; admin and public SEO
+  field resolution refactored for consistency.
+- Map / mobile UX refinements; rate limits and CORS/deploy hardening iterated
+  for live traffic.
 
 ### Fixed
 
 - Under-construction preview and staff browse of public pages while UC is on.
-- Site edit / overview crashes (undefined site id), seed/domain saving, and multi-domain admin settings.
+- Site edit / overview crashes (undefined site id), seed/domain saving, and
+  multi-domain admin settings.
 - Web-prod 502 from missing `languages.json` in the SSR image.
 - Map load/resolution on production and mobile touch behavior.
-- 2FA flows and assorted admin/i18n regressions from the refine-admin merge line.
+- 2FA flows and assorted admin/i18n regressions from the refine-admin merge
+  line.
 - Merge-conflict leftovers that broke API/version parsing.
 
 ### Security
 
-- Hostname uniqueness / entitlement checks for custom domains; known-public-hostname helpers for crawl/TLS ask paths.
+- Hostname uniqueness / entitlement checks for custom domains;
+  known-public-hostname helpers for crawl/TLS ask paths.
 - Stricter public URL validation for SEO/share and related admin inputs.
-- JWT + role guards retained; 2FA (TOTP) fixes; optional reCAPTCHA v3 on public forms (honeypot/timing still apply when unset).
-- Secrets for Facebook OG scrape never exposed to the admin UI (configured/status only).
+- JWT + role guards retained; 2FA (TOTP) fixes; optional reCAPTCHA v3 on
+  public forms (honeypot/timing still apply when unset).
+- Secrets for Facebook OG scrape never exposed to the admin UI
+  (configured/status only).
 
 ### Known limitations (beta)
 
-- Email delivery still largely placeholder; some advanced admin bulk/export flows remain roadmap items.
+- Email delivery still largely placeholder; some advanced admin bulk/export
+  flows remain roadmap items.
 - Sitemap cache is in-memory (short TTL); no Redis layer yet.
 
 ---
 
 ## [0.1.0-beta] - 2026-01-07
 
-Historical notes from the first beta documentation pass, translated to English for consistency.
+Historical notes from the first beta documentation pass, translated to English
+for consistency.
 
-### Added
+### Added in 0.1.0-beta
 
 #### Content management
+
 - **Multilingual system** — Hungarian, English, and German via i18next
 - **Places management** — full CRUD in the admin UI
   - Dynamic categories
@@ -96,6 +137,7 @@ Historical notes from the first beta documentation pass, translated to English f
 - **Legal pages** — dynamic Terms, Privacy, and Cookies
 
 #### User interface
+
 - **Interactive map view** — MapLibre GL
   - Places shown as markers
   - Events on the map
@@ -132,6 +174,7 @@ Historical notes from the first beta documentation pass, translated to English f
   - Word-wrap for long text
 
 #### Admin
+
 - **Role-based access control**
   - Superadmin — full access
   - Admin — content and settings
@@ -170,6 +213,7 @@ Historical notes from the first beta documentation pass, translated to English f
   9. User profile
 
 #### Notifications
+
 - **Push notification system** — Web Push API
   - Subscribe and unsubscribe
   - Prisma model for push subscriptions
@@ -178,6 +222,7 @@ Historical notes from the first beta documentation pass, translated to English f
   - Cron job every 10 minutes for upcoming events
 
 #### Technical
+
 - **JWT authentication** — access-token based
 - **Prisma ORM** — type-safe database access
 - **React Query** — server state cache management
@@ -187,7 +232,8 @@ Historical notes from the first beta documentation pass, translated to English f
 - **Loading spinner** — 2-second delay, full-screen
 - **Footer** — modern sticky design
 
-### Fixed
+### Fixed in 0.1.0-beta
+
 - Place and Event detail pages made scrollable
 - Slug fallback to Hungarian when the requested language is missing
 - Site settings save works correctly
@@ -199,13 +245,15 @@ Historical notes from the first beta documentation pass, translated to English f
 - Translation update clarifying "Cities" as "Towns" in the Hungarian locale
 - Linter warnings addressed
 
-### Changed
+### Changed in 0.1.0-beta
+
 - Modern card-based design
 - Hover effects and transitions
 - Smaller, cleaner social share buttons
 - Brand-colored checkboxes in filters
 
-### Security
+### Security in 0.1.0-beta
+
 - Bcrypt password hashing
 - JWT token-based authentication
 - Role-based access via Guards
@@ -215,12 +263,17 @@ Historical notes from the first beta documentation pass, translated to English f
 ### Dependencies (as of 0.1.0-beta docs)
 
 #### Frontend
-- React 19, Vite, TypeScript, TanStack Query, React Router, MapLibre GL, TipTap, i18next
+
+- React 19, Vite, TypeScript, TanStack Query, React Router, MapLibre GL,
+  TipTap, i18next
 
 #### Backend
-- NestJS 11, Prisma 7, PostgreSQL (`@prisma/adapter-pg`), Passport JWT, bcryptjs, Web Push, Node.js 18+
+
+- NestJS 11, Prisma 7, PostgreSQL (`@prisma/adapter-pg`), Passport JWT,
+  bcryptjs, Web Push, Node.js 18+
 
 ### Known limitations (0.1.0-beta)
+
 - Unit and E2E tests missing (partially addressed later)
 - Email service not configured (EmailService placeholder)
 - Image upload still file-path based (Cloudinary added later for editor/CDN)
@@ -233,6 +286,7 @@ Historical notes from the first beta documentation pass, translated to English f
 ## [Unreleased]
 
 ### Planned
+
 - [ ] Redis cache layer
 - [ ] Export/Import (CSV, JSON)
 - [ ] Bulk admin operations
@@ -243,9 +297,14 @@ Historical notes from the first beta documentation pass, translated to English f
 
 ## Versioning notes
 
-- **Product / release version**: root `package.json` and `apps/web/package.json` (kept in sync by `scripts/bump-version-on-commit.cjs`, which bumps the patch while preserving a prerelease suffix such as `-beta`).
-- **API** (`apps/api/package.json`): aligned to **1.0.0-beta** for this release; not auto-bumped by the commit hook.
-- **Shared** (`packages/shared/package.json`): independent package version (`0.1.0`); not the product semver.
+- **Product / release version**: root `package.json` and
+  `apps/web/package.json` (kept in sync by
+  `scripts/bump-version-on-commit.cjs`, which bumps the patch while preserving
+  a prerelease suffix such as `-beta`).
+- **API** (`apps/api/package.json`): aligned to **1.0.0-beta** for this
+  release; not auto-bumped by the commit hook.
+- **Shared** (`packages/shared/package.json`): independent package version
+  (`0.1.0`); not the product semver.
 
 [1.0.0-beta]: https://github.com/yourusername/hellolocal/releases/tag/v1.0.0-beta
 [0.1.0-beta]: https://github.com/yourusername/hellolocal/releases/tag/v0.1.0-beta
