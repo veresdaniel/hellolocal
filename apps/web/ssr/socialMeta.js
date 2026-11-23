@@ -20,6 +20,24 @@ export const SHARE_IMAGE_PATH = "/marketing/map-szeged.jpg";
 export const SHARE_IMAGE_WIDTH = "1024";
 export const SHARE_IMAGE_HEIGHT = "656";
 
+/** FB-recommended defaults when the asset has no known pixel size. */
+export const OG_IMAGE_WIDTH_DEFAULT = "1200";
+export const OG_IMAGE_HEIGHT_DEFAULT = "630";
+
+/**
+ * Seed / demo hosts Meta often cannot scrape (HEAD 405, redirect CDNs).
+ * Treat as missing so OG falls back to same-origin {@link SHARE_IMAGE_PATH}.
+ */
+const UNUSABLE_SHARE_IMAGE_HOSTS = new Set([
+  "picsum.photos",
+  "fastly.picsum.photos",
+  "loremflickr.com",
+  "placekitten.com",
+  "via.placeholder.com",
+  "placehold.co",
+  "placehold.it",
+]);
+
 const LOCALES = { hu: "hu_HU", en: "en_US", de: "de_DE" };
 const LANGS = ["hu", "en", "de"];
 const PLACE_SEGMENTS = new Set(["hely", "place", "ort"]);
@@ -179,9 +197,30 @@ function hostnameFromOrigin(value) {
   }
 }
 
+function shareImageHost(url) {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function isUnusableShareImageUrl(url) {
+  const host = shareImageHost(url);
+  if (!host) return true;
+  if (UNUSABLE_SHARE_IMAGE_HOSTS.has(host)) return true;
+  // Subdomains of listed hosts (e.g. i.picsum.photos).
+  for (const blocked of UNUSABLE_SHARE_IMAGE_HOSTS) {
+    if (host.endsWith(`.${blocked}`)) return true;
+  }
+  return false;
+}
+
 /**
  * Resolve a share image to an absolute https URL.
- * Relative paths join `origin`; empty / localhost → built-in marketing fallback (+ known dimensions).
+ * Relative paths join `origin`; empty / localhost / placeholder CDNs → built-in
+ * marketing fallback (+ known dimensions). Other absolute URLs get default OG
+ * width/height so Meta does not warn about missing dimensions.
  */
 export function absoluteShareImage(origin, image) {
   const fallback = {
@@ -195,9 +234,13 @@ export function absoluteShareImage(origin, image) {
   if (/^https?:\/\//i.test(raw)) url = raw;
   else if (raw.startsWith("//")) url = `https:${raw}`;
   else if (raw.startsWith("/")) url = `${origin}${raw}`;
-  if (!url || isLocalHost(url)) return fallback;
+  if (!url || isLocalHost(url) || isUnusableShareImageUrl(url)) return fallback;
   if (url === fallback.url) return fallback;
-  return { url, width: "", height: "" };
+  return {
+    url,
+    width: OG_IMAGE_WIDTH_DEFAULT,
+    height: OG_IMAGE_HEIGHT_DEFAULT,
+  };
 }
 
 function loadCopy(lang) {

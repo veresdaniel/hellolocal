@@ -12,6 +12,14 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.20-beta] - 2026-11-23
+
+### Fixed
+
+- Social OG: ignore picsum/placeholder hero URLs (Meta cannot scrape them) and
+  fall back to same-origin `/marketing/map-szeged.jpg`; always emit
+  `og:image:width` / `height` so Sharing Debugger can show image + description.
+
 ## [1.0.19-beta] - 2026-11-23
 
 ### Fixed

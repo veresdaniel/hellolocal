@@ -35,14 +35,28 @@ describe("socialMeta absoluteShareImage", () => {
   it("builds same-origin absolute URLs for relative paths", () => {
     const image = absoluteShareImage("https://hellolocal.hu", FALLBACK_SHARE_IMAGE_PATH);
     expect(image.url).toBe(`https://hellolocal.hu${FALLBACK_SHARE_IMAGE_PATH}`);
+    expect(image.width).toBeTruthy();
+    expect(image.height).toBeTruthy();
   });
 
-  it("keeps absolute https image URLs", () => {
+  it("keeps absolute https image URLs and sets default OG dimensions", () => {
     const image = absoluteShareImage(
       "https://hellolocal.hu",
       "https://cdn.example.com/share.jpg"
     );
     expect(image.url).toBe("https://cdn.example.com/share.jpg");
+    expect(image.width).toBe("1200");
+    expect(image.height).toBe("630");
+  });
+
+  it("replaces picsum placeholders with the same-origin marketing fallback", () => {
+    const image = absoluteShareImage(
+      "https://helloetyek.hu",
+      "https://picsum.photos/seed/etyek-budai-hero/1800/900"
+    );
+    expect(image.url).toBe(`https://helloetyek.hu${FALLBACK_SHARE_IMAGE_PATH}`);
+    expect(image.width).toBeTruthy();
+    expect(image.height).toBeTruthy();
   });
 });
 
