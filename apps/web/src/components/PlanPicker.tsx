@@ -15,10 +15,17 @@ import {
   type PublicPlanNumbers,
 } from "./publicPlans";
 import { useLandingText } from "../hooks/useLandingText";
-import { fillCount, landingDefault } from "./landingCopy";
+import { fillCount } from "./landingCopy";
 import "../styles/plan-picker.css";
 
 const LOCALE: Record<Lang, string> = { hu: "hu-HU", en: "en-GB", de: "de-DE" };
+
+/** Free card price note — not taken from i18n/UI copy (those get stale DB merges). */
+const FREE_PRICE_NOTE: Record<Lang, string> = {
+  hu: "Ft az első {{count}} napban",
+  en: "HUF for the first {{count}} days",
+  de: "Ft für die ersten {{count}} Tage",
+};
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function formatCount(value: number, lang: Lang) {
@@ -120,10 +127,9 @@ function PlanCard({
   const text = useLandingText(lang);
   const featured = id === "basic";
   const price = numbers.priceHuf <= 0 ? "0" : formatCount(numbers.priceHuf, lang);
-  // Locale JSON + freeTrialDays only (cloned defaults; ignore mutated i18n/DB copy).
   const priceNote =
     numbers.priceHuf <= 0
-      ? fillCount(landingDefault(lang, "plans.freeForever"), freeTrialDays)
+      ? fillCount(FREE_PRICE_NOTE[lang] ?? FREE_PRICE_NOTE.hu, freeTrialDays)
       : text("plans.priceUnit");
   const registerUrl = `${buildUrl({ lang, path: "admin/register" })}?plan=${id}`;
   const pitch =

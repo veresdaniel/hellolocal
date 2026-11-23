@@ -12,6 +12,14 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.17-beta] - 2026-11-23
+
+### Fixed
+
+- Free plan price note hard-wired from `freeTrialDays` (not i18n/UI copy); clone
+  locale JSON when registering i18n resources so DB UI-copy merge cannot mutate
+  shared modules (lazy chunks were cloning after the stale merge).
+
 ## [1.0.16-beta] - 2026-11-23
 
 ### Fixed

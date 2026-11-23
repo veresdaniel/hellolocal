@@ -26,7 +26,9 @@ for (const [path, data] of Object.entries(localeModules)) {
   if (!match) continue;
   const [, lang, namespace] = match;
   resources[lang] ??= { translation: {} };
-  resources[lang].translation[namespace] = data;
+  // Clone so later `addResourceBundle(..., deep)` (DB UI copy) cannot mutate
+  // the shared JSON module that landingDefault / other imports also read.
+  resources[lang].translation[namespace] = structuredClone(data);
 }
 
 i18n
