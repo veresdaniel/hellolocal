@@ -51,7 +51,7 @@ export class PlatformSettingsService {
 
   /**
    * Resolve public platform payload for a lang + optional siteKey (`"default"` → implicit site).
-   * Includes seo.defaultShareImage cascade, landingIndexable (global ∧ landingCrawlable), and brand.
+   * Includes seo.defaultShareImage cascade, landingIndexable (platform.landingCrawlable only), and brand.
    * No auth — consumed by public API / SSR.
    */
   async getPlatformSettings(args: {
@@ -335,11 +335,11 @@ export class PlatformSettingsService {
       avatar: brandPlaceholders.brandBadgeIcon ?? appDefaults.placeholders.avatar,
     };
 
-    // Region home follows the site switch. Global off forces every page off.
+    // Region home follows the site switch. Global off forces region/content pages off.
+    // Platform marketing landing is independent (own AppSetting).
     const globalCrawlability = await this.getGlobalCrawlability();
     const indexable = allowsCrawl(globalCrawlability, site.isCrawlable);
-    const landingOwn = await this.getLandingCrawlability();
-    const landingIndexable = allowsCrawl(globalCrawlability, landingOwn);
+    const landingIndexable = (await this.getLandingCrawlability()) === true;
 
     // Get feature matrix overrides from Brand (for pricing page)
     const brand = await this.prisma.brand.findFirst({

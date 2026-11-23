@@ -2,15 +2,17 @@
  * Platform marketing landing SSR (hellolocal.hu /:lang overview).
  * Not used on custom domains — those go through resolvePublicShare instead.
  *
- * Crawl: `indexable` comes from AppSetting platform.landingCrawlable (AND global crawl);
+ * Crawl: `indexable` comes from AppSetting platform.landingCrawlable (independent of global);
  * default is noindex until an admin turns landing crawl on.
  */
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { applySocialMeta, publicOrigin, SHARE_IMAGE_HEIGHT, SHARE_IMAGE_WIDTH } from "./socialMeta.js";
+import { injectOverviewShellHead } from "./overviewShellCss.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
+const webRoot = join(here, "..");
 
 /** Prod image copies catalog next to this file; local/dev keeps it under src/i18n. */
 function loadLanguageCatalog() {
@@ -336,7 +338,7 @@ export function renderOverviewDocument(
   const planItems = renderPlanCards(copy, lang, planOverrides);
 
   const body = `
-    <main>
+    <main class="overview overview--ssr">
       <p>${escapeHtml(copy.eyebrow)}</p>
       <h1>${escapeHtml(copy.title)}</h1>
       <p>${escapeHtml(copy.lead)}</p>
@@ -375,7 +377,7 @@ export function renderOverviewDocument(
       </section>
     </main>`;
 
-  // Default off until AppSetting platform.landingCrawlable is enabled (and global is on).
+  // Default off until AppSetting platform.landingCrawlable is enabled.
   const robots = indexable === true ? "index,follow" : "noindex,nofollow";
   const head = `
     <meta name="keywords" content="${keywords}" />
@@ -384,7 +386,7 @@ export function renderOverviewDocument(
     <link rel="alternate" hreflang="x-default" href="${origin}/" />
     <script type="application/ld+json">${jsonLd}</script>`;
 
-  return applySocialMeta(indexHtml, {
+  let html = applySocialMeta(indexHtml, {
     lang,
     title: copy.seoTitle,
     description: copy.seoDescription,
@@ -395,7 +397,9 @@ export function renderOverviewDocument(
     type: "website",
     siteName: "HelloLocal",
     origin,
-  })
+  });
+  html = injectOverviewShellHead(html, webRoot);
+  return html
     .replace("</head>", `${head}</head>`)
-    .replace('<div id="root"></div>', `<div id="root">${body}</div>`);
+    .replace('<div id="root"></div>', `<div id="root" class="hl-public">${body}</div>`);
 }

@@ -1,6 +1,6 @@
 /**
  * Admin card: toggle indexing for the platform marketing landing (hellolocal.hu overview).
- * Independent of region-site crawl flags; global crawl off still forces noindex.
+ * Independent of region-site crawl flags and of global crawl (landing can be on while global is off).
  * Requires authenticated admin API access (same as App Settings).
  */
 import { useEffect, useState } from "react";

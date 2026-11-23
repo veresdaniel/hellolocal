@@ -29,6 +29,47 @@
       })();
     </script>
     <meta charset="UTF-8" />
+    <script>
+      // Boot surface before CSS: public navy vs admin light (avoids wrong-color flash).
+      (function () {
+        var path = location.pathname || "/";
+        var admin =
+          /\/admin(\/|$)/.test(path) ||
+          /\/(login|register|forgot-password|reset-password)\/?$/.test(path);
+        document.documentElement.classList.add("hl-booting", admin ? "hl-boot-admin" : "hl-boot-public");
+      })();
+    </script>
+    <style id="hl-first-paint">
+      /* Match DEFAULT_PUBLIC_THEME_COLORS / admin surfaces — before the main CSS bundle. */
+      :root {
+        --hl-bg: #1b1730;
+        --hl-on-dark: #f2f4fb;
+      }
+      html.hl-boot-public {
+        background-color: var(--hl-bg);
+        color: var(--hl-on-dark);
+      }
+      html.hl-boot-public body {
+        margin: 0;
+        min-height: 100vh;
+        background-color: var(--hl-bg);
+        color: var(--hl-on-dark);
+      }
+      html.hl-boot-admin {
+        background-color: #f8fafc;
+        color: #1b1730;
+      }
+      html.hl-boot-admin body {
+        margin: 0;
+        min-height: 100vh;
+        background-color: #f8fafc;
+        color: #1b1730;
+      }
+      /* Hide empty SPA shell until entry CSS applies. SSR bodies (.hl-public) stay visible with shell CSS. */
+      html.hl-booting #root:not(.hl-public) {
+        visibility: hidden;
+      }
+    </style>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />

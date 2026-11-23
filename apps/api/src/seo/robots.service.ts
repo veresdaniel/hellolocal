@@ -3,7 +3,7 @@
  */
 import { Injectable } from "@nestjs/common";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
-import { isProductionSeoEnvironment } from "./public-path.util";
+import { isProductionSeoEnvironment, PUBLIC_LANGS } from "./public-path.util";
 import type { SitemapScope } from "./sitemap-scope";
 
 @Injectable()
@@ -12,8 +12,11 @@ export class RobotsService {
 
   /**
    * Non-prod (local/staging/beta/devel): always Disallow all, no Sitemap line.
-   * Prod: allow crawl when global crawlability is on; Sitemap: same-host only.
-   * Unknown custom hosts and global-off → Disallow all (Sitemap line still listed in prod).
+   * Prod platform host:
+   * - Global on → Allow / (admin/api still Disallow)
+   * - Global off + landing on → Allow only apex + `/:lang` landings (rest Disallow)
+   * - Global off + landing off → Disallow all
+   * Custom/unknown hosts follow global only (landing switch is platform marketing only).
    * @param scope From {@link SitemapScopeResolver} (Host / X-Forwarded-Host)
    */
   async buildRobotsTxt(scope: SitemapScope): Promise<string> {
@@ -26,10 +29,35 @@ export class RobotsService {
       ].join("\n");
     }
 
-    const crawlable = await this.platformSettings.getGlobalCrawlability();
+    const globalOn = await this.platformSettings.getGlobalCrawlability();
+    const landingOn = await this.platformSettings.getLandingCrawlability();
     const sitemapLine = `Sitemap: ${scope.origin}/sitemap.xml`;
 
-    if (!crawlable || scope.kind === "unknown") {
+    if (scope.kind === "unknown") {
+      return [
+        "# HelloLocal — crawling disabled",
+        "User-agent: *",
+        "Disallow: /",
+        "",
+        sitemapLine,
+        "",
+      ].join("\n");
+    }
+
+    // Platform marketing landing may stay crawlable while global content indexing is off.
+    if (!globalOn) {
+      if (scope.kind === "platform" && landingOn) {
+        return [
+          "# HelloLocal robots.txt — platform landing only (global indexing off)",
+          "User-agent: *",
+          "Allow: /$",
+          ...PUBLIC_LANGS.map((lang) => `Allow: /${lang}$`),
+          "Disallow: /",
+          "",
+          sitemapLine,
+          "",
+        ].join("\n");
+      }
       return [
         "# HelloLocal — crawling disabled",
         "User-agent: *",

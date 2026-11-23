@@ -14,12 +14,19 @@ import "./styles/public-tokens.css";
 import "./styles/public-surfaces.css";
 import "./styles/admin-surfaces.css";
 import "./styles/fonts.css";
+/** Eager: keep landing/pricing styles in the blocking main CSS (not a lazy chunk). */
+import "./styles/overview.css";
 import "./i18n/config";
 import "./i18n/loadUiCopy";
 import { useDefaultLanguage } from "./hooks/useDefaultLanguage";
 import { NotificationService } from "./services/notification.service";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import type { ReactNode } from "react";
+
+/** First paint was hidden via `html.hl-booting`; reveal once entry CSS has applied. */
+if (typeof document !== "undefined") {
+  document.documentElement.classList.remove("hl-booting");
+}
 
 // Backup filter for "tabReply" deprecation warnings from browser extensions
 // The main filter runs in index.html, but this ensures coverage if extensions inject later

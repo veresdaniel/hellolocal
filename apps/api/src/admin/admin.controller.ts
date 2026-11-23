@@ -1888,7 +1888,7 @@ export class AdminController {
     return this.appSettingsService.setDefaultLanguage(requireUiLang(dto.language));
   }
 
-  /** Master crawl switch (AppSetting globalCrawlability). Off → noindex everywhere + empty sitemap. */
+  /** Master crawl switch (AppSetting globalCrawlability). Off → noindex for region/content pages; platform landing uses its own switch. */
   @Get("/app-settings/global-crawlability")
   @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async getGlobalCrawlability() {
@@ -1903,7 +1903,7 @@ export class AdminController {
     return this.appSettingsService.setGlobalCrawlability(dto.isCrawlable);
   }
 
-  /** Platform overview only (platform.landingCrawlable). Default off; global off still wins. */
+  /** Platform overview only (platform.landingCrawlable). Default off; independent of global crawl. */
   @Get("/app-settings/landing-crawlability")
   @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
   async getLandingCrawlability() {

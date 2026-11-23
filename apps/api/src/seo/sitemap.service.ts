@@ -137,7 +137,7 @@ ${entries}
     return true;
   }
 
-  /** Own switch for platform overview URLs. Default off; global off already emptied the sitemap. */
+  /** Own switch for platform overview URLs. Independent of global crawl. Default off. */
   private async isLandingCrawlOn(): Promise<boolean> {
     const setting = await this.prisma.appSetting.findUnique({
       where: { key: PLATFORM_LANDING_CRAWLABLE_KEY },
@@ -146,9 +146,27 @@ ${entries}
     return PLATFORM_LANDING_CRAWLABLE_DEFAULT;
   }
 
+  /** Landing-only URLs when global crawl is off but platform landing is on. */
+  private async landingOnlyUrls(origin: string): Promise<SitemapUrl[]> {
+    if (!(await this.isLandingCrawlOn())) return [];
+    return PUBLIC_LANGS.map((lang) => ({
+      loc: absoluteUrlOnOrigin(origin, overviewPath(lang)),
+      changefreq: "daily" as const,
+      priority: 1.0,
+    }));
+  }
+
   private async urlsForChunk(scope: SitemapScope, chunk: SitemapChunk): Promise<SitemapUrl[]> {
     if (scope.kind === "unknown") return [];
-    if (!(await this.isGlobalCrawlOn())) return [];
+
+    const globalOn = await this.isGlobalCrawlOn();
+    if (!globalOn) {
+      // Global off: only platform marketing landings may appear (own switch).
+      if (scope.kind === "platform" && chunk === "static") {
+        return this.landingOnlyUrls(scope.origin);
+      }
+      return [];
+    }
 
     if (scope.kind === "town") {
       return chunk === "towns" ? this.townEntityHostUrls(scope) : [];

@@ -22,4 +22,16 @@ describe("renderOverviewDocument JSON-LD", () => {
     expect(html).toContain("\\u003c");
     expect(html).not.toContain("</script><script>alert");
   });
+
+  it("injects overview shell CSS and blocking stylesheet in head", () => {
+    const html = renderOverviewDocument(SHELL, {
+      lang: "hu",
+      origin: "https://hellolocal.hu",
+    });
+
+    expect(html).toContain('id="overview-shell"');
+    expect(html).toContain('class="overview overview--ssr"');
+    expect(html).toContain('class="hl-public"');
+    expect(html).toMatch(/<link rel="stylesheet" href="[^"]+overview[^"]*\.css" \/>/);
+  });
 });

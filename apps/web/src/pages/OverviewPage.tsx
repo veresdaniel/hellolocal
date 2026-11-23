@@ -3,7 +3,6 @@ import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { FloatingHeader } from "../components/FloatingHeader";
-import { OverviewSkeleton } from "../components/PublicSkeleton";
 import { Footer } from "../ui/layout/Footer";
 import { useSeo } from "../seo/useSeo";
 import { absoluteCanonical } from "../seo/canonical";
@@ -34,7 +33,7 @@ export function OverviewPage() {
   } | null>();
   const insideSiteLayout = Boolean(outlet?.platform);
   const text = useLandingText(lang);
-  const { data: platformSettings, isPending: isThemePending } = useQuery({
+  const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", lang, "default", "theme"],
     queryFn: () => getPlatformSettings(lang),
     staleTime: 5 * 60 * 1000,
@@ -208,7 +207,7 @@ export function OverviewPage() {
           ? "/"
           : platformLandingPath(lang)
       ),
-      // Platform landing only: seo.landingIndexable (global && platform.landingCrawlable). Default off.
+      // Platform landing only: seo.landingIndexable (platform.landingCrawlable). Default off.
       robots:
         platformSettings?.landingIndexable === true ? "index, follow" : "noindex, nofollow",
       og: { type: "website" as const, title: seoTitle, description, image },
@@ -267,16 +266,6 @@ export function OverviewPage() {
     }
     script.textContent = JSON.stringify(graph);
   }, [description, image, lang, text]);
-
-  // Avoid a blank navy flash before theme/settings resolve (standalone overview).
-  if (!insideSiteLayout && isThemePending) {
-    return (
-      <div className="hl-public">
-        <FloatingHeader hideMapViewButton />
-        <OverviewSkeleton />
-      </div>
-    );
-  }
 
   return (
     <div

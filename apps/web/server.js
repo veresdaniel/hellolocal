@@ -23,6 +23,7 @@ import {
   injectRootContent,
   isAdminPath,
 } from './ssr/renderPublicContent.js';
+import { injectPublicShellHead } from './ssr/publicShellCss.js';
 import {
   applyHostScope,
   applySocialMeta,
@@ -392,7 +393,7 @@ async function loadUiCopy(lang) {
 
 /**
  * Platform overview inputs: landing copy, plan overrides, defaultShareImage,
- * and landingIndexable (global crawl && platform.landingCrawlable).
+ * and landingIndexable (platform.landingCrawlable; independent of global crawl).
  */
 async function loadPlatformForOverview(lang) {
   const cached = platformCache.get(lang);
@@ -584,6 +585,9 @@ app.get('*', async (req, res, next) => {
       html = html.replace('</head>', `    <script type="application/ld+json">${json}</script>\n  </head>`);
     }
     html = injectRootContent(html, contentBody);
+    if (contentBody) {
+      html = injectPublicShellHead(html);
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     if (meta?.notFound) {
       res.setHeader('X-Robots-Tag', 'noindex, nofollow');

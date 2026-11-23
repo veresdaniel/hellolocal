@@ -233,17 +233,16 @@ export class AdminAppSettingsService {
     return PLATFORM_LANDING_CRAWLABLE_DEFAULT;
   }
 
-  /** Persist platform-landing crawl switch and bust sitemap cache. */
   /**
    * Persist platform-landing crawl flag and invalidate sitemap cache.
-   * Independent of region sites; global off still forces noindex on the landing.
+   * Independent of region sites and of global crawl.
    */
   async setLandingCrawlability(isCrawlable: boolean) {
     const saved = await this.upsert(PLATFORM_LANDING_CRAWLABLE_KEY, {
       value: isCrawlable ? "true" : "false",
       type: "boolean",
       description:
-        "Platform landing (hellolocal.hu overview) index switch. Independent of region sites; global off still forces noindex.",
+        "Platform landing (hellolocal.hu /:lang) index switch. Independent of region sites and of global crawl.",
     });
     this.sitemapService.invalidate();
     return saved;

@@ -603,7 +603,7 @@ export function setGlobalCrawlability(isCrawlable: boolean) {
   });
 }
 
-/** Platform marketing landing crawl flag (`platform.landingCrawlable`). Default off. */
+/** Platform marketing landing crawl flag (`platform.landingCrawlable`). Independent of global. Default off. */
 export function getLandingCrawlability() {
   return apiGet<{ isCrawlable: boolean }>("/admin/app-settings/landing-crawlability");
 }

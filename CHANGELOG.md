@@ -12,6 +12,23 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.8-beta] - 2026-11-23
+
+### Changed
+
+- Platform landing crawl is independent of global indexing: global off + landing
+  on still serves `index` meta, Allow for `/` and `/:lang` in robots.txt, and
+  landing-only sitemap entries on the platform host.
+
+### Fixed
+
+- Google login no longer 404s on platform/custom hosts: OAuth start URL uses
+  `VITE_API_URL` (`api.*`) instead of same-origin `/api/auth/google` (SPA shell).
+- App-wide FOUC: boot path sets public navy vs admin light background, empty
+  `#root` stays hidden until entry CSS applies, overview styles ship in the
+  main CSS bundle, and SSR bodies (overview / place / event / region) get an
+  inline first-paint shell so crawlable HTML never flashes unstyled.
+
 ## [1.0.7-beta] - 2026-11-23
 
 ### Added

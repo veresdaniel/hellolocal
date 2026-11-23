@@ -31,8 +31,8 @@ export type PlatformSettingsDto = {
     defaultDescription?: string | null;
     defaultImage?: string | null;
     indexable: boolean; // region home: global && site switch
-    globalIndexable: boolean; // master switch; off forces every page off
-    /** Platform marketing landing (hellolocal.hu overview): global && platform.landingCrawlable. */
+    globalIndexable: boolean; // master switch for region/content pages (landing is independent)
+    /** Platform marketing landing (hellolocal.hu /:lang): platform.landingCrawlable only (not gated by global). */
     landingIndexable: boolean;
   };
 

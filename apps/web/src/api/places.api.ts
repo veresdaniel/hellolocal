@@ -45,7 +45,7 @@ export interface PlatformSettings extends PlatformSettingsDto {
   isCrawlable?: boolean; // Region home: global && site switch
   /** Master switch. Off forces every public page out of the index. */
   globalIndexable?: boolean;
-  /** Platform marketing landing (hellolocal.hu overview): global && platform.landingCrawlable. */
+  /** Platform marketing landing (hellolocal.hu /:lang): platform.landingCrawlable only. */
   landingIndexable?: boolean;
   featureMatrix?: {
     planOverrides?: any;

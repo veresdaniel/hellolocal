@@ -278,12 +278,18 @@ export function applyAdminRobots(html) {
  */
 export function injectRootContent(html, body) {
   if (!body) return html;
+  const wrapped = body.includes("hl-ssr")
+    ? body
+    : `<article class="hl-ssr hl-public">${body}</article>`;
   if (html.includes('<div id="root"></div>')) {
-    return html.replace('<div id="root"></div>', `<div id="root">${body}</div>`);
+    return html.replace(
+      '<div id="root"></div>',
+      `<div id="root" class="hl-public">${wrapped}</div>`
+    );
   }
   return html.replace(
-    /<div id="root">[\s\S]*?<\/div>/i,
-    `<div id="root">${body}</div>`
+    /<div id="root"[^>]*>[\s\S]*?<\/div>/i,
+    `<div id="root" class="hl-public">${wrapped}</div>`
   );
 }
 
