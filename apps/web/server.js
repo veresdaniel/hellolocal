@@ -467,16 +467,19 @@ async function loadPlatformForOverview(lang) {
         planOverrides: null,
         defaultShareImage: null,
         landingIndexable: false,
+        freeTrialDays: 30,
       };
     }
     const data = await response.json();
     const planOverrides = data?.featureMatrix?.planOverrides ?? null;
+    const trialRaw = Number(data?.platform?.freeTrialDays);
     const value = {
       landingCopy: planOverrides?.landingCopy?.[lang] ?? null,
       planOverrides,
       defaultShareImage: data?.platform?.defaultShareImage || data?.seo?.defaultImage || null,
       // Platform overview only; missing/false → noindex (gradual rollout default).
       landingIndexable: data?.seo?.landingIndexable === true,
+      freeTrialDays: Number.isFinite(trialRaw) && trialRaw > 0 ? Math.floor(trialRaw) : 30,
     };
     platformCache.set(lang, { until: Date.now() + 60_000, value });
     return value;
@@ -486,6 +489,7 @@ async function loadPlatformForOverview(lang) {
       planOverrides: null,
       defaultShareImage: null,
       landingIndexable: false,
+      freeTrialDays: 30,
     };
   } finally {
     clearTimeout(timer);
@@ -616,6 +620,7 @@ app.get('*', async (req, res, next) => {
           planOverrides: platform.planOverrides,
           shareImage: platform.defaultShareImage || null,
           indexable: platform.landingIndexable === true,
+          freeTrialDays: platform.freeTrialDays ?? 30,
         })
       );
     } catch (error) {

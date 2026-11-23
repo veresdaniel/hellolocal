@@ -197,7 +197,7 @@
     "plans": {
       "priceUnit": "Ft / Monat",
       "freePrice": "Kostenlos",
-      "freeForever": "Ft im ersten Monat",
+      "freeForever": "Ft für die ersten {{count}} Tage",
       "places": "{{count}} Orte auf der Karte",
       "eventsNone": "Noch ohne Programm, solange Sie es ausprobieren",
       "events": "{{count}} Veranstaltungen im Monat",

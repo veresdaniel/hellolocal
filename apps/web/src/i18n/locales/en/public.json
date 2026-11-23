@@ -197,7 +197,7 @@
     "plans": {
       "priceUnit": "HUF / month",
       "freePrice": "Free",
-      "freeForever": "HUF for the first month",
+      "freeForever": "HUF for the first {{count}} days",
       "places": "{{count}} places on the map",
       "eventsNone": "No events while you try it",
       "events": "{{count}} events a month",

@@ -198,7 +198,11 @@ export const PLAN_SECTION_FIELDS: PlanCopyField[] = [
 
 export const PLAN_SHARED_LINE_FIELDS: PlanCopyField[] = [
   field("plans.priceUnit", ["Ár mértékegysége", "Price unit", "Preiseinheit"]),
-  field("plans.freeForever", ["Ingyenes megjegyzés", "Free note", "Hinweis kostenlos"]),
+  field("plans.freeForever", [
+    "Ingyenes megjegyzés ({{count}} = próbanapok)",
+    "Free note ({{count}} = trial days)",
+    "Hinweis kostenlos ({{count}} = Testtage)",
+  ]),
   field("plans.places", ["Helyek sora", "Places line", "Orte-Zeile"]),
   field("plans.eventsNone", ["Nincs program", "No events", "Keine Termine"]),
   field("plans.events", ["Programok sora", "Events line", "Termine-Zeile"]),

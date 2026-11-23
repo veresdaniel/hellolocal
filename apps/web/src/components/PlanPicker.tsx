@@ -119,7 +119,10 @@ function PlanCard({
   const text = useLandingText(lang);
   const featured = id === "basic";
   const price = numbers.priceHuf <= 0 ? "0" : formatCount(numbers.priceHuf, lang);
-  const priceNote = numbers.priceHuf <= 0 ? text("plans.freeForever") : text("plans.priceUnit");
+  const priceNote =
+    numbers.priceHuf <= 0
+      ? text("plans.freeForever", { count: freeTrialDays })
+      : text("plans.priceUnit");
   const registerUrl = `${buildUrl({ lang, path: "admin/register" })}?plan=${id}`;
   const pitch =
     id === "free"

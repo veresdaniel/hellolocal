@@ -12,6 +12,13 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.13-beta] - 2026-11-23
+
+### Fixed
+
+- Free plan card price note uses `platform.freeTrialDays` (`{{count}}` nap) instead
+  of a hardcoded first month — CSR PlanPicker and overview SSR.
+
 ## [1.0.12-beta] - 2026-11-23
 
 ### Fixed

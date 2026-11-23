@@ -105,10 +105,13 @@ function planEnabled(planOverrides, id) {
   return typeof flag === "boolean" ? flag : PLAN_ENABLED_DEFAULTS[id];
 }
 
-function renderPlanCards(copy, lang, planOverrides) {
+function renderPlanCards(copy, lang, planOverrides, freeTrialDays = 30) {
   const plans = copy.plans;
   if (!plans) return "";
   const numbersById = resolvePlanNumbers(planOverrides);
+  const trialDays = Number.isFinite(Number(freeTrialDays)) && Number(freeTrialDays) > 0
+    ? Math.floor(Number(freeTrialDays))
+    : 30;
   const cards = ["free", "basic", "premium"]
     .filter((id) => planEnabled(planOverrides, id))
     .map((id) => {
@@ -116,10 +119,13 @@ function renderPlanCards(copy, lang, planOverrides) {
       const numbers = numbersById[id];
       if (!plan) return "";
       const grouped = String(numbers.priceHuf).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
+      const freeNote = fillCount(plans.freeForever || plans.freePrice || "", trialDays);
       const price =
         numbers.priceHuf <= 0
-          ? `0 ${plans.freeForever || plans.freePrice}`
+          ? `0 ${freeNote}`
           : `${grouped} ${plans.priceUnit || ""}`;
+      const pitch =
+        id === "free" ? fillCount(plan.pitch || "", trialDays) : plan.pitch || "";
       const bullets = [
         fillCount(plans.places, numbers.places),
         numbers.events <= 0 ? plans.eventsNone : fillCount(plans.events, numbers.events),
@@ -127,7 +133,7 @@ function renderPlanCards(copy, lang, planOverrides) {
       ]
         .map((line) => `<li>${escapeHtml(line)}</li>`)
         .join("");
-      return `<article><h3>${escapeHtml(plan.name)}</h3><p>${escapeHtml(price)}</p><p>${escapeHtml(plan.pitch)}</p><ul>${bullets}</ul><p><a href="/${lang}/admin/register?plan=${id}">${escapeHtml(plan.cta)}</a></p></article>`;
+      return `<article><h3>${escapeHtml(plan.name)}</h3><p>${escapeHtml(price)}</p><p>${escapeHtml(pitch)}</p><ul>${bullets}</ul><p><a href="/${lang}/admin/register?plan=${id}">${escapeHtml(plan.cta)}</a></p></article>`;
     });
   if (planEnabled(planOverrides, "municipal") && plans.municipal) {
     const municipal = plans.municipal;
@@ -283,6 +289,7 @@ export function renderOverviewDocument(
     indexable,
     pathname,
     shareUrl,
+    freeTrialDays,
   }
 ) {
   origin = publicOrigin(origin);
@@ -335,7 +342,7 @@ export function renderOverviewDocument(
   const faqItems = Object.values(copy.faq)
     .map((item) => `<article><h3>${escapeHtml(item.q)}</h3><p>${escapeHtml(item.a)}</p></article>`)
     .join("");
-  const planItems = renderPlanCards(copy, lang, planOverrides);
+  const planItems = renderPlanCards(copy, lang, planOverrides, freeTrialDays);
 
   const body = `
     <main class="overview overview--ssr">

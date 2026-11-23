@@ -197,7 +197,7 @@
     "plans": {
       "priceUnit": "Ft / hó",
       "freePrice": "Ingyenes",
-      "freeForever": "Ft az első hónapban",
+      "freeForever": "Ft az első {{count}} napban",
       "places": "{{count}} hely a térképen",
       "eventsNone": "Programok nélkül, amíg kipróbálod",
       "events": "{{count}} program havonta",
