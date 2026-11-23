@@ -655,6 +655,174 @@ export function TownsPage() {
                     placeholder={t("admin.urlPlaceholder")}
                   />
                 </div>
+
+                <div
+                  style={{
+                    marginTop: 24,
+                    padding: 16,
+                    background:
+                      "linear-gradient(135deg, var(--admin-primary)15 0%, var(--admin-primary-hover)15 100%)",
+                    borderRadius: 8,
+                    border: "1px solid var(--admin-primary)30",
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: "0 0 8px 0",
+                      fontSize: "clamp(16px, 3.5vw, 18px)",
+                      fontWeight: 600,
+                      color: "var(--admin-primary)",
+                    }}
+                  >
+                    SEO / Social ({selectedLang.toUpperCase()})
+                  </h3>
+                  <p style={{ margin: "0 0 16px", color: "#64748b", fontSize: 13, lineHeight: 1.45 }}>
+                    {t("admin.seoOptionalHint") ||
+                      "Optional overrides. Empty fields use the town name, description, and hero image automatically."}
+                  </p>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>
+                      {t("admin.seoTitle")}
+                    </label>
+                    <AiPostFormField
+                      draft={{
+                        kind: "town",
+                        field: "seoTitle",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        name: readLang(formData, "name", selectedLang),
+                      }}
+                      value={readLang(formData, "seoTitle", selectedLang)}
+                      onApply={(text) =>
+                        setFormData((prev) => patchLang(prev, "seoTitle", selectedLang, text))
+                      }
+                    >
+                      <input
+                        type="text"
+                        value={readLang(formData, "seoTitle", selectedLang)}
+                        onChange={(e) => {
+                          setFormData(patchLang(formData, "seoTitle", selectedLang, e.target.value));
+                        }}
+                        placeholder={
+                          t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"
+                        }
+                        style={{
+                          width: "100%",
+                          padding: 8,
+                          fontSize: 16,
+                          border: "1px solid #ddd",
+                          borderRadius: 4,
+                        }}
+                      />
+                    </AiPostFormField>
+                    <small style={{ color: "#665d78", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoTitleHint") || "If empty, town name will be used"}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>
+                      {t("admin.seoDescription")}
+                    </label>
+                    <AiPostFormField
+                      draft={{
+                        kind: "town",
+                        field: "seoDescription",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        name: readLang(formData, "name", selectedLang),
+                      }}
+                      value={readLang(formData, "seoDescription", selectedLang)}
+                      onApply={(text) =>
+                        setFormData((prev) =>
+                          patchLang(prev, "seoDescription", selectedLang, text)
+                        )
+                      }
+                      variant="textarea"
+                    >
+                      <textarea
+                        value={readLang(formData, "seoDescription", selectedLang)}
+                        onChange={(e) => {
+                          setFormData(
+                            patchLang(formData, "seoDescription", selectedLang, e.target.value)
+                          );
+                        }}
+                        placeholder={
+                          t("admin.seoDescriptionPlaceholder") ||
+                          "SEO description (leave empty for auto)"
+                        }
+                        rows={3}
+                        style={{
+                          width: "100%",
+                          padding: 8,
+                          fontSize: 16,
+                          border: "1px solid #ddd",
+                          borderRadius: 4,
+                        }}
+                      />
+                    </AiPostFormField>
+                    <small style={{ color: "#665d78", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoDescriptionHint") ||
+                        "If empty, first sentences from the description will be used"}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>
+                      {t("admin.seoImage") || t("admin.seoImagePlaceholder")}
+                    </label>
+                    <input
+                      type="url"
+                      value={readLang(formData, "seoImage", selectedLang)}
+                      onChange={(e) => {
+                        setFormData(patchLang(formData, "seoImage", selectedLang, e.target.value));
+                      }}
+                      placeholder={
+                        t("admin.seoImagePlaceholder") ||
+                        "SEO image URL (leave empty for hero image)"
+                      }
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        fontSize: 16,
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                      }}
+                    />
+                    <small style={{ color: "#665d78", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoImageHint") || "If empty, hero image will be used"}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 0 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>
+                      {t("admin.seoKeywords")}
+                    </label>
+                    <input
+                      type="text"
+                      value={readLang(formData, "seoKeywords", selectedLang)}
+                      onChange={(e) => {
+                        setFormData(
+                          patchLang(formData, "seoKeywords", selectedLang, e.target.value)
+                        );
+                      }}
+                      placeholder={
+                        t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"
+                      }
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        fontSize: 16,
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                      }}
+                    />
+                    <small style={{ color: "#665d78", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
+                    </small>
+                  </div>
+                </div>
               </>
             )}
           </LanguageAwareForm>

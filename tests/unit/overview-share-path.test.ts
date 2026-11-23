@@ -33,12 +33,16 @@ describe("overviewShareUrl", () => {
     expect(overviewShareUrl(origin, "/en", "en")).toBe("https://hellolocal.hu/en");
   });
 
-  it("uses the localized overview path when that segment is present", () => {
+  it("canonicalizes legacy overview segments to the language root", () => {
     expect(overviewShareUrl(origin, "/hu/attekintes", "hu")).toBe(
-      "https://hellolocal.hu/hu/attekintes"
+      "https://hellolocal.hu/hu"
     );
     expect(overviewShareUrl(origin, "/en/overview", "en")).toBe(
-      "https://hellolocal.hu/en/overview"
+      "https://hellolocal.hu/en"
+    );
+    expect(overviewShareUrl(origin, "/de/ueberblick", "de")).toBe(
+      "https://hellolocal.hu/de"
     );
   });
 });
+

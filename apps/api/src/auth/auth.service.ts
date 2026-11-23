@@ -23,6 +23,7 @@ import { UserRole } from "@prisma/client";
 import { isSupportedLang } from "../common/lang";
 import { randomBytes } from "crypto";
 import { CountryService } from "../country/country.service";
+import { isConfiguredFrontendOrigin, normalizeReturnHost } from "./oauth-return.util";
 
 /** Claims embedded in access JWTs. */
 export interface JwtPayload {
@@ -907,5 +908,44 @@ export class AuthService {
         aiAssistantEnabled: Boolean(user.aiAssistantEnabled),
       },
     };
+  }
+
+  /**
+   * Allow Google OAuth to return only to the platform frontend or a known custom domain
+   * (SiteDomain / primaryDomain / town|place|collection customDomain) — blocks open redirects.
+   */
+  async isAllowedOAuthReturnOrigin(origin: string): Promise<boolean> {
+    if (isConfiguredFrontendOrigin(origin)) return true;
+    const host = normalizeReturnHost(origin);
+    if (!host) return false;
+    const hosts = [host, `www.${host}`];
+
+    const siteDomain = await this.prisma.siteDomain.findFirst({
+      where: { domain: { in: hosts }, isActive: true },
+      select: { id: true },
+    });
+    if (siteDomain) return true;
+
+    const sitePrimary = await this.prisma.site.findFirst({
+      where: { primaryDomain: { in: hosts }, isActive: true },
+      select: { id: true },
+    });
+    if (sitePrimary) return true;
+
+    const [town, place, collection] = await Promise.all([
+      this.prisma.town.findFirst({
+        where: { customDomain: { in: hosts }, isActive: true },
+        select: { id: true },
+      }),
+      this.prisma.place.findFirst({
+        where: { customDomain: { in: hosts }, isActive: true },
+        select: { id: true },
+      }),
+      this.prisma.collection.findFirst({
+        where: { domain: { in: hosts }, isActive: true },
+        select: { id: true },
+      }),
+    ]);
+    return Boolean(town || place || collection);
   }
 }

@@ -1466,6 +1466,7 @@
   "categoryInfok": "Info",
   "seoTitleHint": "Wenn leer, wird der Titel verwendet",
   "seoDescriptionHint": "Wenn leer, werden die ersten 2 Sätze aus dem Inhalt verwendet",
+  "seoOptionalHint": "Optionale Überschreibungen. Leere Felder nutzen automatisch Name, Beschreibung und Hero-Bild.",
   "seoImagePlaceholder": "SEO-Bild URL",
   "seoImageHint": "Wenn leer, wird das Hero-Bild verwendet",
   "seoKeywords": "SEO-Schlüsselwörter",

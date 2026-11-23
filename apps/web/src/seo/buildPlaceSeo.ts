@@ -34,6 +34,7 @@ export function buildPlaceSeo(
       seoDescription: base?.description,
       seoImage: base?.image,
       name: place.name,
+      shortDescription: place.shortDescription,
       description: place.description,
       heroImage: place.heroImage,
     },

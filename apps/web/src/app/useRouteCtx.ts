@@ -1,14 +1,18 @@
 // src/app/useRouteCtx.ts
 import { useParams } from "react-router-dom";
+import { preferredLang } from "./browserLang";
 import { DEFAULT_LANG, DEFAULT_SITE_SLUG, HAS_MULTIPLE_SITES, type Lang, isLang } from "./config";
 import { isReservedPublicSegment, mapViewSegment } from "./entityPaths";
 import { useHostScope } from "./hostScope";
+import { platformHostLanguage } from "./platformOrigin";
+import { isPlatformHost } from "./urls";
 
 /**
  * Derive public `lang` + region `siteKey` from the URL and {@link useHostScope}.
  *
  * On a custom region/town/place/event host the region slug is not in the path —
  * the host supplies it. Town segments and map words on a region host are not treated as siteKeys.
+ * Platform apex (`/`) uses the host’s configured opener language when present.
  *
  * @returns `{ lang, siteKey, langParam, siteKeyParam }` — validated lang and resolved site slug
  */
@@ -19,7 +23,16 @@ export function useRouteCtx() {
   }>();
   const scope = useHostScope();
 
-  const lang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
+  const lang: Lang = isLang(langParam)
+    ? langParam
+    : (() => {
+        if (typeof window !== "undefined" && isPlatformHost(window.location.hostname)) {
+          const hostLang = platformHostLanguage(window.location.hostname);
+          if (isLang(hostLang)) return hostLang;
+          return preferredLang();
+        }
+        return DEFAULT_LANG;
+      })();
   const hostSlug =
     scope.status === "ready" && scope.kind !== "platform" && scope.kind !== "collection"
       ? scope.siteSlug

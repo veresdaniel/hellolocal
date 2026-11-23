@@ -1539,6 +1539,7 @@
   "seoDescriptionHint": "Ha üres, akkor az első 2 mondat a tartalomból",
   "seoImagePlaceholder": "SEO kép URL",
   "seoImageHint": "Ha üres, akkor a hero kép lesz használva",
+  "seoOptionalHint": "Opcionális felülírások. Üres mezőknél a név, leírás és hero kép automatikusan kerül használatra.",
   "seoKeywords": "SEO Kulcsszavak",
   "seoKeywordsPlaceholder": "kulcsszó1, kulcsszó2, kulcsszó3",
   "seoKeywordsHint": "Vesszővel elválasztott kulcsszavak a keresőmotorok számára",

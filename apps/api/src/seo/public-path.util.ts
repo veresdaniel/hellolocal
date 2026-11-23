@@ -34,12 +34,6 @@ const REGION_LIST_PATH: Record<PublicLang, string> = {
   de: "regionen",
 };
 
-const OVERVIEW_PATH: Record<PublicLang, string> = {
-  hu: "attekintes",
-  en: "overview",
-  de: "ueberblick",
-};
-
 const PRICING_PATH: Record<PublicLang, string> = {
   hu: "pricing",
   en: "tarife",
@@ -288,10 +282,12 @@ export function collectionPath(lang: string, slug: string): string {
   return `/${lang}/collections/${slug}`;
 }
 
-/** Platform marketing overview path (`/:lang/attekintes|overview|ueberblick`). */
+/**
+ * Platform marketing landing path (`/:lang`).
+ * Legacy `/attekintes|overview|ueberblick` segments redirect here client-side.
+ */
 export function overviewPath(lang: string): string {
-  const code = asPublicLang(lang);
-  return `/${code}/${OVERVIEW_PATH[code]}`;
+  return `/${asPublicLang(lang)}`;
 }
 
 /** Platform region list path. */

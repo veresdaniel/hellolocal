@@ -1,13 +1,21 @@
 // src/components/RootRedirect.tsx
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { preferredLang } from "../app/browserLang";
-import { overviewSegment } from "../app/entityPaths";
+import { platformLandingPath } from "../app/entityPaths";
 import { isPlatformHost } from "../app/urls";
 import { pathForHostResolve, siteForHost } from "../app/hostResolve";
 import { platformHostLanguage, setPlatformPublicHostEntries, setPlatformPublicHosts } from "../app/platformOrigin";
 import { getPublicPlatformHost } from "../api/public.api";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { PlatformGaShell } from "./PlatformGaShell";
+
+const OverviewPage = lazy(() =>
+  import("../pages/OverviewPage").then((m) => ({ default: m.OverviewPage }))
+);
+
+/** Sentinel: stay on `/` and render the platform marketing landing. */
+const PLATFORM_APEX = "__platform_apex__";
 
 export function RootRedirect() {
   const location = useLocation();
@@ -29,8 +37,8 @@ export function RootRedirect() {
       if (ac.signal.aborted || typeof window === "undefined") return;
       const host = window.location.hostname;
       if (isPlatformHost(host)) {
-        const opener = platformHostLanguage(host) || preferredLang();
-        setPublicTarget(`/${opener}/${overviewSegment(opener)}`);
+        // Language-specific platform hosts keep the bare domain as the opener URL.
+        setPublicTarget(PLATFORM_APEX);
         return;
       }
       const site = await siteForHost(host, ac.signal);
@@ -38,13 +46,22 @@ export function RootRedirect() {
       setPublicTarget(
         site
           ? pathForHostResolve(site, location.search)
-          : `/${preferredLang()}/${overviewSegment(preferredLang())}`
+          : platformLandingPath(platformHostLanguage(host) || preferredLang())
       );
     })();
     return () => ac.abort();
   }, [isAdminRoute, location.search]);
 
   if (!isAdminRoute && !publicTarget) return <LoadingSpinner />;
+  if (!isAdminRoute && publicTarget === PLATFORM_APEX) {
+    return (
+      <PlatformGaShell>
+        <Suspense fallback={<LoadingSpinner />}>
+          <OverviewPage />
+        </Suspense>
+      </PlatformGaShell>
+    );
+  }
   if (!isAdminRoute && publicTarget) return <Navigate to={publicTarget} replace />;
 
   if (isAdminRoute) {

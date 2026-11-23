@@ -153,6 +153,15 @@ export function overviewSegment(lang: string): string {
   return OVERVIEW_PATH[asLang(lang)];
 }
 
+/**
+ * Platform marketing landing path: language root only (`/hu`), no `/attekintes`.
+ * Legacy overview segments redirect here. Language-specific platform hosts still
+ * open via RootRedirect onto this path (or stay on `/` for SSR/share).
+ */
+export function platformLandingPath(lang: string): string {
+  return `/${asLang(lang)}`;
+}
+
 /** True when the segment is any overview path alias. */
 export function isOverviewPathSegment(segment: string | undefined): boolean {
   return !!segment && (OVERVIEW_PATH_ALIASES as readonly string[]).includes(segment);

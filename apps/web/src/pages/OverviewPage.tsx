@@ -9,7 +9,7 @@ import { useSeo } from "../seo/useSeo";
 import { absoluteCanonical } from "../seo/canonical";
 import { LiveDemoLink } from "../components/LiveDemoLink";
 import { APP_LANGS, DEFAULT_LANG, type Lang, isLang } from "../app/config";
-import { overviewSegment } from "../app/entityPaths";
+import { platformLandingPath } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { useLandingText } from "../hooks/useLandingText";
 import { getPlatformSettings } from "../api/places.api";
@@ -202,7 +202,12 @@ export function OverviewPage() {
         .map((word) => word.trim())
         .filter(Boolean),
       image,
-      canonical: absoluteCanonical(`/${lang}/${overviewSegment(lang)}`),
+      // Apex `/` on a language-specific platform host; otherwise `/:lang`.
+      canonical: absoluteCanonical(
+        typeof window !== "undefined" && window.location.pathname === "/"
+          ? "/"
+          : platformLandingPath(lang)
+      ),
       // Platform landing only: seo.landingIndexable (global && platform.landingCrawlable). Default off.
       robots:
         platformSettings?.landingIndexable === true ? "index, follow" : "noindex, nofollow",
@@ -232,7 +237,10 @@ export function OverviewPage() {
           name: "HelloLocal",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
-          url: `${origin}/${lang}/${overviewSegment(lang)}`,
+          url:
+            typeof window !== "undefined" && window.location.pathname === "/"
+              ? `${origin}/`
+              : `${origin}${platformLandingPath(lang)}`,
           description,
           inLanguage: LANGS,
           image,

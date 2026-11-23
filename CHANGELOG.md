@@ -12,14 +12,38 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+### Added
+
+- **Town admin SEO / Social** block (title, description, image, keywords) —
+  optional overrides, same pattern as place / event / collection / site.
+- **Site** admin SEO keywords field (previously schema-only).
+- Google OAuth **return-origin state** so custom-domain admin login
+  (`helloetyek.hu`, …) round-trips to the same host after Google callback.
+
 ### Changed
 
 - Mobile explore **map dock** pins edge-to-edge at the bottom with no pill
   radius; filter/events/services panels open above the bar (no drag on mobile).
 - **Show my location** control defaults just above the closed mobile dock bar
   when no device-specific position is persisted (`mapLocationControlPosition_mobile`).
-- Platform landing SSR / Open Graph also covers bare `https://hellolocal.hu/` and
-  `/:lang` (without requiring `/hu/attekintes`); `og:url` matches the shared path.
+- Desktop **Show my location** default sits in the map’s bottom-left corner
+  (`bottom: 16`, `left: 16`) when no desktop position is persisted.
+- Platform marketing landing URL is the bare domain or `/:lang` (SSR + SPA);
+  legacy `/attekintes|overview|ueberblick` redirects to the language root;
+  sitemap / canonical / hreflang / share `og:url` follow the same paths.
+- Domain-capable entities (site, town, place, event, collection): empty admin
+  SEO/social fields cascade from content (name → short description → first
+  sentences → hero) then brand placeholder / platform `defaultShareImage`;
+  filled admin fields win. Collection public API keeps `seo.*` null when unset
+  so CSR/SSR can cascade. SSR `socialMeta` matches CSR `resolveSeoFields`.
+
+### Fixed
+
+- Google admin login no longer dumps staff onto the public list page; it opens
+  the admin shell (same as password login). Visitors still leave via
+  `ProtectedRoute`.
+- Google OAuth callback no longer always redirects to `FRONTEND_URL` — returns
+  to the validated originating custom domain when present.
 
 ## [1.0.0-beta] - 2026-11-23
 

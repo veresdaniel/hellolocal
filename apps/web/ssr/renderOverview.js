@@ -39,10 +39,6 @@ const RESERVED = new Set(["api", "assets", "static", "src", "www", "app", "css",
 const OVERVIEW_BY_LANG = { hu: "attekintes", en: "overview", de: "ueberblick" };
 const OVERVIEW_SEGMENTS = new Set(Object.values(OVERVIEW_BY_LANG));
 
-function overviewSegment(lang) {
-  return OVERVIEW_BY_LANG[lang] || OVERVIEW_BY_LANG[FALLBACK_LANG];
-}
-
 /**
  * Escape user/admin-provided copy before interpolating into SSR HTML.
  * Prevents XSS from landing copy / plan / FAQ strings (JSON-LD uses a separate `\\u003c` escape).
@@ -221,8 +217,8 @@ function loadOverview(lang, override, messages) {
 
 /**
  * Detect platform overview routes:
- * `/`, `/:lang`, `/:lang/overview|attekintes|ueberblick`.
- * Apex `/` uses the fallback language (same landing content as `/hu/attekintes`).
+ * `/`, `/:lang`, legacy `/:lang/overview|attekintes|ueberblick`.
+ * Apex `/` uses the fallback language (same landing as `/:lang`).
  * Returns the page language, or null when this path is not the marketing landing.
  */
 export function overviewLang(pathname) {
@@ -233,7 +229,7 @@ export function overviewLang(pathname) {
   // Bare host root (https://hellolocal.hu/) — same landing as the overview page.
   if (parts.length === 0) return FALLBACK_LANG;
   if (parts.length === 1 && OVERVIEW_SEGMENTS.has(parts[0])) return FALLBACK_LANG;
-  // Language root is the public opener, the same landing as /:lang/<overview>.
+  // Language root is the public opener.
   if (parts.length === 1 && LANGS.includes(parts[0])) return parts[0];
   if (
     parts.length === 2 &&
@@ -248,8 +244,7 @@ export function overviewLang(pathname) {
 
 /**
  * Public share / canonical URL for an overview request path.
- * Apex and bare `/:lang` stay without the overview segment so sharing
- * `https://hellolocal.hu` / `https://hellolocal.hu/hu` works.
+ * Prefer apex `/` or `/:lang` — never the legacy overview segment.
  */
 export function overviewShareUrl(origin, pathname, lang) {
   const base = String(origin || "").replace(/\/$/, "");
@@ -259,8 +254,14 @@ export function overviewShareUrl(origin, pathname, lang) {
     .filter(Boolean);
   if (parts.length === 0) return `${base}/`;
   if (parts.length === 1 && LANGS.includes(parts[0])) return `${base}/${parts[0]}`;
-  const code = LANGS.includes(lang) ? lang : FALLBACK_LANG;
-  return `${base}/${code}/${overviewSegment(code)}`;
+  if (parts.length === 1 && OVERVIEW_SEGMENTS.has(parts[0])) return `${base}/`;
+  const code =
+    parts.length >= 1 && LANGS.includes(parts[0])
+      ? parts[0]
+      : LANGS.includes(lang)
+        ? lang
+        : FALLBACK_LANG;
+  return `${base}/${code}`;
 }
 
 /**
@@ -287,7 +288,7 @@ export function renderOverviewDocument(
   const published = Array.isArray(languages) && languages.length ? languages : LANGS;
   const url =
     (shareUrl && String(shareUrl).trim()) ||
-    overviewShareUrl(origin, pathname || `/${lang}/${overviewSegment(lang)}`, lang);
+    overviewShareUrl(origin, pathname || `/${lang}`, lang);
   const configuredShare = String(shareImage || "").trim();
   const image = configuredShare
     ? /^https?:\/\//i.test(configuredShare)
@@ -298,7 +299,7 @@ export function renderOverviewDocument(
     : `${origin}/marketing/map-szeged.jpg`;
   const keywords = escapeHtml(copy.keywords);
   const alternates = published.map(
-    (code) => `<link rel="alternate" hreflang="${code}" href="${origin}/${code}/${overviewSegment(code)}" />`
+    (code) => `<link rel="alternate" hreflang="${code}" href="${origin}/${code}" />`
   ).join("");
 
   const questions = ["app", "languages", "editors", "towns"].map((key) => ({
@@ -380,7 +381,7 @@ export function renderOverviewDocument(
     <meta name="keywords" content="${keywords}" />
     <meta name="robots" content="${robots}" />
     ${alternates}
-    <link rel="alternate" hreflang="x-default" href="${origin}/${FALLBACK_LANG}/${overviewSegment(FALLBACK_LANG)}" />
+    <link rel="alternate" hreflang="x-default" href="${origin}/" />
     <script type="application/ld+json">${jsonLd}</script>`;
 
   return applySocialMeta(indexHtml, {

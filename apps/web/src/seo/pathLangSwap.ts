@@ -6,8 +6,8 @@ import {
   legalKeyFromSegment,
   legalSegment,
   MAP_VIEW_PATH,
-  overviewSegment,
   PLACE_PATH,
+  platformLandingPath,
   regionListSegment,
 } from "../app/entityPaths";
 import type { Lang } from "../app/config";
@@ -23,8 +23,18 @@ export function swapPublicPathLang(
   toLang: Lang
 ): string {
   const current = isLang(fromLang) ? fromLang : "hu";
+  const raw = pathname.split("?")[0] || "/";
+  // Platform apex `/` and legacy overview segments → language-root landing.
+  const segs = raw.split("/").filter(Boolean);
+  if (
+    segs.length === 0 ||
+    (segs.length === 1 && isOverviewPathSegment(segs[0])) ||
+    (segs.length === 2 && segs[0].toLowerCase() === current && isOverviewPathSegment(segs[1]))
+  ) {
+    return platformLandingPath(toLang);
+  }
   // Only rewrite the leading /:lang segment — avoid replace() matching later path bits.
-  const parts = pathname.split("/");
+  const parts = raw.split("/");
   if (parts[1] && parts[1].toLowerCase() === current) {
     parts[1] = toLang;
   }
@@ -32,7 +42,7 @@ export function swapPublicPathLang(
     .flatMap((part) => {
       const key = legalKeyFromSegment(part);
       if (key) return [legalSegment(toLang, key)];
-      if (isOverviewPathSegment(part)) return [overviewSegment(toLang)];
+      if (isOverviewPathSegment(part)) return [];
       if (isMapViewSegment(part)) return [MAP_VIEW_PATH[toLang]];
       if (isPlacePathSegment(part)) return [PLACE_PATH[toLang]];
       if (isRegionListPathSegment(part)) return [regionListSegment(toLang)];

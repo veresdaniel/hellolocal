@@ -11,6 +11,7 @@ import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { GoogleStrategy } from "./strategies/google.strategy";
+import { GoogleAuthGuard } from "./guards/google-auth.guard";
 import { RbacService } from "./rbac.service";
 import { SiteRoleGuard } from "./guards/site-role.guard";
 import { PlaceRoleGuard } from "./guards/place-role.guard";
@@ -52,7 +53,15 @@ import { PlaceRoleGuard } from "./guards/place-role.guard";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleStrategy, RbacService, SiteRoleGuard, PlaceRoleGuard],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    GoogleStrategy,
+    GoogleAuthGuard,
+    RbacService,
+    SiteRoleGuard,
+    PlaceRoleGuard,
+  ],
   exports: [AuthService, RbacService, SiteRoleGuard, PlaceRoleGuard, JwtModule],
 })
 export class AuthModule {}

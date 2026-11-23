@@ -130,10 +130,11 @@ export class CollectionsService {
       title: collectionTranslation.title,
       description: collectionTranslation.description ?? null,
       heroImage: collectionTranslation.heroImage ?? null,
+      // Keep seo* null when unset so CSR/SSR can cascade from title / description / hero.
       seo: {
-        title: collectionTranslation.seoTitle ?? collectionTranslation.title,
+        title: collectionTranslation.seoTitle ?? null,
         description: collectionTranslation.seoDescription ?? null,
-        image: collectionTranslation.seoImage ?? collectionTranslation.heroImage ?? null,
+        image: collectionTranslation.seoImage ?? null,
         keywords: collectionTranslation.seoKeywords ?? [],
       },
       items,

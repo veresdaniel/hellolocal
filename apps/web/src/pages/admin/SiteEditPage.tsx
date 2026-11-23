@@ -174,6 +174,9 @@ export function SiteEditPage() {
     seoImageHu: "",
     seoImageEn: "",
     seoImageDe: "",
+    seoKeywordsHu: "",
+    seoKeywordsEn: "",
+    seoKeywordsDe: "",
     isActive: true,
     brandId: "",
     // Subscription tab
@@ -287,6 +290,9 @@ export function SiteEditPage() {
         seoImageHu: translationHu?.seoImage || "",
         seoImageEn: translationEn?.seoImage || "",
         seoImageDe: translationDe?.seoImage || "",
+        seoKeywordsHu: (translationHu?.seoKeywords || []).join(", "),
+        seoKeywordsEn: (translationEn?.seoKeywords || []).join(", "),
+        seoKeywordsDe: (translationDe?.seoKeywords || []).join(", "),
         isActive: data.isActive,
         brandId: data.brandId,
         plan: data.plan || "basic",
@@ -391,6 +397,9 @@ export function SiteEditPage() {
           seoTitle: formData.seoTitleHu || null,
           seoDescription: formData.seoDescriptionHu || null,
           seoImage: formData.seoImageHu || null,
+          seoKeywords: formData.seoKeywordsHu
+            ? formData.seoKeywordsHu.split(",").map((k) => k.trim()).filter(Boolean)
+            : [],
         });
       }
       if (formData.nameEn) {
@@ -406,6 +415,9 @@ export function SiteEditPage() {
           seoTitle: formData.seoTitleEn || null,
           seoDescription: formData.seoDescriptionEn || null,
           seoImage: formData.seoImageEn || null,
+          seoKeywords: formData.seoKeywordsEn
+            ? formData.seoKeywordsEn.split(",").map((k) => k.trim()).filter(Boolean)
+            : [],
         });
       }
       if (formData.nameDe) {
@@ -421,6 +433,9 @@ export function SiteEditPage() {
           seoTitle: formData.seoTitleDe || null,
           seoDescription: formData.seoDescriptionDe || null,
           seoImage: formData.seoImageDe || null,
+          seoKeywords: formData.seoKeywordsDe
+            ? formData.seoKeywordsDe.split(",").map((k) => k.trim()).filter(Boolean)
+            : [],
         });
       }
       appendExtraLanguages(translations, formData, "name", [
@@ -433,6 +448,7 @@ export function SiteEditPage() {
         "seoTitle",
         "seoDescription",
         "seoImage",
+        "seoKeywords",
       ]);
 
       const updateData = {
@@ -1376,6 +1392,51 @@ function OverviewTab({
                       }}
                     />
                   ) : null}
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      fontWeight: 500,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.seoKeywords")}
+                  </label>
+                  <input
+                    type="text"
+                    value={readLang(formData, "seoKeywords", selectedLang)}
+                    onChange={(e) => {
+                      setFormData(patchLang(formData, "seoKeywords", selectedLang, e.target.value));
+                    }}
+                    placeholder={
+                      t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      border: "1px solid #d1d5db",
+                      borderRadius: 6,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <p
+                    style={{
+                      margin: "6px 0 0",
+                      color: "#6b7280",
+                      fontSize: 13,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
+                  </p>
                 </div>
                 <div
                   style={{

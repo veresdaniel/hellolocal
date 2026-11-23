@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { buildUrl } from "../app/urls";
-import { isOverviewPathSegment, legalSegment, mapViewSegment, overviewSegment, pathnameHasLegal, townEntityPath, townSlugFromPath } from "../app/entityPaths";
+import { isOverviewPathSegment, legalSegment, mapViewSegment, platformLandingPath, pathnameHasLegal, townEntityPath, townSlugFromPath } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { usePlatformSettingsContextOptional } from "../context/PlatformSettingsContext";
@@ -66,9 +66,10 @@ export function FloatingHeader({
   const hostScope = useHostScope();
   const isLangLanding =
     location.pathname === `/${lang}` || location.pathname === `/${lang}/`;
-  // /:lang is the sales overview only on a platform host. A region domain uses it for the map and the list.
+  // Apex `/` and /:lang are the sales overview on a platform host. A region domain uses /:lang for the map/list.
   const onPlatform = hostScope.status === "ready" && hostScope.kind === "platform";
   const isOverview =
+    location.pathname === "/" ||
     location.pathname.split("/").some((part) => isOverviewPathSegment(part)) ||
     (isLangLanding && onPlatform);
   const scrollToDemo = () => {
@@ -636,7 +637,7 @@ export function FloatingHeader({
 
             {!location.pathname.includes("/admin") && !isOverview && (
               <Link
-                to={buildUrl({ lang, path: overviewSegment(lang) })}
+                to={platformLandingPath(lang)}
                 style={{
                   background: "rgba(242, 244, 251, 0.08)",
                   border: "1px solid rgba(242, 244, 251, 0.28)",
@@ -1102,7 +1103,7 @@ export function FloatingHeader({
             )}
             {!location.pathname.includes("/admin") && !isOverview && (
               <Link
-                to={buildUrl({ lang, path: overviewSegment(lang) })}
+                to={platformLandingPath(lang)}
                 onClick={() => setIsMobileMenuOpen(false)}
                 style={{
                   margin: "12px 0 0",

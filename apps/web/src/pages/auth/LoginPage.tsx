@@ -9,13 +9,12 @@ import {
   DEFAULT_SITE_SLUG,
   type Lang, isLang} from "../../app/config";
 import { buildUrl } from "../../app/urls";
-import { ROLE_VIEWER } from "../../types/enums";
 import { useSeo } from "../../seo/useSeo";
 import { safeInternalPath } from "../../utils/safeInternalPath";
-import { API_AUTH_GOOGLE } from "@hellolocal/shared";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "../../constants/authStorage";
 import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
+import { googleAuthHref } from "../../auth/googleOAuth";
 
 
 export function LoginPage() {
@@ -182,64 +181,42 @@ export function LoginPage() {
 
   // Redirect if already logged in (after auth state is updated)
   useEffect(() => {
-    if (!authIsLoading && user) {
-      // Check if user is viewer - viewers should not access admin
-      if (user.role === ROLE_VIEWER) {
-        // Get return URL from sessionStorage or use home page (same-origin path only)
-        const returnUrl = safeInternalPath(
-          sessionStorage.getItem("authReturnUrl"),
-          `/${lang}`
-        );
-        sessionStorage.removeItem("authReturnUrl");
+    if (authIsLoading || !user) return;
 
-        // If we're already on the return URL (public page), don't navigate - just update state
-        const currentPath =
-          window.location.pathname + window.location.search + window.location.hash;
-        if (currentPath === returnUrl || currentPath === returnUrl + "/") {
-          // Already on the target page, no need to navigate
-          return;
-        }
-
-        // Use replace to avoid adding to history
-        navigate(returnUrl, { replace: true });
-        return;
-      }
-
-      // For admin/editor/superadmin, always redirect to dashboard (ignore activeSiteId check)
-      // Check if we have a return URL
-      const rawReturnUrl = sessionStorage.getItem("authReturnUrl");
-      const returnUrl = safeInternalPath(rawReturnUrl, "");
-      if (returnUrl && !returnUrl.includes("/admin/login")) {
-        // If return URL is a public page, ignore it for admin users - always go to dashboard
-        // Only use return URL if it's an admin page
-        if (returnUrl.includes("/admin")) {
-          sessionStorage.removeItem("authReturnUrl");
-
-          // If we're already on the return URL, don't navigate
-          const currentPath =
-            window.location.pathname + window.location.search + window.location.hash;
-          if (currentPath === returnUrl || currentPath === returnUrl + "/") {
-            return;
-          }
-
-          navigate(returnUrl, { replace: true });
-          return;
-        } else {
-          // Public return URL - clear it and go to dashboard instead
-          sessionStorage.removeItem("authReturnUrl");
-        }
-      } else if (rawReturnUrl) {
-        sessionStorage.removeItem("authReturnUrl");
-      }
-
-      // Default: redirect to admin dashboard for non-viewer users
-      // Only navigate if we're not already on admin dashboard
-      const currentPath = window.location.pathname;
-      if (currentPath !== `/${lang}/admin` && currentPath !== `/${lang}/admin/`) {
-        navigate(`/${lang}/admin`, { replace: true });
-      }
+    // Visitor login pages: return to the public page (or lang home).
+    if (visitor) {
+      const returnUrl = safeInternalPath(
+        sessionStorage.getItem("authReturnUrl"),
+        `/${lang}`
+      );
+      sessionStorage.removeItem("authReturnUrl");
+      const currentPath =
+        window.location.pathname + window.location.search + window.location.hash;
+      if (currentPath === returnUrl || currentPath === returnUrl + "/") return;
+      navigate(returnUrl, { replace: true });
+      return;
     }
-  }, [user, authIsLoading, navigate, lang]);
+
+    // Admin login (incl. Google): same as password login — always open the admin shell.
+    // ProtectedRoute sends true visitors (viewer + no site) to the public list; do not
+    // short-circuit all ROLE_VIEWER users to the list here (site-scoped viewers need admin).
+    const rawReturnUrl = sessionStorage.getItem("authReturnUrl");
+    const returnUrl = safeInternalPath(rawReturnUrl, "");
+    if (returnUrl && returnUrl.includes("/admin") && !returnUrl.includes("/admin/login")) {
+      sessionStorage.removeItem("authReturnUrl");
+      const currentPath =
+        window.location.pathname + window.location.search + window.location.hash;
+      if (currentPath === returnUrl || currentPath === returnUrl + "/") return;
+      navigate(returnUrl, { replace: true });
+      return;
+    }
+    if (rawReturnUrl) sessionStorage.removeItem("authReturnUrl");
+
+    const currentPath = window.location.pathname;
+    if (currentPath !== `/${lang}/admin` && currentPath !== `/${lang}/admin/`) {
+      navigate(`/${lang}/admin`, { replace: true });
+    }
+  }, [user, authIsLoading, navigate, lang, visitor]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -640,30 +617,36 @@ export function LoginPage() {
         {/* Google OAuth Button */}
         <a
           key="google-login-button"
-          href={API_AUTH_GOOGLE}
-          onClick={(e) => {
-            // Store current location as return URL before redirecting to Google OAuth
+          href={googleAuthHref(lang, visitor ? "visitor" : "admin")}
+          onClick={() => {
+            // Admin Google login should not inherit a public referrer as return URL
+            // (that used to dump staff onto the explore list after OAuth).
+            if (!visitor) {
+              sessionStorage.removeItem("authReturnUrl");
+              return;
+            }
             const currentPath =
               window.location.pathname + window.location.search + window.location.hash;
-            // Only store if we're coming from a public page (not from admin or login itself)
-            if (!currentPath.includes("/admin") && !currentPath.includes("/login")) {
+            if (!isVisitorAuthPath(currentPath) && !currentPath.includes("/admin")) {
               sessionStorage.setItem("authReturnUrl", currentPath);
-            } else {
-              // If we're on login page, try to get referrer
-              const referrer = document.referrer;
-              if (referrer && !referrer.includes("/admin") && !referrer.includes("/login")) {
-                try {
-                  const referrerUrl = new URL(referrer);
-                  if (referrerUrl.origin === window.location.origin) {
-                    sessionStorage.setItem(
-                      "authReturnUrl",
-                      referrerUrl.pathname + referrerUrl.search + referrerUrl.hash
-                    );
-                  }
-                } catch (e) {
-                  // Ignore if referrer is not a valid URL
-                }
+              return;
+            }
+            const referrer = document.referrer;
+            if (!referrer) return;
+            try {
+              const referrerUrl = new URL(referrer);
+              if (
+                referrerUrl.origin === window.location.origin &&
+                !referrerUrl.pathname.includes("/admin") &&
+                !isVisitorAuthPath(referrerUrl.pathname)
+              ) {
+                sessionStorage.setItem(
+                  "authReturnUrl",
+                  referrerUrl.pathname + referrerUrl.search + referrerUrl.hash
+                );
               }
+            } catch {
+              // ignore invalid referrer
             }
           }}
           style={{

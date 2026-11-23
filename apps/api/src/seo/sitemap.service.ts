@@ -244,15 +244,10 @@ ${entries}
     const landingOn = await this.isLandingCrawlOn();
     const urls: SitemapUrl[] = [];
     for (const lang of PUBLIC_LANGS) {
-      // /:lang and /:lang/<overview> are the same marketing landing — gated separately.
+      // Platform landing is language root (`/:lang`); apex `/` is host-default via SSR.
       if (landingOn) {
         urls.push({
           loc: absoluteUrlOnOrigin(origin, overviewPath(lang)),
-          changefreq: "weekly",
-          priority: 0.9,
-        });
-        urls.push({
-          loc: absoluteUrlOnOrigin(origin, `/${lang}`),
           changefreq: "daily",
           priority: 1.0,
         });

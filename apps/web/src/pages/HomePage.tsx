@@ -373,10 +373,13 @@ export function HomePage() {
   const pageCanonical = absoluteCanonical();
   const languages = usePublishedLanguages();
 
-  // Town pages: keep i18n explore/map title (do not let raw name win via resolveSeoFields).
+  // Town pages: admin seo* overrides win; otherwise i18n explore title + content cascade.
   const homeResolved = selectedTown
     ? resolveSeoFields(
         {
+          seoTitle: selectedTown.seo?.title,
+          seoDescription: selectedTown.seo?.description,
+          seoImage: selectedTown.seo?.image,
           description: selectedTown.description,
           heroImage: selectedTown.heroImage,
         },
@@ -385,7 +388,10 @@ export function HomePage() {
             name: selectedTown.name,
           }),
           description: t("public.home.description"),
-          image: platformSettings?.defaultPlaceholderCardImage || undefined,
+          image:
+            platformSettings?.defaultPlaceholderCardImage ||
+            platformSettings?.defaultShareImage ||
+            undefined,
         }
       )
     : resolveSeoFields(
@@ -401,7 +407,10 @@ export function HomePage() {
         {
           title: t("public.home.title"),
           description: t("public.home.description"),
-          image: platformSettings?.defaultPlaceholderCardImage || undefined,
+          image:
+            platformSettings?.defaultPlaceholderCardImage ||
+            platformSettings?.defaultShareImage ||
+            undefined,
         }
       );
   const homeTitle = homeResolved.title;

@@ -81,7 +81,8 @@ export function getPlatformSettings(
     brandBadgeIcon: dto.placeholders.avatar || null,
     faviconUrl: dto.brand.faviconUrl || null,
     // Additional fields
-    seoImage: dto.seoImage || null,
+    seoImage: dto.seoImage || dto.seo?.defaultImage || null,
+    defaultShareImage: dto.platform?.defaultShareImage || null,
     isCrawlable: dto.seo.indexable,
     globalIndexable: dto.seo.globalIndexable ?? dto.seo.indexable,
     landingIndexable: dto.seo.landingIndexable === true,
@@ -131,6 +132,12 @@ export interface PublicTown {
   name: string;
   description: string | null;
   heroImage: string | null;
+  /** Optional admin SEO overrides (null → content cascade). */
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    image?: string | null;
+  } | null;
   lat: number | null;
   lng: number | null;
   /** Set when this town overrides the region zoom. */

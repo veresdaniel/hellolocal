@@ -5,10 +5,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
-import { API_AUTH_GOOGLE } from "@hellolocal/shared";
 import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 import { usernameAvailable } from "../../api/auth.api";
 import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
+import { googleAuthHref } from "../../auth/googleOAuth";
 import { passwordProblem, passwordStrength } from "../../auth/passwordStrength";
 import { safeInternalPath } from "../../utils/safeInternalPath";
 
@@ -647,7 +647,7 @@ export function RegisterPage() {
         {/* Google OAuth Button */}
         <a
           key="google-register-button"
-          href={API_AUTH_GOOGLE}
+          href={googleAuthHref(lang, visitor ? "visitor" : "admin")}
           style={{
             width: "100%",
             padding: "clamp(12px, 3vw, 14px) clamp(20px, 5vw, 24px)",

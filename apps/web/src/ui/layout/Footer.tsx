@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getStaticPages } from "../../api/static-pages.api";
 import type { Lang} from "../../app/config";
 import type { PlatformSettings } from "../../app/site/SiteOutletContext";
-import { legalSegment, overviewSegment } from "../../app/entityPaths";
+import { legalSegment, platformLandingPath } from "../../app/entityPaths";
 import { buildUrl } from "../../app/urls";
 import { usePlatformSettingsContextOptional } from "../../context/PlatformSettingsContext";
 
@@ -240,7 +240,7 @@ export function Footer({
                 {t("public.legal.privacy.title")}
               </Link>
               <Link
-                to={buildUrl({ lang, path: overviewSegment(lang) })}
+                to={platformLandingPath(lang)}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -311,7 +311,7 @@ export function Footer({
   const terms = buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "terms") });
   const privacy = buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "privacy") });
   const home = buildUrl({ lang, siteKey: effectiveSiteSlug });
-  const overview = buildUrl({ lang, path: overviewSegment(lang) });
+  const overview = platformLandingPath(lang);
   const staticPagesPath = buildUrl({ lang, siteKey: effectiveSiteSlug, path: "static-pages" });
   const products = buildUrl({ lang, siteKey: effectiveSiteSlug, path: "products" });
   const pricing = buildUrl({ lang, path: lang === "de" ? "preise" : "pricing" });

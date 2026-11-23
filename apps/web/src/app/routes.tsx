@@ -15,7 +15,7 @@ import { AdminPageSkeleton } from "../components/AdminPageSkeleton";
 import { PlatformGaShell } from "../components/PlatformGaShell";
 import { UnderConstructionGate } from "../components/UnderConstructionGate";
 import { ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN, ROLE_SUPERADMIN } from "../types/enums";
-import { isOverviewPathSegment, LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, mapViewSegment, OVERVIEW_PATH_ALIASES, overviewSegment, PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH, type LegalPageKey } from "./entityPaths";
+import { LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, mapViewSegment, OVERVIEW_PATH_ALIASES, PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH, type LegalPageKey } from "./entityPaths";
 import { canonicalHostPath, useHostScope } from "./hostScope";
 import { isPlatformHost } from "./urls";
 import { useRouteCtx } from "./useRouteCtx";
@@ -350,23 +350,12 @@ function legalPageRoutes() {
   }));
 }
 
+/** Legacy `/attekintes|overview|ueberblick` → language root landing. */
 function OverviewPath() {
   const params = useParams();
   const location = useLocation();
-  const canonical = overviewSegment(params.lang || "hu");
-  const parts = location.pathname.split("/");
-  let changed = false;
-  const next = parts.map((part) => {
-    if (isOverviewPathSegment(part) && part !== canonical) {
-      changed = true;
-      return canonical;
-    }
-    return part;
-  });
-  if (changed) {
-    return <Navigate to={`${next.join("/")}${location.search}${location.hash}`} replace />;
-  }
-  return <OverviewPage />;
+  const lang = params.lang || "hu";
+  return <Navigate to={`/${lang}${location.search}${location.hash}`} replace />;
 }
 
 function overviewRoutes() {

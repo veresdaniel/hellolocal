@@ -122,6 +122,24 @@ export function clip(value, max) {
   return `${cut.trim()}...`;
 }
 
+/** First N sentences (or a short clip) — mirrors CSR `resolveSeoFields.firstSentences`. */
+function firstSentences(value, count = 2) {
+  const text = plainText(value);
+  if (!text) return "";
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+  if (!sentences.length) return clip(text, 280);
+  return clip(sentences.slice(0, count).join(" "), 300);
+}
+
+/** Pick first non-empty clipped string. */
+function pickClip(max, ...values) {
+  for (const value of values) {
+    const clean = clip(value, max);
+    if (clean) return clean;
+  }
+  return "";
+}
+
 function isLocalHost(value) {
   try {
     const host = new URL(value).hostname.toLowerCase();
@@ -388,28 +406,36 @@ export function siteShare(data) {
   };
 }
 
-function collectionShare(data) {
+function collectionShare(data, platformFallback = "") {
   if (!data) return null;
-  const title = clip(data.seo?.title, 140) || clip(data.title, 140);
+  const title = pickClip(140, data.seo?.title, data.title);
   if (!title) return null;
   return {
     title,
-    description: clip(data.seo?.description, 300) || clip(data.description, 300),
-    hero: data.seo?.image || data.heroImage || "",
+    description: pickClip(
+      300,
+      data.seo?.description,
+      firstSentences(data.description, 2),
+      data.description
+    ),
+    hero: data.seo?.image || data.heroImage || platformFallback || "",
     siteName: clip(data.title, 80),
   };
 }
 
-function entityShare(data) {
-  const title = clip(data?.seo?.title, 140) || clip(data?.name, 140);
+function entityShare(data, platformFallback = "") {
+  const title = pickClip(140, data?.seo?.title, data?.name);
   if (!title) return null;
   return {
     title,
-    description:
-      clip(data.seo?.description, 300) ||
-      clip(data.shortDescription, 300) ||
-      clip(data.description, 300),
-    hero: data.seo?.image || data.heroImage || "",
+    description: pickClip(
+      300,
+      data.seo?.description,
+      data.shortDescription,
+      firstSentences(data.description, 2),
+      data.description
+    ),
+    hero: data.seo?.image || data.heroImage || platformFallback || "",
     type: "article",
   };
 }
@@ -477,7 +503,7 @@ export function applyHostScope(route, resolved) {
   return next;
 }
 
-async function enrich(route, apiUrl, origin, forward = null) {
+async function enrich(route, apiUrl, origin, forward = null, platformFallback = "") {
   const base = String(apiUrl || "").replace(/\/$/, "");
   if (!base) return null;
   const key = route.siteKey ? encodeURIComponent(route.siteKey) : "";
@@ -488,7 +514,8 @@ async function enrich(route, apiUrl, origin, forward = null) {
         `${base}/api/public/collections/by-slug/${encodeURIComponent(route.slug)}?lang=${route.lang}`,
         1000,
         forward
-      )
+      ),
+      platformFallback
     );
     if (!share && route.lang !== "hu") {
       share = collectionShare(
@@ -496,7 +523,8 @@ async function enrich(route, apiUrl, origin, forward = null) {
           `${base}/api/public/collections/by-slug/${encodeURIComponent(route.slug)}?lang=hu`,
           1000,
           forward
-        )
+        ),
+        platformFallback
       );
     }
     if (!share && forward?.host) {
@@ -505,7 +533,8 @@ async function enrich(route, apiUrl, origin, forward = null) {
           `${base}/api/public/collections/by-domain/${encodeURIComponent(forward.host)}?lang=${route.lang}`,
           1000,
           forward
-        )
+        ),
+        platformFallback
       );
     }
     if (!share) return null;
@@ -546,14 +575,16 @@ async function enrich(route, apiUrl, origin, forward = null) {
           : [];
     const town = towns.find((item) => item?.slug === route.slug) || null;
     const title =
-      clip(town?.seo?.title || town?.seoTitle, 140) ||
-      clip(town?.name, 140) ||
+      pickClip(140, town?.seo?.title || town?.seoTitle, town?.name) ||
       (site ? clip(`${route.slug} · ${site.title || site.siteName || ""}`, 140) : "");
     const description =
-      clip(town?.seo?.description || town?.seoDescription, 300) ||
-      clip(town?.description, 300) ||
-      site?.description ||
-      "";
+      pickClip(
+        300,
+        town?.seo?.description || town?.seoDescription,
+        firstSentences(town?.description, 2),
+        town?.description,
+        site?.description
+      ) || "";
     if (!title && !description) return null;
     const patch = {
       title,
@@ -564,7 +595,12 @@ async function enrich(route, apiUrl, origin, forward = null) {
       patch,
       imagePatch(
         origin,
-        town?.seo?.image || town?.seoImage || town?.heroImage || site?.hero || ""
+        town?.seo?.image ||
+          town?.seoImage ||
+          town?.heroImage ||
+          site?.hero ||
+          platformFallback ||
+          ""
       ) || {}
     );
     return patch;
@@ -575,11 +611,13 @@ async function enrich(route, apiUrl, origin, forward = null) {
   const sitePart = key || "default";
   const suffix = `${sitePart}/${collection}/${encodeURIComponent(route.slug)}`;
   let share = entityShare(
-    await fetchPublicJson(`${base}/api/public/${route.lang}/${suffix}`, 1000, forward)
+    await fetchPublicJson(`${base}/api/public/${route.lang}/${suffix}`, 1000, forward),
+    platformFallback
   );
   if (!share && route.lang !== "hu") {
     share = entityShare(
-      await fetchPublicJson(`${base}/api/public/hu/${suffix}`, 1000, forward)
+      await fetchPublicJson(`${base}/api/public/hu/${suffix}`, 1000, forward),
+      platformFallback
     );
   }
   if (!share) return null;
@@ -639,7 +677,13 @@ export async function resolvePublicShare({ pathname, apiUrl, requestOrigin, requ
     origin,
     notFound: false,
   };
-  const patch = await enrich(route, apiUrl, origin, forward);
+  const patch = await enrich(
+    route,
+    apiUrl,
+    origin,
+    forward,
+    platformDefaults?.shareImage || ""
+  );
   const entityKinds = new Set(["place", "event", "collection", "town"]);
   if (!patch) {
     // Soft-404: slug entity routes with no content must not look like a thin 200.

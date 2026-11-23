@@ -1465,6 +1465,7 @@
   "categoryInfok": "Info",
   "seoTitleHint": "If empty, the title will be used",
   "seoDescriptionHint": "If empty, the first 2 sentences from content will be used",
+  "seoOptionalHint": "Optional overrides. Empty fields use the name, description, and hero image automatically.",
   "seoImagePlaceholder": "SEO image URL",
   "seoImageHint": "If empty, the hero image will be used",
   "seoKeywords": "SEO Keywords",

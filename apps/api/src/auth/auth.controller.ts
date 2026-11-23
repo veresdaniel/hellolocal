@@ -9,11 +9,8 @@ import {
   Query,
   Req,
   Res,
-  HttpException,
-  HttpStatus as NestHttpStatus,
 } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
-import { AuthGuard } from "@nestjs/passport";
 import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
@@ -22,11 +19,18 @@ import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { GoogleAuthGuard } from "./guards/google-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import { RequestWithSite } from "../common/middleware/site-resolve.middleware";
-import { langFromPath } from "../common/lang";
+import { langFromPath, langOrDefault } from "../common/lang";
 import { assertPublicFormShield } from "../common/public-form-shield";
 import { API_AUTH_BASE } from "@hellolocal/shared";
+import {
+  decodeOAuthReturnState,
+  defaultOAuthFrontendOrigin,
+  oauthLoginPath,
+  type OAuthReturnMode,
+} from "./oauth-return.util";
 
 /**
  * Authentication controller.
@@ -115,39 +119,33 @@ export class AuthController {
   /**
    * Initiate Google OAuth login.
    * Redirects to Google OAuth consent screen.
+   * Query: `returnOrigin`, `lang`, `mode` (`admin`|`visitor`) → packed into OAuth `state`.
    */
   @Get("/google")
-  @UseGuards(AuthGuard("google"))
-  async googleAuth(@Req() req: Request) {
+  @UseGuards(GoogleAuthGuard)
+  async googleAuth() {
     // Guard redirects to Google
-    // This method will not be called if credentials are missing,
-    // but the route will still be registered
   }
 
   /**
    * Google OAuth callback.
    * Handles the redirect from Google after authentication.
-   * Redirects to frontend with tokens in URL hash (more secure than query params).
+   * Redirects to the originating frontend host with tokens in the URL hash.
    */
   @Get("/google/callback")
-  @UseGuards(AuthGuard("google"))
+  @UseGuards(GoogleAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const lang = this.extractLanguageFromRequest(req) || "hu";
+    const returnCtx = await this.resolveOAuthReturn(req);
+    const loginPath = oauthLoginPath(returnCtx.lang, returnCtx.mode);
+    const loginBase = `${returnCtx.origin}${loginPath}`;
 
-    // Check if OAuth failed (user will be null if strategy validation failed)
     if (!req.user) {
-      // Check if there's an error in query params (from Google)
       const error = req.query.error;
       const errorDescription = req.query.error_description;
-
       const errorMsg = error
         ? `Google OAuth error: ${error}${errorDescription ? ` - ${errorDescription}` : ""}`
         : "Google OAuth authentication failed";
-
-      return res.redirect(
-        `${frontendUrl}/${lang}/admin/login?error=${encodeURIComponent(errorMsg)}`
-      );
+      return res.redirect(`${loginBase}?error=${encodeURIComponent(errorMsg)}`);
     }
 
     const googleUser = req.user as {
@@ -159,8 +157,6 @@ export class AuthController {
 
     try {
       const authResponse = await this.authService.googleLogin(googleUser);
-
-      // Encode tokens in the URL hash so they are not sent to servers / access logs
       const tokens = encodeURIComponent(
         JSON.stringify({
           accessToken: authResponse.accessToken,
@@ -168,23 +164,32 @@ export class AuthController {
           user: authResponse.user,
         })
       );
-
-      // Hash fragment only — never query string (referrer / proxy / browser history leakage)
-      return res.redirect(
-        `${frontendUrl}/${lang}/admin/login#googleAuth=success&tokens=${tokens}`
-      );
+      return res.redirect(`${loginBase}#googleAuth=success&tokens=${tokens}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Google authentication failed";
-      return res.redirect(
-        `${frontendUrl}/${lang}/admin/login?error=${encodeURIComponent(errorMessage)}`
-      );
+      return res.redirect(`${loginBase}?error=${encodeURIComponent(errorMessage)}`);
     }
   }
 
   /**
-   * Extract language from request (from referer or default)
+   * Prefer OAuth `state` (return origin from the login page). Fall back to FRONTEND_URL.
    */
-  private extractLanguageFromRequest(req: Request): string | null {
-    return langFromPath(req.headers.referer || "");
+  private async resolveOAuthReturn(req: Request): Promise<{
+    origin: string;
+    lang: ReturnType<typeof langOrDefault>;
+    mode: OAuthReturnMode;
+  }> {
+    const fallbackOrigin = defaultOAuthFrontendOrigin();
+    const fromState = decodeOAuthReturnState(req.query.state);
+    const lang =
+      fromState?.lang ||
+      langFromPath(typeof req.headers.referer === "string" ? req.headers.referer : "") ||
+      langOrDefault(undefined);
+    const mode: OAuthReturnMode = fromState?.mode === "visitor" ? "visitor" : "admin";
+
+    if (fromState?.origin && (await this.authService.isAllowedOAuthReturnOrigin(fromState.origin))) {
+      return { origin: fromState.origin.replace(/\/$/, ""), lang, mode };
+    }
+    return { origin: fallbackOrigin.replace(/\/$/, ""), lang, mode };
   }
 }

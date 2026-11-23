@@ -533,7 +533,7 @@ app.get('*', async (req, res, next) => {
   const requestOrigin = `${forwardProto}://${forwardHost || req.get('host') || 'localhost'}`;
   const customDomain = await resolveCustomDomain(forwardHost);
 
-  // Platform overview only on platform hosts (/, /:lang, /:lang/attekintes|…).
+  // Platform overview only on platform hosts (/, /:lang; legacy /:lang/attekintes|… still SSR).
   // Custom domains use resolvePublicShare.
   const overview = !customDomain ? overviewLang(req.path) : null;
   if (overview) {

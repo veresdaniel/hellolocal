@@ -34,6 +34,8 @@ export type PlatformSettingsDto = {
   seo: {
     defaultTitle?: string | null;
     defaultDescription?: string | null;
+    /** Site-level share image override (from SiteTranslation.seoImage). */
+    defaultImage?: string | null;
     indexable: boolean;
     /** Master switch. Off forces every public page out of the index. */
     globalIndexable?: boolean;
@@ -85,7 +87,12 @@ export type PlatformSettingsDto = {
     currency: string; // e.g., "HUF"
     timeFormat: "24h" | "12h";
     weekStartsOn: number; // 0 = Sunday, 1 = Monday
+    /** Optional platform-wide OG/share image fallback. */
+    defaultShareImage?: string | null;
   };
+
+  /** Flattened alias of `platform.defaultShareImage` for CSR cascades. */
+  defaultShareImage?: string | null;
 
   /** Per-site GA4 ID for this site's public pages. */
   analytics?: {

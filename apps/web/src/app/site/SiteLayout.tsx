@@ -1,6 +1,6 @@
 // src/app/site/SiteLayout.tsx
 import { Outlet, useParams, Navigate, useLocation } from "react-router-dom";
-import { isOverviewPathSegment, LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, mapViewSegment, OVERVIEW_PATH_ALIASES, overviewSegment } from "../entityPaths";
+import { isOverviewPathSegment, LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, mapViewSegment, OVERVIEW_PATH_ALIASES } from "../entityPaths";
 import { canonicalHostPath, useHostScope } from "../hostScope";
 import { isPlatformHost } from "../urls";
 import { lazy, Suspense } from "react";
@@ -33,11 +33,6 @@ const LegalPage = lazy(() =>
 const PublicPricingPage = lazy(() =>
   import("../../pages/PublicPricingPage").then((m) => ({ default: m.PublicPricingPage }))
 );
-const OverviewPage = lazy(() =>
-  import("../../pages/OverviewPage").then((m) => ({ default: m.OverviewPage }))
-);
-
-
 export function SiteLayout() {
   const params = useParams();
   const location = useLocation();
@@ -129,17 +124,8 @@ export function SiteLayout() {
   // so navigating onto one of these paths does not change the hook count.
   if (HAS_MULTIPLE_SITES && siteKeyParam && RESERVED_PATHS.includes(siteKeyParam) && !viewOnTownHost) {
     if (isOverviewPathSegment(siteKeyParam)) {
-      const canonical = overviewSegment(lang);
-      if (siteKeyParam !== canonical) {
-        return <Navigate to={`/${lang}/${canonical}${location.search}${location.hash}`} replace />;
-      }
-      return (
-        <PlatformGaShell>
-          <Suspense fallback={<PublicPageSkeleton withHero label={t("common.loading")} />}>
-            <OverviewPage />
-          </Suspense>
-        </PlatformGaShell>
-      );
+      // Legacy overview segment → platform landing at /:lang
+      return <Navigate to={`/${lang}${location.search}${location.hash}`} replace />;
     }
     // Reserved paths are platform pages — use platform GA, not a site ID
     if (siteKeyParam === "pricing" || siteKeyParam === "preise" || siteKeyParam === "tarife") {

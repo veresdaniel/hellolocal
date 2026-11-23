@@ -400,7 +400,8 @@ export function MapComponent({
     window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
   // Constants for location control positioning
-  const LOCATION_CONTROL_DESKTOP_BOTTOM = 100;
+  /** Desktop default: bottom-left corner of the map (above the edge, left of attribution). */
+  const LOCATION_CONTROL_DESKTOP_BOTTOM = 16;
   const LOCATION_CONTROL_DESKTOP_LEFT = 16;
   /** Gap above the closed mobile map dock when no saved position. */
   const LOCATION_CONTROL_MOBILE_GAP = 8;
