@@ -32,7 +32,7 @@ function cloneOverrides(planOverrides: unknown): Record<string, any> {
   return structuredClone(planOverrides) as Record<string, any>;
 }
 
-/** Finite matrix limits → publicPlans (priceHuf untouched). */
+/** Finite matrix limits → publicPlans (prices untouched). */
 export function syncPublicPlansFromMatrixLimits(planOverrides: unknown): Record<string, any> {
   const root = cloneOverrides(planOverrides);
   const publicPlans: Record<string, any> = {

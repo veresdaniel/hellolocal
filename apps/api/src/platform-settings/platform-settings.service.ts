@@ -13,6 +13,13 @@ import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { allowsCrawl } from "../seo/crawlability";
 import { FREE_TRIAL_DAYS_KEY, parseFreeTrialDays } from "../common/free-trial";
 import {
+  CURRENCY_BY_LANG_DEFAULTS,
+  CURRENCY_BY_LANG_KEY,
+  DEFAULT_CURRENCIES,
+  parseCurrencyByLang,
+  type CurrencyByLang,
+} from "../common/currency";
+import {
   DEFAULT_SHARE_IMAGE_KEY,
   FALLBACK_SHARE_IMAGE_PATH,
   normalizeShareImageUrl,
@@ -437,6 +444,8 @@ export class PlatformSettingsService {
     weekStartsOn: number;
     defaultShareImage: string | null;
     freeTrialDays: number;
+    currencies: Array<{ code: string; name: string; plural: string; symbol: string | null }>;
+    currencyByLang: CurrencyByLang;
   }> {
     // Get platform settings from AppSetting
     const [
@@ -446,6 +455,8 @@ export class PlatformSettingsService {
       weekStartsOnSetting,
       shareImageSetting,
       freeTrialSetting,
+      currencyByLangSetting,
+      currencyRows,
     ] = await Promise.all([
       this.prisma.appSetting.findUnique({ where: { key: "platform.locale" } }),
       this.prisma.appSetting.findUnique({ where: { key: "platform.currency" } }),
@@ -453,8 +464,29 @@ export class PlatformSettingsService {
       this.prisma.appSetting.findUnique({ where: { key: "platform.weekStartsOn" } }),
       this.prisma.appSetting.findUnique({ where: { key: DEFAULT_SHARE_IMAGE_KEY } }),
       this.prisma.appSetting.findUnique({ where: { key: FREE_TRIAL_DAYS_KEY } }),
+      this.prisma.appSetting.findUnique({ where: { key: CURRENCY_BY_LANG_KEY } }),
+      this.prisma.currency.findMany({ orderBy: { code: "asc" } }),
     ]);
 
+    // Idempotent seed if migration not applied yet / empty table.
+    let currencies = currencyRows;
+    if (!currencies.length) {
+      for (const row of DEFAULT_CURRENCIES) {
+        await this.prisma.currency.upsert({
+          where: { code: row.code },
+          create: {
+            code: row.code,
+            name: row.name,
+            plural: row.plural,
+            symbol: row.symbol ?? null,
+          },
+          update: {},
+        });
+      }
+      currencies = await this.prisma.currency.findMany({ orderBy: { code: "asc" } });
+    }
+
+    const currencyByLang = parseCurrencyByLang(currencyByLangSetting?.value);
     const configuredShare = normalizeShareImageUrl(shareImageSetting?.value);
     return {
       locale: localeSetting?.value || "hu-HU",
@@ -463,6 +495,13 @@ export class PlatformSettingsService {
       weekStartsOn: weekStartsOnSetting?.value ? parseInt(weekStartsOnSetting.value, 10) : 1,
       defaultShareImage: configuredShare || FALLBACK_SHARE_IMAGE_PATH,
       freeTrialDays: parseFreeTrialDays(freeTrialSetting?.value),
+      currencies: currencies.map((row) => ({
+        code: row.code,
+        name: row.name,
+        plural: row.plural,
+        symbol: row.symbol,
+      })),
+      currencyByLang: currencyByLang || CURRENCY_BY_LANG_DEFAULTS,
     };
   }
 

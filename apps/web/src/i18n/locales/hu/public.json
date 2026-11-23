@@ -193,22 +193,23 @@
       "invalidEmail": "Ez nem tűnik email címnek."
     },
     "plansTitle": "Csomagok",
-    "plansLead": "Havonta, forintban. Látszódj, minden helyeden, vagy egy település.",
+    "plansLead": "Havonta. Látszódj, minden helyeden, vagy egy település.",
     "plans": {
-      "priceUnit": "Ft / hó",
+      "priceUnit": "/ hó",
       "freePrice": "Ingyenes",
-      "freeForever": "Ft az első {{count}} napban",
+      "freeForever": "{{currency}} az első {{count}} napban",
       "places": "{{count}} hely a térképen",
       "eventsNone": "Programok nélkül, amíg kipróbálod",
       "events": "{{count}} program havonta",
       "languagesOne": "Több nyelven",
       "languages": "{{count}} nyelv",
-      "adminNote": "A hely / program / nyelv számok a jogosultsági mátrixszal együtt mentődnek, és a kártyákon a {{count}} sablonokba kerülnek. A nevek és a pitch kézzel szerkeszthető. Az önkormányzati csomagnak nincs mátrix-limit syncje.",
+      "adminNote": "A hely / program / nyelv számok a jogosultsági mátrixszal együtt mentődnek, és a kártyákon a {{count}} sablonokba kerülnek. A nevek és a pitch kézzel szerkeszthető. Az önkormányzati csomagnak nincs mátrix-limit syncje. Az árak pénznemenként külön szerkeszthetők.",
       "visible": "Látható a nyilvános oldalon",
       "save": "Csomagok mentése",
       "saving": "Mentés…",
       "fields": {
-        "priceHuf": "Havi díj (Ft)",
+        "priceHuf": "Havi díj",
+        "price": "Havi díj",
         "places": "Helyek",
         "events": "Programok havonta",
         "languages": "Nyelvek"

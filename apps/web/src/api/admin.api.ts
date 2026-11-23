@@ -624,6 +624,40 @@ export function setFreeTrialDays(days: number) {
   return apiPut<{ days: number }>("/admin/app-settings/free-trial-days", { days });
 }
 
+export type PlatformCurrency = {
+  code: string;
+  name: string;
+  plural: string;
+  symbol: string | null;
+};
+
+export function getPlatformCurrencies() {
+  return apiGet<PlatformCurrency[]>("/admin/app-settings/currencies");
+}
+
+export function upsertPlatformCurrency(body: {
+  code: string;
+  name?: string;
+  plural?: string;
+  symbol?: string | null;
+}) {
+  return apiPut<PlatformCurrency>("/admin/app-settings/currencies", body);
+}
+
+export function deletePlatformCurrency(code: string) {
+  return apiDelete<{ ok: boolean }>(`/admin/app-settings/currencies/${encodeURIComponent(code)}`);
+}
+
+export function getCurrencyByLang() {
+  return apiGet<{ byLang: Record<string, string> }>("/admin/app-settings/currency-by-lang");
+}
+
+export function setCurrencyByLang(byLang: Record<string, string>) {
+  return apiPut<{ byLang: Record<string, string> }>("/admin/app-settings/currency-by-lang", {
+    byLang,
+  });
+}
+
 // Domains (admin UI). Prisma/API entity remains Brand; REST path stays /admin/brands.
 export interface Brand {
   id: string;
@@ -1368,9 +1402,27 @@ export interface FeatureMatrix {
       };
     };
     publicPlans?: {
-      free?: { priceHuf?: number; places?: number; events?: number; languages?: number };
-      basic?: { priceHuf?: number; places?: number; events?: number; languages?: number };
-      premium?: { priceHuf?: number; places?: number; events?: number; languages?: number };
+      free?: {
+        priceHuf?: number;
+        prices?: Record<string, number>;
+        places?: number;
+        events?: number;
+        languages?: number;
+      };
+      basic?: {
+        priceHuf?: number;
+        prices?: Record<string, number>;
+        places?: number;
+        events?: number;
+        languages?: number;
+      };
+      premium?: {
+        priceHuf?: number;
+        prices?: Record<string, number>;
+        places?: number;
+        events?: number;
+        languages?: number;
+      };
     };
   } | null;
   placePlanOverrides?: {

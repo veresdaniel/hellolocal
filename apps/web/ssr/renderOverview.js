@@ -54,11 +54,18 @@ function escapeHtml(value) {
 }
 
 const PLAN_DEFAULTS = {
-  free: { priceHuf: 0, places: 1, events: 5, languages: 1 },
-  basic: { priceHuf: 3990, places: 5, events: 15, languages: 1 },
-  premium: { priceHuf: 8990, places: 30, events: 30, languages: 1 },
+  free: { prices: { HUF: 0, EUR: 0 }, places: 1, events: 5, languages: 1 },
+  basic: { prices: { HUF: 3990, EUR: 12.9 }, places: 5, events: 15, languages: 1 },
+  premium: { prices: { HUF: 8990, EUR: 29 }, places: 30, events: 30, languages: 1 },
 };
 const PLAN_ENABLED_DEFAULTS = { free: true, basic: true, premium: false, municipal: true };
+const DEFAULT_CURRENCY_BY_LANG = { hu: "HUF", en: "EUR", de: "EUR" };
+const PERIOD_UNIT = { hu: "/ hó", en: "/ month", de: "/ Monat" };
+const FREE_PRICE_NOTE = {
+  hu: "{{currency}} az első {{count}} napban",
+  en: "{{currency}} for the first {{count}} days",
+  de: "{{currency}} für die ersten {{count}} Tage",
+};
 
 const MATRIX_PLAN = { free: "FREE", basic: "BASIC", premium: "PRO" };
 
@@ -67,6 +74,37 @@ function finiteNumber(value) {
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n)) return undefined;
   return Math.max(0, Math.round(n));
+}
+
+function finiteMoney(value) {
+  if (value === "" || value === null || value === undefined) return undefined;
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return Math.round(n * 100) / 100;
+}
+
+function normalizePrices(custom, defaults) {
+  const out = { ...defaults };
+  const raw =
+    custom?.prices && typeof custom.prices === "object" && !Array.isArray(custom.prices)
+      ? custom.prices
+      : null;
+  if (raw) {
+    for (const [code, value] of Object.entries(raw)) {
+      const amount = finiteMoney(value);
+      if (amount !== undefined) out[String(code).toUpperCase()] = amount;
+    }
+  }
+  const legacy = finiteMoney(custom?.priceHuf);
+  if (legacy !== undefined && (raw == null || out.HUF === undefined)) out.HUF = legacy;
+  return out;
+}
+
+function planPriceForCurrency(numbers, currencyCode) {
+  const code = String(currencyCode || "HUF").toUpperCase();
+  if (numbers.prices[code] !== undefined) return numbers.prices[code];
+  if (numbers.prices.HUF !== undefined) return numbers.prices.HUF;
+  return 0;
 }
 
 /** Same priority as apps/web/src/components/publicPlans.ts resolvePublicPlans. */
@@ -80,7 +118,7 @@ function resolvePlanNumbers(planOverrides) {
     const custom = customRoot[id] ?? {};
     const limits = root[MATRIX_PLAN[id]]?.limits ?? {};
     result[id] = {
-      priceHuf: finiteNumber(custom.priceHuf) ?? defaults.priceHuf,
+      prices: normalizePrices(custom, defaults.prices),
       places: finiteNumber(limits.placesMax) ?? finiteNumber(custom.places) ?? defaults.places,
       events:
         finiteNumber(limits.eventsPerMonthMax) ??
@@ -117,7 +155,14 @@ function planEnabled(planOverrides, id) {
   return typeof flag === "boolean" ? flag : PLAN_ENABLED_DEFAULTS[id];
 }
 
-function renderPlanCards(copy, lang, planOverrides, freeTrialDays = 30) {
+function renderPlanCards(
+  copy,
+  lang,
+  planOverrides,
+  freeTrialDays = 30,
+  currencyByLang = DEFAULT_CURRENCY_BY_LANG,
+  currencies = []
+) {
   const plans = copy.plans;
   if (!plans) return "";
   const bundledPlans = (readOverview(lang) || readOverview("en") || {}).plans || {};
@@ -125,26 +170,38 @@ function renderPlanCards(copy, lang, planOverrides, freeTrialDays = 30) {
   const trialDays = Number.isFinite(Number(freeTrialDays)) && Number(freeTrialDays) > 0
     ? Math.floor(Number(freeTrialDays))
     : 30;
+  const currencyCode =
+    (currencyByLang && currencyByLang[lang]) || DEFAULT_CURRENCY_BY_LANG[lang] || "HUF";
+  const currencyRow = (currencies || []).find((row) => row.code === currencyCode);
+  const currencyLabel = currencyRow?.symbol || currencyCode;
+  const locale = lang === "en" ? "en-GB" : lang === "de" ? "de-DE" : "hu-HU";
   const cards = ["free", "basic", "premium"]
     .filter((id) => planEnabled(planOverrides, id))
     .map((id) => {
       const plan = plans[id];
       const numbers = numbersById[id];
       if (!plan) return "";
-      const grouped = String(numbers.priceHuf).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
-      const FREE_PRICE_NOTE = {
-        hu: "Ft az első {{count}} napban",
-        en: "HUF for the first {{count}} days",
-        de: "Ft für die ersten {{count}} Tage",
-      };
-      const freeNote = fillCount(
-        FREE_PRICE_NOTE[lang] || FREE_PRICE_NOTE.hu,
-        trialDays
-      );
-      const price =
-        numbers.priceHuf <= 0
-          ? `0 ${freeNote}`
-          : `${grouped} ${plans.priceUnit || ""}`;
+      const amount = planPriceForCurrency(numbers, currencyCode);
+      let price;
+      if (amount <= 0) {
+        const freeNote = fillCount(FREE_PRICE_NOTE[lang] || FREE_PRICE_NOTE.hu, trialDays).replace(
+          /\{\{\s*currency\s*\}\}/g,
+          currencyLabel
+        );
+        price = `0 ${freeNote}`;
+      } else {
+        let formatted;
+        try {
+          formatted = new Intl.NumberFormat(locale, {
+            style: "currency",
+            currency: currencyCode,
+            maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+          }).format(amount);
+        } catch {
+          formatted = `${String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0")}\u00a0${currencyCode}`;
+        }
+        price = `${formatted} ${PERIOD_UNIT[lang] || PERIOD_UNIT.en}`;
+      }
       const pitch =
         id === "free"
           ? fillCountWithFallback(plan.pitch || "", bundledPlans.free?.pitch || "", trialDays)
@@ -313,6 +370,8 @@ export function renderOverviewDocument(
     pathname,
     shareUrl,
     freeTrialDays,
+    currencyByLang,
+    currencies,
   }
 ) {
   origin = publicOrigin(origin);
@@ -365,7 +424,14 @@ export function renderOverviewDocument(
   const faqItems = Object.values(copy.faq)
     .map((item) => `<article><h3>${escapeHtml(item.q)}</h3><p>${escapeHtml(item.a)}</p></article>`)
     .join("");
-  const planItems = renderPlanCards(copy, lang, planOverrides, freeTrialDays);
+  const planItems = renderPlanCards(
+    copy,
+    lang,
+    planOverrides,
+    freeTrialDays,
+    currencyByLang,
+    currencies
+  );
 
   const body = `
     <main class="overview overview--ssr">

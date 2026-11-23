@@ -193,22 +193,23 @@
       "invalidEmail": "That does not look like an email address."
     },
     "plansTitle": "Plans",
-    "plansLead": "A monthly price in forints. Be seen, every location, or a town.",
+    "plansLead": "Monthly pricing. Be seen, every location, or a town.",
     "plans": {
-      "priceUnit": "HUF / month",
+      "priceUnit": "/ month",
       "freePrice": "Free",
-      "freeForever": "HUF for the first {{count}} days",
+      "freeForever": "{{currency}} for the first {{count}} days",
       "places": "{{count}} places on the map",
       "eventsNone": "No events while you try it",
       "events": "{{count}} events a month",
       "languagesOne": "In several languages",
       "languages": "{{count}} languages",
-      "adminNote": "Place / event / language numbers save with the entitlement matrix and fill the {{count}} templates on the cards. Names and pitch stay manually editable. The municipal plan has no matrix-limit sync.",
+      "adminNote": "Place / event / language numbers save with the entitlement matrix and fill the {{count}} templates on the cards. Names and pitch stay manually editable. The municipal plan has no matrix-limit sync. Prices are edited per currency.",
       "visible": "Shown on the public page",
       "save": "Save plans",
       "saving": "Saving…",
       "fields": {
-        "priceHuf": "Monthly price (HUF)",
+        "priceHuf": "Monthly price",
+        "price": "Monthly price",
         "places": "Places",
         "events": "Events per month",
         "languages": "Languages"

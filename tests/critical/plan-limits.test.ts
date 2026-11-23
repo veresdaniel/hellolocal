@@ -329,12 +329,12 @@ describe("public plan numbers", () => {
       PRO: { limits: { placesMax: Number.POSITIVE_INFINITY, languagesMax: 5 } },
       MUNICIPAL: { limits: { placesMax: Number.POSITIVE_INFINITY } },
       publicPlans: {
-        basic: { priceHuf: 3990, places: 30, events: 30, languages: 1 },
-        premium: { priceHuf: 8990, places: 150, events: 200, languages: 3 },
+        basic: { prices: { HUF: 3990, EUR: 12.9 }, places: 30, events: 30, languages: 1 },
+        premium: { prices: { HUF: 8990, EUR: 29 }, places: 150, events: 200, languages: 3 },
       },
     });
     expect(fromMatrix.publicPlans.basic).toEqual({
-      priceHuf: 3990,
+      prices: { HUF: 3990, EUR: 12.9 },
       places: 22,
       events: 11,
       languages: 2,
@@ -345,9 +345,9 @@ describe("public plan numbers", () => {
 
     const fromPublic = syncMatrixLimitsFromPublicPlans({
       publicPlans: {
-        free: { priceHuf: 0, places: 4, events: 0, languages: 1 },
-        basic: { priceHuf: 3990, places: 25, events: 15, languages: 2 },
-        premium: { priceHuf: 8990, places: 80, events: 90, languages: 3 },
+        free: { prices: { HUF: 0, EUR: 0 }, places: 4, events: 0, languages: 1 },
+        basic: { prices: { HUF: 3990, EUR: 12.9 }, places: 25, events: 15, languages: 2 },
+        premium: { prices: { HUF: 8990, EUR: 29 }, places: 80, events: 90, languages: 3 },
       },
     });
     expect(fromPublic.FREE.limits).toEqual({

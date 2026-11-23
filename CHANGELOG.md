@@ -12,6 +12,21 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.18-beta] - 2026-11-23
+
+### Added
+
+- Extensible `Currency` catalog (HUF/EUR seeded) and per-language currency map
+  (`platform.currencyByLang`: hu→HUF, en/de→EUR by default) with admin CRUD on
+  App Settings.
+- Public plan amounts as `prices[code]` (separate editable values per currency);
+  landing PlanPicker + SSR format with the lang’s currency from the catalog.
+
+### Changed
+
+- Plans lead / free-trial note / price unit copy no longer hardcodes forints;
+  free note uses `{{currency}}` + `{{count}}`.
+
 ## [1.0.17-beta] - 2026-11-23
 
 ### Fixed

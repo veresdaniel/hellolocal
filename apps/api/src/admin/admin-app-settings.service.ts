@@ -26,6 +26,14 @@ import {
   PLATFORM_LANDING_CRAWLABLE_KEY,
 } from "../common/platform-landing-crawlable";
 import { FREE_TRIAL_DAYS_KEY, parseFreeTrialDays } from "../common/free-trial";
+import {
+  CURRENCY_BY_LANG_KEY,
+  DEFAULT_CURRENCIES,
+  normalizeCurrencyCode,
+  parseCurrencyByLang,
+  suggestCurrencyMeta,
+  type CurrencyByLang,
+} from "../common/currency";
 
 const SECRET_SETTING_KEYS = new Set([CONTENT_DRAFT_API_KEY, UC_ACCESS_TOKEN_KEY]);
 /** Secrets encrypted at rest with APP_SECRET/JWT_SECRET (AES-GCM). */
@@ -265,5 +273,91 @@ export class AdminAppSettingsService {
       description:
         "Free-plan trial days after registration; when validUntil elapses the owner is auto-suspended.",
     });
+  }
+
+  /** Ensure HUF/EUR exist (idempotent). */
+  async ensureDefaultCurrencies() {
+    for (const row of DEFAULT_CURRENCIES) {
+      await this.prisma.currency.upsert({
+        where: { code: row.code },
+        create: {
+          code: row.code,
+          name: row.name,
+          plural: row.plural,
+          symbol: row.symbol ?? null,
+        },
+        update: {},
+      });
+    }
+  }
+
+  async listCurrencies() {
+    await this.ensureDefaultCurrencies();
+    return this.prisma.currency.findMany({ orderBy: { code: "asc" } });
+  }
+
+  async upsertCurrency(input: {
+    code: string;
+    name?: string;
+    plural?: string;
+    symbol?: string | null;
+  }) {
+    const code = normalizeCurrencyCode(input.code);
+    if (!code) {
+      throw new BadRequestException("Invalid currency code");
+    }
+    const suggested = suggestCurrencyMeta(code);
+    const name = (input.name ?? "").trim() || suggested.name;
+    const plural = (input.plural ?? "").trim() || suggested.plural;
+    const symbol =
+      input.symbol === undefined
+        ? suggested.symbol
+        : input.symbol === null || input.symbol === ""
+          ? null
+          : String(input.symbol).trim();
+    return this.prisma.currency.upsert({
+      where: { code },
+      create: { code, name, plural, symbol },
+      update: { name, plural, symbol },
+    });
+  }
+
+  async deleteCurrency(codeRaw: string) {
+    const code = normalizeCurrencyCode(codeRaw);
+    if (!code) throw new BadRequestException("Invalid currency code");
+    if (code === "HUF" || code === "EUR") {
+      throw new BadRequestException("Cannot delete built-in HUF or EUR");
+    }
+    const byLang = await this.getCurrencyByLang();
+    if (Object.values(byLang).includes(code)) {
+      throw new BadRequestException("Currency is assigned to a language");
+    }
+    await this.prisma.currency.delete({ where: { code } });
+    return { ok: true };
+  }
+
+  async getCurrencyByLang(): Promise<CurrencyByLang> {
+    await this.ensureDefaultCurrencies();
+    const setting = await this.prisma.appSetting.findUnique({
+      where: { key: CURRENCY_BY_LANG_KEY },
+    });
+    return parseCurrencyByLang(setting?.value);
+  }
+
+  async setCurrencyByLang(map: CurrencyByLang) {
+    await this.ensureDefaultCurrencies();
+    const next = parseCurrencyByLang(JSON.stringify(map ?? {}));
+    const codes = new Set((await this.listCurrencies()).map((c) => c.code));
+    for (const [lang, code] of Object.entries(next)) {
+      if (!codes.has(code)) {
+        throw new BadRequestException(`Unknown currency for ${lang}: ${code}`);
+      }
+    }
+    await this.upsert(CURRENCY_BY_LANG_KEY, {
+      value: JSON.stringify(next),
+      type: "json",
+      description: "Per UI-language currency for platform landing plan cards (hu/en/de).",
+    });
+    return next;
   }
 }

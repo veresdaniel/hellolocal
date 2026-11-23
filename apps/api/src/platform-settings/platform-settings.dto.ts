@@ -73,13 +73,22 @@ export type PlatformSettingsDto = {
   // Platform settings (global)
   platform: {
     locale: string; // e.g., "hu-HU"
-    currency: string; // e.g., "HUF"
+    currency: string; // e.g., "HUF" — fallback for places/products
     timeFormat: "24h" | "12h";
     weekStartsOn: number; // 0 = Sunday, 1 = Monday
     /** Platform-wide OG/share image fallback (AppSetting). */
     defaultShareImage?: string | null;
     /** Free-plan trial days before auto-suspend (shown on pricing). */
     freeTrialDays?: number;
+    /** Extensible currency catalog for landing plan cards. */
+    currencies?: Array<{
+      code: string;
+      name: string;
+      plural: string;
+      symbol: string | null;
+    }>;
+    /** Per UI-lang currency code for landing plan amounts. */
+    currencyByLang?: Record<string, string>;
   };
 
   /**

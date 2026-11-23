@@ -987,6 +987,16 @@ model AppSetting {
   @@index([key])
 }
 
+/** Extensible platform currency catalog (landing plan cards + lang mapping). */
+model Currency {
+  code      String   @id // ISO-ish abbrev: HUF, EUR
+  name      String // long singular: forint, euro
+  plural    String // plural form: forint, euros
+  symbol    String? // optional display: Ft, €
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Custom-offer requests from the public municipal plan. Stored even when mail is not sent.
 model QuoteRequest {
   id           String   @id @default(cuid())

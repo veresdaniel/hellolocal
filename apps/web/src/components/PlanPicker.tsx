@@ -9,6 +9,7 @@ import { buildUrl } from "../app/urls";
 import type { Lang } from "../app/config";
 import {
   PUBLIC_PLAN_IDS,
+  planPriceForCurrency,
   resolvePlanEnabled,
   resolvePublicPlans,
   type PublicPlanId,
@@ -20,12 +21,47 @@ import "../styles/plan-picker.css";
 
 const LOCALE: Record<Lang, string> = { hu: "hu-HU", en: "en-GB", de: "de-DE" };
 
-/** Free card price note — not taken from i18n/UI copy (those get stale DB merges). */
-const FREE_PRICE_NOTE: Record<Lang, string> = {
-  hu: "Ft az első {{count}} napban",
-  en: "HUF for the first {{count}} days",
-  de: "Ft für die ersten {{count}} Tage",
+const DEFAULT_CURRENCY_BY_LANG: Record<Lang, string> = { hu: "HUF", en: "EUR", de: "EUR" };
+
+const PERIOD_UNIT: Record<Lang, string> = {
+  hu: "/ hó",
+  en: "/ month",
+  de: "/ Monat",
 };
+
+/** Free card note — `{{currency}}` = abbrev, `{{count}}` = trial days. */
+const FREE_PRICE_NOTE: Record<Lang, string> = {
+  hu: "{{currency}} az első {{count}} napban",
+  en: "{{currency}} for the first {{count}} days",
+  de: "{{currency}} für die ersten {{count}} Tage",
+};
+
+function resolveCurrencyCode(
+  lang: Lang,
+  byLang: Record<string, string> | undefined
+): string {
+  return byLang?.[lang] || DEFAULT_CURRENCY_BY_LANG[lang] || "HUF";
+}
+
+function currencyAbbrev(
+  code: string,
+  currencies: Array<{ code: string; symbol: string | null }> | undefined
+): string {
+  const row = currencies?.find((item) => item.code === code);
+  return row?.symbol || code;
+}
+
+function formatMoney(amount: number, lang: Lang, currencyCode: string): string {
+  try {
+    return new Intl.NumberFormat(LOCALE[lang], {
+      style: "currency",
+      currency: currencyCode,
+      maximumFractionDigits: amount % 1 === 0 ? 0 : 2,
+    }).format(amount);
+  } catch {
+    return `${formatCount(amount, lang)}\u00a0${currencyCode}`;
+  }
+}
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function formatCount(value: number, lang: Lang) {
@@ -104,6 +140,11 @@ export function PlanPicker({ lang }: { lang: Lang }) {
             lang={lang}
             numbers={plans[id]}
             freeTrialDays={data?.platform?.freeTrialDays ?? 30}
+            currencyCode={resolveCurrencyCode(lang, data?.platform?.currencyByLang)}
+            currencyLabel={currencyAbbrev(
+              resolveCurrencyCode(lang, data?.platform?.currencyByLang),
+              data?.platform?.currencies
+            )}
           />
         ))}
         {enabled.municipal ? <MunicipalCard lang={lang} onOpen={() => setQuoteOpen(true)} /> : null}
@@ -118,19 +159,26 @@ function PlanCard({
   lang,
   numbers,
   freeTrialDays,
+  currencyCode,
+  currencyLabel,
 }: {
   id: PublicPlanId;
   lang: Lang;
   numbers: PublicPlanNumbers;
   freeTrialDays: number;
+  currencyCode: string;
+  currencyLabel: string;
 }) {
   const text = useLandingText(lang);
   const featured = id === "basic";
-  const price = numbers.priceHuf <= 0 ? "0" : formatCount(numbers.priceHuf, lang);
-  const priceNote =
-    numbers.priceHuf <= 0
-      ? fillCount(FREE_PRICE_NOTE[lang] ?? FREE_PRICE_NOTE.hu, freeTrialDays)
-      : text("plans.priceUnit");
+  const amount = planPriceForCurrency(numbers, currencyCode);
+  const isFree = amount <= 0;
+  const price = isFree ? "0" : formatMoney(amount, lang, currencyCode);
+  const freeNote = fillCount(FREE_PRICE_NOTE[lang] ?? FREE_PRICE_NOTE.hu, freeTrialDays).replace(
+    /\{\{\s*currency\s*\}\}/g,
+    currencyLabel
+  );
+  const priceNote = isFree ? freeNote : PERIOD_UNIT[lang];
   const registerUrl = `${buildUrl({ lang, path: "admin/register" })}?plan=${id}`;
   const pitch =
     id === "free"
@@ -145,8 +193,17 @@ function PlanCard({
       </div>
       <h3>{text(`plans.${id}.name`)}</h3>
       <p className="plan-picker__price">
-        <span>{price}</span>
-        <small>{priceNote}</small>
+        {isFree ? (
+          <>
+            <span>{price}</span>
+            <small>{priceNote}</small>
+          </>
+        ) : (
+          <>
+            <span>{price}</span>
+            <small>{priceNote}</small>
+          </>
+        )}
       </p>
       <p className="plan-picker__pitch">{pitch}</p>
       <ul>

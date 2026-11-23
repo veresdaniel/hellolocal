@@ -8,7 +8,8 @@ export type PublicPlanId = "free" | "basic" | "premium";
 export const PUBLIC_PLAN_IDS: PublicPlanId[] = ["free", "basic", "premium"];
 
 export type PublicPlanNumbers = {
-  priceHuf: number;
+  /** Major-unit amounts keyed by currency code (HUF, EUR, …). */
+  prices: Record<string, number>;
   places: number;
   events: number;
   languages: number;
@@ -20,9 +21,9 @@ export type PublicPlanNumbers = {
  * Premium is off on the public page until a superadmin turns it on.
  */
 export const PUBLIC_PLAN_DEFAULTS: Record<PublicPlanId, PublicPlanNumbers> = {
-  free: { priceHuf: 0, places: 1, events: 5, languages: 1 },
-  basic: { priceHuf: 3990, places: 5, events: 15, languages: 1 },
-  premium: { priceHuf: 8990, places: 30, events: 30, languages: 1 },
+  free: { prices: { HUF: 0, EUR: 0 }, places: 1, events: 5, languages: 1 },
+  basic: { prices: { HUF: 3990, EUR: 12.9 }, places: 5, events: 15, languages: 1 },
+  premium: { prices: { HUF: 8990, EUR: 29 }, places: 30, events: 30, languages: 1 },
 };
 
 export type SwitchablePlanId = PublicPlanId | "municipal";
@@ -55,6 +56,47 @@ function finiteNumber(value: unknown): number | undefined {
   return Math.max(0, Math.round(n));
 }
 
+/** Money major units (allows decimals, e.g. EUR 12.9). */
+function finiteMoney(value: unknown): number | undefined {
+  if (value === "" || value === null || value === undefined) return undefined;
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n) || n < 0) return undefined;
+  return Math.round(n * 100) / 100;
+}
+
+function normalizePrices(
+  custom: Record<string, unknown> | null | undefined,
+  defaults: Record<string, number>
+): Record<string, number> {
+  const out: Record<string, number> = { ...defaults };
+  const rawPrices =
+    custom?.prices && typeof custom.prices === "object" && !Array.isArray(custom.prices)
+      ? (custom.prices as Record<string, unknown>)
+      : null;
+  if (rawPrices) {
+    for (const [code, value] of Object.entries(rawPrices)) {
+      const amount = finiteMoney(value);
+      if (amount !== undefined) out[String(code).toUpperCase()] = amount;
+    }
+  }
+  // Legacy single-field storage.
+  const legacy = finiteMoney(custom?.priceHuf);
+  if (legacy !== undefined && out.HUF === undefined) out.HUF = legacy;
+  else if (legacy !== undefined && rawPrices == null) out.HUF = legacy;
+  return out;
+}
+
+/** Amount for a currency code with HUF / legacy fallback. */
+export function planPriceForCurrency(
+  numbers: PublicPlanNumbers,
+  currencyCode: string | null | undefined
+): number {
+  const code = String(currencyCode || "HUF").toUpperCase();
+  if (numbers.prices[code] !== undefined) return numbers.prices[code];
+  if (numbers.prices.HUF !== undefined) return numbers.prices.HUF;
+  return 0;
+}
+
 function cloneOverrides(planOverrides: unknown): Record<string, any> {
   if (!planOverrides || typeof planOverrides !== "object") return {};
   // structuredClone keeps Infinity; JSON.stringify would turn it into null.
@@ -63,7 +105,7 @@ function cloneOverrides(planOverrides: unknown): Record<string, any> {
 
 /**
  * Landing numbers. Finite FREE / BASIC / PRO matrix limits win (single source of
- * truth). publicPlans fills gaps and always owns priceHuf. Infinity is ignored.
+ * truth). publicPlans fills gaps and always owns `prices`. Infinity is ignored.
  */
 export function resolvePublicPlans(
   planOverrides: unknown
@@ -81,7 +123,7 @@ export function resolvePublicPlans(
     const custom = customRoot[id] ?? {};
     const limits = root[MATRIX_PLAN[id]]?.limits ?? {};
     result[id] = {
-      priceHuf: finiteNumber(custom.priceHuf) ?? defaults.priceHuf,
+      prices: normalizePrices(custom, defaults.prices),
       places: finiteNumber(limits.placesMax) ?? finiteNumber(custom.places) ?? defaults.places,
       events:
         finiteNumber(limits.eventsPerMonthMax) ??
@@ -114,7 +156,7 @@ export function resolvePlanEnabled(planOverrides: unknown): Record<SwitchablePla
 
 /**
  * After the feature matrix is saved: copy finite FREE/BASIC/PRO limits into
- * publicPlans so marketing cards stay aligned. Leaves priceHuf and municipal alone.
+ * publicPlans so marketing cards stay aligned. Leaves prices and municipal alone.
  */
 export function syncPublicPlansFromMatrixLimits(planOverrides: unknown): Record<string, any> {
   const root = cloneOverrides(planOverrides);
@@ -185,7 +227,7 @@ function field(path: string, label: [string, string, string], long = false): Pla
 
 /** Shared labels shown next to the numeric inputs in the admin editor. */
 export const PLAN_FIELD_LABEL_FIELDS: PlanCopyField[] = [
-  field("plans.fields.priceHuf", ["Havi díj címke", "Monthly price label", "Monatspreis-Label"]),
+  field("plans.fields.price", ["Havi díj címke", "Monthly price label", "Monatspreis-Label"]),
   field("plans.fields.places", ["Helyek címke", "Places label", "Orte-Label"]),
   field("plans.fields.events", ["Programok címke", "Events label", "Termine-Label"]),
   field("plans.fields.languages", ["Nyelvek címke", "Languages label", "Sprachen-Label"]),

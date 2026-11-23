@@ -1936,6 +1936,47 @@ export class AdminController {
     return { days };
   }
 
+  /** Extensible currency catalog for landing plan cards. */
+  @Get("/app-settings/currencies")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async listCurrencies() {
+    return this.appSettingsService.listCurrencies();
+  }
+
+  @Put("/app-settings/currencies")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async upsertCurrency(
+    @Body() dto: { code?: string; name?: string; plural?: string; symbol?: string | null }
+  ) {
+    return this.appSettingsService.upsertCurrency({
+      code: dto.code ?? "",
+      name: dto.name,
+      plural: dto.plural,
+      symbol: dto.symbol,
+    });
+  }
+
+  @Delete("/app-settings/currencies/:code")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async deleteCurrency(@Param("code") code: string) {
+    return this.appSettingsService.deleteCurrency(code);
+  }
+
+  /** Per UI-language currency for platform landing cards. */
+  @Get("/app-settings/currency-by-lang")
+  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor, UserRole.viewer)
+  async getCurrencyByLang() {
+    const byLang = await this.appSettingsService.getCurrencyByLang();
+    return { byLang };
+  }
+
+  @Put("/app-settings/currency-by-lang")
+  @Roles(UserRole.superadmin, UserRole.admin)
+  async setCurrencyByLang(@Body() dto: { byLang?: Record<string, string> }) {
+    const byLang = await this.appSettingsService.setCurrencyByLang(dto.byLang ?? {});
+    return { byLang };
+  }
+
   @Get("/app-settings")
   @Roles(UserRole.superadmin, UserRole.admin)
   async getAppSettings() {

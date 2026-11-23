@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import languages from "../i18n/languages.json";
+import { getPlatformCurrencies, type PlatformCurrency } from "../api/admin.api";
 import { getUiMessages } from "../api/uiCopy.api";
 import { isUiLang, LANG_VALUES, type Lang } from "../types/enums";
 import {
@@ -24,7 +25,7 @@ import {
 } from "./publicPlans";
 import "../styles/plan-picker.css";
 
-const NUMBER_FIELDS: Array<keyof PublicPlanNumbers> = ["priceHuf", "places", "events", "languages"];
+const LIMIT_FIELDS: Array<"places" | "events" | "languages"> = ["places", "events", "languages"];
 
 function TextField({
   item,
@@ -77,6 +78,10 @@ export function PublicPlansEditor({
   );
   const [copyDrafts, setCopyDrafts] = useState<PlanCopyDrafts>(() => emptyPlanCopyDrafts());
   const [copyLoading, setCopyLoading] = useState(true);
+  const [currencies, setCurrencies] = useState<PlatformCurrency[]>([
+    { code: "HUF", name: "forint", plural: "forint", symbol: "Ft" },
+    { code: "EUR", name: "euro", plural: "euros", symbol: "€" },
+  ]);
 
   useEffect(() => {
     setDraft(resolvePublicPlans(planOverrides));
@@ -102,6 +107,12 @@ export function PublicPlansEditor({
           /* JSON defaults already in emptyPlanCopyDrafts */
         }
       }
+      try {
+        const list = await getPlatformCurrencies();
+        if (!cancelled && list.length) setCurrencies(list);
+      } catch {
+        /* keep HUF/EUR fallback */
+      }
       if (!cancelled) {
         setCopyDrafts(next);
         setCopyLoading(false);
@@ -112,13 +123,26 @@ export function PublicPlansEditor({
     };
   }, []);
 
-  const setField = (id: PublicPlanId, field: keyof PublicPlanNumbers, raw: string) => {
+  const setLimitField = (id: PublicPlanId, field: "places" | "events" | "languages", raw: string) => {
     const parsed = raw === "" ? 0 : Math.max(0, Math.round(Number(raw)));
     setDraft((current) => ({
       ...current,
       [id]: {
         ...current[id],
         [field]: Number.isFinite(parsed) ? parsed : current[id][field],
+      },
+    }));
+  };
+
+  const setPrice = (id: PublicPlanId, currencyCode: string, raw: string) => {
+    const parsed = raw === "" ? 0 : Number(raw);
+    const amount =
+      Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed * 100) / 100 : 0;
+    setDraft((current) => ({
+      ...current,
+      [id]: {
+        ...current[id],
+        prices: { ...current[id].prices, [currencyCode]: amount },
       },
     }));
   };
@@ -133,9 +157,18 @@ export function PublicPlansEditor({
   const endonym = (code: Lang) =>
     languages.languages.find((language) => language.code === code)?.endonym ?? code;
 
-  const labelFor = (field: keyof PublicPlanNumbers) => {
-    const path = `plans.fields.${field}`;
-    return copyDrafts[active]?.[path] || t(`public.overview.${path}`);
+  const labelFor = (field: "places" | "events" | "languages" | "price") => {
+    const path = `plans.fields.${field === "price" ? "price" : field}`;
+    const legacy =
+      field === "price"
+        ? copyDrafts[active]?.["plans.fields.priceHuf"] || t("public.overview.plans.fields.priceHuf")
+        : "";
+    return (
+      copyDrafts[active]?.[path] ||
+      t(`public.overview.${path}`, {
+        defaultValue: legacy || undefined,
+      })
+    );
   };
 
   return (
@@ -223,7 +256,21 @@ export function PublicPlansEditor({
                     onChange={(value) => setCopy(item.path, value)}
                   />
                 ))}
-                {NUMBER_FIELDS.map((field) => (
+                {currencies.map((currency) => (
+                  <label key={`${id}-${currency.code}`}>
+                    {labelFor("price")} ({currency.code}
+                    {currency.symbol ? ` ${currency.symbol}` : ""})
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      inputMode="decimal"
+                      value={draft[id].prices[currency.code] ?? 0}
+                      onChange={(event) => setPrice(id, currency.code, event.target.value)}
+                    />
+                  </label>
+                ))}
+                {LIMIT_FIELDS.map((field) => (
                   <label key={field}>
                     {labelFor(field)}
                     <input
@@ -232,7 +279,7 @@ export function PublicPlansEditor({
                       step={1}
                       inputMode="numeric"
                       value={draft[id][field]}
-                      onChange={(event) => setField(id, field, event.target.value)}
+                      onChange={(event) => setLimitField(id, field, event.target.value)}
                     />
                   </label>
                 ))}

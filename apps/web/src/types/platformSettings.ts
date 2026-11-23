@@ -84,13 +84,20 @@ export type PlatformSettingsDto = {
   // Platform settings (global)
   platform?: {
     locale: string; // e.g., "hu-HU"
-    currency: string; // e.g., "HUF"
+    currency: string; // e.g., "HUF" — fallback for places/products
     timeFormat: "24h" | "12h";
     weekStartsOn: number; // 0 = Sunday, 1 = Monday
     /** Optional platform-wide OG/share image fallback. */
     defaultShareImage?: string | null;
     /** Free-plan trial days before auto-suspend. */
     freeTrialDays?: number;
+    currencies?: Array<{
+      code: string;
+      name: string;
+      plural: string;
+      symbol: string | null;
+    }>;
+    currencyByLang?: Record<string, string>;
   };
 
   /** Flattened alias of `platform.defaultShareImage` for CSR cascades. */

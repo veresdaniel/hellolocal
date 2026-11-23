@@ -468,6 +468,8 @@ async function loadPlatformForOverview(lang) {
         defaultShareImage: null,
         landingIndexable: false,
         freeTrialDays: 30,
+        currencyByLang: { hu: "HUF", en: "EUR", de: "EUR" },
+        currencies: [],
       };
     }
     const data = await response.json();
@@ -480,6 +482,8 @@ async function loadPlatformForOverview(lang) {
       // Platform overview only; missing/false → noindex (gradual rollout default).
       landingIndexable: data?.seo?.landingIndexable === true,
       freeTrialDays: Number.isFinite(trialRaw) && trialRaw > 0 ? Math.floor(trialRaw) : 30,
+      currencyByLang: data?.platform?.currencyByLang || { hu: "HUF", en: "EUR", de: "EUR" },
+      currencies: Array.isArray(data?.platform?.currencies) ? data.platform.currencies : [],
     };
     platformCache.set(lang, { until: Date.now() + 60_000, value });
     return value;
@@ -490,6 +494,8 @@ async function loadPlatformForOverview(lang) {
       defaultShareImage: null,
       landingIndexable: false,
       freeTrialDays: 30,
+      currencyByLang: { hu: "HUF", en: "EUR", de: "EUR" },
+      currencies: [],
     };
   } finally {
     clearTimeout(timer);
@@ -621,6 +627,8 @@ app.get('*', async (req, res, next) => {
           shareImage: platform.defaultShareImage || null,
           indexable: platform.landingIndexable === true,
           freeTrialDays: platform.freeTrialDays ?? 30,
+          currencyByLang: platform.currencyByLang,
+          currencies: platform.currencies,
         })
       );
     } catch (error) {

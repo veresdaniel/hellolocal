@@ -193,22 +193,23 @@
       "invalidEmail": "Das sieht nicht nach einer E-Mail-Adresse aus."
     },
     "plansTitle": "Pakete",
-    "plansLead": "Monatlich, in Forint. Sichtbar werden, an jedem Ort oder eine Gemeinde.",
+    "plansLead": "Monatliche Preise. Sichtbar werden, an jedem Ort oder eine Gemeinde.",
     "plans": {
-      "priceUnit": "Ft / Monat",
+      "priceUnit": "/ Monat",
       "freePrice": "Kostenlos",
-      "freeForever": "Ft für die ersten {{count}} Tage",
+      "freeForever": "{{currency}} für die ersten {{count}} Tage",
       "places": "{{count}} Orte auf der Karte",
       "eventsNone": "Noch ohne Programm, solange Sie es ausprobieren",
       "events": "{{count}} Veranstaltungen im Monat",
       "languagesOne": "Mehrsprachig",
       "languages": "{{count}} Sprachen",
-      "adminNote": "Orte / Termine / Sprachen werden mit der Rechtematrix gespeichert und füllen die {{count}}-Vorlagen auf den Karten. Namen und Pitch bleiben manuell. Das Gemeinde-Paket hat keinen Matrix-Limit-Sync.",
+      "adminNote": "Orte / Termine / Sprachen werden mit der Rechtematrix gespeichert und füllen die {{count}}-Vorlagen auf den Karten. Namen und Pitch bleiben manuell. Das Gemeinde-Paket hat keinen Matrix-Limit-Sync. Preise werden je Währung bearbeitet.",
       "visible": "Auf der öffentlichen Seite sichtbar",
       "save": "Pakete speichern",
       "saving": "Speichern…",
       "fields": {
-        "priceHuf": "Monatspreis (Ft)",
+        "priceHuf": "Monatspreis",
+        "price": "Monatspreis",
         "places": "Orte",
         "events": "Veranstaltungen im Monat",
         "languages": "Sprachen"

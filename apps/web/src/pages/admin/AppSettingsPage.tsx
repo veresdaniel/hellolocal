@@ -32,6 +32,8 @@ import { UnderConstructionSettings } from "../../components/UnderConstructionSet
 import { GlobalCrawlabilityCard } from "../../components/GlobalCrawlabilityCard";
 import { LandingCrawlabilityCard } from "../../components/LandingCrawlabilityCard";
 import { FreeTrialDaysCard } from "../../components/FreeTrialDaysCard";
+import { CurrenciesCard } from "../../components/CurrenciesCard";
+import { CurrencyByLangCard } from "../../components/CurrencyByLangCard";
 import { VisitorLadderSettings } from "../../components/VisitorLadderSettings";
 import type { PublicPlanId, PublicPlanNumbers } from "../../components/publicPlans";
 import { DEFAULT_LANG, HAS_MULTIPLE_SITES, isLang } from "../../app/config";
@@ -1097,6 +1099,8 @@ export function AppSettingsPage() {
       {userIsSuperadmin && <LandingCrawlabilityCard />}
 
       {userIsSuperadmin && <FreeTrialDaysCard />}
+      {userIsSuperadmin && <CurrenciesCard />}
+      {userIsSuperadmin && <CurrencyByLangCard />}
 
       {userIsSuperadmin && <UnderConstructionSettings adminLang={adminLang} />}
 
