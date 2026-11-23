@@ -215,6 +215,28 @@ export function fillCount(template: string, count?: string | number): string {
   return template.replace(/\{\{\s*count\s*\}\}/g, String(count));
 }
 
+function hasCountPlaceholder(template: string): boolean {
+  return /\{\{\s*count\s*\}\}/.test(template);
+}
+
+/**
+ * When DB UI copy / landing override still has a stale string without `{{count}}`
+ * (e.g. "Ft az első hónapban"), prefer the bundled fallback that keeps the placeholder.
+ */
+export function fillCountWithFallback(
+  primary: string,
+  fallback: string,
+  count?: string | number
+): string {
+  if (count === undefined) return primary || fallback;
+  const template = hasCountPlaceholder(primary)
+    ? primary
+    : hasCountPlaceholder(fallback)
+      ? fallback
+      : primary || fallback;
+  return fillCount(template, count);
+}
+
 export function landingString(
   override: unknown,
   path: string,
@@ -222,7 +244,7 @@ export function landingString(
   count?: string | number
 ): string {
   const custom = stringAt(override, path).trim();
-  return fillCount(custom || fallback, count);
+  return fillCountWithFallback(custom || fallback, fallback, count);
 }
 
 export type LandingDrafts = Record<Lang, Record<string, string>>;

@@ -7,7 +7,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getPlatformSettings } from "../api/places.api";
 import type { Lang } from "../app/config";
-import { landingOverride, landingString, fillCount } from "../components/landingCopy";
+import {
+  landingOverride,
+  landingString,
+  landingDefault,
+  fillCountWithFallback,
+} from "../components/landingCopy";
 import { hasUiCopy } from "../i18n/loadUiCopy";
 
 export function useLandingText(lang: Lang) {
@@ -23,7 +28,13 @@ export function useLandingText(lang: Lang) {
   return useCallback(
     (path: string, options?: { count?: string | number }) => {
       const translated = String(t(`public.overview.${path}`));
-      if (hasUiCopy(lang)) return fillCount(translated, options?.count);
+      const bundled = landingDefault(lang, path);
+      // DB UI copy can lag behind locale JSON; if it dropped `{{count}}`, use the bundle.
+      if (hasUiCopy(lang)) {
+        return options?.count !== undefined
+          ? fillCountWithFallback(translated, bundled || translated, options.count)
+          : translated;
+      }
       return landingString(override, path, translated, options?.count);
     },
     [override, t, lang]

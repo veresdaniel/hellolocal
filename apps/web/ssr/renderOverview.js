@@ -99,6 +99,18 @@ function fillCount(template, count) {
   return String(template ?? "").replace(/\{\{\s*count\s*\}\}/g, String(count));
 }
 
+function hasCountPlaceholder(template) {
+  return /\{\{\s*count\s*\}\}/.test(String(template ?? ""));
+}
+
+/** Prefer bundled copy when DB UI strings dropped the `{{count}}` placeholder. */
+function fillCountWithFallback(primary, fallback, count) {
+  const a = String(primary ?? "");
+  const b = String(fallback ?? "");
+  const template = hasCountPlaceholder(a) ? a : hasCountPlaceholder(b) ? b : a || b;
+  return fillCount(template, count);
+}
+
 function planEnabled(planOverrides, id) {
   const root = planOverrides && typeof planOverrides === "object" ? planOverrides : {};
   const flag = root.publicPlans?.[id]?.enabled;
@@ -108,6 +120,7 @@ function planEnabled(planOverrides, id) {
 function renderPlanCards(copy, lang, planOverrides, freeTrialDays = 30) {
   const plans = copy.plans;
   if (!plans) return "";
+  const bundledPlans = (readOverview(lang) || readOverview("en") || {}).plans || {};
   const numbersById = resolvePlanNumbers(planOverrides);
   const trialDays = Number.isFinite(Number(freeTrialDays)) && Number(freeTrialDays) > 0
     ? Math.floor(Number(freeTrialDays))
@@ -119,13 +132,19 @@ function renderPlanCards(copy, lang, planOverrides, freeTrialDays = 30) {
       const numbers = numbersById[id];
       if (!plan) return "";
       const grouped = String(numbers.priceHuf).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
-      const freeNote = fillCount(plans.freeForever || plans.freePrice || "", trialDays);
+      const freeNote = fillCountWithFallback(
+        plans.freeForever || plans.freePrice || "",
+        bundledPlans.freeForever || bundledPlans.freePrice || "",
+        trialDays
+      );
       const price =
         numbers.priceHuf <= 0
           ? `0 ${freeNote}`
           : `${grouped} ${plans.priceUnit || ""}`;
       const pitch =
-        id === "free" ? fillCount(plan.pitch || "", trialDays) : plan.pitch || "";
+        id === "free"
+          ? fillCountWithFallback(plan.pitch || "", bundledPlans.free?.pitch || "", trialDays)
+          : plan.pitch || "";
       const bullets = [
         fillCount(plans.places, numbers.places),
         numbers.events <= 0 ? plans.eventsNone : fillCount(plans.events, numbers.events),

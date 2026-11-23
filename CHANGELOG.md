@@ -12,6 +12,13 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.14-beta] - 2026-11-23
+
+### Fixed
+
+- Free plan card ignored `freeTrialDays` when DB UI copy still had
+  "Ft az első hónapban" without `{{count}}` — fall back to bundled locale text.
+
 ## [1.0.13-beta] - 2026-11-23
 
 ### Fixed
