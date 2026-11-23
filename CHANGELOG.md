@@ -20,8 +20,6 @@ in prose as used in the product.
   when no device-specific position is persisted (`mapLocationControlPosition_mobile`).
 - Platform landing SSR / Open Graph also covers bare `https://hellolocal.hu/` and
   `/:lang` (without requiring `/hu/attekintes`); `og:url` matches the shared path.
-- `robots.txt` allows Facebook / Twitter / LinkedIn / WhatsApp preview crawlers
-  even when global indexing is off (fixes Sharing Debugger “403 / robots block”).
 
 ## [1.0.0-beta] - 2026-11-23
 
