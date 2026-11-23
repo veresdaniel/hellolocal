@@ -12,6 +12,13 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.25-beta] - 2026-11-23
+
+### Changed
+
+- Drop the visible “skip to content” link; public layout uses a `<main>`
+  landmark (and admin already has `<main id="admin-main">`) for bypass-blocks.
+
 ## [1.0.24-beta] - 2026-11-23
 
 ### Fixed

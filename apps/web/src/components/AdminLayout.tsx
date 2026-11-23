@@ -284,10 +284,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         }
       `}</style>
 
-      <a href="#admin-main" className="hl-skip-link">
-        {t("common.skipToContent", { defaultValue: "Ugrás a tartalomra" })}
-      </a>
-
       {/* Header */}
       <nav
         aria-label={t("admin.header.title") || "Adminisztrációs felület"}

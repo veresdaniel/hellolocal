@@ -275,17 +275,14 @@ function SiteLayoutContent({
         flexDirection: "column",
       }}
     >
-      <a href="#public-main" className="hl-skip-link">
-        {t("common.skipToContent", { defaultValue: "Ugrás a tartalomra" })}
-      </a>
-      {/* ide később jöhet Header, site alapján brandelt */}
-      <div id="public-main" tabIndex={-1} style={{ flex: "1 0 auto" }}>
+      {/* Landmark <main> covers WCAG bypass-blocks; no skip-link chip in the header. */}
+      <main id="public-main" style={{ flex: "1 0 auto" }}>
         <InsideSiteChrome.Provider value={true}>
           <Suspense fallback={<PublicListSkeleton label={t("common.loading")} />}>
             <Outlet context={{ lang, siteKey, platform }} />
           </Suspense>
         </InsideSiteChrome.Provider>
-      </div>
+      </main>
       {/* Footer always visible at bottom, using flexbox to keep it there */}
       {platform && (
         <div style={{ flexShrink: 0 }}>
