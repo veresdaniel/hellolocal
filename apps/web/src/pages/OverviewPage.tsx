@@ -180,7 +180,7 @@ export function OverviewPage() {
   const description = text("seoDescription") || text("subtitle") || title;
   const seoTitle = text("seoTitle") || title;
   const origin = typeof window === "undefined" ? "https://hello-local.io" : window.location.origin;
-  const image = `${origin}/marketing/map-szeged.jpg`;
+  const image = `${origin}/marketing/hellolocal-share.jpg`;
   const { data: uiLanguages } = useQuery({
     queryKey: ["ui-languages"],
     queryFn: getPublicUiLanguages,

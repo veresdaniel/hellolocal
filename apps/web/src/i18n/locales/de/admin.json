@@ -1729,10 +1729,10 @@
   },
   "defaultShareImage": {
     "title": "Standard-Social-Bild",
-    "help": "Plattform-Open-Graph-Bild, wenn Region/Seite kein seoImage oder Hero hat. Volle URL oder Pfad. Leer bleibt /marketing/map-szeged.jpg.",
+    "help": "Plattform-Open-Graph-Bild, wenn Region/Seite kein seoImage oder Hero hat. Volle URL oder Pfad. Leer bleibt /marketing/hellolocal-share.jpg.",
     "save": "Social-Bild speichern",
     "saved": "Social-Bild gespeichert",
-    "placeholder": "/marketing/map-szeged.jpg"
+    "placeholder": "/marketing/hellolocal-share.jpg"
   },
   "geocode": {
     "suggest": "Koordinaten vorschlagen",

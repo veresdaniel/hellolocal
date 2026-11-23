@@ -172,7 +172,9 @@ describe("normalizeShareImageUrl", () => {
     expect(normalizeShareImageUrl("https://cdn.example.com/a.jpg")).toBe(
       "https://cdn.example.com/a.jpg"
     );
-    expect(normalizeShareImageUrl("/marketing/map-szeged.jpg")).toBe("/marketing/map-szeged.jpg");
+    expect(normalizeShareImageUrl("/marketing/hellolocal-share.jpg")).toBe(
+      "/marketing/hellolocal-share.jpg"
+    );
     expect(normalizeShareImageUrl("//cdn.example.com/a.jpg")).toBe("https://cdn.example.com/a.jpg");
     expect(normalizeShareImageUrl("not-a-url")).toBe("");
     expect(normalizeShareImageUrl("")).toBe("");
@@ -190,7 +192,7 @@ describe("siteShare empty SEO cascade", () => {
       },
       seo: { defaultTitle: null, defaultDescription: null, defaultImage: null },
       placeholders: { placeHero: "https://cdn.example.com/placeholder.jpg" },
-      platform: { defaultShareImage: "/marketing/map-szeged.jpg" },
+      platform: { defaultShareImage: "/marketing/hellolocal-share.jpg" },
       brand: { name: "HelloLocal" },
     });
     expect(share).toEqual({
@@ -214,7 +216,7 @@ describe("siteShare empty SEO cascade", () => {
         defaultImage: "https://cdn.example.com/og.jpg",
       },
       placeholders: { placeHero: "https://cdn.example.com/placeholder.jpg" },
-      platform: { defaultShareImage: "/marketing/map-szeged.jpg" },
+      platform: { defaultShareImage: "/marketing/hellolocal-share.jpg" },
     });
     expect(share?.title).toBe("Etyek · HelloLocal");
     expect(share?.description).toBe("Egyedi leírás");
@@ -226,8 +228,8 @@ describe("siteShare empty SEO cascade", () => {
       site: { name: "Etyek", shortDescription: "Borvidék", heroImage: null },
       seo: {},
       placeholders: { placeHero: null },
-      platform: { defaultShareImage: "/marketing/map-szeged.jpg" },
+      platform: { defaultShareImage: "/marketing/hellolocal-share.jpg" },
     });
-    expect(share?.hero).toBe("/marketing/map-szeged.jpg");
+    expect(share?.hero).toBe("/marketing/hellolocal-share.jpg");
   });
 });

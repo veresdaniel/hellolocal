@@ -15,10 +15,10 @@ import { fileURLToPath } from "url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** Built-in marketing OG image when no AppSetting / site SEO image is set. */
-export const SHARE_IMAGE_PATH = "/marketing/map-szeged.jpg";
-export const SHARE_IMAGE_WIDTH = "1024";
-export const SHARE_IMAGE_HEIGHT = "656";
+/** Built-in HelloLocal brand OG image when no AppSetting / site SEO image is set. */
+export const SHARE_IMAGE_PATH = "/marketing/hellolocal-share.jpg";
+export const SHARE_IMAGE_WIDTH = "1200";
+export const SHARE_IMAGE_HEIGHT = "630";
 
 /** FB-recommended defaults when the asset has no known pixel size. */
 export const OG_IMAGE_WIDTH_DEFAULT = "1200";

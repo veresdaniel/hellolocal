@@ -1728,10 +1728,10 @@
   },
   "defaultShareImage": {
     "title": "Default social share image",
-    "help": "Platform Open Graph image when a region/page has no seoImage or hero. Full URL or path. Empty keeps the built-in /marketing/map-szeged.jpg.",
+    "help": "Platform Open Graph image when a region/page has no seoImage or hero. Full URL or path. Empty keeps the built-in /marketing/hellolocal-share.jpg.",
     "save": "Save share image",
     "saved": "Social share image saved",
-    "placeholder": "/marketing/map-szeged.jpg"
+    "placeholder": "/marketing/hellolocal-share.jpg"
   },
   "geocode": {
     "suggest": "Suggest coordinates",

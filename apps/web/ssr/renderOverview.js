@@ -386,8 +386,8 @@ export function renderOverviewDocument(
       ? configuredShare
       : configuredShare.startsWith("/")
         ? `${origin}${configuredShare}`
-        : `${origin}/marketing/map-szeged.jpg`
-    : `${origin}/marketing/map-szeged.jpg`;
+        : `${origin}/marketing/hellolocal-share.jpg`
+    : `${origin}/marketing/hellolocal-share.jpg`;
   const keywords = escapeHtml(copy.keywords);
   const alternates = published.map(
     (code) => `<link rel="alternate" hreflang="${code}" href="${origin}/${code}" />`
@@ -488,8 +488,10 @@ export function renderOverviewDocument(
     description: copy.seoDescription,
     url,
     image,
-    imageWidth: configuredShare && !configuredShare.includes("map-szeged") ? "" : SHARE_IMAGE_WIDTH,
-    imageHeight: configuredShare && !configuredShare.includes("map-szeged") ? "" : SHARE_IMAGE_HEIGHT,
+    imageWidth:
+      configuredShare && !configuredShare.includes("hellolocal-share") ? "" : SHARE_IMAGE_WIDTH,
+    imageHeight:
+      configuredShare && !configuredShare.includes("hellolocal-share") ? "" : SHARE_IMAGE_HEIGHT,
     type: "website",
     siteName: "HelloLocal",
     origin,

@@ -1783,10 +1783,10 @@
   },
   "defaultShareImage": {
     "title": "Social megosztás alapkép",
-    "help": "Platform szintű Open Graph kép, ha a régiónak/oldalnak nincs saját seoImage/hero képe. Teljes URL vagy útvonal. Üresen a beépített /marketing/map-szeged.jpg.",
+    "help": "Platform szintű Open Graph kép, ha a régiónak/oldalnak nincs saját seoImage/hero képe. Teljes URL vagy útvonal. Üresen a beépített /marketing/hellolocal-share.jpg.",
     "save": "Alapkép mentése",
     "saved": "Social alapkép elmentve",
-    "placeholder": "/marketing/map-szeged.jpg"
+    "placeholder": "/marketing/hellolocal-share.jpg"
   },
   "geocode": {
     "suggest": "Koordináta javaslat",
