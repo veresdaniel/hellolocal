@@ -12,6 +12,13 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.24-beta] - 2026-11-23
+
+### Fixed
+
+- Skip-link parked off-screen (`left: -10000px`) until keyboard focus — the old
+  `translateY` hide still left a white chip above the site title.
+
 ## [1.0.22-beta] - 2026-11-23
 
 ### Fixed
