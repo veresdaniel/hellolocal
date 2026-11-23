@@ -12,6 +12,15 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+## [1.0.22-beta] - 2026-11-23
+
+### Fixed
+
+- Custom-domain `/hu` no longer flashes the platform overview while host scope
+  loads; SSR content uses the same host-scope as OG (tenant home, not Régiók).
+- Skip-link CSS in first-paint so hard reload does not flash a white box in the
+  header before the main stylesheet.
+
 ## [1.0.21-beta] - 2026-11-23
 
 ### Changed

@@ -4,12 +4,14 @@
  * Admin paths stay an empty shell with robots noindex via {@link applyAdminRobots}.
  */
 import {
+  applyHostScope,
   clip,
   escapeHtml,
   fetchPublicJson,
   parsePublicPath,
   placePathSegment,
   plainText,
+  resolveDomainHost,
 } from "./socialMeta.js";
 
 const CONTENT_KINDS = new Set(["site", "town", "place", "event", "sites"]);
@@ -111,26 +113,36 @@ function formatWhen(start, end, lang) {
   }
 }
 
-async function loadPlatform(apiUrl, lang, siteKey) {
+async function loadPlatform(apiUrl, lang, siteKey, forward = null) {
   const key = encodeURIComponent(siteKey);
-  let data = await fetchPublicJson(`${apiUrl}/api/public/${lang}/${key}/platform`, 1200);
+  let data = await fetchPublicJson(
+    `${apiUrl}/api/public/${lang}/${key}/platform`,
+    1200,
+    forward
+  );
   if (!data?.site && lang !== "hu") {
-    data = await fetchPublicJson(`${apiUrl}/api/public/hu/${key}/platform`, 1200);
+    data = await fetchPublicJson(
+      `${apiUrl}/api/public/hu/${key}/platform`,
+      1200,
+      forward
+    );
   }
   return data;
 }
 
-async function loadEntity(apiUrl, lang, siteKey, kind, slug) {
+async function loadEntity(apiUrl, lang, siteKey, kind, slug, forward = null) {
   const collection = kind === "place" ? "places" : "events";
   const sitePart = encodeURIComponent(siteKey || "default");
   let data = await fetchPublicJson(
     `${apiUrl}/api/public/${lang}/${sitePart}/${collection}/${encodeURIComponent(slug)}`,
-    1200
+    1200,
+    forward
   );
   if (!data && lang !== "hu") {
     data = await fetchPublicJson(
       `${apiUrl}/api/public/hu/${sitePart}/${collection}/${encodeURIComponent(slug)}`,
-      1200
+      1200,
+      forward
     );
   }
   return data;
@@ -296,21 +308,49 @@ export function injectRootContent(html, body) {
 /**
  * Build crawlable HTML for high-value public routes (region, town, place, event, region list).
  * Returns null when the path should stay an empty SPA shell.
+ * Pass `requestHost` / `requestProto` on custom domains so `/hu` is the tenant home
+ * (not the platform region list) — same host-scope as resolvePublicShare.
  */
-export async function buildPublicContentHtml({ pathname, apiUrl }) {
-  const route = parsePublicPath(pathname);
-  if (!CONTENT_KINDS.has(route.kind)) return null;
-
+export async function buildPublicContentHtml({
+  pathname,
+  apiUrl,
+  requestHost = null,
+  requestProto = "https",
+}) {
+  let route = parsePublicPath(pathname);
   const base = String(apiUrl || "").replace(/\/$/, "");
   if (!base) return null;
+
+  const host = String(requestHost || "")
+    .toLowerCase()
+    .split(":")[0]
+    .replace(/\.$/, "");
+  const forward =
+    host && host !== "localhost" && host !== "127.0.0.1"
+      ? { host, proto: requestProto || "https" }
+      : null;
+  if (forward?.host) {
+    const resolved = await resolveDomainHost(base, forward.host, forward);
+    if (resolved) route = applyHostScope(route, resolved);
+  }
+
+  if (!CONTENT_KINDS.has(route.kind)) return null;
   const labels = labelsFor(route.lang);
 
   try {
     if (route.kind === "sites") {
       const sites =
-        (await fetchPublicJson(`${base}/api/public/${route.lang}/default/sites?limit=40`, 1200)) ||
+        (await fetchPublicJson(
+          `${base}/api/public/${route.lang}/default/sites?limit=40`,
+          1200,
+          forward
+        )) ||
         (route.lang !== "hu"
-          ? await fetchPublicJson(`${base}/api/public/hu/default/sites?limit=40`, 1200)
+          ? await fetchPublicJson(
+              `${base}/api/public/hu/default/sites?limit=40`,
+              1200,
+              forward
+            )
           : null);
       if (!asList(sites).length) return null;
       return renderSitesBody(route.lang, sites, labels);
@@ -324,12 +364,17 @@ export async function buildPublicContentHtml({ pathname, apiUrl }) {
           ? `&town=${encodeURIComponent(route.slug)}`
           : "";
       const [platform, places, events] = await Promise.all([
-        loadPlatform(base, route.lang, route.siteKey),
+        loadPlatform(base, route.lang, route.siteKey, forward),
         fetchPublicJson(
           `${base}/api/public/${route.lang}/${key}/places?limit=40${townQuery}`,
-          1200
+          1200,
+          forward
         ),
-        fetchPublicJson(`${base}/api/public/${route.lang}/${key}/events?limit=20`, 1200),
+        fetchPublicJson(
+          `${base}/api/public/${route.lang}/${key}/events?limit=20`,
+          1200,
+          forward
+        ),
       ]);
       if (!platform?.site && !asList(places).length && !asList(events).length) return null;
       return renderRegionBody(
@@ -345,7 +390,14 @@ export async function buildPublicContentHtml({ pathname, apiUrl }) {
 
     if (route.kind === "place" || route.kind === "event") {
       if (!route.slug) return null;
-      const entity = await loadEntity(base, route.lang, route.siteKey, route.kind, route.slug);
+      const entity = await loadEntity(
+        base,
+        route.lang,
+        route.siteKey,
+        route.kind,
+        route.slug,
+        forward
+      );
       if (!entity?.name && !entity?.slug) return null;
       const siteKey = route.siteKey || entity.siteKey || "";
       return route.kind === "place"

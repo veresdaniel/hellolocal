@@ -646,7 +646,12 @@ app.get('*', async (req, res, next) => {
         requestProto: forwardProto,
       }),
       fetchBotSchema(req),
-      buildPublicContentHtml({ pathname: req.path, apiUrl: API_URL }),
+      buildPublicContentHtml({
+        pathname: req.path,
+        apiUrl: API_URL,
+        requestHost: forwardHost,
+        requestProto: forwardProto,
+      }),
     ]);
     let html = applySocialMeta(readShell(), meta);
     if (schema) {

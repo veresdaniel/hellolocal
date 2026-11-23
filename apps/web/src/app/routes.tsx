@@ -202,6 +202,9 @@ function PublicLangLayout() {
 
 function LangIndex() {
   const scope = useHostScope();
+  // Custom hosts resolve asynchronously — never flash the platform overview
+  // (or "Rólunk"/landing copy) while domain lookup is still in flight.
+  if (scope.status === "loading") return <LoadingSpinner isLoading />;
   if (scope.status === "ready" && scope.kind === "place") return <PlaceDetailPage />;
   if (scope.status === "ready" && scope.kind === "event") return <EventDetailPage />;
   if (scope.status === "ready" && scope.kind === "collection") return <CollectionDetailPage />;
