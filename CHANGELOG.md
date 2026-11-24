@@ -12,6 +12,11 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+### Fixed
+
+- Facebook Sharing Debugger false 403 on `robots.txt`: Meta UAs always get
+  HTTP 206 for robots (even without `Range`), matching the known Meta quirk.
+
 ### Added
 
 - Place `cardImage` field (list/card view); CDN upload for hero / card / map images

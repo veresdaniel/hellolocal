@@ -97,11 +97,27 @@ function readShell() {
   throw new Error('index.html missing');
 }
 
+/** Meta / social preview UAs that mishandle robots.txt status codes. */
+const META_ROBOTS_BOTS = [
+  'facebookexternalhit',
+  'facebot',
+  'meta-externalagent',
+  'meta-externalfetcher',
+];
+
+function isMetaRobotsBot(userAgent) {
+  if (!userAgent) return false;
+  const ua = userAgent.toLowerCase();
+  return META_ROBOTS_BOTS.some((bot) => ua.includes(bot));
+}
+
 /**
  * Honor `Range: bytes=…` for small text bodies (robots.txt).
  * Meta's Sharing Debugger intermittently treats a full 200 robots response as
  * blocked (surfaces as HTTP 403) but accepts 206 Partial Content — see Meta
  * community threads on facebookexternalhit + robots.txt.
+ * For known Meta UAs we always answer 206 (full body as a single range) even
+ * when they omit Range, so Debugger does not invent a robots "403".
  */
 function sendTextWithOptionalRange(req, res, body, contentType, cacheControl) {
   const buf = Buffer.from(body, 'utf8');
@@ -111,34 +127,40 @@ function sendTextWithOptionalRange(req, res, body, contentType, cacheControl) {
   res.setHeader('Accept-Ranges', 'bytes');
 
   const range = req.get('range');
-  if (!range) {
+  const forceMetaPartial = !range && isMetaRobotsBot(req.get('user-agent'));
+  if (!range && !forceMetaPartial) {
     res.setHeader('Content-Length', String(total));
     return res.status(200).send(buf);
   }
 
-  const match = /^bytes=(\d*)-(\d*)$/i.exec(String(range).trim());
-  if (!match) {
-    res.setHeader('Content-Range', `bytes */${total}`);
-    return res.status(416).end();
-  }
+  let start = 0;
+  let end = total - 1;
 
-  let start = match[1] === '' ? undefined : Number(match[1]);
-  let end = match[2] === '' ? undefined : Number(match[2]);
-  if (start === undefined && end === undefined) {
-    res.setHeader('Content-Range', `bytes */${total}`);
-    return res.status(416).end();
-  }
-  if (start === undefined) {
-    // suffix: bytes=-N
-    const suffix = end;
-    start = Math.max(0, total - suffix);
-    end = total - 1;
-  } else if (end === undefined || end >= total) {
-    end = total - 1;
-  }
-  if (start < 0 || start >= total || end < start) {
-    res.setHeader('Content-Range', `bytes */${total}`);
-    return res.status(416).end();
+  if (range) {
+    const match = /^bytes=(\d*)-(\d*)$/i.exec(String(range).trim());
+    if (!match) {
+      res.setHeader('Content-Range', `bytes */${total}`);
+      return res.status(416).end();
+    }
+
+    start = match[1] === '' ? undefined : Number(match[1]);
+    end = match[2] === '' ? undefined : Number(match[2]);
+    if (start === undefined && end === undefined) {
+      res.setHeader('Content-Range', `bytes */${total}`);
+      return res.status(416).end();
+    }
+    if (start === undefined) {
+      // suffix: bytes=-N
+      const suffix = end;
+      start = Math.max(0, total - suffix);
+      end = total - 1;
+    } else if (end === undefined || end >= total) {
+      end = total - 1;
+    }
+    if (start < 0 || start >= total || end < start) {
+      res.setHeader('Content-Range', `bytes */${total}`);
+      return res.status(416).end();
+    }
   }
 
   const slice = buf.subarray(start, end + 1);
