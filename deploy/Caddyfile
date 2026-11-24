@@ -17,6 +17,17 @@ hello-local.io {
 	reverse_proxy web-prod:3000
 }
 
+# HU marketing domain: Meta Sharing Debugger blocks apex scrapes but accepts www.
+# Force apex → www so FB (and users) land on the scrapable host.
+hellolocal.hu {
+	redir https://www.hellolocal.hu{uri} permanent
+}
+
+www.hellolocal.hu {
+	encode gzip
+	reverse_proxy web-prod:3000
+}
+
 api.hello-local.io {
 	encode gzip
 	reverse_proxy api-prod:3002
