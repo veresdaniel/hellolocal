@@ -161,6 +161,30 @@ describe("socialMeta applyHostScope", () => {
     ).toEqual({ kind: "place", lang: "hu", siteKey: "etyek", slug: "pince" });
   });
 
+  it("maps /:lang/:town on a region host to town under the host siteKey", () => {
+    const route = parsePublicPath("/hu/etyek");
+    expect(
+      applyHostScope(route, {
+        kind: "site",
+        slug: "etyek-budai",
+        defaultLang: "hu",
+        domain: "helloetyek.hu",
+      })
+    ).toEqual({ kind: "town", lang: "hu", siteKey: "etyek-budai", slug: "etyek" });
+  });
+
+  it("rewrites nested town paths to the host siteKey", () => {
+    const route = parsePublicPath("/hu/etyek/terkep");
+    expect(
+      applyHostScope(route, {
+        kind: "site",
+        slug: "etyek-budai",
+        defaultLang: "hu",
+        domain: "helloetyek.hu",
+      })
+    ).toEqual({ kind: "town", lang: "hu", siteKey: "etyek-budai", slug: "etyek" });
+  });
+
   it("does not rewrite an already entity-specific path on a town domain", () => {
     const route = parsePublicPath("/hu/hely/pince");
     expect(

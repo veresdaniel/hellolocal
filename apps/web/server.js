@@ -22,6 +22,7 @@ import {
   buildPublicContentHtml,
   injectRootContent,
   isAdminPath,
+  loadPlatform,
 } from './ssr/renderPublicContent.js';
 import { injectHostBootstrap, injectPublicShellHead } from './ssr/publicShellCss.js';
 import {
@@ -752,8 +753,29 @@ app.get('*', async (req, res, next) => {
     html = injectRootContent(html, contentBody);
     if (customDomain) {
       html = injectHostBootstrap(html, customDomain);
-    }
-    if (contentBody) {
+      let siteTheme = content?.siteTheme ?? null;
+      let brandTheme = content?.brandTheme ?? null;
+      // Nested custom-host paths can miss crawl SSR; still pin atelier/classic from platform.
+      if (siteTheme == null && brandTheme == null && customDomain.slug) {
+        try {
+          const lang =
+            parsePublicPath(req.path)?.lang || customDomain.defaultLang || "hu";
+          const platform = await loadPlatform(API_URL, lang, customDomain.slug, {
+            host: forwardHost,
+            proto: forwardProto,
+          });
+          siteTheme = platform?.siteTheme ?? null;
+          brandTheme = platform?.brand?.theme ?? null;
+        } catch (error) {
+          console.warn(`[SSR] Theme fallback failed: ${error.message}`);
+        }
+      }
+      html = injectPublicShellHead(html, {
+        lcpImage,
+        siteTheme,
+        brandTheme,
+      });
+    } else if (contentBody) {
       html = injectPublicShellHead(html, {
         lcpImage,
         siteTheme: content?.siteTheme,

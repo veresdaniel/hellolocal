@@ -543,6 +543,16 @@ export function applyHostScope(route, resolved) {
       next.siteKey = resolved.slug;
     } else if (!next.siteKey) {
       next.siteKey = resolved.slug;
+    } else if (next.siteKey !== resolved.slug) {
+      // Region custom domain: /:lang/:town is a town under the host site, not a nested siteKey
+      // (mirrors client useRouteCtx `townOnRegionHost`).
+      if (next.kind === "site") {
+        next.kind = "town";
+        next.slug = next.siteKey;
+        next.siteKey = resolved.slug;
+      } else {
+        next.siteKey = resolved.slug;
+      }
     }
     return next;
   }

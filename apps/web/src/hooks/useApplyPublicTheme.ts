@@ -16,21 +16,12 @@ export function useApplyPublicTheme(siteTheme?: unknown, brandTheme?: unknown) {
     const vars = publicThemeCssVars(parsedSite, parsedBrand);
     const presetId = resolvePublicThemePreset(parsedSite, parsedBrand);
     const root = document.documentElement;
-    const previous = new Map<string, string>();
-    const prevTheme = root.getAttribute("data-theme");
     root.setAttribute("data-theme", presetId);
     for (const [key, value] of Object.entries(vars)) {
-      previous.set(key, root.style.getPropertyValue(key));
       root.style.setProperty(key, value);
     }
-    return () => {
-      if (prevTheme) root.setAttribute("data-theme", prevTheme);
-      else root.removeAttribute("data-theme");
-      for (const [key, value] of previous) {
-        if (value) root.style.setProperty(key, value);
-        else root.style.removeProperty(key);
-      }
-    };
+    // Do not strip vars on cleanup — route transitions were flashing classic
+    // :root navy from the CSS bundle between unmount and the next effect.
   }, [siteKey, brandKey]);
 }
 

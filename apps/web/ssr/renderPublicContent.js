@@ -113,7 +113,7 @@ function formatWhen(start, end, lang) {
   }
 }
 
-async function loadPlatform(apiUrl, lang, siteKey, forward = null) {
+export async function loadPlatform(apiUrl, lang, siteKey, forward = null) {
   const key = encodeURIComponent(siteKey);
   let data = await fetchPublicJson(
     `${apiUrl}/api/public/${lang}/${key}/platform`,
