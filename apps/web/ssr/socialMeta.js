@@ -217,6 +217,28 @@ function isUnusableShareImageUrl(url) {
 }
 
 /**
+ * If `url` is only a www/apex variant of `origin`, rewrite to `origin` + same path.
+ * Keeps og:image / twitter:image on the same host as og:url (Meta is picky).
+ */
+function alignShareImageToOrigin(origin, url) {
+  try {
+    const base = new URL(origin);
+    const abs = new URL(url);
+    const baseHost = base.hostname.replace(/^www\./, "");
+    const absHost = abs.hostname.replace(/^www\./, "");
+    if (baseHost && absHost === baseHost && abs.hostname !== base.hostname) {
+      abs.protocol = base.protocol;
+      abs.hostname = base.hostname;
+      abs.port = base.port;
+      return abs.toString();
+    }
+  } catch {
+    // keep original
+  }
+  return url;
+}
+
+/**
  * Resolve a share image to an absolute https URL.
  * Relative paths join `origin`; empty / localhost / placeholder CDNs → built-in
  * marketing fallback (+ known dimensions). Other absolute URLs get default OG
@@ -235,6 +257,7 @@ export function absoluteShareImage(origin, image) {
   else if (raw.startsWith("//")) url = `https:${raw}`;
   else if (raw.startsWith("/")) url = `${origin}${raw}`;
   if (!url || isLocalHost(url) || isUnusableShareImageUrl(url)) return fallback;
+  url = alignShareImageToOrigin(origin, url);
   if (url === fallback.url) return fallback;
   return {
     url,

@@ -1,0 +1,16 @@
+# HelloLocal
+
+> HelloLocal maps local places, makers, services, and events for towns, regions, and tourism offices — including spots that are not on the main street.
+
+## Product
+
+- [Platform overview (HU)](https://hellolocal.hu/hu): Marketing landing and how HelloLocal works
+- [Platform overview (EN)](https://hellolocal.hu/en): English overview
+- [Pricing (HU)](https://hellolocal.hu/hu/tarife): Plans for municipalities and tourism offices
+- [Sitemap](https://hellolocal.hu/sitemap.xml): Public crawl index
+
+## For visitors
+
+- [Live map demo](https://hellolocal.hu/hu): Open the visitor map experience from the language root
+- [Privacy](https://hellolocal.hu/hu/adatvedelem): Privacy policy
+- [Terms](https://hellolocal.hu/hu/aszf): Terms of service

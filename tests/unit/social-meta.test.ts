@@ -58,6 +58,14 @@ describe("socialMeta absoluteShareImage", () => {
     expect(image.width).toBeTruthy();
     expect(image.height).toBeTruthy();
   });
+
+  it("rewrites www twin of the request origin to match og:url host", () => {
+    const image = absoluteShareImage(
+      "https://hellolocal.hu",
+      "https://www.hellolocal.hu/marketing/hellolocal-share.jpg"
+    );
+    expect(image.url).toBe("https://hellolocal.hu/marketing/hellolocal-share.jpg");
+  });
 });
 
 describe("socialMeta parsePublicPath", () => {

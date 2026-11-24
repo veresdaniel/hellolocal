@@ -225,10 +225,10 @@ function renderPlanCards(
 }
 
 const STORY_IMAGES = {
-  maker: "/marketing/craft-workshop.jpg",
-  service: "/marketing/local-service.jpg",
-  quiet: "/marketing/side-street.jpg",
-  town: "/marketing/map-szeged.jpg",
+  maker: { webp: "/marketing/craft-workshop.webp", jpg: "/marketing/craft-workshop.jpg", w: 1100, h: 825 },
+  service: { webp: "/marketing/local-service.webp", jpg: "/marketing/local-service.jpg", w: 1100, h: 825 },
+  quiet: { webp: "/marketing/side-street.webp", jpg: "/marketing/side-street.jpg", w: 675, h: 900 },
+  town: { webp: "/marketing/map-szeged.webp", jpg: "/marketing/map-szeged.jpg", w: 1024, h: 656 },
 };
 
 function renderDifference(copy) {
@@ -248,7 +248,8 @@ function renderStories(copy) {
     .map((key) => {
       const story = copy.stories[key];
       if (!story) return "";
-      return `<article><img src="${STORY_IMAGES[key]}" alt="${escapeHtml(story.alt)}" /><h3>${escapeHtml(story.title)}</h3><p>${escapeHtml(story.text)}</p></article>`;
+      const img = STORY_IMAGES[key];
+      return `<article><picture><source srcset="${img.webp}" type="image/webp" /><img src="${img.jpg}" alt="${escapeHtml(story.alt)}" width="${img.w}" height="${img.h}" loading="lazy" decoding="async" /></picture><h3>${escapeHtml(story.title)}</h3><p>${escapeHtml(story.text)}</p></article>`;
     })
     .join("");
 }
@@ -381,13 +382,29 @@ export function renderOverviewDocument(
     (shareUrl && String(shareUrl).trim()) ||
     overviewShareUrl(origin, pathname || `/${lang}`, lang);
   const configuredShare = String(shareImage || "").trim();
-  const image = configuredShare
+  // Prefer same-origin marketing image; absolute configured URLs stay as-is
+  // except www/apex twin of this host (aligned in absoluteShareImage via applySocialMeta).
+  let image = configuredShare
     ? /^https?:\/\//i.test(configuredShare)
       ? configuredShare
       : configuredShare.startsWith("/")
         ? `${origin}${configuredShare}`
         : `${origin}/marketing/hellolocal-share.jpg`
     : `${origin}/marketing/hellolocal-share.jpg`;
+  try {
+    const base = new URL(origin);
+    const abs = new URL(image, origin);
+    const baseHost = base.hostname.replace(/^www\./, "");
+    const absHost = abs.hostname.replace(/^www\./, "");
+    if (baseHost && absHost === baseHost) {
+      abs.protocol = base.protocol;
+      abs.hostname = base.hostname;
+      abs.port = base.port;
+      image = abs.toString();
+    }
+  } catch {
+    // keep image
+  }
   const keywords = escapeHtml(copy.keywords);
   const alternates = published.map(
     (code) => `<link rel="alternate" hreflang="${code}" href="${origin}/${code}" />`
@@ -440,7 +457,10 @@ export function renderOverviewDocument(
       <p>${escapeHtml(copy.lead)}</p>
       <p><a href="/${lang}">${escapeHtml(copy.cta)}</a></p>
       <figure>
-        <img src="/marketing/map-szeged.jpg" alt="${escapeHtml(copy.shotCaption)}" />
+        <picture>
+          <source srcset="/marketing/map-szeged.webp" type="image/webp" />
+          <img src="/marketing/map-szeged.jpg" alt="${escapeHtml(copy.shotCaption)}" width="1024" height="656" fetchpriority="high" decoding="async" />
+        </picture>
         <figcaption>${escapeHtml(copy.shotCaption)}</figcaption>
       </figure>
       <section>

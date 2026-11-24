@@ -21,13 +21,17 @@ import { isPlatformHost } from "./urls";
 import { useRouteCtx } from "./useRouteCtx";
 import { useAdminSite } from "../contexts/useAdminSite";
 
-// Public entry / shell pages — keep eager (LCP, auth, error paths)
-import { HomePage } from "../pages/HomePage";
+// Public entry / shell pages — keep eager (auth, error paths). HomePage is lazy so
+// platform overview does not pull MapDock / explore into the first paint graph.
 import { SitesListPage } from "../pages/SitesListPage";
 import { StaticPagesRouteGuard } from "../components/StaticPagesRouteGuard";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ErrorPage } from "../pages/ErrorPage";
 import { OfflinePage } from "../pages/OfflinePage";
+
+const HomePage = lazy(() =>
+  import("../pages/HomePage").then((m) => ({ default: m.HomePage }))
+);
 
 // Auth pages - loaded eagerly (small, needed for login)
 import { LoginPage } from "../pages/auth/LoginPage";

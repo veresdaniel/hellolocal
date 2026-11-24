@@ -52,6 +52,7 @@ export function resolveOverviewStylesheetHref(webRoot) {
 export function injectOverviewShellHead(html, webRoot) {
   const sheet = resolveOverviewStylesheetHref(webRoot);
   const block = `
+    <link rel="preload" as="image" href="/marketing/map-szeged.webp" type="image/webp" fetchpriority="high" />
     <style id="overview-shell">${OVERVIEW_SHELL_CSS}</style>
     ${sheet ? `<link rel="stylesheet" href="${sheet}" />` : ""}`;
   if (html.includes("</head>")) {

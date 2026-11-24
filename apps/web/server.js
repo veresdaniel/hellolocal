@@ -303,13 +303,16 @@ function metaSocialRobotsBody() {
 app.get('/robots.txt', async (req, res) => {
   const ua = req.get('user-agent') || '';
   if (isMetaRobotsBot(ua)) {
-    console.info(`[SEO] Meta robots.txt hit ua=${JSON.stringify(ua.slice(0, 120))}`);
+    const ip = req.get('x-forwarded-for') || req.socket?.remoteAddress || '';
+    console.info(
+      `[SEO] Meta robots.txt hit ip=${ip} ua=${JSON.stringify(ua.slice(0, 120))}`
+    );
     return sendTextWithOptionalRange(
       req,
       res,
       metaSocialRobotsBody(),
       'text/plain; charset=utf-8',
-      'public, max-age=60'
+      'no-store'
     );
   }
   try {
@@ -576,8 +579,9 @@ app.get('*', async (req, res, next) => {
 
   const requestUa = req.get('user-agent') || '';
   if (isMetaRobotsBot(requestUa)) {
+    const ip = req.get('x-forwarded-for') || req.socket?.remoteAddress || '';
     console.info(
-      `[SEO] Meta HTML hit host=${req.get('x-forwarded-host') || req.get('host') || ''} path=${req.path} ua=${JSON.stringify(requestUa.slice(0, 120))}`
+      `[SEO] Meta HTML hit ip=${ip} host=${req.get('x-forwarded-host') || req.get('host') || ''} path=${req.path} ua=${JSON.stringify(requestUa.slice(0, 120))}`
     );
   }
 

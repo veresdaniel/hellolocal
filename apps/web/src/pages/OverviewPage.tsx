@@ -300,13 +300,18 @@ export function OverviewPage() {
                     <i />
                   </span>
                 </div>
-                <img
-                  src="/marketing/map-szeged.jpg"
-                  alt={text("shotCaption")}
-                  loading="eager"
-                  decoding="async"
-                  fetchPriority="high"
-                />
+                <picture>
+                  <source srcSet="/marketing/map-szeged.webp" type="image/webp" />
+                  <img
+                    src="/marketing/map-szeged.jpg"
+                    alt={text("shotCaption")}
+                    width={1024}
+                    height={656}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                </picture>
               </div>
               <figcaption className="overview__caption">{text("shotLabel")}</figcaption>
             </figure>

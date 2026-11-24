@@ -7,11 +7,11 @@ import { useLandingText } from "../hooks/useLandingText";
 
 const FEATURE_KEYS = ["places", "events", "map", "languages", "sites", "editors"] as const;
 const STORY_KEYS = ["maker", "service", "quiet", "town"] as const;
-const STORY_IMAGES: Record<(typeof STORY_KEYS)[number], string> = {
-  maker: "/marketing/craft-workshop.jpg",
-  service: "/marketing/local-service.jpg",
-  quiet: "/marketing/side-street.jpg",
-  town: "/marketing/map-szeged.jpg",
+const STORY_IMAGES: Record<(typeof STORY_KEYS)[number], { webp: string; jpg: string; w: number; h: number }> = {
+  maker: { webp: "/marketing/craft-workshop.webp", jpg: "/marketing/craft-workshop.jpg", w: 1100, h: 825 },
+  service: { webp: "/marketing/local-service.webp", jpg: "/marketing/local-service.jpg", w: 1100, h: 825 },
+  quiet: { webp: "/marketing/side-street.webp", jpg: "/marketing/side-street.jpg", w: 675, h: 900 },
+  town: { webp: "/marketing/map-szeged.webp", jpg: "/marketing/map-szeged.jpg", w: 1024, h: 656 },
 };
 const STEP_KEYS = ["collect", "publish", "share"] as const;
 const DIFFERENCE_KEYS = ["hidden", "traffic", "region"] as const;
@@ -66,12 +66,17 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
             key={key}
           >
             <div className="overview__frame">
-              <img
-                src={STORY_IMAGES[key]}
-                alt={text(`stories.${key}.alt`)}
-                loading="lazy"
-                decoding="async"
-              />
+              <picture>
+                <source srcSet={STORY_IMAGES[key].webp} type="image/webp" />
+                <img
+                  src={STORY_IMAGES[key].jpg}
+                  alt={text(`stories.${key}.alt`)}
+                  width={STORY_IMAGES[key].w}
+                  height={STORY_IMAGES[key].h}
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
             </div>
             <div className="overview__story-copy">
               <p className="overview__kicker">{text(`stories.${key}.kicker`)}</p>
@@ -130,13 +135,18 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
             {text("cta")}
           </LiveDemoLink>
         </div>
-        <img
-          className="overview__close-map"
-          src="/marketing/visitor-hiker.jpg"
-          alt={text("closingImageAlt")}
-          loading="lazy"
-          decoding="async"
-        />
+        <picture>
+          <source srcSet="/marketing/visitor-hiker.webp" type="image/webp" />
+          <img
+            className="overview__close-map"
+            src="/marketing/visitor-hiker.jpg"
+            alt={text("closingImageAlt")}
+            width={1100}
+            height={730}
+            loading="lazy"
+            decoding="async"
+          />
+        </picture>
       </section>
 
       <section className="overview__section" id="demo-request">

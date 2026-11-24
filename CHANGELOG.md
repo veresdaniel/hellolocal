@@ -18,6 +18,11 @@ in prose as used in the product.
   HTTP 206 for robots (even without `Range`), matching the known Meta quirk.
 - Meta preview bots get a static Allow-only `robots.txt` (no empty `Disallow:`,
   no platform landing Disallow merge); drop empty Disallow from social UA groups.
+- Share image URLs: align www/apex twin hosts to the request origin so
+  `og:image` / `twitter:image` match `og:url`.
+- PageSpeed: overview marketing images serve WebP (+ sized JPG fallbacks);
+  LCP map shot preloaded; Google Fonts no longer render-block; preload Source Sans
+  latin-ext (HU glyphs / CLS); `HomePage` lazy so overview skips map-vendor.
 
 ### Added
 
@@ -25,6 +30,7 @@ in prose as used in the product.
   in place admin; seed sample card + hero images in snapshot.
 - Shared `AdminImageField` (CDN) wired across admin image inputs (places, events,
   towns, collections, sites, brands/domains, SEO images, products, share image).
+- `/llms.txt` (Markdown H1 + links) for PageSpeed Agentic Browsing discoverability.
 
 ### Changed
 
