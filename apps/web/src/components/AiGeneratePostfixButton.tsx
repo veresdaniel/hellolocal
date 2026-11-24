@@ -223,3 +223,6 @@ export function AiPostfixField({
     </div>
   );
 }
+
+/** Alias for typos / older call sites. */
+export const AiPostFormField = AiPostFixField;
