@@ -1240,11 +1240,13 @@ function OverviewTab({
         </p>
         <PublicThemeColorsEditor
           value={(formData.themeColors as PublicThemeColors) || DEFAULT_PUBLIC_THEME_COLORS}
-          onChange={(next) => setFormData({ ...formData, themeColors: next })}
+          onChange={(next) => setFormData((prev) => ({ ...prev, themeColors: next }))}
           presetId={
             (formData.themePresetId as PublicThemePresetId) || DEFAULT_PUBLIC_THEME_PRESET
           }
-          onPresetChange={(themePresetId) => setFormData({ ...formData, themePresetId })}
+          onPresetChange={(themePresetId) =>
+            setFormData((prev) => ({ ...prev, themePresetId }))
+          }
         />
         {formErrors.themeColors ? (
           <p style={{ margin: "8px 0 0", color: "#dc2626", fontSize: 13 }}>

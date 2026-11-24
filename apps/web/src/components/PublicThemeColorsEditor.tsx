@@ -46,9 +46,9 @@ export function PublicThemeColorsEditor({
   };
 
   const selectPreset = (next: PublicThemePresetId) => {
+    const colors = presetColors(next);
     onPresetChange?.(next);
-    // Apply preset palette so the admin preview matches the new surface language.
-    onChange(presetColors(next));
+    onChange(colors);
   };
 
   return (

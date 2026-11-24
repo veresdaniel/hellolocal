@@ -17,6 +17,7 @@ import { useAdminSite } from "../contexts/useAdminSite";
 import { useToast } from "../contexts/ToastContext";
 import { useConfirm } from "../hooks/useConfirm";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { AdminSettingsCollapsible } from "./AdminSettingsCollapsible";
 
 const LANGS = ["hu", "en", "de"] as const;
 
@@ -247,27 +248,10 @@ export function UnderConstructionSettings({ adminLang }: Props) {
   };
 
   return (
-    <div
+    <AdminSettingsCollapsible
       id="under-construction"
-      style={{
-        marginBottom: 24,
-        background: "white",
-        borderRadius: 12,
-        border: "1px solid #e0e0e0",
-        padding: 24,
-        scrollMarginTop: 96,
-      }}
+      title={t("admin.underConstruction.title")}
     >
-      <h2
-        style={{
-          margin: "0 0 8px",
-          fontSize: 20,
-          fontWeight: 600,
-          color: "#0f172a",
-        }}
-      >
-        {t("admin.underConstruction.title")}
-      </h2>
       <p style={{ margin: "0 0 16px", color: "#475569", lineHeight: 1.5 }}>
         {t("admin.underConstruction.help")}
       </p>
@@ -496,6 +480,6 @@ export function UnderConstructionSettings({ adminLang }: Props) {
           {t("admin.underConstruction.invalidate")}
         </button>
       </div>
-    </div>
+    </AdminSettingsCollapsible>
   );
 }

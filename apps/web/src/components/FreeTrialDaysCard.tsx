@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getFreeTrialDays, setFreeTrialDays } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
+import { AdminSettingsCollapsible } from "./AdminSettingsCollapsible";
 
 export function FreeTrialDaysCard() {
   const { t } = useTranslation();
@@ -54,16 +55,7 @@ export function FreeTrialDaysCard() {
   };
 
   return (
-    <div
-      style={{
-        marginBottom: 24,
-        background: "var(--admin-surface)",
-        borderRadius: 12,
-        border: "1px solid var(--admin-border-subtle)",
-        padding: 24,
-      }}
-    >
-      <h2 style={{ marginTop: 0 }}>{t("admin.freeTrialDays")}</h2>
+    <AdminSettingsCollapsible title={t("admin.freeTrialDays")}>
       <p style={{ color: "var(--admin-muted)", marginTop: 0 }}>
         {t("admin.freeTrialDaysDescription")}
       </p>
@@ -104,6 +96,6 @@ export function FreeTrialDaysCard() {
           {t("common.save")}
         </button>
       </div>
-    </div>
+    </AdminSettingsCollapsible>
   );
 }

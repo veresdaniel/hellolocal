@@ -51,12 +51,14 @@ import {
   DEFAULT_PUBLIC_THEME_COLORS,
   DEFAULT_PUBLIC_THEME_PRESET,
   isValidHexColor,
+  presetColors,
   resolvePublicThemeColors,
   resolvePublicThemePreset,
   type PublicThemeColors,
   type PublicThemePresetId,
 } from "../../styles/publicThemeColors";
 import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEditor";
+import { AdminSettingsCollapsible } from "../../components/AdminSettingsCollapsible";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
 import { AdminImageField } from "../../components/AdminImageField";
@@ -939,7 +941,18 @@ export function AppSettingsPage() {
             >
               {t("admin.typography.title")}
             </h2>
-            <span>{typographyOpen ? "▾" : "▸"}</span>
+            <span
+              aria-hidden
+              style={{
+                fontSize: 20,
+                lineHeight: 1,
+                color: "var(--admin-muted)",
+                transition: "transform 0.2s",
+                transform: typographyOpen ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              ▼
+            </span>
           </button>
           {typographyOpen && (
             <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
@@ -1065,7 +1078,18 @@ export function AppSettingsPage() {
             >
               {t("admin.themeColors.title")}
             </h2>
-            <span>{themeColorsOpen ? "▾" : "▸"}</span>
+            <span
+              aria-hidden
+              style={{
+                fontSize: 20,
+                lineHeight: 1,
+                color: "var(--admin-muted)",
+                transition: "transform 0.2s",
+                transform: themeColorsOpen ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              ▼
+            </span>
           </button>
           {themeColorsOpen && (
             <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
@@ -1084,7 +1108,10 @@ export function AppSettingsPage() {
                 value={themeColors}
                 onChange={setThemeColors}
                 presetId={themePresetId}
-                onPresetChange={setThemePresetId}
+                onPresetChange={(id) => {
+                  setThemePresetId(id);
+                  setThemeColors(presetColors(id));
+                }}
                 disabled={isSavingThemeColors || !brandId}
               />
               <button
@@ -1121,26 +1148,7 @@ export function AppSettingsPage() {
       {userIsSuperadmin && <UnderConstructionSettings adminLang={adminLang} />}
 
       {userIsSuperadmin && (
-        <div
-          style={{
-            marginBottom: 24,
-            background: "var(--admin-surface)",
-            borderRadius: 12,
-            border: "1px solid var(--admin-border-subtle)",
-            padding: 24,
-          }}
-        >
-          <h2
-            style={{
-              margin: "0 0 8px",
-              fontSize: 20,
-              fontWeight: 600,
-              fontFamily:
-                "var(--admin-font-display)",
-            }}
-          >
-            {t("admin.i18n.landingMovedTitle")}
-          </h2>
+        <AdminSettingsCollapsible title={t("admin.i18n.landingMovedTitle")}>
           <p style={{ margin: "0 0 12px", color: "var(--admin-muted)", lineHeight: 1.5 }}>
             {t("admin.i18n.landingMovedHint")}
           </p>
@@ -1150,24 +1158,14 @@ export function AppSettingsPage() {
           >
             {t("admin.i18n.openOverview")}
           </Link>
-        </div>
+        </AdminSettingsCollapsible>
       )}
 
       {userIsSuperadmin && (
-        <div
+        <AdminSettingsCollapsible
           id="content-draft"
-          style={{
-            marginBottom: 24,
-            background: "var(--admin-surface)",
-            borderRadius: 12,
-            border: "1px solid var(--admin-border-subtle)",
-            padding: 24,
-            scrollMarginTop: 96,
-          }}
+          title={t("admin.contentDraft.settingsTitle")}
         >
-          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
-            {t("admin.contentDraft.settingsTitle")}
-          </h2>
           <p style={{ margin: "0 0 8px", color: "var(--admin-muted)" }}>{t("admin.contentDraft.settingsHelp")}</p>
           <p style={{ margin: "0 0 16px", color: contentDraftEnabled ? "#166534" : "#6b7280", fontWeight: 600 }}>
             {contentDraftEnabled
@@ -1286,19 +1284,11 @@ export function AppSettingsPage() {
               </button>
             ) : null}
           </div>
-        </div>
+        </AdminSettingsCollapsible>
       )}
 
       {userIsSuperadmin && (
-        <div
-          style={{
-            marginBottom: 24,
-            background: "var(--admin-surface)",
-            borderRadius: 12,
-            border: "1px solid var(--admin-border-subtle)",
-            padding: 24,
-          }}
-        >
+        <AdminSettingsCollapsible title={t("admin.googleAnalytics.platformTitle")}>
           <GaMeasurementField
             label={t("admin.googleAnalytics.platformTitle")}
             help={t("admin.googleAnalytics.platformHelp")}
@@ -1329,22 +1319,11 @@ export function AppSettingsPage() {
               {isSavingPlatformGa ? t("common.loading") : t("admin.googleAnalytics.save")}
             </button>
           </div>
-        </div>
+        </AdminSettingsCollapsible>
       )}
 
       {userIsSuperadmin && (
-        <div
-          style={{
-            marginBottom: 24,
-            background: "var(--admin-surface)",
-            borderRadius: 12,
-            border: "1px solid var(--admin-border-subtle)",
-            padding: 24,
-          }}
-        >
-          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
-            {t("admin.platformHost.title")}
-          </h2>
+        <AdminSettingsCollapsible title={t("admin.platformHost.title")}>
           <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
             {t("admin.platformHost.help")}
           </p>
@@ -1452,22 +1431,11 @@ export function AppSettingsPage() {
               {isSavingPlatformHost ? t("common.loading") : t("admin.platformHost.save")}
             </button>
           </div>
-        </div>
+        </AdminSettingsCollapsible>
       )}
 
       {userIsSuperadmin && (
-        <div
-          style={{
-            marginBottom: 24,
-            background: "var(--admin-surface)",
-            borderRadius: 12,
-            border: "1px solid var(--admin-border-subtle)",
-            padding: 24,
-          }}
-        >
-          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
-            {t("admin.liveDemo.title")}
-          </h2>
+        <AdminSettingsCollapsible title={t("admin.liveDemo.title")}>
           <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>{t("admin.liveDemo.help")}</p>
           <input
             autoComplete="off"
@@ -1505,22 +1473,11 @@ export function AppSettingsPage() {
               {isSavingLiveDemo ? t("common.loading") : t("admin.liveDemo.save")}
             </button>
           </div>
-        </div>
+        </AdminSettingsCollapsible>
       )}
 
       {userIsSuperadmin && (
-        <div
-          style={{
-            marginBottom: 24,
-            background: "var(--admin-surface)",
-            borderRadius: 12,
-            border: "1px solid var(--admin-border-subtle)",
-            padding: 24,
-          }}
-        >
-          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
-            {t("admin.defaultShareImage.title")}
-          </h2>
+        <AdminSettingsCollapsible title={t("admin.defaultShareImage.title")}>
           <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
             {t("admin.defaultShareImage.help")}
           </p>
@@ -1550,39 +1507,17 @@ export function AppSettingsPage() {
               {isSavingShareImage ? t("common.loading") : t("admin.defaultShareImage.save")}
             </button>
           </div>
-        </div>
+        </AdminSettingsCollapsible>
       )}
 
       {userIsSuperadmin && (
-        <div
-          style={{
-            marginBottom: 24,
-            background: "var(--admin-surface)",
-            borderRadius: 12,
-            border: "1px solid var(--admin-border-subtle)",
-            padding: 24,
-          }}
-        >
-          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
-            Landing képek (áttekintő)
-          </h2>
+        <AdminSettingsCollapsible title="Landing képek (áttekintő)">
           <LandingImagesEditor />
-        </div>
+        </AdminSettingsCollapsible>
       )}
 
       {userIsSuperadmin && (
-        <div
-          style={{
-            marginBottom: 24,
-            background: "var(--admin-surface)",
-            borderRadius: 12,
-            border: "1px solid var(--admin-border-subtle)",
-            padding: 24,
-          }}
-        >
-          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
-            {t("public.overview.plans.recipient.label")}
-          </h2>
+        <AdminSettingsCollapsible title={t("public.overview.plans.recipient.label")}>
           <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
             {t("public.overview.plans.recipient.help")}
           </p>
@@ -1621,7 +1556,7 @@ export function AppSettingsPage() {
                 : t("public.overview.plans.recipient.save")}
             </button>
           </div>
-        </div>
+        </AdminSettingsCollapsible>
       )}
 
       {userIsSuperadmin && (
@@ -1659,7 +1594,18 @@ export function AppSettingsPage() {
             >
               {t("public.overview.plansTitle")}
             </h2>
-            <span>{publicPlansOpen ? "▾" : "▸"}</span>
+            <span
+              aria-hidden
+              style={{
+                fontSize: 20,
+                lineHeight: 1,
+                color: "var(--admin-muted)",
+                transition: "transform 0.2s",
+                transform: publicPlansOpen ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              ▼
+            </span>
           </button>
           {publicPlansOpen && (
             <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>
@@ -1712,7 +1658,18 @@ export function AppSettingsPage() {
             >
               {t("admin.visitorLadder.title")}
             </h2>
-            <span>{visitorLadderOpen ? "▾" : "▸"}</span>
+            <span
+              aria-hidden
+              style={{
+                fontSize: 20,
+                lineHeight: 1,
+                color: "var(--admin-muted)",
+                transition: "transform 0.2s",
+                transform: visitorLadderOpen ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            >
+              ▼
+            </span>
           </button>
           {visitorLadderOpen && (
             <div style={{ padding: 24, borderTop: "1px solid var(--admin-border-subtle)" }}>

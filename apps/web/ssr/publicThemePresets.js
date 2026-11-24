@@ -68,7 +68,13 @@ export function resolvePublicThemeColors(siteTheme, brandTheme) {
   const defaults =
     presetId === "atelier" ? ATELIER_PUBLIC_THEME_COLORS : DEFAULT_PUBLIC_THEME_COLORS;
   const brand = readColorsObject(brandTheme);
-  const site = readColorsObject(siteTheme);
+  // Legacy site color maps without presetId must not block a brand preset switch.
+  const siteHasPreset =
+    siteTheme &&
+    typeof siteTheme === "object" &&
+    !Array.isArray(siteTheme) &&
+    (siteTheme.presetId === "classic" || siteTheme.presetId === "atelier");
+  const site = siteHasPreset ? readColorsObject(siteTheme) : {};
   const out = { ...defaults };
   for (const key of Object.keys(defaults)) {
     out[key] = pickHex(site[key], pickHex(brand[key], defaults[key]));

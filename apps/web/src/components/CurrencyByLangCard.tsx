@@ -14,6 +14,7 @@ import {
 } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
 import { LANG_VALUES, isLang } from "../types/enums";
+import { AdminSettingsCollapsible } from "./AdminSettingsCollapsible";
 
 const DEFAULTS: Record<string, string> = { hu: "HUF", en: "EUR", de: "EUR" };
 
@@ -75,16 +76,7 @@ export function CurrencyByLangCard() {
   };
 
   return (
-    <div
-      style={{
-        marginBottom: 24,
-        background: "var(--admin-surface)",
-        borderRadius: 12,
-        border: "1px solid var(--admin-border-subtle)",
-        padding: 24,
-      }}
-    >
-      <h2 style={{ marginTop: 0 }}>{t("admin.currencyByLangTitle")}</h2>
+    <AdminSettingsCollapsible title={t("admin.currencyByLangTitle")}>
       <p style={{ color: "var(--admin-muted)", marginTop: 0 }}>
         {t("admin.currencyByLangDescription")}
       </p>
@@ -136,6 +128,6 @@ export function CurrencyByLangCard() {
           </button>
         </div>
       )}
-    </div>
+    </AdminSettingsCollapsible>
   );
 }

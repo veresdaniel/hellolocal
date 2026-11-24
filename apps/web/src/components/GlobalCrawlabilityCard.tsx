@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getGlobalCrawlability, setGlobalCrawlability } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
+import { AdminSettingsCollapsible } from "./AdminSettingsCollapsible";
 
 export function GlobalCrawlabilityCard() {
   const { t } = useTranslation();
@@ -41,16 +42,7 @@ export function GlobalCrawlabilityCard() {
   };
 
   return (
-    <div
-      style={{
-        marginBottom: 24,
-        background: "var(--admin-surface)",
-        borderRadius: 12,
-        border: "1px solid var(--admin-border-subtle)",
-        padding: 24,
-      }}
-    >
-      <h2 style={{ marginTop: 0 }}>{t("admin.globalCrawlability")}</h2>
+    <AdminSettingsCollapsible title={t("admin.globalCrawlability")}>
       <p style={{ color: "var(--admin-muted)", marginTop: 0 }}>
         {t("admin.globalCrawlabilityDescription")}
       </p>
@@ -64,6 +56,6 @@ export function GlobalCrawlabilityCard() {
         />
         <span style={{ fontWeight: 500 }}>{t("admin.globalCrawlabilityEnabled")}</span>
       </label>
-    </div>
+    </AdminSettingsCollapsible>
   );
 }

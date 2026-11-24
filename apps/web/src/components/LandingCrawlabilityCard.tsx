@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getLandingCrawlability, setLandingCrawlability } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
+import { AdminSettingsCollapsible } from "./AdminSettingsCollapsible";
 
 export function LandingCrawlabilityCard() {
   const { t } = useTranslation();
@@ -46,16 +47,7 @@ export function LandingCrawlabilityCard() {
   };
 
   return (
-    <div
-      style={{
-        marginBottom: 24,
-        background: "var(--admin-surface)",
-        borderRadius: 12,
-        border: "1px solid var(--admin-border-subtle)",
-        padding: 24,
-      }}
-    >
-      <h2 style={{ marginTop: 0 }}>{t("admin.landingCrawlability")}</h2>
+    <AdminSettingsCollapsible title={t("admin.landingCrawlability")}>
       <p style={{ color: "var(--admin-muted)", marginTop: 0 }}>
         {t("admin.landingCrawlabilityDescription")}
       </p>
@@ -69,6 +61,6 @@ export function LandingCrawlabilityCard() {
         />
         <span style={{ fontWeight: 500 }}>{t("admin.landingCrawlabilityEnabled")}</span>
       </label>
-    </div>
+    </AdminSettingsCollapsible>
   );
 }

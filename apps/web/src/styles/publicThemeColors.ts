@@ -2,6 +2,7 @@
 
 import {
   CLASSIC_PUBLIC_THEME_COLORS,
+  isPublicThemePresetId,
   presetColors,
   resolvePublicThemePreset,
   type PublicThemePresetId,
@@ -80,14 +81,23 @@ function readColorsObject(source: unknown): Partial<Record<PublicColorKey, unkno
   };
 }
 
-/** Merge site over brand over preset defaults. Empty / invalid hex falls through. */
+function themeHasPresetId(source: unknown): boolean {
+  if (!source || typeof source !== "object" || Array.isArray(source)) return false;
+  return isPublicThemePresetId((source as Record<string, unknown>).presetId);
+}
+
+/**
+ * Merge site over brand over preset defaults.
+ * Site color snapshots without `presetId` are ignored so a platform preset
+ * switch still reaches regions that only have a legacy baked color map.
+ */
 export function resolvePublicThemeColors(
   siteTheme?: unknown,
   brandTheme?: unknown
 ): PublicThemeColors {
   const presetId = resolvePublicThemePreset(siteTheme, brandTheme);
   const brand = readColorsObject(brandTheme);
-  const site = readColorsObject(siteTheme);
+  const site = themeHasPresetId(siteTheme) ? readColorsObject(siteTheme) : {};
   const defaults = presetColors(presetId);
   const out = { ...defaults };
   for (const key of PUBLIC_COLOR_KEYS) {

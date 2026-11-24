@@ -10,6 +10,7 @@ import {
   type PlatformCurrency,
 } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
+import { AdminSettingsCollapsible } from "./AdminSettingsCollapsible";
 
 const BUILTIN = new Set(["HUF", "EUR"]);
 
@@ -139,16 +140,7 @@ export function CurrenciesCard() {
   };
 
   return (
-    <div
-      style={{
-        marginBottom: 24,
-        background: "var(--admin-surface)",
-        borderRadius: 12,
-        border: "1px solid var(--admin-border-subtle)",
-        padding: 24,
-      }}
-    >
-      <h2 style={{ marginTop: 0 }}>{t("admin.currenciesTitle")}</h2>
+    <AdminSettingsCollapsible title={t("admin.currenciesTitle")}>
       <p style={{ color: "var(--admin-muted)", marginTop: 0 }}>{t("admin.currenciesDescription")}</p>
 
       {loading ? (
@@ -269,6 +261,6 @@ export function CurrenciesCard() {
           </div>
         </div>
       )}
-    </div>
+    </AdminSettingsCollapsible>
   );
 }
