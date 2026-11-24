@@ -18,7 +18,6 @@ in prose as used in the product.
   HTTP 206 for robots (even without `Range`), matching the known Meta quirk.
 - Meta preview bots get a static Allow-only `robots.txt` (no empty `Disallow:`,
   no platform landing Disallow merge); drop empty Disallow from social UA groups.
-- `hellolocal.hu` → `www.hellolocal.hu` (Meta scrapes www; apex stays blocked on their side).
 
 ### Added
 
