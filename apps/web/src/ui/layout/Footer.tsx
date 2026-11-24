@@ -5,8 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getStaticPages } from "../../api/static-pages.api";
 import type { Lang} from "../../app/config";
 import type { PlatformSettings } from "../../app/site/SiteOutletContext";
-import { legalSegment, platformLandingPath } from "../../app/entityPaths";
-import { buildUrl } from "../../app/urls";
+import { legalSegment } from "../../app/entityPaths";
+import { buildUrl, platformLandingHref } from "../../app/urls";
 import { usePlatformSettingsContextOptional } from "../../context/PlatformSettingsContext";
 import { openCookieConsentSettings } from "../../lib/cookieConsent";
 
@@ -258,8 +258,8 @@ export function Footer({
               >
                 {t("cookieConsent.settings")}
               </button>
-              <Link
-                to={platformLandingPath(lang)}
+              <a
+                href={platformLandingHref(lang)}
                 style={{
                   color: "white",
                   textDecoration: "none",
@@ -278,7 +278,7 @@ export function Footer({
                 }}
               >
                 {t("public.overview.menu")}
-              </Link>
+              </a>
               <Link
                 to={buildUrl({
                   lang,
@@ -330,7 +330,7 @@ export function Footer({
   const terms = buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "terms") });
   const privacy = buildUrl({ lang, siteKey: effectiveSiteSlug, path: legalSegment(lang, "privacy") });
   const home = buildUrl({ lang, siteKey: effectiveSiteSlug });
-  const overview = platformLandingPath(lang);
+  const overview = platformLandingHref(lang);
   const staticPagesPath = buildUrl({ lang, siteKey: effectiveSiteSlug, path: "static-pages" });
   const products = buildUrl({ lang, siteKey: effectiveSiteSlug, path: "products" });
   const pricing = buildUrl({ lang, path: lang === "de" ? "preise" : "pricing" });
@@ -387,7 +387,13 @@ export function Footer({
                 <h4>{t("public.footer.quickLinks") || "Gyors linkek"}</h4>
                 <ul>
                   <li><Link to={home}>{t("public.home.title")}</Link></li>
-                  <li><Link to={overview}>{t("public.overview.menu")}</Link></li>
+                  <li>
+                    {overview.startsWith("http") ? (
+                      <a href={overview}>{t("public.overview.menu")}</a>
+                    ) : (
+                      <Link to={overview}>{t("public.overview.menu")}</Link>
+                    )}
+                  </li>
                   {hasStaticPages && (
                     <li><Link to={staticPagesPath}>{t("public.staticPages.title")}</Link></li>
                   )}

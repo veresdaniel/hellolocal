@@ -3,8 +3,8 @@ import { useState, useEffect, useContext, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { buildUrl } from "../app/urls";
-import { isOverviewPathSegment, legalSegment, mapViewSegment, platformLandingPath, pathnameHasLegal, townEntityPath, townSlugFromPath } from "../app/entityPaths";
+import { buildUrl, platformLandingHref } from "../app/urls";
+import { isOverviewPathSegment, legalSegment, mapViewSegment, pathnameHasLegal, townEntityPath, townSlugFromPath } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { usePlatformSettingsContextOptional } from "../context/PlatformSettingsContext";
@@ -645,8 +645,8 @@ export function FloatingHeader({
             )}
 
             {!location.pathname.includes("/admin") && !isOverview && (
-              <Link
-                to={platformLandingPath(lang)}
+              <a
+                href={platformLandingHref(lang)}
                 style={{
                   background: "var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08))",
                   border: "1px solid var(--hl-nav-ghost-border, rgba(242, 244, 251, 0.28))",
@@ -668,7 +668,7 @@ export function FloatingHeader({
                 }}
               >
                 {t("public.overview.menu")}
-              </Link>
+              </a>
             )}
             {/* Map view button - show on all non-map view pages */}
             {(() => {
@@ -1115,8 +1115,8 @@ export function FloatingHeader({
               </>
             )}
             {!location.pathname.includes("/admin") && !isOverview && (
-              <Link
-                to={platformLandingPath(lang)}
+              <a
+                href={platformLandingHref(lang)}
                 onClick={() => setIsMobileMenuOpen(false)}
                 style={{
                   margin: 0,
@@ -1136,7 +1136,7 @@ export function FloatingHeader({
                 }}
               >
                 {t("public.overview.menu")}
-              </Link>
+              </a>
             )}
             {/* Map view button - Mobile */}
             {(() => {

@@ -18,6 +18,18 @@ export function getPlatformOrigin(): string {
   return hosts[0] ? `https://${hosts[0]}` : DEFAULT_ORIGIN;
 }
 
+/**
+ * Prefer a platform host configured for `lang` (e.g. hellolocal.hu → hu,
+ * hellolocal.eu → en). Falls back to the primary platform origin.
+ */
+export function getPlatformOriginForLang(lang: string): string {
+  const code = lang.split("-")[0];
+  for (const [host, hostLang] of hostLangs) {
+    if (hostLang === code) return `https://${host}`;
+  }
+  return getPlatformOrigin();
+}
+
 /** Replace the host list without per-host default languages. */
 export function setPlatformPublicHosts(next: readonly string[] | null | undefined): void {
   const seen = new Set<string>();

@@ -4,7 +4,8 @@ import { ImageWithSkeleton } from "./ImageWithSkeleton";
 import { sanitizeImageUrl } from "../utils/urlValidation";
 
 const MOBILE_MQ = "(max-width: 767px)";
-const SWIPE_THRESHOLD_PX = 48;
+const SWIPE_THRESHOLD_PX = 56;
+const SWIPE_SETTLE_MS = 280;
 
 // Add CSS animations
 const styleSheet = document.createElement("style");
@@ -22,6 +23,8 @@ if (!document.head.querySelector("style[data-gallery-animations]")) {
   styleSheet.setAttribute("data-gallery-animations", "true");
   document.head.appendChild(styleSheet);
 }
+
+type SwipeAxis = "x" | "y" | null;
 
 interface GalleryImage {
   id?: string;
@@ -54,8 +57,16 @@ export function GalleryViewer({
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined" ? window.matchMedia(MOBILE_MQ).matches : false
   );
-  const swipeStartX = useRef<number | null>(null);
-  const swipeStartY = useRef<number | null>(null);
+  /** Finger offset while dragging the fullscreen track. */
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [settleAnimating, setSettleAnimating] = useState(false);
+  const swipeTrackRef = useRef<HTMLDivElement | null>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swipeAxis = useRef<SwipeAxis>(null);
+  const dragXRef = useRef(0);
+  const selectedIndexRef = useRef(selectedIndex);
+  selectedIndexRef.current = selectedIndex;
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_MQ);
@@ -102,7 +113,96 @@ export function GalleryViewer({
     };
   }, [isFullscreen]);
 
+  // Non-passive touchmove so we can lock horizontal swipe without page scroll fighting it
+  useEffect(() => {
+    if (!isFullscreen || !isMobile || images.length < 2) return;
+    const el = swipeTrackRef.current;
+    if (!el) return;
+
+    const onMove = (e: TouchEvent) => {
+      if (!swipeStart.current || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - swipeStart.current.x;
+      const dy = touch.clientY - swipeStart.current.y;
+
+      if (swipeAxis.current == null) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        swipeAxis.current = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (swipeAxis.current === "x") setIsDragging(true);
+      }
+      if (swipeAxis.current !== "x") return;
+
+      e.preventDefault();
+      const idx = selectedIndexRef.current ?? 0;
+      let next = dx;
+      // Rubber-band at ends
+      if ((idx === 0 && dx > 0) || (idx === images.length - 1 && dx < 0)) {
+        next = dx * 0.32;
+      }
+      dragXRef.current = next;
+      setDragX(next);
+    };
+
+    const onEnd = () => {
+      if (!swipeStart.current) return;
+      const axis = swipeAxis.current;
+      const dx = dragXRef.current;
+      swipeStart.current = null;
+      swipeAxis.current = null;
+      setIsDragging(false);
+
+      if (axis !== "x") {
+        dragXRef.current = 0;
+        setDragX(0);
+        return;
+      }
+
+      const idx = selectedIndexRef.current;
+      if (idx == null) return;
+
+      const width = el.clientWidth || window.innerWidth || 1;
+      const commit =
+        Math.abs(dx) >= SWIPE_THRESHOLD_PX || Math.abs(dx) / width >= 0.18;
+
+      let targetIndex = idx;
+      if (commit && dx < 0 && idx < images.length - 1) targetIndex = idx + 1;
+      else if (commit && dx > 0 && idx > 0) targetIndex = idx - 1;
+
+      if (targetIndex !== idx) {
+        // Finish the slide into place, then snap index (same visual position)
+        const slideTo = targetIndex > idx ? -width : width;
+        setSettleAnimating(true);
+        setDragX(slideTo);
+        dragXRef.current = slideTo;
+        window.setTimeout(() => {
+          setSelectedIndex(targetIndex);
+          setDragX(0);
+          dragXRef.current = 0;
+          requestAnimationFrame(() => setSettleAnimating(false));
+        }, SWIPE_SETTLE_MS);
+      } else {
+        setSettleAnimating(true);
+        setDragX(0);
+        dragXRef.current = 0;
+        window.setTimeout(() => setSettleAnimating(false), SWIPE_SETTLE_MS);
+      }
+    };
+
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd);
+    el.addEventListener("touchcancel", onEnd);
+    return () => {
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onEnd);
+    };
+  }, [isFullscreen, isMobile, images.length]);
+
   const openFullscreen = (index: number) => {
+    setDragX(0);
+    dragXRef.current = 0;
+    setIsDragging(false);
+    setSettleAnimating(false);
     setSelectedIndex(index);
     setIsFullscreen(true);
   };
@@ -110,6 +210,10 @@ export function GalleryViewer({
   const closeFullscreen = () => {
     setIsFullscreen(false);
     setSelectedIndex(null);
+    setDragX(0);
+    dragXRef.current = 0;
+    setIsDragging(false);
+    setSettleAnimating(false);
   };
 
   const goToPrevious = () => {
@@ -120,22 +224,6 @@ export function GalleryViewer({
   const goToNext = () => {
     if (selectedIndex === null) return;
     setSelectedIndex(selectedIndex < images.length - 1 ? selectedIndex + 1 : 0);
-  };
-
-  const onSwipeStart = (clientX: number, clientY: number) => {
-    swipeStartX.current = clientX;
-    swipeStartY.current = clientY;
-  };
-
-  const onSwipeEnd = (clientX: number, clientY: number) => {
-    if (swipeStartX.current == null || swipeStartY.current == null) return;
-    const dx = clientX - swipeStartX.current;
-    const dy = clientY - swipeStartY.current;
-    swipeStartX.current = null;
-    swipeStartY.current = null;
-    if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(dy)) return;
-    if (dx < 0) goToNext();
-    else goToPrevious();
   };
 
   if (!images || images.length === 0) return null;
@@ -454,16 +542,20 @@ export function GalleryViewer({
             </button>
           )}
 
-          {/* Image container — swipeable on mobile */}
+          {/* Image track — drag-follow swipe on mobile */}
           <div
+            ref={swipeTrackRef}
             onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => {
-              if (e.touches.length !== 1) return;
-              onSwipeStart(e.touches[0].clientX, e.touches[0].clientY);
-            }}
-            onTouchEnd={(e) => {
-              if (!e.changedTouches.length) return;
-              onSwipeEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+              if (!isMobile || images.length < 2 || e.touches.length !== 1) return;
+              if (settleAnimating) return;
+              swipeStart.current = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY,
+              };
+              swipeAxis.current = null;
+              dragXRef.current = 0;
+              setDragX(0);
             }}
             style={{
               width: "100vw",
@@ -474,24 +566,56 @@ export function GalleryViewer({
               justifyContent: "center",
               animation: "zoomIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               paddingBottom: images[selectedIndex].caption || images.length > 1 ? "80px" : "20px",
-              touchAction: "pan-y",
+              touchAction: isMobile && images.length > 1 ? "pan-y" : "auto",
               userSelect: "none",
+              overflow: "hidden",
+              position: "relative",
             }}
           >
-            <img
-              src={sanitizeImageUrl(images[selectedIndex].src) || ""}
-              alt={images[selectedIndex].alt || `Gallery image ${selectedIndex + 1}`}
-              draggable={false}
+            <div
               style={{
-                maxWidth: "100%",
-                maxHeight: "calc(100vh - 100px)",
-                objectFit: "contain",
-                borderRadius: 8,
-                boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
-                transition: "opacity 0.3s ease",
-                pointerEvents: "none",
+                display: "flex",
+                width: `${images.length * 100}vw`,
+                height: "100%",
+                transform: `translate3d(calc(${-selectedIndex * 100}vw + ${dragX}px), 0, 0)`,
+                transition:
+                  isDragging || !settleAnimating
+                    ? "none"
+                    : `transform ${SWIPE_SETTLE_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+                willChange: isDragging || settleAnimating ? "transform" : undefined,
               }}
-            />
+            >
+              {images.map((image, index) => (
+                <div
+                  key={image.id || image.src || index}
+                  style={{
+                    width: "100vw",
+                    height: "100%",
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "20px",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <img
+                    src={sanitizeImageUrl(image.src) || ""}
+                    alt={image.alt || `Gallery image ${index + 1}`}
+                    draggable={false}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "calc(100vh - 100px)",
+                      objectFit: "contain",
+                      borderRadius: 8,
+                      boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
             {(images[selectedIndex].caption || images.length > 1) && (
               <div
                 style={{
@@ -506,6 +630,7 @@ export function GalleryViewer({
                   maxWidth: "90vw",
                   width: "auto",
                   minWidth: "200px",
+                  pointerEvents: "none",
                 }}
               >
                 {images[selectedIndex].caption && (

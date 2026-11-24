@@ -27,12 +27,16 @@ in prose as used in the product.
 ### Changed
 
 - Place detail map: locked pan/zoom, marker centered; mobile height ~⅔.
-- Mobile gallery lightbox: swipe, no arrows; stronger close control.
+- Mobile gallery lightbox: drag-follow swipe with settle animation (no hard
+  cut), no arrows; stronger close control.
 - Mobile nav secondary links: tighter spacing; platform GTM fallback UI removed
   (per-host GTM only).
 
 ### Fixed
 
+- Custom-domain “Áttekintés” (footer + mobile/desktop nav) opens the
+  language-matched platform marketing landing (e.g. helloetyek.hu/en →
+  hellolocal.eu/en) instead of the region `/:lang` home.
 - SPA list → detail kept scroll position; `ScrollRestoration` resets on forward
   navigations.
 - Admin towns edit crash: SEO fields referenced undefined `AiPostFillField`

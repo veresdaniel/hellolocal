@@ -5,9 +5,15 @@
 // src/app/urls.ts
 import { HAS_MULTIPLE_SITES } from "./config";
 import type { Lang } from "./config";
-import { mapViewSegment, placeEntityPath, regionListSegment, townEntityPath } from "./entityPaths";
+import {
+  mapViewSegment,
+  placeEntityPath,
+  platformLandingPath,
+  regionListSegment,
+  townEntityPath,
+} from "./entityPaths";
 import { getHostScope } from "./hostScope";
-import { getPlatformOrigin, platformHostMatches } from "./platformOrigin";
+import { getPlatformOrigin, getPlatformOriginForLang, platformHostMatches } from "./platformOrigin";
 
 type BuildArgs = {
   lang: Lang;
@@ -107,6 +113,18 @@ function platformAbsolute(lang: string, siteKey: string, clean: string): string 
   if (typeof window === "undefined" || isPlatformHost(window.location.hostname)) return path;
   const origin = import.meta.env.DEV ? window.location.origin : getPlatformOrigin();
   return `${origin}${path}`;
+}
+
+/**
+ * Marketing / app overview (“Áttekintés”).
+ * On a platform host: relative `/:lang`. On a region custom domain: absolute
+ * URL to the matching platform host so we leave helloetyek.hu → hellolocal.hu.
+ */
+export function platformLandingHref(lang: string): string {
+  const path = platformLandingPath(lang);
+  if (typeof window === "undefined") return path;
+  if (isPlatformHost(window.location.hostname)) return path;
+  return `${getPlatformOriginForLang(lang)}${path}`;
 }
 
 /**
