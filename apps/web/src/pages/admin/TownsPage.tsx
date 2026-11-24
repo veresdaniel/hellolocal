@@ -534,7 +534,7 @@ export function TownsPage() {
                     <label style={{ display: "block", marginBottom: 4 }}>
                       {t("admin.seoTitle")}
                     </label>
-                    <AiPostFixField
+                    <AiPostfixField
                       draft={{
                         kind: "town",
                         field: "seoTitle",
@@ -564,7 +564,7 @@ export function TownsPage() {
                           borderRadius: 4,
                         }}
                       />
-                    </AiPostFixField>
+                    </AiPostfixField>
                     <small style={{ color: "#665d78", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoTitleHint") || "If empty, town name will be used"}
                     </small>
@@ -574,7 +574,7 @@ export function TownsPage() {
                     <label style={{ display: "block", marginBottom: 4 }}>
                       {t("admin.seoDescription")}
                     </label>
-                    <AiPostFixField
+                    <AiPostfixField
                       draft={{
                         kind: "town",
                         field: "seoDescription",
@@ -610,7 +610,7 @@ export function TownsPage() {
                           borderRadius: 4,
                         }}
                       />
-                    </AiPostFixField>
+                    </AiPostfixField>
                     <small style={{ color: "#665d78", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoDescriptionHint") ||
                         "If empty, first sentences from the description will be used"}

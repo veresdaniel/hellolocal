@@ -224,5 +224,6 @@ export function AiPostfixField({
   );
 }
 
-/** Alias for typos / older call sites. */
-export const AiPostFormField = AiPostFixField;
+/** Aliases for older call sites that misspelled the export. */
+export const AiPostFixField = AiPostfixField;
+export const AiPostFormField = AiPostfixField;
