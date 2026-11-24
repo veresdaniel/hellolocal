@@ -701,7 +701,15 @@ export function EventDetailPage() {
             </div>
           )}
 
-          <div style={{ maxWidth: "var(--hl-content-max, 960px)", margin: "0 auto", width: "100%" }}>
+          <div
+            style={{
+              maxWidth: "var(--hl-content-max, 960px)",
+              margin: "0 auto",
+              width: "100%",
+              padding: "0 var(--hl-content-pad-x, 0px)",
+              boxSizing: "border-box",
+            }}
+          >
           {event.category && <p className="hl-event__kicker">{event.category}</p>}
           <div style={{ margin: "0 16px 18px" }}>
             <h1

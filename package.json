@@ -1,6 +1,6 @@
 {
   "name": "hellolocal",
-  "version": "1.0.63-beta",
+  "version": "1.0.64-beta",
   "private": true,
   "workspaces": [
     "apps/*",

@@ -93,11 +93,39 @@
 
 .hl-public[data-theme="atelier"] .hl-skel-page,
 .hl-public[data-theme="atelier"] .hl-skel-page--bleed .hl-skel-page__sheet {
-  max-width: var(--hl-content-max, 1120px);
+  max-width: var(--hl-content-max, 1920px);
 }
 
 .hl-public[data-theme="atelier"] .hl-skel-page__sheet {
   border-radius: var(--hl-radius-sheet, 12px);
+}
+
+/* Light chrome for primary nav + footer under atelier. */
+html[data-theme="atelier"] .hl-floating-header,
+.hl-public[data-theme="atelier"] .hl-floating-header {
+  color: var(--hl-nav-fg, #12141a);
+}
+
+html[data-theme="atelier"] .hl-crumb a,
+.hl-public[data-theme="atelier"] .hl-crumb a {
+  color: color-mix(in srgb, var(--hl-nav-fg, #12141a) 72%, transparent);
+}
+
+html[data-theme="atelier"] .hl-crumb a:hover,
+html[data-theme="atelier"] .hl-crumb [aria-current="page"],
+.hl-public[data-theme="atelier"] .hl-crumb a:hover,
+.hl-public[data-theme="atelier"] .hl-crumb [aria-current="page"] {
+  color: var(--hl-nav-fg-strong, #12141a);
+}
+
+html[data-theme="atelier"] .hl-crumb__sep,
+.hl-public[data-theme="atelier"] .hl-crumb__sep {
+  color: color-mix(in srgb, var(--hl-nav-fg, #12141a) 40%, transparent);
+}
+
+html[data-theme="atelier"] .hl-footer,
+.hl-public[data-theme="atelier"] .hl-footer {
+  box-shadow: 0 -1px 0 var(--hl-footer-line, rgba(18, 20, 26, 0.08));
 }
 
 /* Contact + hours: full-width stacks on small screens */

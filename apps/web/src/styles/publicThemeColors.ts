@@ -203,14 +203,38 @@ export function publicThemeCssVars(
     "--hl-line": hexToRgba(atelier ? c.ink : c.onDark, atelier ? 0.08 : 0.14),
     "--hl-line-on-card": hexToRgba(c.ink, 0.1),
     "--hl-bg-image": bgImage,
-    /* Detail column + story sheet: atelier grows a touch with viewport. */
-    "--hl-content-max": atelier ? "clamp(960px, 78vw, 1120px)" : "960px",
-    "--hl-sheet-max": atelier ? "clamp(780px, 72vw, 920px)" : "760px",
+    /* Detail column matches the 1920 hero; existing 16px card margins are the inset. */
+    "--hl-content-max": atelier ? "1920px" : "960px",
+    "--hl-content-pad-x": "0px",
+    "--hl-sheet-max": atelier ? "clamp(880px, 78vw, 1080px)" : "760px",
     "--hl-radius-card": atelier ? "8px" : "16px",
     "--hl-radius-list": atelier ? "10px" : "20px",
     "--hl-radius-sheet": atelier ? "12px" : "28px",
     "--hl-radius-control": atelier ? "8px" : "10px",
     "--hl-public-pad-x": atelier ? "clamp(16px, 1.5vw, 24px)" : "clamp(16px, 1.8vw, 28px)",
+    /* Nav + footer chrome (FloatingHeader / .hl-footer consume these). */
+    "--hl-nav-bg": atelier ? "rgba(255, 255, 255, 0.88)" : "rgba(22, 19, 42, 0.78)",
+    "--hl-nav-fg": atelier ? c.ink : "#f2f4fb",
+    "--hl-nav-fg-strong": atelier ? c.ink : "#fffdf9",
+    "--hl-nav-line": atelier ? hexToRgba(c.ink, 0.08) : "rgba(242, 244, 251, 0.12)",
+    "--hl-nav-shadow": atelier
+      ? "0 8px 24px rgba(18, 20, 26, 0.06)"
+      : "0 10px 28px rgba(0, 0, 0, 0.28)",
+    "--hl-nav-ghost-border": atelier
+      ? hexToRgba(c.ink, 0.16)
+      : "rgba(242, 244, 251, 0.28)",
+    "--hl-nav-ghost-bg": atelier ? hexToRgba(c.ink, 0.04) : "rgba(242, 244, 251, 0.08)",
+    "--hl-nav-primary-bg": atelier ? c.ink : "#fffdf9",
+    "--hl-nav-primary-fg": atelier ? "#ffffff" : "#1b1730",
+    "--hl-nav-divider": atelier ? hexToRgba(c.ink, 0.12) : "rgba(242, 244, 251, 0.18)",
+    "--hl-nav-drawer-bg": atelier ? c.card : "#fffdf9",
+    "--hl-nav-on-drawer": c.ink,
+    "--hl-nav-wide-primary-bg": atelier ? c.ink : "#1b1730",
+    "--hl-nav-wide-primary-fg": atelier ? "#ffffff" : "#fffdf9",
+    "--hl-footer-bg": atelier ? c.card : "#1b1730",
+    "--hl-footer-fg": atelier ? c.ink : "#ffffff",
+    "--hl-footer-muted": atelier ? c.muted : mutedOnDark,
+    "--hl-footer-line": atelier ? hexToRgba(c.ink, 0.1) : "rgba(255, 255, 255, 0.16)",
     "--paper": c.bg,
     "--card": c.card,
     "--ink": atelier ? c.ink : c.onDark,

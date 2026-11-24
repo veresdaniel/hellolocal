@@ -180,6 +180,8 @@
   min-height: 22px;
   height: auto;
   margin-top: 10px;
+  /* Keep tags off the footer rule when the body is packed (auto margin → 0). */
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 8px;

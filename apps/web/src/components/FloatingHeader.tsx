@@ -108,19 +108,25 @@ export function FloatingHeader({
     minHeight: wide ? 52 : 44,
     padding: wide ? "12px 16px" : "0 18px",
     border: wide
-      ? "1px solid rgba(27, 23, 48, 0.18)"
+      ? "1px solid var(--hl-nav-ghost-border, rgba(27, 23, 48, 0.18))"
       : primary
-        ? "1px solid #fffdf9"
-        : "1px solid rgba(242, 244, 251, 0.28)",
-    borderRadius: 999,
+        ? "1px solid var(--hl-nav-primary-bg, #fffdf9)"
+        : "1px solid var(--hl-nav-ghost-border, rgba(242, 244, 251, 0.28))",
+    borderRadius: "var(--hl-radius-control, 999px)",
     background: wide
       ? primary
-        ? "#1b1730"
+        ? "var(--hl-nav-wide-primary-bg, #1b1730)"
         : "transparent"
       : primary
-        ? "#fffdf9"
-        : "rgba(242, 244, 251, 0.08)",
-    color: wide ? (primary ? "#fffdf9" : "#1b1730") : primary ? "#1b1730" : "#f2f4fb",
+        ? "var(--hl-nav-primary-bg, #fffdf9)"
+        : "var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08))",
+    color: wide
+      ? primary
+        ? "var(--hl-nav-wide-primary-fg, #fffdf9)"
+        : "var(--hl-nav-on-drawer, #1b1730)"
+      : primary
+        ? "var(--hl-nav-primary-fg, #1b1730)"
+        : "var(--hl-nav-fg, #f2f4fb)",
     fontWeight: 700,
     fontSize: wide ? 16 : 15,
     letterSpacing: "-0.01em",
@@ -313,22 +319,23 @@ export function FloatingHeader({
         }
       `}</style>
       <header
+        className="hl-floating-header"
         style={{
           position: "fixed",
           top: 0,
           left: 0,
           right: 0,
           zIndex: isMobileMenuOpen ? 10001 : 1000,
-          background: "rgba(22, 19, 42, 0.78)",
+          background: "var(--hl-nav-bg, rgba(22, 19, 42, 0.78))",
           backdropFilter: "blur(18px) saturate(1.2)",
           WebkitBackdropFilter: "blur(18px) saturate(1.2)",
-          borderBottom: "1px solid rgba(242, 244, 251, 0.12)",
-          boxShadow: "0 10px 28px rgba(0, 0, 0, 0.28)",
+          borderBottom: "1px solid var(--hl-nav-line, rgba(242, 244, 251, 0.12))",
+          boxShadow: "var(--hl-nav-shadow, 0 10px 28px rgba(0, 0, 0, 0.28))",
           transform: isVisible ? "translateY(0)" : "translateY(-100%)",
           transition: "transform 0.3s ease-in-out",
           width: "100%",
           boxSizing: "border-box",
-          color: "#f2f4fb",
+          color: "var(--hl-nav-fg, #f2f4fb)",
         }}
       >
         <div
@@ -365,7 +372,7 @@ export function FloatingHeader({
                 }
                 style={{
                   textDecoration: "none",
-                  color: "#fffdf9",
+                  color: "var(--hl-nav-fg-strong, #fffdf9)",
                   display: "flex",
                   alignItems: "center",
                   gap: 10,
@@ -483,7 +490,7 @@ export function FloatingHeader({
                 style={{
                   width: 1,
                   height: 24,
-                  background: "rgba(242, 244, 251, 0.18)",
+                  background: "var(--hl-nav-divider, rgba(242, 244, 251, 0.18))",
                 }}
               />
             )}
@@ -531,7 +538,7 @@ export function FloatingHeader({
                       style={{
                         width: 1,
                         height: 24,
-                        background: "rgba(242, 244, 251, 0.18)",
+                        background: "var(--hl-nav-divider, rgba(242, 244, 251, 0.18))",
                       }}
                     />
                   </>
@@ -542,10 +549,10 @@ export function FloatingHeader({
                     <button
                       onClick={() => setShowActivationModal(true)}
                       style={{
-                        background: "#fffdf9",
+                        background: "var(--hl-nav-drawer-bg, #fffdf9)",
                         border: "none",
                         borderRadius: 8,
-                        color: "#1b1730",
+                        color: "var(--hl-nav-on-drawer, #1b1730)",
                         fontSize: "clamp(12px, 2.5vw, 16px)",
                         fontWeight: 600,
                         fontFamily:
@@ -580,7 +587,7 @@ export function FloatingHeader({
                       style={{
                         width: 1,
                         height: 24,
-                        background: "rgba(242, 244, 251, 0.18)",
+                        background: "var(--hl-nav-divider, rgba(242, 244, 251, 0.18))",
                       }}
                     />
                   </>
@@ -592,8 +599,8 @@ export function FloatingHeader({
                       to={buildUrl({ lang, path: "admin" })}
                       style={{
                         textDecoration: "none",
-                        background: "#fffdf9",
-                        color: "#1b1730",
+                        background: "var(--hl-nav-drawer-bg, #fffdf9)",
+                        color: "var(--hl-nav-on-drawer, #1b1730)",
                         fontSize: "clamp(12px, 2.5vw, 16px)",
                         fontWeight: 600,
                         fontFamily:
@@ -627,7 +634,7 @@ export function FloatingHeader({
                       style={{
                         width: 1,
                         height: 24,
-                        background: "rgba(242, 244, 251, 0.18)",
+                        background: "var(--hl-nav-divider, rgba(242, 244, 251, 0.18))",
                       }}
                     />
                   </>
@@ -639,10 +646,10 @@ export function FloatingHeader({
               <Link
                 to={platformLandingPath(lang)}
                 style={{
-                  background: "rgba(242, 244, 251, 0.08)",
-                  border: "1px solid rgba(242, 244, 251, 0.28)",
+                  background: "var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08))",
+                  border: "1px solid var(--hl-nav-ghost-border, rgba(242, 244, 251, 0.28))",
                   borderRadius: 999,
-                  color: "#f2f4fb",
+                  color: "var(--hl-nav-fg, #f2f4fb)",
                   fontSize: "clamp(12px, 2.5vw, 16px)",
                   fontWeight: 600,
                   height: "clamp(36px, 4vw, 40px)",
@@ -707,10 +714,10 @@ export function FloatingHeader({
                     }
                     }}
                     style={{
-                      background: "rgba(242, 244, 251, 0.08)",
-                      border: "1px solid rgba(242, 244, 251, 0.28)",
+                      background: "var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08))",
+                      border: "1px solid var(--hl-nav-ghost-border, rgba(242, 244, 251, 0.28))",
                       borderRadius: 999,
-                      color: "#f2f4fb",
+                      color: "var(--hl-nav-fg, #f2f4fb)",
                       fontSize: "clamp(12px, 2.5vw, 16px)",
                       fontWeight: 600,
                       height: "clamp(36px, 4vw, 40px)",
@@ -742,7 +749,7 @@ export function FloatingHeader({
                     style={{
                       width: 1,
                       height: 24,
-                      background: "rgba(242, 244, 251, 0.18)",
+                      background: "var(--hl-nav-divider, rgba(242, 244, 251, 0.18))",
                     }}
                   />
                 </>
@@ -753,14 +760,14 @@ export function FloatingHeader({
               <LanguageSelector />
               <style>{`
                 .hl-floating-header__lang .hl-lang-switch__trigger {
-                  color: #f2f4fb !important;
-                  border-color: rgba(242, 244, 251, 0.28) !important;
-                  background: rgba(242, 244, 251, 0.08) !important;
+                  color: var(--hl-nav-fg, #f2f4fb) !important;
+                  border-color: var(--hl-nav-ghost-border, rgba(242, 244, 251, 0.28)) !important;
+                  background: var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08)) !important;
                 }
                 .hl-floating-header__lang .hl-lang-switch__trigger:hover {
-                  color: #f2f4fb !important;
-                  border-color: rgba(242, 244, 251, 0.28) !important;
-                  background: rgba(242, 244, 251, 0.08) !important;
+                  color: var(--hl-nav-fg, #f2f4fb) !important;
+                  border-color: var(--hl-nav-ghost-border, rgba(242, 244, 251, 0.28)) !important;
+                  background: var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08)) !important;
                 }
               `}</style>
             </div>
@@ -772,14 +779,14 @@ export function FloatingHeader({
                   style={{
                     width: 1,
                     height: 24,
-                    background: "rgba(242, 244, 251, 0.18)",
+                    background: "var(--hl-nav-divider, rgba(242, 244, 251, 0.18))",
                   }}
                 />
                 <span
                   style={{
                     fontSize: "clamp(12px, 2.5vw, 16px)",
                     fontWeight: 500,
-                    color: "#f2f4fb",
+                    color: "var(--hl-nav-fg, #f2f4fb)",
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     maxWidth: "clamp(80px, 15vw, 200px)",
@@ -799,7 +806,7 @@ export function FloatingHeader({
                   style={{
                     width: 1,
                     height: 24,
-                    background: "rgba(242, 244, 251, 0.18)",
+                    background: "var(--hl-nav-divider, rgba(242, 244, 251, 0.18))",
                   }}
                 />
                 <button
@@ -810,9 +817,9 @@ export function FloatingHeader({
                   }}
                   style={{
                     background: "transparent",
-                    border: "1px solid rgba(242, 244, 251, 0.28)",
+                    border: "1px solid var(--hl-nav-ghost-border, rgba(242, 244, 251, 0.28))",
                     borderRadius: 999,
-                    color: "#f2f4fb",
+                    color: "var(--hl-nav-fg, #f2f4fb)",
                     fontSize: "clamp(12px, 2.5vw, 16px)",
                     fontWeight: 500,
                     fontFamily:
@@ -878,7 +885,9 @@ export function FloatingHeader({
                 style={{
                   width: 24,
                   height: 2,
-                  background: isMobileMenuOpen ? "transparent" : "#f2f4fb",
+                  background: isMobileMenuOpen
+                    ? "transparent"
+                    : "var(--hl-nav-fg, #f2f4fb)",
                   transition: "all 0.3s ease",
                   transform: isMobileMenuOpen ? "rotate(45deg)" : "none",
                   position: isMobileMenuOpen ? "absolute" : "relative",
@@ -888,7 +897,7 @@ export function FloatingHeader({
                 style={{
                   width: 24,
                   height: 2,
-                  background: "#f2f4fb",
+                  background: "var(--hl-nav-fg, #f2f4fb)",
                   transition: "all 0.3s ease",
                   opacity: isMobileMenuOpen ? 0 : 1,
                 }}
@@ -897,7 +906,7 @@ export function FloatingHeader({
                 style={{
                   width: 24,
                   height: 2,
-                  background: "#f2f4fb",
+                  background: "var(--hl-nav-fg, #f2f4fb)",
                   transition: "all 0.3s ease",
                   transform: isMobileMenuOpen ? "rotate(-45deg)" : "none",
                   position: isMobileMenuOpen ? "absolute" : "relative",
@@ -922,7 +931,7 @@ export function FloatingHeader({
               width: "100%",
               maxWidth: "100%",
               height: "100%",
-              background: "#fffdf9",
+              background: "var(--hl-nav-drawer-bg, #fffdf9)",
               zIndex: 12000,
               opacity: isMobileMenuOpen ? 1 : 0,
               visibility: isMobileMenuOpen ? "visible" : "hidden",
@@ -1035,7 +1044,7 @@ export function FloatingHeader({
                     }}
                     style={{
                       margin: "12px 0",
-                      background: "#1b1730",
+                      background: "var(--hl-nav-wide-primary-bg, #1b1730)",
                       border: "none",
                       borderRadius: 12,
                       color: "white",
@@ -1072,7 +1081,7 @@ export function FloatingHeader({
                     style={{
                       textDecoration: "none",
                       margin: "12px 0",
-                      background: "#1b1730",
+                      background: "var(--hl-nav-wide-primary-bg, #1b1730)",
                       color: "white",
                       fontSize: 18,
                       fontWeight: 600,
@@ -1107,10 +1116,10 @@ export function FloatingHeader({
                 onClick={() => setIsMobileMenuOpen(false)}
                 style={{
                   margin: "12px 0 0",
-                  background: "rgba(242, 244, 251, 0.08)",
+                  background: "var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08))",
                   border: "1px solid rgba(27, 23, 48, 0.16)",
                   borderRadius: 12,
-                  color: "#1b1730",
+                  color: "var(--hl-nav-on-drawer, #1b1730)",
                   fontSize: 18,
                   fontWeight: 600,
                   fontFamily:
@@ -1433,7 +1442,7 @@ export function FloatingHeader({
                     background: "transparent",
                     border: "1px solid rgba(27, 23, 48, 0.16)",
                     borderRadius: 12,
-                    color: "#1b1730",
+                    color: "var(--hl-nav-on-drawer, #1b1730)",
                     fontSize: 18,
                     fontWeight: 500,
                     fontFamily:

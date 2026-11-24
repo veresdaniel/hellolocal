@@ -782,7 +782,15 @@ export function PlaceDetailPage() {
             </div>
           )}
 
-          <div style={{ maxWidth: "var(--hl-content-max, 960px)", margin: "0 auto", width: "100%" }}>
+          <div
+            style={{
+              maxWidth: "var(--hl-content-max, 960px)",
+              margin: "0 auto",
+              width: "100%",
+              padding: "0 var(--hl-content-pad-x, 0px)",
+              boxSizing: "border-box",
+            }}
+          >
           {/* Title - directly below image with small offset */}
           <div style={{ margin: "0 16px 16px" }}>
             <h1
