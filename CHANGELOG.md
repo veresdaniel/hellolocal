@@ -14,6 +14,11 @@ in prose as used in the product.
 
 ### Fixed
 
+- hellolocal.hu mobile LCP (~5.1s lab): previous `load`+3s-idle SPA defer let
+  Lighthouse keep updating LCP after `createRoot` wiped the SSR hero; boot as
+  soon as the hero WebP is ready, eager-load `OverviewPage` (no Suspense gap),
+  navy platform Suspense fallback, preload `map-szeged-480.webp`, delay cookie
+  banner past the lab LCP window.
 - hellolocal.hu mobile LCP: defer SPA boot on overview SSR until `load`+idle so
   `createRoot` does not wipe the SSR hero before lab LCP settles; drop vendor
   `modulepreload` on that page (bandwidth for the map WebP); WebP as `<img src>`;

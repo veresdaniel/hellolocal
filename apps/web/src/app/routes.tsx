@@ -23,11 +23,13 @@ import { useAdminSite } from "../contexts/useAdminSite";
 
 // Public entry / shell pages — keep eager (auth, error paths). HomePage is lazy so
 // platform overview does not pull MapDock / explore into the first paint graph.
+// OverviewPage is eager: lazy + Suspense wiped the SSR hero and reset lab LCP to ~5s.
 import { SitesListPage } from "../pages/SitesListPage";
 import { StaticPagesRouteGuard } from "../components/StaticPagesRouteGuard";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { ErrorPage } from "../pages/ErrorPage";
 import { OfflinePage } from "../pages/OfflinePage";
+import { OverviewPage } from "../pages/OverviewPage";
 
 const HomePage = lazy(() =>
   import("../pages/HomePage").then((m) => ({ default: m.HomePage }))
@@ -54,9 +56,6 @@ const LegalPage = lazy(() =>
 );
 const PricingPage = lazy(() =>
   import("../pages/PricingPage").then((m) => ({ default: m.PricingPage }))
-);
-const OverviewPage = lazy(() =>
-  import("../pages/OverviewPage").then((m) => ({ default: m.OverviewPage }))
 );
 const PublicPricingPage = lazy(() =>
   import("../pages/PublicPricingPage").then((m) => ({ default: m.PublicPricingPage }))

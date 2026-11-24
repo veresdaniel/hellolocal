@@ -104,7 +104,7 @@ export const OVERVIEW_CLOSING = ladder(
 );
 
 /** Preferred LCP preload candidate (mobile-capped ladder max). */
-export const OVERVIEW_LCP_PRELOAD = "/marketing/map-szeged-720.webp";
+export const OVERVIEW_LCP_PRELOAD = "/marketing/map-szeged-480.webp";
 
 /** Preload imagesrcset — must not list 960w or mobile will still download it. */
 export const OVERVIEW_LCP_PRELOAD_SRCSET =

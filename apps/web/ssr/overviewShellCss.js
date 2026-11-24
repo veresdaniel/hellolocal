@@ -87,9 +87,10 @@ export function deferOverviewSpaBoot(html) {
 (function(){
   var src="$1";
   var apiOrigin="https://api.hello-local.io";
+  var booted=false;
   function warmApi(){
     // CORS fetch needs matching crossorigin preconnect; inject late so PSI
-    // does not flag an unused early hint while SPA boot is idle-deferred.
+    // does not flag an unused early hint while the LCP WebP settles.
     if(document.querySelector('link[data-hl-api-preconnect]')) return;
     var l=document.createElement("link");
     l.rel="preconnect";
@@ -99,6 +100,8 @@ export function deferOverviewSpaBoot(html) {
     document.head.appendChild(l);
   }
   function boot(){
+    if(booted) return;
+    booted=true;
     warmApi();
     var s=document.createElement("script");
     s.type="module";
@@ -106,12 +109,25 @@ export function deferOverviewSpaBoot(html) {
     s.src=src;
     document.body.appendChild(s);
   }
-  function schedule(){
-    if("requestIdleCallback" in window) requestIdleCallback(boot,{timeout:3000});
-    else setTimeout(boot,50);
+  // Lab LCP keeps updating after createRoot wipes SSR. Waiting for window.load
+  // + 3s idle pushed remount to ~5s. Boot right after the hero WebP is ready
+  // so React can reuse the cached image on the next paint.
+  function afterHero(go){
+    var img=document.querySelector('#root.hl-public img[fetchpriority="high"]');
+    if(!img || img.complete){ go(); return; }
+    var done=false;
+    function once(){ if(done) return; done=true; go(); }
+    img.addEventListener("load",once,{once:true});
+    img.addEventListener("error",once,{once:true});
+    setTimeout(once,2000);
   }
-  if(document.readyState==="complete") schedule();
-  else window.addEventListener("load",schedule,{once:true});
+  function schedule(){
+    afterHero(function(){
+      requestAnimationFrame(function(){ requestAnimationFrame(boot); });
+    });
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",schedule,{once:true});
+  else schedule();
 })();
 </script>`
   );
@@ -124,7 +140,8 @@ export function deferOverviewSpaBoot(html) {
  */
 export function injectOverviewShellHead(html, webRoot) {
   const sheet = resolveOverviewStylesheetHref(webRoot);
-  const lcpPreload = `<link rel="preload" as="image" href="/marketing/map-szeged-720.webp" type="image/webp" imagesrcset="/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w" imagesizes="(max-width: 860px) 100vw, 36vw" fetchpriority="high" />`;
+  // Prefer 480 as preload href — PSI mobile (~412px) selects that candidate.
+  const lcpPreload = `<link rel="preload" as="image" href="/marketing/map-szeged-480.webp" type="image/webp" imagesrcset="/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w" imagesizes="(max-width: 860px) 100vw, 36vw" fetchpriority="high" />`;
   const shellBlock = `
     <style id="overview-shell">${OVERVIEW_SHELL_CSS}</style>
     ${sheet ? `<link rel="stylesheet" href="${sheet}" />` : ""}`;

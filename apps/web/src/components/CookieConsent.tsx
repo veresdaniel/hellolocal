@@ -22,10 +22,12 @@ export function CookieConsent() {
   useEffect(() => {
     if (hasCookieConsent()) return;
 
+    // After first paint / lab LCP window — early fixed chrome still shows up
+    // in PSI filmstrips and can compete with the overview hero.
     const showTimer = window.setTimeout(() => {
       setIsVisible(true);
       window.setTimeout(() => setIsAnimatingIn(true), 50);
-    }, 1000);
+    }, 3500);
 
     return () => window.clearTimeout(showTimer);
   }, []);

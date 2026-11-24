@@ -2,7 +2,7 @@
  * Keep in sync with `src/marketing/overviewImages.ts` (SSR cannot import TS).
  */
 
-export const OVERVIEW_LCP_PRELOAD = "/marketing/map-szeged-720.webp";
+export const OVERVIEW_LCP_PRELOAD = "/marketing/map-szeged-480.webp";
 export const OVERVIEW_LCP_PRELOAD_SRCSET =
   "/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w";
 export const OVERVIEW_LCP_PRELOAD_SIZES = "(max-width: 860px) 100vw, 36vw";

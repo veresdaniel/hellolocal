@@ -3,7 +3,7 @@ import { createContext, Suspense, useContext, useEffect, useState, type ReactNod
 import { Outlet } from "react-router-dom";
 import { CookieConsent } from "./CookieConsent";
 import { GoogleAnalytics } from "./GoogleAnalytics";
-import { LoadingSpinner } from "./LoadingSpinner";
+import { PublicBootShell } from "./PublicSkeleton";
 import { getPublicPlatformGa } from "../api/public.api";
 
 /** Set around a region layout so this shell does not add a second consent banner. */
@@ -32,19 +32,17 @@ export function PlatformGaShell({ children }: Props) {
     };
   }, [insideSite]);
 
+  // Navy boot shell — white LoadingSpinner was flashing over SSR overview and
+  // competing with LCP when a lazy child still suspends.
+  const fallback = <PublicBootShell />;
+
   if (insideSite) {
-    return (
-      <Suspense fallback={<LoadingSpinner isLoading={true} delay={200} />}>
-        {children ?? <Outlet />}
-      </Suspense>
-    );
+    return <Suspense fallback={fallback}>{children ?? <Outlet />}</Suspense>;
   }
 
   return (
     <>
-      <Suspense fallback={<LoadingSpinner isLoading={true} delay={200} />}>
-        {children ?? <Outlet />}
-      </Suspense>
+      <Suspense fallback={fallback}>{children ?? <Outlet />}</Suspense>
       <CookieConsent />
       <GoogleAnalytics measurementId={measurementId} />
     </>
