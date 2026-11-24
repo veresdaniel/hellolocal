@@ -21,8 +21,8 @@ const UNUSABLE_IMAGE_HOSTS = new Set([
 
 const FALLBACK_PUBLIC_IMAGE = "/marketing/map-szeged-720.webp";
 
-/** Wikimedia only serves a fixed width ladder (see https://w.wiki/GHai). */
-const WIKI_THUMB_WIDTHS = [500, 960, 1280, 1920] as const;
+/** Wikimedia only serves a fixed width ladder (see https://w.wiki/GHai). Cap at 1280 — 1920 is rarely worth the bytes on mobile. */
+const WIKI_THUMB_WIDTHS = [500, 960, 1280] as const;
 
 function hostnameOf(url: string): string {
   try {

@@ -17,6 +17,7 @@ import { useFiltersStore } from "../stores/useFiltersStore";
 import { useLiveUserGeolocation } from "../hooks/useLiveUserGeolocation";
 import { GEO_FRESH, coordsFromPosition } from "../lib/geolocation";
 import { sanitizeImageUrl } from "../utils/urlValidation";
+import { preferModernImageUrl } from "../seo/cloudinaryImage";
 import { devLog } from "../lib/devLog";
 import {
   VINTAGE_WINE_REGION_STYLE_ID,
@@ -1466,11 +1467,14 @@ export function MapComponent({
             !showEnhancedCard && showLabel && (!!marker.name || !!marker.category);
           const destinationReady = Number.isFinite(marker.lat) && Number.isFinite(marker.lng);
           const showDirections = destinationReady && showEnhancedCard;
-          const cardImageUrl = showEnhancedCard
+          const rawCardImage = showEnhancedCard
             ? sanitizeImageUrl(marker.mapImage) ||
-                sanitizeImageUrl(marker.cardImage) ||
-                sanitizeImageUrl(marker.heroImage) ||
-                null
+              sanitizeImageUrl(marker.cardImage) ||
+              sanitizeImageUrl(marker.heroImage) ||
+              null
+            : null;
+          const cardImageUrl = rawCardImage
+            ? preferModernImageUrl(rawCardImage, { width: 500 })
             : null;
 
           return (

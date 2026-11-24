@@ -226,8 +226,8 @@ export function CollectionDetailPage() {
               src={sanitizeImageUrl(collection.heroImage) || collection.heroImage}
               alt={collection.title}
               priority
-              width={1600}
-              height={900}
+              width={960}
+              height={540}
               sizes="100vw"
               style={{
                 width: "100%",
@@ -326,8 +326,8 @@ export function CollectionDetailPage() {
                         <ImageWithSkeleton
                           src={itemImage}
                           alt={item.title}
-                          width={640}
-                          height={400}
+                          width={500}
+                          height={320}
                           style={{
                             width: "100%",
                             height: "100%",

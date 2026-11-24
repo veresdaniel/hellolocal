@@ -5,6 +5,7 @@ import { useRouteCtx } from "../../app/useRouteCtx";
 import { useTranslation } from "react-i18next";
 import { getPlatformSettings } from "../../api/places.api";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
+import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
 import type { StaticPage } from "../../api/static-pages.api";
 
 interface StaticPageCardProps {
@@ -19,7 +20,7 @@ function categoryLabel(category: string, t: (key: string) => string): string {
   return category;
 }
 
-export function StaticPageCard({ staticPage }: StaticPageCardProps) {
+export function StaticPageCard({ staticPage, index = 0 }: StaticPageCardProps) {
   const { lang, siteKey } = useRouteCtx();
   const { t } = useTranslation();
 
@@ -41,7 +42,16 @@ export function StaticPageCard({ staticPage }: StaticPageCardProps) {
       {/* Always reserve media height — image may arrive with platformSettings. */}
       <div className="story-card__media">
         {imageUrl ? (
-          <img src={imageUrl} alt="" loading="lazy" decoding="async" />
+          <ImageWithSkeleton
+            src={imageUrl}
+            alt=""
+            priority={index < 2}
+            width={500}
+            height={320}
+            sizes="(max-width: 680px) 92vw, 30vw"
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            skeletonStyle={{ borderRadius: 0 }}
+          />
         ) : null}
       </div>
       <div className="story-card__body">

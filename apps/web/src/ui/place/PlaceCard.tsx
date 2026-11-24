@@ -116,8 +116,8 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               src={imageUrl}
               alt={place.name}
               priority={index < 2}
-              width={800}
-              height={500}
+              width={500}
+              height={320}
               sizes="(max-width: 680px) 92vw, (max-width: 1040px) 45vw, 30vw"
               style={{
                 width: "100%",

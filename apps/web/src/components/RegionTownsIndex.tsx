@@ -49,8 +49,8 @@ export function RegionTownsIndex({
                 src={heroSrc}
                 alt=""
                 priority
-                width={1600}
-                height={700}
+                width={960}
+                height={420}
                 sizes="(max-width: 1080px) 100vw, 1080px"
                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               />

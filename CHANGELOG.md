@@ -22,6 +22,10 @@ in prose as used in the product.
   allowed width (Cloudinary fetch is restricted on this account).
 - Explore CLS: discover chrome skeleton matches search+filters height when the
   site has no `listIntroHtml` (no more tall intro placeholder dump).
+- Explore CLS: wait for events before first grid paint so pinned events do not
+  prepend after places and shove the list.
+- Public image delivery (region / place / event / curator): list cards and map
+  marker media request ~500w thumbs; detail heroes ~960w (not 1600–1920).
 - Facebook Sharing Debugger false 403 on `robots.txt`: Meta UAs always get
   HTTP 206 for robots (even without `Range`), matching the known Meta quirk.
 - Meta preview bots get a static Allow-only `robots.txt` (no empty `Disallow:`,

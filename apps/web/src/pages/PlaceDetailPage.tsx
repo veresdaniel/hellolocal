@@ -630,8 +630,8 @@ export function PlaceDetailPage() {
                 }
                 alt={place.name}
                 priority
-                width={1600}
-                height={900}
+                width={960}
+                height={540}
                 sizes="100vw"
                 style={{
                   width: "100%",

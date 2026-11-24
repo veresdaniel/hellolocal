@@ -608,8 +608,8 @@ export function EventDetailPage() {
                 src={sanitizeImageUrl(event.heroImage) || event.heroImage}
                 alt={event.name}
                 priority
-                width={1600}
-                height={900}
+                width={960}
+                height={540}
                 sizes="100vw"
                 style={{
                   width: "100%",

@@ -121,8 +121,10 @@ export function PlacesListView({
 
   const allPlaces = data?.pages.flatMap((page) => page.places) ?? [];
 
-  // Fetch events for context-based filters
-  const { data: eventsData = [] } = useQuery({
+  // Fetch events for context-based filters + pinned rows in the list.
+  // Gate first paint on this too — otherwise pinned events prepend after
+  // places render and shove the grid (large CLS on explore).
+  const { data: eventsData = [], isPending: isEventsPending } = useQuery({
     queryKey: ["events", lang, siteKey],
     queryFn: () => getEvents(lang, siteKey ?? "", undefined, undefined, 100, 0),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -783,13 +785,13 @@ export function PlacesListView({
             <div style={{ textAlign: "center", padding: "40px 0", color: "#f87171" }}>
               {t("public.errorLoadingPlaces") || "Hiba a helyek betöltésekor"}
             </div>
-          ) : isLoading && places.length === 0 ? (
+          ) : (isLoading || isEventsPending) && places.length === 0 ? (
             <PublicCardSkeletonGrid
               count={ITEMS_PER_PAGE}
               variant="places"
               label={t("common.loading")}
             />
-          ) : !isLoading && combinedItems.length === 0 ? (
+          ) : !isLoading && !isEventsPending && combinedItems.length === 0 ? (
             <EmptyResults
               title={
                 section === "services"
