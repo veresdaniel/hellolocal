@@ -18,13 +18,79 @@ body{margin:0;min-height:100vh;background-color:var(--hl-bg);color:var(--hl-on-d
 `;
 
 /**
+ * Custom-host explore: early API preconnect, drop admin Google Fonts, keep SSR
+ * h1 as lab LCP until SPA can paint the same discover title.
+ * @param {string} html
+ */
+export function deferPublicSpaBoot(html) {
+  let next = html;
+
+  next = next.replace(
+    /<link\s+rel="preconnect"\s+href="https:\/\/fonts\.googleapis\.com"\s*\/?>\s*/gi,
+    ""
+  );
+  next = next.replace(
+    /<link\s+rel="preconnect"\s+href="https:\/\/fonts\.gstatic\.com"[^>]*>\s*/gi,
+    ""
+  );
+  next = next.replace(
+    /<link\s+rel="preload"\s+as="style"\s+href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]+"[^>]*>\s*/gi,
+    ""
+  );
+  next = next.replace(
+    /<noscript>\s*<link\s+href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]+"\s+rel="stylesheet"\s*\/?>\s*<\/noscript>\s*/gi,
+    ""
+  );
+
+  // PSI: dns-prefetch alone leaves ~300ms on the table for api.hello-local.io.
+  if (!next.includes('rel="preconnect" href="https://api.hello-local.io"')) {
+    next = next.replace(
+      /(<link\s+rel="dns-prefetch"\s+href="https:\/\/api\.hello-local\.io"\s*\/?>)/i,
+      `$1\n    <link rel="preconnect" href="https://api.hello-local.io" crossorigin />`
+    );
+  }
+
+  next = next.replace(
+    /<script\s+type="module"\s+crossorigin\s+src="(\/assets\/index-[^"]+\.js)"\s*><\/script>/i,
+    `<script type="module">
+(function(){
+  var src="$1";
+  var booted=false;
+  function boot(){
+    if(booted) return;
+    booted=true;
+    var s=document.createElement("script");
+    s.type="module";
+    s.crossOrigin="";
+    s.src=src;
+    document.body.appendChild(s);
+  }
+  // Let the SSR h1 paint as LCP, then boot on the next frames so React can
+  // reuse the site title in places-discover__title without a long API wait.
+  function afterSsr(go){
+    var h1=document.querySelector("#root.hl-public h1");
+    if(!h1){ go(); return; }
+    requestAnimationFrame(function(){ requestAnimationFrame(go); });
+  }
+  function schedule(){ afterSsr(boot); }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",schedule,{once:true});
+  else schedule();
+})();
+</script>`
+  );
+  return next;
+}
+
+/**
  * @param {string} html
  */
 export function injectPublicShellHead(html) {
-  if (html.includes('id="public-ssr-shell"')) return html;
-  const block = `    <style id="public-ssr-shell">${PUBLIC_SSR_SHELL_CSS}</style>`;
-  if (html.includes("</head>")) {
-    return html.replace("</head>", `${block}\n  </head>`);
+  let next = html;
+  if (!next.includes('id="public-ssr-shell"')) {
+    const block = `    <style id="public-ssr-shell">${PUBLIC_SSR_SHELL_CSS}</style>`;
+    next = next.includes("</head>")
+      ? next.replace("</head>", `${block}\n  </head>`)
+      : `${block}${next}`;
   }
-  return `${block}${html}`;
+  return deferPublicSpaBoot(next);
 }

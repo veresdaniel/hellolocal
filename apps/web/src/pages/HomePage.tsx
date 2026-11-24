@@ -807,8 +807,25 @@ export function HomePage() {
   // Single-settlement sites (Szeged) keep current landing / map behavior.
   if (!landingDismissed && !pathTown && !regionMap) {
     if (isLoadingPlatformSettings || isLoadingTowns) {
-      // List-shaped shell: custom domains usually open the explore list, not a detail hero sheet.
-      return <PublicListSkeleton label={t("common.loading")} />;
+      // Paint the real discover H1 immediately (SSR og:title) so lab LCP is not
+      // stuck behind platform/towns/places — matches PlacesListView title class.
+      const bootName =
+        (typeof document !== "undefined" &&
+          (
+            document.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
+            document.title ||
+            ""
+          )
+            .split(/\s+[—|-]\s+/)[0]
+            ?.trim()) ||
+        "";
+      const bootTitle = bootName
+        ? t("public.explore.siteTitle", {
+            name: bootName,
+            defaultValue: "{{name}}",
+          })
+        : undefined;
+      return <PublicListSkeleton label={t("common.loading")} title={bootTitle} />;
     }
     const landing = readSiteLanding(platformSettings?.site);
     const isRegion = !!townsPayload?.isRegion && (townsPayload.towns?.length || 0) > 1;

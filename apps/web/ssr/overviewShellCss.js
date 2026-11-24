@@ -46,6 +46,26 @@ export function resolveOverviewStylesheetHref(webRoot) {
   return cachedOverviewCssHref;
 }
 
+let cachedOverviewPageHref = /** @type {string | null | undefined} */ (undefined);
+
+/** Lazy OverviewPage chunk — modulepreload so SPA remount does not wait on Slow 4G. */
+export function resolveOverviewPageHref(webRoot) {
+  if (cachedOverviewPageHref !== undefined) return cachedOverviewPageHref;
+  const assetsDir = join(webRoot, "dist", "assets");
+  if (existsSync(assetsDir)) {
+    try {
+      const match = readdirSync(assetsDir).find((file) => /^OverviewPage-[A-Za-z0-9_-]+\.js$/.test(file));
+      cachedOverviewPageHref = match ? `/assets/${match}` : null;
+      return cachedOverviewPageHref;
+    } catch {
+      cachedOverviewPageHref = null;
+      return null;
+    }
+  }
+  cachedOverviewPageHref = null;
+  return null;
+}
+
 /**
  * Overview first paint only needs Source Sans + shell/overview CSS.
  * Drop SPA vendor preloads, admin Google Fonts, and make the fat index.css
@@ -140,11 +160,16 @@ export function deferOverviewSpaBoot(html) {
  */
 export function injectOverviewShellHead(html, webRoot) {
   const sheet = resolveOverviewStylesheetHref(webRoot);
+  const overviewPage = resolveOverviewPageHref(webRoot);
   // Prefer 480 as preload href — PSI mobile (~412px) selects that candidate.
   const lcpPreload = `<link rel="preload" as="image" href="/marketing/map-szeged-480.webp" type="image/webp" imagesrcset="/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w" imagesizes="(max-width: 860px) 100vw, 36vw" fetchpriority="high" />`;
+  const overviewPreload = overviewPage
+    ? `<link rel="modulepreload" crossorigin href="${overviewPage}" />`
+    : "";
   const shellBlock = `
     <style id="overview-shell">${OVERVIEW_SHELL_CSS}</style>
-    ${sheet ? `<link rel="stylesheet" href="${sheet}" />` : ""}`;
+    ${sheet ? `<link rel="stylesheet" href="${sheet}" />` : ""}
+    ${overviewPreload}`;
 
   // Put LCP preload immediately after the boot paint style so it outranks
   // font preloads that follow in index.html.

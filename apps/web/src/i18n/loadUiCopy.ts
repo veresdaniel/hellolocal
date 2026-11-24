@@ -31,7 +31,16 @@ export async function applyUiCopy(lang: string | null | undefined): Promise<void
   i18n.emit("loaded", { [code]: { translation: bundle } });
 }
 
-void applyUiCopy(i18n.language);
+// Defer DB UI copy off the explore critical path (PSI: ui/:lang on LCP chain).
+function scheduleUiCopy(lang: string | null | undefined) {
+  const run = () => void applyUiCopy(lang);
+  if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+    window.requestIdleCallback(run, { timeout: 2500 });
+  } else {
+    setTimeout(run, 200);
+  }
+}
+scheduleUiCopy(i18n.language);
 i18n.on("languageChanged", (lng) => {
-  void applyUiCopy(lng);
+  scheduleUiCopy(lng);
 });

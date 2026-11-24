@@ -12,6 +12,14 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+### Fixed
+
+- helloetyek explore lab LCP: paint `places-discover__title` during the list
+  skeleton (og:title), preconnect `api.hello-local.io` on custom-host SSR, strip
+  admin Google Fonts from that shell, idle-defer DB UI-copy fetch, keep
+  OverviewPage lazy (modulepreload only on platform overview) so explore does
+  not download unused overview JS.
+
 ### Added
 
 - Platform landing images CMS: per-language hero / story / closing / share

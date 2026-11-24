@@ -86,7 +86,9 @@ export function PublicListSkeleton({
   label = "Loading",
   cardCount = 6,
   className,
-}: PublicListSkeletonProps) {
+  /** Real H1 for lab LCP — matches PlacesListView `.places-discover__title`. */
+  title,
+}: PublicListSkeletonProps & { title?: string }) {
   return (
     <div
       className={`hl-skel-list${className ? ` ${className}` : ""}`}
@@ -96,7 +98,11 @@ export function PublicListSkeleton({
       aria-label={label}
     >
       <div className="hl-skel-list__inner hl-public-width">
-        <div className="hl-skel hl-skel--on-dark hl-skel-list__title" />
+        {title ? (
+          <h1 className="places-discover__title hl-skel-list__boot-title">{title}</h1>
+        ) : (
+          <div className="hl-skel hl-skel--on-dark hl-skel-list__title" />
+        )}
         <div className="hl-skel hl-skel--on-dark hl-skel-list__search" />
         <div className="hl-skel-list__filters" aria-hidden="true">
           <div className="hl-skel hl-skel-list__chip" />

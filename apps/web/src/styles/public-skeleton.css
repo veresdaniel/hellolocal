@@ -138,6 +138,20 @@
   border-radius: 8px;
 }
 
+/* Match PlacesListView title so lab LCP can settle before places load. */
+.hl-skel-list__boot-title.places-discover__title {
+  margin: 0 0 16px;
+  min-height: 1.2em;
+  font-size: clamp(28px, 2.2vw, 44px);
+  font-weight: 700;
+  font-family: var(--font-heading, var(--font-body, system-ui, sans-serif));
+  color: var(--hl-ink-strong, var(--hl-on-dark-strong, #fff));
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
 .hl-skel-list__search {
   margin: 0 0 16px;
   height: 44px;
