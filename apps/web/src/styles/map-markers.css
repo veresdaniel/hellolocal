@@ -337,21 +337,80 @@
 }
 
 @media (max-width: 640px) {
-  .hl-map-marker-card--enhanced {
-    width: min(300px, 90vw);
-    max-width: min(300px, 90vw);
-    min-width: min(220px, 90vw);
+  /* Close zoom — slightly tighter than desktop. */
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-close {
+    width: min(280px, 86vw);
+    max-width: min(280px, 86vw);
+    min-width: min(200px, 86vw);
   }
 
-  .hl-map-marker-card__media {
-    height: 124px;
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-close .hl-map-marker-card__media {
+    height: 112px;
   }
 
-  .hl-map-marker-card--enhanced .hl-map-marker-card__body {
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-close .hl-map-marker-card__body {
     padding: 9px 11px 11px;
   }
 
-  .hl-map-marker-card--enhanced .hl-map-marker-card__title {
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-close .hl-map-marker-card__title {
     font-size: 15px;
+  }
+
+  /* Shrink bubble when the user zooms out (fixed px otherwise grows vs map). */
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-medium {
+    width: min(248px, 78vw);
+    max-width: min(248px, 78vw);
+    min-width: min(168px, 78vw);
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-medium .hl-map-marker-card__media {
+    height: 96px;
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-medium .hl-map-marker-card__body {
+    padding: 8px 10px 10px;
+    gap: 3px;
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-medium .hl-map-marker-card__title {
+    font-size: 14px;
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-medium .hl-map-marker-card__category {
+    font-size: 12px;
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-far,
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-veryFar {
+    width: min(200px, 68vw);
+    max-width: min(200px, 68vw);
+    min-width: min(140px, 68vw);
+    border-radius: 14px;
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-far .hl-map-marker-card__media,
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-veryFar .hl-map-marker-card__media {
+    height: 72px;
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-far .hl-map-marker-card__body,
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-veryFar .hl-map-marker-card__body {
+    padding: 7px 9px 9px;
+    gap: 2px;
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-far .hl-map-marker-card__title,
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-veryFar .hl-map-marker-card__title {
+    font-size: 13px;
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-far .hl-map-marker-card__category,
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-veryFar .hl-map-marker-card__category {
+    font-size: 11px;
+  }
+
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-far .hl-map-marker-card__meta,
+  .hl-map-marker-card--enhanced.hl-map-marker-card--zoom-veryFar .hl-map-marker-card__meta {
+    font-size: 11px;
   }
 }

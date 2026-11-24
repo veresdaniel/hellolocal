@@ -26,6 +26,8 @@ in prose as used in the product.
 
 ### Changed
 
+- Place list filters: drop fixed 240px min-height so the panel hugs chip rows
+  (skeleton matches).
 - Place list cards: mobile collapses empty rating/tag/copy slots for tighter
   cards; desktop keeps equal-height grid rows (reserved slots + stretch).
 - Place detail map: locked pan/zoom, marker centered; mobile height ~⅔.
@@ -36,6 +38,8 @@ in prose as used in the product.
 
 ### Fixed
 
+- Mobile map: tapping a place name chip opens the info bubble (not only the
+  pin); selected bubble shrinks when zooming out instead of looking larger.
 - Mobile gallery lightbox: one full image per viewport (clipped track); swipe
   no longer showed half of two slides side-by-side.
 - Custom-domain “Áttekintés” (footer + mobile/desktop nav) opens the

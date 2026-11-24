@@ -1552,6 +1552,7 @@ export function MapComponent({
                     className={[
                       "hl-map-marker-card",
                       showEnhancedCard ? "hl-map-marker-card--enhanced" : "hl-map-marker-card--chip",
+                      showEnhancedCard ? `hl-map-marker-card--zoom-${zoomLevel}` : "",
                       isSelected ? "hl-map-marker-card--selected" : "",
                       cardImageUrl ? "hl-map-marker-card--has-media" : "",
                     ]
@@ -1570,15 +1571,21 @@ export function MapComponent({
                       suppressNextMapClick();
                     }}
                     onClick={(e) => {
-                      // Card media/body opens detail; Navigáció stops propagation itself.
                       e.stopPropagation();
                       suppressNextMapClick();
-                      if (!isClickable || !marker.onClick) return;
-                      marker.onClick();
+                      if (showEnhancedCard) {
+                        // Enhanced card body/media → place detail.
+                        if (!isClickable || !marker.onClick) return;
+                        marker.onClick();
+                        return;
+                      }
+                      // Name chip: same as pin → open / toggle the bubble.
+                      handleMarkerClick(marker, e as any);
                     }}
                     style={{
-                      pointerEvents: showEnhancedCard ? "auto" : "none",
-                      cursor: isClickable ? "pointer" : undefined,
+                      // Chip must receive taps — pointer-events:none let name clicks hit the map.
+                      pointerEvents: "auto",
+                      cursor: isClickable || showZoomChip ? "pointer" : undefined,
                     }}
                   >
                     {cardImageUrl && (
@@ -1596,14 +1603,18 @@ export function MapComponent({
                       {marker.name && (
                         <span
                           className="hl-map-marker-card__title"
-                          role={isClickable ? "link" : undefined}
-                          tabIndex={isClickable ? 0 : undefined}
+                          role={isClickable || showZoomChip ? "button" : undefined}
+                          tabIndex={isClickable || showZoomChip ? 0 : undefined}
                           onKeyDown={(e) => {
-                            if (!isClickable || !marker.onClick) return;
                             if (e.key !== "Enter" && e.key !== " ") return;
                             e.preventDefault();
                             e.stopPropagation();
-                            marker.onClick();
+                            if (showEnhancedCard) {
+                              if (!isClickable || !marker.onClick) return;
+                              marker.onClick();
+                              return;
+                            }
+                            handleMarkerClick(marker, e as any);
                           }}
                         >
                           {marker.name}
