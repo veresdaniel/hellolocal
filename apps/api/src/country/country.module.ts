@@ -2,11 +2,17 @@ import { Module, forwardRef } from "@nestjs/common";
 import { PrismaModule } from "../prisma/prisma.module";
 import { AuthModule } from "../auth/auth.module";
 import { EntitlementsModule } from "../entitlements/entitlements.module";
+import { SignupAbuseModule } from "../signup-abuse/signup-abuse.module";
 import { CountryController } from "./country.controller";
 import { CountryService } from "./country.service";
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => AuthModule), forwardRef(() => EntitlementsModule)],
+  imports: [
+    PrismaModule,
+    forwardRef(() => AuthModule),
+    forwardRef(() => EntitlementsModule),
+    forwardRef(() => SignupAbuseModule),
+  ],
   controllers: [CountryController],
   providers: [CountryService],
   exports: [CountryService],

@@ -24,6 +24,11 @@ export interface AuthContextType {
     lastName: string;
     bio?: string;
     audience?: "visitor";
+    plan?: string;
+    countryId?: string;
+    townId?: string;
+    townName?: string;
+    deviceHash?: string;
     companyWebsite?: string;
     formStartedAt?: number;
     recaptchaToken?: string;

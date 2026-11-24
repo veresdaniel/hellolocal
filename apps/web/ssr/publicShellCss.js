@@ -15,11 +15,19 @@ body{margin:0;min-height:100vh;background-color:var(--hl-bg);color:var(--hl-on-d
 #root>.hl-ssr a{color:var(--hl-mist);font-weight:600}
 #root>.hl-ssr ul{padding-left:1.25rem}
 #root>.hl-ssr img{max-width:100%;height:auto;border-radius:12px}
+#root>.hl-ssr .places-discover__title{margin:0 0 1rem;font-size:clamp(1.65rem,5vw,2.25rem);letter-spacing:-0.02em}
+#root>.hl-ssr .hl-ssr-discover{margin:0 0 1.5rem;max-width:420px}
+#root>.hl-ssr a.list-card--ssr{display:block;text-decoration:none;color:inherit;background:var(--hl-card);border-radius:14px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.22)}
+#root>.hl-ssr .list-card__media{position:relative;aspect-ratio:16/10;background:#2a2540;overflow:hidden}
+#root>.hl-ssr .list-card__media-fill{position:absolute;inset:0}
+#root>.hl-ssr .list-card__media-fill img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;border-radius:0;max-width:none}
+#root>.hl-ssr .list-card__body{padding:12px 14px;color:var(--hl-ink);font-size:1rem}
+#root>.hl-ssr .hl-ssr-links{opacity:.92}
 `;
 
 /**
- * Custom-host explore: early API preconnect, drop admin Google Fonts, keep SSR
- * h1 as lab LCP until SPA can paint the same discover title.
+ * Custom-host explore: early API preconnect, drop admin Google Fonts, async
+ * index.css (inline shell paints first), keep SSR h1/card as lab LCP until SPA.
  * @param {string} html
  */
 export function deferPublicSpaBoot(html) {
@@ -50,6 +58,13 @@ export function deferPublicSpaBoot(html) {
     );
   }
 
+  // Render-blocking index.css (~12KiB / 150ms) — shell CSS already covers first paint.
+  next = next.replace(
+    /<link\s+rel="stylesheet"\s+crossorigin\s+href="(\/assets\/index-[^"]+\.css)"\s*\/?>/i,
+    `<link rel="preload" as="style" href="$1" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" crossorigin href="$1" /></noscript>`
+  );
+
   next = next.replace(
     /<script\s+type="module"\s+crossorigin\s+src="(\/assets\/index-[^"]+\.js)"\s*><\/script>/i,
     `<script type="module">
@@ -65,8 +80,7 @@ export function deferPublicSpaBoot(html) {
     s.src=src;
     document.body.appendChild(s);
   }
-  // Let the SSR h1 paint as LCP, then boot on the next frames so React can
-  // reuse the site title in places-discover__title without a long API wait.
+  // Let the SSR h1 / list-card img paint as LCP, then boot on the next frames.
   function afterSsr(go){
     var h1=document.querySelector("#root.hl-public h1");
     if(!h1){ go(); return; }
@@ -83,9 +97,27 @@ export function deferPublicSpaBoot(html) {
 
 /**
  * @param {string} html
+ * @param {{ lcpImage?: string | null }} [opts]
  */
-export function injectPublicShellHead(html) {
+export function injectPublicShellHead(html, opts = {}) {
   let next = html;
+  const lcp = String(opts.lcpImage || "").trim();
+  if (lcp && !next.includes('data-hl-explore-lcp="1"')) {
+    const isMap = /map-szeged/i.test(lcp);
+    const preload = isMap
+      ? `<link data-hl-explore-lcp="1" rel="preload" as="image" href="/marketing/map-szeged-480.webp" type="image/webp" imagesrcset="/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w" imagesizes="(max-width: 680px) 92vw, (max-width: 1040px) 45vw, 30vw" fetchpriority="high" />`
+      : `<link data-hl-explore-lcp="1" rel="preload" as="image" href="${lcp.replace(/"/g, "")}" fetchpriority="high" />`;
+    if (next.includes('id="hl-first-paint"')) {
+      next = next.replace(
+        /(<style id="hl-first-paint">[\s\S]*?<\/style>)/i,
+        `$1\n    ${preload}`
+      );
+    } else if (next.includes("</head>")) {
+      next = next.replace("</head>", `    ${preload}\n  </head>`);
+    } else {
+      next = `${preload}${next}`;
+    }
+  }
   if (!next.includes('id="public-ssr-shell"')) {
     const block = `    <style id="public-ssr-shell">${PUBLIC_SSR_SHELL_CSS}</style>`;
     next = next.includes("</head>")
@@ -93,4 +125,23 @@ export function injectPublicShellHead(html) {
       : `${block}${next}`;
   }
   return deferPublicSpaBoot(next);
+}
+
+/**
+ * Embed domain resolve so HostScope skips /api/domain on first paint.
+ * @param {string} html
+ * @param {{ kind?: string, slug: string, defaultLang?: string, entitySlug?: string } | null} domain
+ */
+export function injectHostBootstrap(html, domain) {
+  if (!domain?.slug || html.includes('id="hl-host-bootstrap"')) return html;
+  const payload = JSON.stringify({
+    kind: domain.kind || "site",
+    slug: domain.slug,
+    defaultLang: domain.defaultLang || "hu",
+    ...(domain.entitySlug ? { entitySlug: domain.entitySlug } : {}),
+  }).replace(/</g, "\\u003c");
+  const script = `<script type="application/json" id="hl-host-bootstrap">${payload}</script>`;
+  return html.includes("</head>")
+    ? html.replace("</head>", `    ${script}\n  </head>`)
+    : `${script}${html}`;
 }

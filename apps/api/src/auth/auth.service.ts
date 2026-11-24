@@ -1,9 +1,11 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
   Optional,
   UnauthorizedException,
+  forwardRef,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
@@ -24,6 +26,9 @@ import { isSupportedLang } from "../common/lang";
 import { randomBytes } from "crypto";
 import { CountryService } from "../country/country.service";
 import { isConfiguredFrontendOrigin, normalizeReturnHost } from "./oauth-return.util";
+import { SignupAbuseService } from "../signup-abuse/signup-abuse.service";
+import { normalizeEmail } from "../common/email-normalize";
+import type { SignupGateResult } from "../signup-abuse/signup-abuse.service";
 
 /** Claims embedded in access JWTs. */
 export interface JwtPayload {
@@ -42,6 +47,8 @@ export interface JwtPayload {
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
+  /** Present on free-plan register when Stripe card verify is required. */
+  requireCard?: boolean;
   user: {
     id: string;
     username: string;
@@ -68,11 +75,28 @@ export class AuthService {
     private readonly emailService: EmailService,
     @Optional() private readonly twoFactorService?: TwoFactorService,
     @Optional() private readonly eventLogService?: AdminEventLogService,
-    @Optional() private readonly countries?: CountryService
+    @Optional() private readonly countries?: CountryService,
+    @Optional()
+    @Inject(forwardRef(() => SignupAbuseService))
+    private readonly signupAbuse?: SignupAbuseService
   ) {}
 
   private getDefaultSiteSlug(): string {
     return this.configService.get<string>("DEFAULT_SITE_SLUG") ?? "etyek-budai";
+  }
+
+  private signupUserFields(dto: RegisterDto, gate: SignupGateResult | null | undefined) {
+    return {
+      emailNormalized: gate?.emailNormalized || normalizeEmail(dto.email) || undefined,
+      signupIpHash: gate?.ipHash || undefined,
+      signupDeviceHash: gate?.deviceHash || undefined,
+      signupUserAgent: gate?.userAgent || undefined,
+    };
+  }
+
+  private async persistSignupSignal(userId: string, gate: SignupGateResult | null | undefined, note?: string) {
+    if (!gate || !this.signupAbuse) return;
+    await this.signupAbuse.recordSignal({ userId, gate, note }).catch(() => undefined);
   }
 
   private async hashPassword(password: string): Promise<string> {
@@ -158,9 +182,11 @@ export class AuthService {
   async register(
     dto: RegisterDto,
     requestSiteId?: string,
-    referer?: string
+    referer?: string,
+    requestMeta?: { ip?: string | null; userAgent?: string | null }
   ): Promise<AuthResponse> {
     dto.username = dto.username.trim();
+    dto.email = String(dto.email || "").trim();
     if (dto.audience === "visitor" && !/^[a-zA-Z0-9._-]{3,50}$/.test(dto.username)) {
       throw new BadRequestException("username_invalid");
     }
@@ -171,21 +197,40 @@ export class AuthService {
     if (nameTaken) {
       throw new BadRequestException("username_taken");
     }
+
+    const emailNormalized = normalizeEmail(dto.email);
     const emailTaken = await this.prisma.user.findFirst({
-      where: { email: dto.email },
+      where: {
+        OR: [
+          { email: { equals: dto.email, mode: "insensitive" } },
+          ...(emailNormalized ? [{ emailNormalized }] : []),
+        ],
+      },
       select: { id: true },
     });
     if (emailTaken) {
       throw new BadRequestException(ERROR_MESSAGES.BAD_REQUEST_USER_ALREADY_EXISTS);
     }
 
+    let gate: SignupGateResult | null = null;
+    if (this.signupAbuse) {
+      gate = await this.signupAbuse.assertCanRegister({
+        email: dto.email,
+        ip: requestMeta?.ip,
+        userAgent: requestMeta?.userAgent,
+        deviceHash: dto.deviceHash,
+      });
+    }
+
     if (dto.audience === "visitor") {
-      return this.registerVisitor(dto);
+      return this.registerVisitor(dto, gate);
     }
 
     if (dto.plan === "free") {
-      return this.registerFreePlace(dto);
+      return this.registerFreePlace(dto, gate);
     }
+
+    // Continue with region-member registration below (gate already computed).
 
     // Get site ID (priority: DTO > request context > referer-based resolution > default site)
     let siteId: string | undefined;
@@ -294,6 +339,7 @@ export class AuthService {
         bio: dto.bio,
         role: UserRole.viewer, // Default role
         activeSiteId: null, // Visitor by default
+        ...this.signupUserFields(dto, gate),
         sites: {
           create: {
             siteId,
@@ -307,6 +353,7 @@ export class AuthService {
         },
       },
     });
+    await this.persistSignupSignal(user.id, gate, "region_register");
 
     const siteIds = user.sites.map((s) => s.siteId);
 
@@ -348,7 +395,7 @@ export class AuthService {
    * Visitor account: no plan, no region membership, no place request.
    * The person can sign in on the public site and rate a place.
    */
-  private async registerVisitor(dto: RegisterDto): Promise<AuthResponse> {
+  private async registerVisitor(dto: RegisterDto, gate?: SignupGateResult | null): Promise<AuthResponse> {
     assertPasswordStrength(dto.password);
     const passwordHash = await this.hashPassword(dto.password);
     const user = await this.prisma.user.create({
@@ -360,8 +407,10 @@ export class AuthService {
         lastName: dto.lastName,
         role: UserRole.viewer,
         activeSiteId: null,
+        ...this.signupUserFields(dto, gate ?? null),
       },
     });
+    await this.persistSignupSignal(user.id, gate ?? null, "visitor_register");
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
@@ -393,7 +442,7 @@ export class AuthService {
    * Free plan ("Egy hely"): country + town only. Does not create geography.
    * The user is a place member when the town already exists, otherwise the signup stays pending.
    */
-  private async registerFreePlace(dto: RegisterDto): Promise<AuthResponse> {
+  private async registerFreePlace(dto: RegisterDto, gate?: SignupGateResult | null): Promise<AuthResponse> {
     if (!this.countries) {
       throw new BadRequestException("Registration is unavailable");
     }
@@ -411,10 +460,14 @@ export class AuthService {
         bio: dto.bio,
         role: UserRole.viewer,
         activeSiteId: null,
+        ...this.signupUserFields(dto, gate ?? null),
       },
     });
+    await this.persistSignupSignal(user.id, gate ?? null, "free_place_register");
+    let freePlace: Awaited<ReturnType<NonNullable<typeof this.countries>["registerFreePlace"]>> | null =
+      null;
     try {
-      await this.countries.registerFreePlace({
+      freePlace = await this.countries.registerFreePlace({
         userId: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -439,6 +492,9 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
+      requireCard: Boolean(
+        freePlace && "cardRequired" in freePlace && freePlace.cardRequired
+      ),
       user: {
         id: user.id,
         username: user.username,
@@ -856,10 +912,12 @@ export class AuthService {
       }
 
       // Create user as visitor (activeSiteId: null)
+      const emailNormalized = normalizeEmail(googleUser.email);
       user = await this.prisma.user.create({
         data: {
           username,
           email: googleUser.email,
+          emailNormalized: emailNormalized || undefined,
           passwordHash: "", // No password for OAuth users
           firstName: googleUser.firstName,
           lastName: googleUser.lastName,

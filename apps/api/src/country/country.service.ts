@@ -1,14 +1,18 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  Optional,
+  forwardRef,
 } from "@nestjs/common";
 import { PlaceRole, PlaceSignupStatus, SubscriptionPlan, SubscriptionStatus, UserRole } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeDomainHost } from "../common/domain-host";
 import { assertRegionNameAvailable } from "../common/unique-place-name";
 import { EntitlementsService } from "../entitlements/entitlements.service";
+import { SignupAbuseService } from "../signup-abuse/signup-abuse.service";
 import {
   FREE_TRIAL_DAYS_KEY,
   freeTrialValidUntil,
@@ -33,7 +37,10 @@ export type CountryWriteDto = {
 export class CountryService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly entitlementsService: EntitlementsService
+    private readonly entitlementsService: EntitlementsService,
+    @Optional()
+    @Inject(forwardRef(() => SignupAbuseService))
+    private readonly signupAbuse?: SignupAbuseService
   ) {}
 
   async listPublic(lang: string) {
@@ -318,6 +325,23 @@ export class CountryService {
     townId?: string;
     townName: string;
   }) {
+    // One free place / pending signup per user (also enforced in entitlements on attach).
+    const [ownedFree, pending] = await Promise.all([
+      this.prisma.place.count({
+        where: {
+          plan: "free",
+          OR: [{ ownerId: input.userId }, { memberships: { some: { userId: input.userId } } }],
+        },
+      }),
+      this.prisma.placeSignup.count({
+        where: { userId: input.userId, status: PlaceSignupStatus.pending },
+      }),
+    ]);
+    if (ownedFree >= 1 || pending >= 1) {
+      throw new BadRequestException(
+        "Egy fiókhoz csak egy ingyenes hely / függő regisztráció tartozhat."
+      );
+    }
     const country = await this.prisma.country.findFirst({
       where: { id: input.countryId, isActive: true },
     });
@@ -330,6 +354,22 @@ export class CountryService {
           select: { id: true },
         })
       : await this.findTown(country.id, requested);
+
+    // When Stripe card verify is required, keep signup pending until fingerprint is stored.
+    const cardRequired = this.signupAbuse ? await this.signupAbuse.isCardRequired() : false;
+    if (cardRequired) {
+      await this.prisma.placeSignup.create({
+        data: {
+          userId: input.userId,
+          countryId: country.id,
+          townId: town?.id,
+          requestedTownName: requested || input.firstName,
+          status: PlaceSignupStatus.pending,
+        },
+      });
+      return { status: "pending" as const, cardRequired: true as const, townId: town?.id };
+    }
+
     if (town) {
       const placeId = await this.attachPlace(input.userId, town.id, input.firstName, input.lastName);
       await this.prisma.placeSignup.create({
@@ -353,6 +393,32 @@ export class CountryService {
       },
     });
     return { status: "pending" as const };
+  }
+
+  /**
+   * After Stripe card fingerprint is saved, attach a pending free signup that already has a town.
+   */
+  async tryAttachPendingAfterCard(userId: string) {
+    if (this.signupAbuse) {
+      await this.signupAbuse.assertCardVerifiedIfRequired(userId);
+    }
+    const signup = await this.prisma.placeSignup.findFirst({
+      where: { userId, status: PlaceSignupStatus.pending, townId: { not: null } },
+      include: { user: { select: { firstName: true, lastName: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!signup?.townId) return { status: "none" as const };
+    const placeId = await this.attachPlace(
+      userId,
+      signup.townId,
+      signup.user.firstName,
+      signup.user.lastName
+    );
+    await this.prisma.placeSignup.update({
+      where: { id: signup.id },
+      data: { status: PlaceSignupStatus.attached, placeId },
+    });
+    return { status: "attached" as const, placeId, townId: signup.townId };
   }
 
   async listHosts() {

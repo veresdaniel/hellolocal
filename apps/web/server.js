@@ -23,7 +23,7 @@ import {
   injectRootContent,
   isAdminPath,
 } from './ssr/renderPublicContent.js';
-import { injectPublicShellHead } from './ssr/publicShellCss.js';
+import { injectHostBootstrap, injectPublicShellHead } from './ssr/publicShellCss.js';
 import {
   applyHostScope,
   applySocialMeta,
@@ -725,7 +725,7 @@ app.get('*', async (req, res, next) => {
   }
   
   try {
-    const [meta, schema, contentBody] = await Promise.all([
+    const [meta, schema, content] = await Promise.all([
       resolvePublicShare({
         pathname: req.path,
         apiUrl: API_URL,
@@ -739,16 +739,22 @@ app.get('*', async (req, res, next) => {
         apiUrl: API_URL,
         requestHost: forwardHost,
         requestProto: forwardProto,
+        resolvedHost: customDomain,
       }),
     ]);
+    const contentBody = content?.html || null;
+    const lcpImage = content?.lcpImage || null;
     let html = applySocialMeta(readShell(), meta);
     if (schema) {
       const json = JSON.stringify(schema).replace(/</g, '\\u003c');
       html = html.replace('</head>', `    <script type="application/ld+json">${json}</script>\n  </head>`);
     }
     html = injectRootContent(html, contentBody);
+    if (customDomain) {
+      html = injectHostBootstrap(html, customDomain);
+    }
     if (contentBody) {
-      html = injectPublicShellHead(html);
+      html = injectPublicShellHead(html, { lcpImage });
     }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     if (meta?.notFound) {

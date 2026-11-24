@@ -57,7 +57,13 @@ export class AuthController {
   async register(@Body() dto: RegisterDto, @Req() req: RequestWithSite) {
     await assertPublicFormShield(dto);
     const referer = req.headers.referer || req.headers.origin;
-    return this.authService.register(dto, req.site?.siteId, referer);
+    const forwarded = req.headers["x-forwarded-for"];
+    const ip =
+      req.ip ||
+      (typeof forwarded === "string" ? forwarded.split(",")[0]?.trim() : undefined) ||
+      req.socket?.remoteAddress;
+    const userAgent = typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"] : null;
+    return this.authService.register(dto, req.site?.siteId, referer, { ip, userAgent });
   }
 
   /**

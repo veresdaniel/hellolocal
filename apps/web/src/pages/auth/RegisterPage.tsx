@@ -11,6 +11,9 @@ import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
 import { googleAuthHref } from "../../auth/googleOAuth";
 import { passwordProblem, passwordStrength } from "../../auth/passwordStrength";
 import { safeInternalPath } from "../../utils/safeInternalPath";
+import { getSignupDeviceHash } from "../../utils/signupDeviceHash";
+import { FreeTrialCardVerify } from "../../components/FreeTrialCardVerify";
+import { getFreeTrialCardStatus } from "../../api/signupAbuse.api";
 
 export function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -27,6 +30,7 @@ export function RegisterPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [registered, setRegistered] = useState(false);
+  const [needCard, setNeedCard] = useState(false);
   const { register } = useAuth();
   const shield = usePublicFormShield("register");
   const navigate = useNavigate();
@@ -137,11 +141,21 @@ export function RegisterPage() {
         lastName: formData.lastName,
         bio: visitor ? undefined : formData.bio || undefined,
         audience: visitor ? "visitor" : undefined,
+        deviceHash: getSignupDeviceHash(),
         ...(await shield.payload()),
       });
       if (visitor) {
         setRegistered(true);
         return;
+      }
+      try {
+        const card = await getFreeTrialCardStatus();
+        if (card.requireCard && !card.cardVerified) {
+          setNeedCard(true);
+          return;
+        }
+      } catch {
+        /* card gate optional when endpoint unavailable */
       }
       navigate(`/${lang}/admin`);
     } catch (err) {
@@ -171,6 +185,41 @@ export function RegisterPage() {
       setUsernameError(null);
     }
   };
+
+  if (needCard) {
+    return (
+      <div className="admin-login">
+        <div
+          style={{
+            maxWidth: 500,
+            width: "100%",
+            background: "white",
+            borderRadius: 16,
+            padding: "clamp(24px, 5vw, 40px)",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+          }}
+        >
+          <FreeTrialCardVerify
+            onVerified={() => navigate(`/${lang}/admin`)}
+          />
+          <button
+            type="button"
+            onClick={() => navigate(`/${lang}/admin`)}
+            style={{
+              marginTop: 12,
+              background: "transparent",
+              border: "none",
+              color: "#665d78",
+              cursor: "pointer",
+              textDecoration: "underline",
+            }}
+          >
+            {t("admin.signupAbuse.cardLater")}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (registered) {
     const next = safeInternalPath(sessionStorage.getItem("authReturnUrl"), `/${lang}`);

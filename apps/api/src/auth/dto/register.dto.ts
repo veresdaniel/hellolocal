@@ -54,4 +54,10 @@ export class RegisterDto extends PublicFormShieldFields {
   @IsString()
   @MaxLength(120)
   townName?: string;
+
+  /** Soft device signal from the SPA (localStorage id). Hashed server-side. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  deviceHash?: string;
 }

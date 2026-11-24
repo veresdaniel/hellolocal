@@ -15,6 +15,7 @@ import { visibleContentTiles, type ContentTileId } from "../../utils/adminTileAc
 import { isSuperadmin, hasUserRolePermission } from "../../utils/roleHelpers";
 import { ROLE_ADMIN, ROLE_EDITOR } from "../../types/enums";
 import type { UserRole } from "../../types/enums";
+import { FreeTrialCardVerify } from "../../components/FreeTrialCardVerify";
 
 type DashboardCardItem = {
   key: string;
@@ -324,6 +325,14 @@ export function AdminDashboard() {
         variant: "admin",
       },
       {
+        key: "signupSignals",
+        title: t("admin.signupAbuse.title"),
+        description: t("admin.dashboardCards.signupSignalsDesc"),
+        link: adminPath("/signup-signals"),
+        icon: "🛡️",
+        variant: "admin",
+      },
+      {
         key: "priceBands",
         title: t("admin.dashboardCards.priceBands"),
         description: t("admin.dashboardCards.priceBandsDesc"),
@@ -432,6 +441,8 @@ export function AdminDashboard() {
           {t("admin.dashboardWelcome")}
         </p>
       </div>
+
+      <FreeTrialCardVerify compact />
 
       {contentCards.length > 0 && (
         <div style={{ marginBottom: "clamp(24px, 5vw, 32px)" }}>

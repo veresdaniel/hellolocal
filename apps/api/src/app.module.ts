@@ -33,6 +33,7 @@ import { EntitlementsModule } from "./entitlements/entitlements.module";
 import { SubscriptionModule } from "./subscription/subscription.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { QuoteModule } from "./quotes/quote.module";
+import { SignupAbuseModule } from "./signup-abuse/signup-abuse.module";
 import { SeoInjectorMiddleware } from "./common/middleware/seo-injector.middleware";
 import { SiteResolveMiddleware } from "./common/middleware/site-resolve.middleware";
 import { CanonicalRedirectInterceptor } from "./common/interceptors/canonical-redirect.interceptor";
@@ -105,6 +106,7 @@ const envFilePath = configEnvFilePath();
     SubscriptionModule, // Subscription lifecycle management (cancel, expire)
     AnalyticsModule,
     QuoteModule, // Analytics tracking and dashboard
+    SignupAbuseModule, // Free-plan signup email / card / soft IP-device abuse gates
   ],
   controllers: [HealthController],
   providers: [

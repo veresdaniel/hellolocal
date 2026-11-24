@@ -152,6 +152,9 @@ const I18nAdminPage = lazy(() =>
 const EventLogPage = lazy(() =>
   import("../pages/admin/EventLogPage").then((m) => ({ default: m.EventLogPage }))
 );
+const SignupSignalsPage = lazy(() =>
+  import("../pages/admin/SignupSignalsPage").then((m) => ({ default: m.SignupSignalsPage }))
+);
 const SiteAnalyticsPage = lazy(() =>
   import("../pages/admin/SiteAnalyticsPage").then((m) => ({ default: m.SiteAnalyticsPage }))
 );
@@ -829,6 +832,18 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SubscriptionsDashboardPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "signup-signals",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <SignupSignalsPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>

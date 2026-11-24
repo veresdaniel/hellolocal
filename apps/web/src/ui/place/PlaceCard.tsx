@@ -93,12 +93,16 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Prefer dedicated card image, then hero, then platform placeholder
-  const imageUrl =
+  // Prefer dedicated card image, then hero, then platform placeholder.
+  // Marketing map ladder: use 480 as primary so SPA matches SSR explore LCP preload.
+  const rawImage =
     sanitizeImageUrl(place.cardImage) ||
     sanitizeImageUrl(place.heroImage) ||
     sanitizeImageUrl(platformSettings?.defaultPlaceholderCardImage) ||
     null;
+  const imageUrl = rawImage?.match(/\/marketing\/map-szeged/i)
+    ? "/marketing/map-szeged-480.webp"
+    : rawImage;
   const hasSlug = !!place.slug;
 
   // Common article content

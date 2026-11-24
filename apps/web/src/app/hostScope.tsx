@@ -23,6 +23,19 @@ const PLATFORM: HostScope = { status: "ready", kind: "platform" };
 
 let current: HostScope = PLATFORM;
 
+/** SSR-injected domain resolve (`#hl-host-bootstrap`) — skips /api/domain on first paint. */
+function readHostBootstrap(): HostResolve | null {
+  if (typeof document === "undefined") return null;
+  const el = document.getElementById("hl-host-bootstrap");
+  if (!el?.textContent?.trim()) return null;
+  try {
+    const data = JSON.parse(el.textContent) as HostResolve;
+    return data?.slug ? data : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Imperative read of the latest host scope (used by `buildUrl` outside React). */
 export function getHostScope(): HostScope {
   return current;
@@ -77,13 +90,17 @@ export function useHostScope(): HostScope {
  */
 export function HostScopeProvider({ children }: { children: ReactNode }) {
   const host = typeof window !== "undefined" ? window.location.hostname : "";
-  const [scope, setScope] = useState<HostScope>(() =>
-    !host || isPlatformHost(host) ? PLATFORM : { status: "loading", kind: "platform" }
-  );
+  const [scope, setScope] = useState<HostScope>(() => {
+    if (!host || isPlatformHost(host)) return PLATFORM;
+    const boot = readHostBootstrap();
+    if (boot) return scopeFromResolve(boot);
+    return { status: "loading", kind: "platform" };
+  });
   current = scope;
 
   useEffect(() => {
     const ac = new AbortController();
+    const boot = readHostBootstrap();
     void (async () => {
       try {
         const row = await getPublicPlatformHost();
@@ -100,6 +117,8 @@ export function HostScopeProvider({ children }: { children: ReactNode }) {
         setScope(PLATFORM);
         return;
       }
+      // SSR bootstrap already painted a ready scope — skip /api/domain round-trip.
+      if (boot?.slug) return;
       const site = await siteForHost(host, ac.signal);
       if (ac.signal.aborted) return;
       const next = scopeFromResolve(site);

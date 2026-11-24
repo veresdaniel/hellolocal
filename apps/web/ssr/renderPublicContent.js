@@ -170,7 +170,60 @@ function renderSitesBody(lang, sites, labels) {
     </main>`;
 }
 
-function renderRegionBody(lang, siteKey, platform, places, events, labels, townSlug) {
+/** Discover heading — keep in sync with `public.explore.siteTitle` / PlacesListView. */
+function discoverTitle(lang, siteName) {
+  const name = plainText(siteName) || "";
+  if (!name) return lang === "de" ? "Entdecken" : lang === "en" ? "Explore" : "Felfedezés";
+  if (lang === "en") return `Explore ${name}`;
+  if (lang === "de") return `${name} entdecken`;
+  return `${name} felfedezése`;
+}
+
+/** Prefer card → hero → platform placeholder → local marketing 480 (mobile LCP). */
+function firstCardImage(places, platform) {
+  const first = asList(places).find((p) => p && (p.cardImage || p.heroImage || p.name));
+  const raw =
+    (first && (first.cardImage || first.heroImage)) ||
+    platform?.placeholders?.placeCard ||
+    platform?.defaultPlaceholderCardImage ||
+    "";
+  const url = String(raw || "").trim();
+  if (!url) return "/marketing/map-szeged-480.webp";
+  // Same marketing ladder as overview: serve 480 as document LCP candidate.
+  if (/\/marketing\/map-szeged(?:-\d+)?\.(webp|jpg|jpeg|png)$/i.test(url)) {
+    return "/marketing/map-szeged-480.webp";
+  }
+  return url;
+}
+
+function renderFirstListCard(lang, siteKey, places, platform) {
+  const first = asList(places).find((p) => p?.slug && p?.name);
+  if (!first) return { html: "", lcpImage: null };
+  const href = placeHref(lang, siteKey, first.slug);
+  const name = escapeHtml(plainText(first.name));
+  const img = firstCardImage(places, platform);
+  const imgEsc = escapeHtml(img);
+  const srcset = img.includes("map-szeged")
+    ? ` srcset="/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w" sizes="(max-width: 680px) 92vw, (max-width: 1040px) 45vw, 30vw"`
+    : "";
+  const html = `
+      <section class="hl-ssr-discover" aria-label="${escapeHtml(labelsFor(lang).places)}">
+        <a class="list-card list-card--ssr" href="${escapeHtml(href)}">
+          <div class="list-card__media">
+            <div class="list-card__media-fill">
+              <img alt="${name}" width="500" height="320"${srcset}
+                loading="eager" decoding="sync" fetchpriority="high"
+                src="${imgEsc}"
+                style="width:100%;height:100%;object-fit:cover;object-position:center top;display:block" />
+            </div>
+          </div>
+          <div class="list-card__body"><strong>${name}</strong></div>
+        </a>
+      </section>`;
+  return { html, lcpImage: img };
+}
+
+function renderRegionBody(lang, siteKey, platform, places, events, labels, townSlug, opts = {}) {
   const site = platform?.site || {};
   const title = plainText(site.name) || siteKey;
   const lead =
@@ -203,9 +256,33 @@ function renderRegionBody(lang, siteKey, platform, places, events, labels, townS
     .filter(Boolean)
     .join("");
   const heading = townSlug ? `${plainText(townSlug)} · ${title}` : title;
+  // Custom-host explore: match SPA discover title + first list-card so LCP img
+  // is in the initial document (PSI: not found in document → wait for SPA).
+  if (opts.exploreShell) {
+    const card = renderFirstListCard(lang, siteKey, places, platform);
+    return {
+      html: `
+    <main class="hl-ssr-explore">
+      <h1 class="places-discover__title">${escapeHtml(discoverTitle(lang, title))}</h1>
+      ${card.html}
+      ${
+        placeItems
+          ? `<section class="hl-ssr-links"><h2>${escapeHtml(labels.places)}</h2><ul>${placeItems}</ul></section>`
+          : ""
+      }
+      ${
+        eventItems
+          ? `<section class="hl-ssr-links"><h2>${escapeHtml(labels.events)}</h2><ul>${eventItems}</ul></section>`
+          : ""
+      }
+    </main>`,
+      lcpImage: card.lcpImage,
+    };
+  }
   // No "Régiók → /:lang" crumb: on custom domains /:lang is this home; on the
   // platform host that path is the marketing overview, not the region list.
-  return `
+  return {
+    html: `
     <main>
       <h1>${escapeHtml(heading)}</h1>
       ${paragraph(lead, 500)}
@@ -219,7 +296,9 @@ function renderRegionBody(lang, siteKey, platform, places, events, labels, townS
           ? `<section><h2>${escapeHtml(labels.events)}</h2><ul>${eventItems}</ul></section>`
           : ""
       }
-    </main>`;
+    </main>`,
+    lcpImage: null,
+  };
 }
 
 function renderPlaceBody(lang, siteKey, place, labels) {
@@ -308,15 +387,17 @@ export function injectRootContent(html, body) {
 
 /**
  * Build crawlable HTML for high-value public routes (region, town, place, event, region list).
- * Returns null when the path should stay an empty SPA shell.
+ * Returns `{ html, lcpImage }` or null when the path should stay an empty SPA shell.
  * Pass `requestHost` / `requestProto` on custom domains so `/hu` is the tenant home
  * (not the platform region list) — same host-scope as resolvePublicShare.
+ * @param {{ resolvedHost?: object | null }} [opts] Skip duplicate /api/domain when already resolved.
  */
 export async function buildPublicContentHtml({
   pathname,
   apiUrl,
   requestHost = null,
   requestProto = "https",
+  resolvedHost = null,
 }) {
   let route = parsePublicPath(pathname);
   const base = String(apiUrl || "").replace(/\/$/, "");
@@ -331,12 +412,14 @@ export async function buildPublicContentHtml({
       ? { host, proto: requestProto || "https" }
       : null;
   if (forward?.host) {
-    const resolved = await resolveDomainHost(base, forward.host, forward);
+    const resolved =
+      resolvedHost || (await resolveDomainHost(base, forward.host, forward));
     if (resolved) route = applyHostScope(route, resolved);
   }
 
   if (!CONTENT_KINDS.has(route.kind)) return null;
   const labels = labelsFor(route.lang);
+  const wrap = (html, lcpImage = null) => (html ? { html, lcpImage } : null);
 
   try {
     if (route.kind === "sites") {
@@ -354,7 +437,7 @@ export async function buildPublicContentHtml({
             )
           : null);
       if (!asList(sites).length) return null;
-      return renderSitesBody(route.lang, sites, labels);
+      return wrap(renderSitesBody(route.lang, sites, labels));
     }
 
     if (route.kind === "site" || route.kind === "town") {
@@ -378,15 +461,25 @@ export async function buildPublicContentHtml({
         ),
       ]);
       if (!platform?.site && !asList(places).length && !asList(events).length) return null;
-      return renderRegionBody(
+      // Explore shell only on custom-host home (list), not map path segments.
+      const pathTail = String(pathname || "")
+        .split("/")
+        .filter(Boolean)
+        .slice(1);
+      const isMap =
+        pathTail.includes("map") || pathTail.includes("terkep") || pathTail.includes("karte");
+      const exploreShell = Boolean(forward?.host) && !isMap;
+      const region = renderRegionBody(
         route.lang,
         route.siteKey,
         platform,
         places,
         route.kind === "town" ? [] : events,
         labels,
-        route.kind === "town" ? route.slug : ""
+        route.kind === "town" ? route.slug : "",
+        { exploreShell }
       );
+      return wrap(region.html, region.lcpImage);
     }
 
     if (route.kind === "place" || route.kind === "event") {
@@ -401,9 +494,11 @@ export async function buildPublicContentHtml({
       );
       if (!entity?.name && !entity?.slug) return null;
       const siteKey = route.siteKey || entity.siteKey || "";
-      return route.kind === "place"
-        ? renderPlaceBody(route.lang, siteKey, entity, labels)
-        : renderEventBody(route.lang, siteKey, entity, labels);
+      const html =
+        route.kind === "place"
+          ? renderPlaceBody(route.lang, siteKey, entity, labels)
+          : renderEventBody(route.lang, siteKey, entity, labels);
+      return wrap(html);
     }
   } catch (error) {
     console.error(`[SSR] Public content failed for ${pathname}: ${error.message}`);

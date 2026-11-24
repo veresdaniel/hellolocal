@@ -18,6 +18,12 @@ export interface RegisterDto extends PublicFormShieldFields {
   siteId?: string;
   /** "visitor" creates a public account without a plan or a place. */
   audience?: "visitor";
+  plan?: string;
+  countryId?: string;
+  townId?: string;
+  townName?: string;
+  /** Soft device id from localStorage; hashed server-side. */
+  deviceHash?: string;
 }
 
 export interface LoginDto extends PublicFormShieldFields {

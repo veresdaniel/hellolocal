@@ -7,6 +7,7 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { EmailModule } from "../email/email.module";
 import { TwoFactorModule } from "../two-factor/two-factor.module";
 import { EventLogModule } from "../event-log/event-log.module";
+import { SignupAbuseModule } from "../signup-abuse/signup-abuse.module";
 import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
 import { JwtStrategy } from "./strategies/jwt.strategy";
@@ -20,6 +21,7 @@ import { PlaceRoleGuard } from "./guards/place-role.guard";
   imports: [
     PrismaModule,
     forwardRef(() => CountryModule),
+    forwardRef(() => SignupAbuseModule),
     EmailModule,
     TwoFactorModule,
     EventLogModule, // Import EventLogModule to access AdminEventLogService (avoids circular dependency)

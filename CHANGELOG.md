@@ -14,7 +14,11 @@ in prose as used in the product.
 
 ### Fixed
 
-- helloetyek explore lab LCP: paint `places-discover__title` during the list
+- helloetyek explore lab LCP: SSR emit discover title + first `list-card` img
+  (same markup PSI cites), preload `map-szeged-480.webp`, async `index.css`,
+  `#hl-host-bootstrap` so HostScope skips `/api/domain` on first paint; SPA
+  PlaceCard uses the 480 marketing ladder to match the preload.
+- helloetyek explore lab LCP (earlier): paint `places-discover__title` during the list
   skeleton (og:title), preconnect `api.hello-local.io` on custom-host SSR, strip
   admin Google Fonts from that shell, idle-defer DB UI-copy fetch, keep
   OverviewPage lazy (modulepreload only on platform overview) so explore does
@@ -22,6 +26,11 @@ in prose as used in the product.
 
 ### Added
 
+- Free-account abuse stack: email normalize + disposable block, one free
+  place/pending per user, optional Stripe SetupIntent card fingerprint
+  (`platform.freeTrialRequireCard` + `STRIPE_*`), soft IP/device score with
+  admin “Gyanús regisztrációk” list (`/admin/signup-signals`), migration
+  `20261124160000_signup_abuse_signals`.
 - Platform landing images CMS: per-language hero / story / closing / share
   Cloudinary URLs via AppSetting `platform.landingImages` (admin App settings);
   overview SSR + SPA resolve CMS URLs over bundled `/marketing` fallbacks.

@@ -797,6 +797,8 @@ model User {
   id           String @id @default(cuid())
   username     String @unique
   email        String @unique
+  /** Lowercased / Gmail-dot-stripped form used for multi-account abuse checks. */
+  emailNormalized String?
   passwordHash String // bcrypt hashed password
 
   firstName String
@@ -805,6 +807,15 @@ model User {
 
   role     UserRole @default(viewer)
   isActive Boolean  @default(true)
+
+  /** Soft signup signals (hashed). */
+  signupIpHash     String?
+  signupDeviceHash String?
+  signupUserAgent  String? @db.VarChar(512)
+
+  /** Stripe identity for free-trial card verify (optional until STRIPE_SECRET_KEY is set). */
+  stripeCustomerId      String?
+  stripeCardFingerprint String?
 
   // Password reset
   resetToken          String?
@@ -849,6 +860,7 @@ model User {
   townMemberships TownMembership[]
 
   placeSignups PlaceSignup[]
+  signupSignals SignupSignal[]
 
   subscriptionChanges SubscriptionHistory[] @relation("SubscriptionChangedBy")
 
@@ -862,8 +874,40 @@ model User {
   eventRatings EventRating[]
 
   @@index([email])
+  @@index([emailNormalized])
   @@index([username])
   @@index([isActive])
+  @@index([signupIpHash])
+  @@index([signupDeviceHash])
+  @@index([stripeCardFingerprint])
+}
+
+/**
+ * Per-registration abuse / risk signal for free-plan and public signup review.
+ * Soft scores (IP / device) flag for admin; hard blocks use emailNormalized + card fingerprint.
+ */
+model SignupSignal {
+  id               String   @id @default(cuid())
+  userId           String?
+  emailNormalized  String
+  ipHash           String?
+  deviceHash       String?
+  userAgent        String?  @db.VarChar(512)
+  stripeFingerprint String?
+  riskScore        Int      @default(0)
+  flags            String[] @default([])
+  note             String?
+  createdAt        DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([emailNormalized])
+  @@index([ipHash])
+  @@index([deviceHash])
+  @@index([stripeFingerprint])
+  @@index([riskScore])
+  @@index([createdAt])
+  @@index([userId])
 }
 
 // PlaceRating: User ratings for places (1-5 stars)
