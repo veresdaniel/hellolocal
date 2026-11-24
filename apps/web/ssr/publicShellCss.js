@@ -4,10 +4,10 @@ import { publicThemeInlineCss } from "./publicThemePresets.js";
  * First-paint styles for crawlable SSR bodies injected into `#root`
  * (region / town / place / event). Complements index.html `hl-first-paint`.
  */
+/** Structural shell only — colors come from `publicThemeInlineCss` on `<html style>`. */
 export const PUBLIC_SSR_SHELL_CSS = `
-:root{--hl-bg:#1b1730;--hl-bg-mid:#1f2140;--hl-bg-deep:#16132a;--hl-on-dark:#f2f4fb;--hl-on-dark-strong:#fff;--hl-muted-on-dark:#a8b0c8;--hl-mist:#7a92c8;--hl-card:#fffdf9;--hl-ink:#1b1730;--font-body:"Source Sans 3",system-ui,-apple-system,sans-serif}
-html{background-color:var(--hl-bg);color:var(--hl-on-dark)}
-body{margin:0;min-height:100vh;background-color:var(--hl-bg);color:var(--hl-on-dark);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
+:root{--font-body:"Source Sans 3",system-ui,-apple-system,sans-serif}
+body{margin:0;min-height:100vh;font-family:var(--font-body);-webkit-font-smoothing:antialiased}
 #root.hl-public{box-sizing:border-box;min-height:100vh;color:inherit;background:transparent;visibility:visible}
 /* Humans never paint crawl SSR (avoids list-page flash); bots still read the HTML. */
 #root.hl-public>.hl-ssr,#hl-ssr-hold{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important;pointer-events:none!important}
@@ -110,7 +110,7 @@ export function injectPublicShellHead(html, opts = {}) {
   }
   const theme = publicThemeInlineCss(opts.siteTheme, opts.brandTheme);
   if (!next.includes('id="public-ssr-shell"')) {
-    const block = `    <style id="public-ssr-shell">${PUBLIC_SSR_SHELL_CSS}\n${theme.css}</style>`;
+    const block = `    <style id="public-ssr-shell" data-hl-theme-vars="1">${PUBLIC_SSR_SHELL_CSS}\n${theme.css}</style>`;
     next = next.includes("</head>")
       ? next.replace("</head>", `${block}\n  </head>`)
       : `${block}${next}`;
@@ -121,10 +121,22 @@ export function injectPublicShellHead(html, opts = {}) {
       ? next.replace("</head>", `${block}\n  </head>`)
       : `${block}${next}`;
   }
-  // Mark document + root for atelier/classic attribute selectors before SPA boot.
+  // Theme on <html style> beats SPA `:root` navy defaults; data-theme for atelier CSS.
+  const safeStyle = String(theme.styleAttr || "").replace(/"/g, "&quot;");
   next = next.replace(/<html(\s[^>]*)?>/i, (full, attrs = "") => {
-    if (/\bdata-theme=/.test(attrs)) return full;
-    return `<html${attrs} data-theme="${theme.presetId}">`;
+    let nextAttrs = attrs || "";
+    if (!/\bdata-theme=/.test(nextAttrs)) {
+      nextAttrs += ` data-theme="${theme.presetId}"`;
+    }
+    if (/\bstyle=/.test(nextAttrs)) {
+      nextAttrs = nextAttrs.replace(/\bstyle=(["'])([\s\S]*?)\1/i, (_, q, existing) => {
+        const merged = existing ? `${existing};${theme.styleAttr}` : theme.styleAttr;
+        return `style=${q}${String(merged).replace(new RegExp(q, "g"), "")}${q}`;
+      });
+    } else {
+      nextAttrs += ` style="${safeStyle}"`;
+    }
+    return `<html${nextAttrs}>`;
   });
   next = next.replace(
     /<div id="root"([^>]*)>/i,

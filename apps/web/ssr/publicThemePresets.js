@@ -165,15 +165,22 @@ export function publicThemeCssVars(siteTheme, brandTheme) {
   };
 }
 
-/** Inline `:root` / `html` declarations for first paint. */
+/**
+ * First-paint theme CSS. `styleAttr` goes on `<html style="...">` so it beats
+ * later `:root` rules from the SPA CSS bundle (classic navy FOUC on atelier).
+ */
 export function publicThemeInlineCss(siteTheme, brandTheme) {
   const { presetId, vars } = publicThemeCssVars(siteTheme, brandTheme);
   const decls = Object.entries(vars)
     .map(([k, v]) => `${k}:${v}`)
     .join(";");
   const pageColor = presetId === "atelier" ? vars["--hl-ink"] : vars["--hl-on-dark"];
+  const bg = vars["--hl-bg"];
+  const bgImage = vars["--hl-bg-image"] || "none";
+  const styleAttr = `${decls};background-color:${bg};background-image:${bgImage};color:${pageColor}`;
   return {
     presetId,
-    css: `:root{${decls}}html{background-color:var(--hl-bg);color:${pageColor}}body{background-color:var(--hl-bg);color:inherit}`,
+    styleAttr,
+    css: `html{background-color:var(--hl-bg);background-image:var(--hl-bg-image);color:${pageColor}}body{background-color:var(--hl-bg);background-image:var(--hl-bg-image);color:inherit}`,
   };
 }
