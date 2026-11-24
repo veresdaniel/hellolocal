@@ -1068,12 +1068,20 @@ export function PlaceDetailPage() {
                   display: "grid",
                   gridTemplateColumns: shouldShowTwoColumns ? "1fr 1fr" : "1fr",
                   gap: 12,
+                  width: "auto",
+                  maxWidth: "100%",
+                  boxSizing: "border-box",
                 }}
               >
                 <style>{`
                 @media (max-width: 767px) {
                   .contact-opening-hours-grid {
-                    gridTemplateColumns: 1fr !important;
+                    grid-template-columns: 1fr !important;
+                  }
+                  .contact-opening-hours-grid > * {
+                    width: 100%;
+                    min-width: 0;
+                    max-width: 100%;
                   }
                   .gallery-compact {
                     order: 2;
@@ -1520,12 +1528,13 @@ export function PlaceDetailPage() {
                 {/* Opening Hours - Right, or Gallery if no opening hours but has address */}
                 {place.openingHours && place.openingHours.length > 0 ? (
                   <div
+                    className="hl-content-card hl-hours-panel"
                     style={{
-                      background: "var(--hl-card)",
                       padding: "16px",
                       borderRadius: 12,
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-                      border: "1px solid rgba(102, 126, 234, 0.1)",
+                      minWidth: 0,
+                      width: "100%",
+                      boxSizing: "border-box",
                     }}
                   >
                     <h3
@@ -1541,7 +1550,9 @@ export function PlaceDetailPage() {
                         gap: 6,
                       }}
                     >
-                      <span style={{ fontSize: 18 }}>🕐</span>
+                      <span style={{ fontSize: 18 }} aria-hidden>
+                        🕐
+                      </span>
                       {t("public.openingHours")}
                     </h3>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -1556,25 +1567,33 @@ export function PlaceDetailPage() {
                         return (
                           <div
                             key={index}
+                            className={isToday ? "hl-hours-today" : undefined}
                             style={{
                               display: "flex",
                               justifyContent: "space-between",
                               alignItems: "center",
-                              padding: "6px 10px",
-                              background: isToday ? "rgba(102, 126, 234, 0.05)" : "transparent",
+                              gap: 12,
+                              padding: "8px 10px",
+                              background: isToday
+                                ? "color-mix(in srgb, var(--hl-accent, #c45c26) 10%, transparent)"
+                                : "transparent",
                               borderRadius: 6,
                               border: isToday
-                                ? "1px solid rgba(102, 126, 234, 0.2)"
+                                ? "1px solid color-mix(in srgb, var(--hl-accent, #c45c26) 28%, transparent)"
                                 : "1px solid transparent",
+                              minWidth: 0,
                             }}
                           >
                             <span
                               style={{
-                                fontWeight: isToday ? 500 : 400,
+                                fontWeight: isToday ? 600 : 400,
                                 fontFamily:
                                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                                color: isToday ? "#c45c26" : "#333",
+                                color: isToday
+                                  ? "var(--hl-accent, #c45c26)"
+                                  : "var(--hl-ink, #1b1730)",
                                 fontSize: "clamp(14px, 3.5vw, 16px)",
+                                minWidth: 0,
                               }}
                             >
                               {dayName}
@@ -1595,11 +1614,15 @@ export function PlaceDetailPage() {
                             </span>
                             <span
                               style={{
-                                color: oh.isClosed ? "#999" : "#333",
+                                color: oh.isClosed
+                                  ? "var(--hl-muted, #665d78)"
+                                  : "var(--hl-ink, #1b1730)",
                                 fontSize: "clamp(14px, 3.5vw, 16px)",
                                 fontFamily:
                                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                                 fontWeight: 400,
+                                whiteSpace: "nowrap",
+                                flexShrink: 0,
                               }}
                             >
                               {oh.isClosed ? (

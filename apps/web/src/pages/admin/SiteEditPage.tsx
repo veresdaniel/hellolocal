@@ -63,9 +63,12 @@ import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
 import {
   DEFAULT_PUBLIC_THEME_COLORS,
+  DEFAULT_PUBLIC_THEME_PRESET,
   isValidHexColor,
   resolvePublicThemeColors,
+  resolvePublicThemePreset,
   type PublicThemeColors,
+  type PublicThemePresetId,
 } from "../../styles/publicThemeColors";
 import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEditor";
 
@@ -183,6 +186,7 @@ export function SiteEditPage() {
     allowPublicRegistration: true,
     showAdvanced: false,
     gaMeasurementId: "",
+    themePresetId: DEFAULT_PUBLIC_THEME_PRESET as PublicThemePresetId,
     themeColors: { ...DEFAULT_PUBLIC_THEME_COLORS } as PublicThemeColors,
     // Domain tab - will be handled separately
     // Appearance tab - will be handled via SiteInstance
@@ -267,6 +271,7 @@ export function SiteEditPage() {
         allowPublicRegistration: data.allowPublicRegistration ?? true,
         showAdvanced: false,
         gaMeasurementId: data.gaMeasurementId ?? "",
+        themePresetId: resolvePublicThemePreset(data.theme, data.brand?.theme),
         themeColors: resolvePublicThemeColors(data.theme, data.brand?.theme),
       }, data.translations.map((row) => ({
         ...row,
@@ -358,7 +363,10 @@ export function SiteEditPage() {
         gaMeasurementId: formData.gaMeasurementId.trim()
           ? formData.gaMeasurementId.trim().toUpperCase()
           : null,
-        theme: { colors },
+        theme: {
+          presetId: formData.themePresetId || DEFAULT_PUBLIC_THEME_PRESET,
+          colors,
+        },
       };
 
       await updateSite(id, updateData);
@@ -1233,6 +1241,10 @@ function OverviewTab({
         <PublicThemeColorsEditor
           value={(formData.themeColors as PublicThemeColors) || DEFAULT_PUBLIC_THEME_COLORS}
           onChange={(next) => setFormData({ ...formData, themeColors: next })}
+          presetId={
+            (formData.themePresetId as PublicThemePresetId) || DEFAULT_PUBLIC_THEME_PRESET
+          }
+          onPresetChange={(themePresetId) => setFormData({ ...formData, themePresetId })}
         />
         {formErrors.themeColors ? (
           <p style={{ margin: "8px 0 0", color: "#dc2626", fontSize: 13 }}>

@@ -22,7 +22,9 @@ import { sanitizeHtml } from "../utils/sanitizeHtml";
 import { sanitizeImageUrl } from "../utils/urlValidation";
 import { usePublishedLanguages } from "../hooks/useContentLanguages";
 import { NotFoundPage } from "./NotFoundPage";
-
+import { useApplyPublicTheme, publicThemeStyle } from "../hooks/useApplyPublicTheme";
+import { resolvePublicThemePreset } from "../styles/publicThemeColors";
+import { publicFontCssVars } from "../styles/publicFonts";
 
 /** Route page for a curated collection of regions (lazy-loaded from the router). */
 export function CollectionDetailPage() {
@@ -99,12 +101,16 @@ export function CollectionDetailPage() {
     enabled: !!slug || isDomainBased,
   });
 
-  // Load platform settings for SEO
+  // Load platform settings for SEO + public theme (custom-domain collections skip SiteLayout)
   const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", lang, siteKey],
     queryFn: () => getPlatformSettings(lang, siteKey),
     staleTime: 5 * 60 * 1000,
   });
+
+  const collectionSiteTheme = platformSettings?.siteTheme;
+  const collectionBrandTheme = platformSettings?.brand?.theme;
+  useApplyPublicTheme(collectionSiteTheme, collectionBrandTheme);
 
   // Sync i18n language
   useEffect(() => {
@@ -206,7 +212,15 @@ export function CollectionDetailPage() {
   }
 
   return (
-    <>
+    <div
+      className="hl-public"
+      data-theme={resolvePublicThemePreset(collectionSiteTheme, collectionBrandTheme)}
+      style={{
+        ...publicFontCssVars(collectionBrandTheme),
+        ...publicThemeStyle(collectionSiteTheme, collectionBrandTheme),
+        minHeight: "100vh",
+      }}
+    >
       <FloatingHeader visitorAuth hideMapViewButton={true} />
       <div style={{ paddingTop: "clamp(72px, 8vw, 88px)" }}>
         {/* Hero: fixed aspect-ratio + skeleton for LCP/CLS */}
@@ -388,6 +402,6 @@ export function CollectionDetailPage() {
         )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

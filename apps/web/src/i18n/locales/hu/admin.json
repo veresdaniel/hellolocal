@@ -1890,7 +1890,12 @@
     "muted": "Halvány szöveg",
     "onDark": "Szöveg sötét alapon",
     "onAccent": "Szöveg kiemelésen",
-    "helpSite": "Ennek a helynek a publikus színei. Üresen a platform / domain alapértelmezés érvényes."
+    "helpSite": "Ennek a helynek a publikus színei. Üresen a platform / domain alapértelmezés érvényes.",
+    "presetLabel": "Design preset",
+    "presetClassic": "Klasszikus (kék)",
+    "presetClassicHelp": "A jelenlegi navy háttér és krémszínű kártyák. A térkép nézet mindig ezt használja.",
+    "presetAtelier": "Atelier (2026 light)",
+    "presetAtelierHelp": "Világos aggregátor-stílus: fehér lap, sötét tinta, visszafogott accent. Bemutatkozó és térkép kimarad."
   },
   "eventActive": "Aktív",
   "eventActiveDescription": "Az esemény látható a publikus oldalon",

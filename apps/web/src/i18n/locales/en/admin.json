@@ -1835,7 +1835,12 @@
     "muted": "Muted text",
     "onDark": "Text on dark",
     "onAccent": "Text on accent",
-    "helpSite": "Public colors for this place. Leave empty to inherit platform/domain defaults."
+    "helpSite": "Public colors for this place. Leave empty to inherit platform/domain defaults.",
+    "presetLabel": "Design preset",
+    "presetClassic": "Classic (blue)",
+    "presetClassicHelp": "Current navy backdrop and cream cards. Map view always uses this chrome.",
+    "presetAtelier": "Atelier (2026 light)",
+    "presetAtelierHelp": "Light aggregator look: white sheets, dark ink, restrained accent. Overview and map stay classic."
   },
   "eventActive": "Active",
   "eventActiveDescription": "The event is visible on the public page",

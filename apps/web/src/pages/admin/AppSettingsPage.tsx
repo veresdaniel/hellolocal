@@ -49,9 +49,12 @@ import {
 } from "../../styles/publicFonts";
 import {
   DEFAULT_PUBLIC_THEME_COLORS,
+  DEFAULT_PUBLIC_THEME_PRESET,
   isValidHexColor,
   resolvePublicThemeColors,
+  resolvePublicThemePreset,
   type PublicThemeColors,
+  type PublicThemePresetId,
 } from "../../styles/publicThemeColors";
 import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEditor";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
@@ -152,6 +155,8 @@ export function AppSettingsPage() {
   const [themeColors, setThemeColors] = useState<PublicThemeColors>({
     ...DEFAULT_PUBLIC_THEME_COLORS,
   });
+  const [themePresetId, setThemePresetId] =
+    useState<PublicThemePresetId>(DEFAULT_PUBLIC_THEME_PRESET);
   const [isSavingThemeColors, setIsSavingThemeColors] = useState(false);
 
   useEffect(() => {
@@ -271,6 +276,7 @@ export function AppSettingsPage() {
         setHeadingFont(fonts.headingFont);
         setBodyFont(fonts.bodyFont);
         setThemeColors(resolvePublicThemeColors(undefined, theme));
+        setThemePresetId(resolvePublicThemePreset(undefined, theme));
       })
       .catch(() => {
         if (!cancelled) setBrandId(null);
@@ -312,7 +318,13 @@ export function AppSettingsPage() {
     }
     try {
       setIsSavingThemeColors(true);
-      const nextTheme = { ...brandTheme, headingFont, bodyFont, colors: themeColors };
+      const nextTheme = {
+        ...brandTheme,
+        headingFont,
+        bodyFont,
+        presetId: themePresetId,
+        colors: themeColors,
+      };
       await updateBrand(brandId, { theme: nextTheme });
       setBrandTheme(nextTheme);
       showToast(t("admin.themeColors.saved"), "success");
@@ -1071,6 +1083,8 @@ export function AppSettingsPage() {
               <PublicThemeColorsEditor
                 value={themeColors}
                 onChange={setThemeColors}
+                presetId={themePresetId}
+                onPresetChange={setThemePresetId}
                 disabled={isSavingThemeColors || !brandId}
               />
               <button

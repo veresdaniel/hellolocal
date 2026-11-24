@@ -19,6 +19,7 @@ import type { PlatformSettings } from "./SiteOutletContext";
 import { publicFontCssVars } from "../../styles/publicFonts";
 import { useApplyPublicFonts } from "../../hooks/useApplyPublicFonts";
 import { useApplyPublicTheme, publicThemeStyle } from "../../hooks/useApplyPublicTheme";
+import { resolvePublicThemePreset } from "../../styles/publicThemeColors";
 import { CookieConsent } from "../../components/CookieConsent";
 import { GoogleAnalytics } from "../../components/GoogleAnalytics";
 import { InsideSiteChrome, PlatformGaShell } from "../../components/PlatformGaShell";
@@ -203,6 +204,7 @@ export function SiteLayout() {
     return (
       <div
         className="hl-public"
+        data-theme={resolvePublicThemePreset(platform.siteTheme, platform.brand?.theme)}
         style={{
           ...publicFontCssVars(platform.brand?.theme),
           ...publicThemeStyle(platform.siteTheme, platform.brand?.theme),
@@ -267,6 +269,7 @@ function SiteLayoutContent({
   return (
     <div
       className="hl-public"
+      data-theme={resolvePublicThemePreset(platform.siteTheme, platform.brand?.theme)}
       style={{
         ...publicFontCssVars(platform.brand?.theme),
         ...publicThemeStyle(platform.siteTheme, platform.brand?.theme),

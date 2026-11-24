@@ -13,6 +13,10 @@ export const PUBLIC_COLOR_KEYS = [
 
 export type PublicColorKey = (typeof PUBLIC_COLOR_KEYS)[number];
 
+export const PUBLIC_THEME_PRESET_IDS = ["classic", "atelier"] as const;
+
+export type PublicThemePresetId = (typeof PUBLIC_THEME_PRESET_IDS)[number];
+
 const HEX_RE = /^#([0-9a-fA-F]{6})$/;
 
 export function isValidHexColor(value: unknown): value is string {
@@ -23,9 +27,21 @@ export function normalizeHexColor(value: string): string {
   return value.trim().toLowerCase();
 }
 
+export function isPublicThemePresetId(value: unknown): value is PublicThemePresetId {
+  return value === "classic" || value === "atelier";
+}
+
+function sanitizePresetId(value: unknown): PublicThemePresetId | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (!isPublicThemePresetId(value)) {
+    throw new Error("Invalid theme presetId. Use classic or atelier.");
+  }
+  return value;
+}
+
 /**
- * Normalize theme payload: keep unrelated Brand.theme keys (fonts), sanitize colors.
- * Accepts `{ colors: {...} }` or a flat color map mixed into theme.
+ * Normalize theme payload: keep unrelated Brand.theme keys (fonts), sanitize colors + presetId.
+ * Accepts `{ colors: {...}, presetId }` or a flat color map mixed into theme.
  */
 export function mergeThemeWithColors(
   existingTheme: unknown,
@@ -38,6 +54,7 @@ export function mergeThemeWithColors(
 
   if (nextTheme === null) {
     delete base.colors;
+    delete base.presetId;
     return base;
   }
 
@@ -47,6 +64,12 @@ export function mergeThemeWithColors(
 
   const incoming = nextTheme as Record<string, unknown>;
   const next: Record<string, unknown> = { ...base, ...incoming };
+
+  if ("presetId" in incoming) {
+    const presetId = sanitizePresetId(incoming.presetId);
+    if (presetId) next.presetId = presetId;
+    else delete next.presetId;
+  }
 
   const colorSource =
     incoming.colors && typeof incoming.colors === "object" && !Array.isArray(incoming.colors)
@@ -70,7 +93,7 @@ export function mergeThemeWithColors(
       colors[key] = normalizeHexColor(value);
     }
 
-    // Strip flat color keys from root so Brand.theme stays { fonts..., colors: {} }
+    // Strip flat color keys from root so Brand.theme stays { fonts..., colors: {}, presetId }
     for (const key of PUBLIC_COLOR_KEYS) {
       delete next[key];
     }
@@ -99,5 +122,8 @@ export function sanitizeSiteTheme(input: unknown): Record<string, unknown> | nul
     }
     colors[key] = normalizeHexColor(value);
   }
-  return { colors };
+  const out: Record<string, unknown> = { colors };
+  const presetId = sanitizePresetId(raw.presetId);
+  if (presetId) out.presetId = presetId;
+  return out;
 }

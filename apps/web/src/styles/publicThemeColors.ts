@@ -1,4 +1,11 @@
-/** Public design colors: site → brand → code defaults. Native color inputs need #RRGGBB. */
+/** Public design colors: site → brand → preset defaults. Native color inputs need #RRGGBB. */
+
+import {
+  CLASSIC_PUBLIC_THEME_COLORS,
+  presetColors,
+  resolvePublicThemePreset,
+  type PublicThemePresetId,
+} from "./publicThemePresets";
 
 export const PUBLIC_COLOR_KEYS = [
   "bg",
@@ -17,15 +24,22 @@ export type PublicThemeColors = Record<PublicColorKey, string>;
 
 /** Page navy/blue wash; cards stay cream; ink dark on cards; onDark for blue backdrop. */
 export const DEFAULT_PUBLIC_THEME_COLORS: PublicThemeColors = {
-  bg: "#1b1730",
-  card: "#fffdf9",
-  accent: "#c45c26",
-  header: "#1b1730",
-  ink: "#1b1730",
-  muted: "#665d78",
-  onDark: "#f2f4fb",
-  onAccent: "#fffdf9",
+  ...CLASSIC_PUBLIC_THEME_COLORS,
 };
+
+/** Re-export so call sites can import preset helpers from one module. */
+export {
+  PUBLIC_THEME_PRESET_IDS,
+  PUBLIC_THEME_PRESETS,
+  DEFAULT_PUBLIC_THEME_PRESET,
+  ATELIER_PUBLIC_THEME_COLORS,
+  CLASSIC_PUBLIC_THEME_COLORS,
+  resolvePublicThemePreset,
+  presetColors,
+  isPublicThemePresetId,
+  sanitizePublicThemePresetId,
+  type PublicThemePresetId,
+} from "./publicThemePresets";
 
 const HEX_RE = /^#([0-9a-fA-F]{6})$/;
 
@@ -66,16 +80,18 @@ function readColorsObject(source: unknown): Partial<Record<PublicColorKey, unkno
   };
 }
 
-/** Merge site over brand over defaults. Empty / invalid hex falls through. */
+/** Merge site over brand over preset defaults. Empty / invalid hex falls through. */
 export function resolvePublicThemeColors(
   siteTheme?: unknown,
   brandTheme?: unknown
 ): PublicThemeColors {
+  const presetId = resolvePublicThemePreset(siteTheme, brandTheme);
   const brand = readColorsObject(brandTheme);
   const site = readColorsObject(siteTheme);
-  const out = { ...DEFAULT_PUBLIC_THEME_COLORS };
+  const defaults = presetColors(presetId);
+  const out = { ...defaults };
   for (const key of PUBLIC_COLOR_KEYS) {
-    out[key] = pickHex(site[key], pickHex(brand[key], DEFAULT_PUBLIC_THEME_COLORS[key]));
+    out[key] = pickHex(site[key], pickHex(brand[key], defaults[key]));
   }
   return out;
 }
@@ -131,12 +147,27 @@ export function publicThemeCssVars(
   siteTheme?: unknown,
   brandTheme?: unknown
 ): Record<string, string> {
+  const presetId = resolvePublicThemePreset(siteTheme, brandTheme);
   const c = resolvePublicThemeColors(siteTheme, brandTheme);
-  const bgMid = mixToward(c.bg, "#3d5a9a", 0.18);
-  const bgDeep = mixToward(c.bg, "#000000", 0.18);
+  const atelier = presetId === "atelier";
+  const bgMid = mixToward(c.bg, atelier ? "#ffffff" : "#3d5a9a", 0.18);
+  const bgDeep = mixToward(c.bg, "#000000", atelier ? 0.04 : 0.18);
   const mist = mixToward(c.onDark, "#7a92c8", 0.45);
   const blue = mixToward(c.bg, "#3d5a9a", 0.55);
   const mutedOnDark = mixToward(c.onDark, "#7a92c8", 0.35);
+
+  const bgImage = atelier
+    ? [
+        `radial-gradient(900px 480px at 12% -8%, ${hexToRgba(c.accent, 0.06)}, transparent 55%)`,
+        `linear-gradient(180deg, ${c.bg} 0%, ${bgMid} 48%, ${c.bg} 100%)`,
+      ].join(", ")
+    : [
+        `radial-gradient(980px 560px at 8% -4%, ${hexToRgba(blue, 0.55)}, transparent 58%)`,
+        `radial-gradient(820px 520px at 100% 8%, ${hexToRgba(mist, 0.28)}, transparent 52%)`,
+        `radial-gradient(700px 480px at 70% 55%, ${hexToRgba(c.accent, 0.08)}, transparent 60%)`,
+        `radial-gradient(640px 400px at 20% 90%, ${hexToRgba(blue, 0.45)}, transparent 55%)`,
+        `linear-gradient(180deg, ${c.bg} 0%, ${bgMid} 38%, ${c.bg} 72%, ${bgDeep} 100%)`,
+      ].join(", ");
 
   return {
     "--hl-bg": c.bg,
@@ -150,36 +181,41 @@ export function publicThemeCssVars(
     "--hl-ink-on-card": c.ink,
     "--hl-muted-on-card": c.muted,
     "--hl-on-dark": c.onDark,
-    "--hl-on-dark-strong": "#ffffff",
-    "--hl-ink-strong": c.onDark,
-    "--hl-muted-on-dark": mutedOnDark,
+    "--hl-on-dark-strong": atelier ? c.ink : "#ffffff",
+    "--hl-ink-strong": atelier ? c.ink : c.onDark,
+    "--hl-muted-on-dark": atelier ? c.muted : mutedOnDark,
     "--hl-on-accent": c.onAccent,
     "--hl-accent": c.accent,
     "--hl-header": c.header,
     "--hl-navy": c.header,
     "--hl-blue": blue,
     "--hl-mist": mist,
-    "--hl-line": hexToRgba(c.onDark, 0.14),
+    "--hl-line": hexToRgba(atelier ? c.ink : c.onDark, atelier ? 0.08 : 0.14),
     "--hl-line-on-card": hexToRgba(c.ink, 0.1),
-    "--hl-bg-image": [
-      `radial-gradient(980px 560px at 8% -4%, ${hexToRgba(blue, 0.55)}, transparent 58%)`,
-      `radial-gradient(820px 520px at 100% 8%, ${hexToRgba(mist, 0.28)}, transparent 52%)`,
-      `radial-gradient(700px 480px at 70% 55%, ${hexToRgba(c.accent, 0.08)}, transparent 60%)`,
-      `radial-gradient(640px 400px at 20% 90%, ${hexToRgba(blue, 0.45)}, transparent 55%)`,
-      `linear-gradient(180deg, ${c.bg} 0%, ${bgMid} 38%, ${c.bg} 72%, ${bgDeep} 100%)`,
-    ].join(", "),
+    "--hl-bg-image": bgImage,
     "--paper": c.bg,
     "--card": c.card,
-    "--ink": c.onDark,
-    "--ink-strong": "#ffffff",
-    "--muted": mutedOnDark,
-    "--line": hexToRgba(c.onDark, 0.14),
+    "--ink": atelier ? c.ink : c.onDark,
+    "--ink-strong": atelier ? c.ink : "#ffffff",
+    "--muted": atelier ? c.muted : mutedOnDark,
+    "--line": hexToRgba(atelier ? c.ink : c.onDark, atelier ? 0.08 : 0.14),
     "--panel": c.card,
     "--panel-solid": c.card,
     "--accent": c.accent,
     "--navy": c.header,
     "--blue": blue,
     "--mist": mist,
+  };
+}
+
+/** Inline style + `data-theme` for `.hl-public` shells. */
+export function publicThemeShellProps(
+  siteTheme?: unknown,
+  brandTheme?: unknown
+): { "data-theme": PublicThemePresetId; style: Record<string, string> } {
+  return {
+    "data-theme": resolvePublicThemePreset(siteTheme, brandTheme),
+    style: publicThemeCssVars(siteTheme, brandTheme),
   };
 }
 

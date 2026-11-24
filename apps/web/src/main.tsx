@@ -12,6 +12,7 @@ import { router } from "./app/routes";
 import { HostScopeProvider } from "./app/hostScope";
 import "./styles/public-tokens.css";
 import "./styles/public-surfaces.css";
+import "./styles/public-theme-atelier.css";
 import "./styles/admin-surfaces.css";
 import "./styles/fonts.css";
 /** Eager: keep landing/pricing styles in the blocking main CSS (not a lazy chunk). */

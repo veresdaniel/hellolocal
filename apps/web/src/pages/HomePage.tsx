@@ -50,11 +50,15 @@ import {
 } from "../utils/siteLanding";
 import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 import { framePoints } from "../lib/mapFrame";
+import { publicThemeCssVars } from "../styles/publicThemeColors";
 
 // MapLibre only when map view is shown — keeps list/landing/overview free of map-vendor
 const MapComponent = lazy(() =>
   import("../components/MapComponent").then((m) => ({ default: m.MapComponent }))
 );
+
+/** Map chrome stays classic even when the site preset is atelier. */
+const CLASSIC_MAP_THEME_STYLE = publicThemeCssVars({ presetId: "classic" });
 
 export function HomePage() {
   const { t } = useTranslation();
@@ -893,6 +897,7 @@ export function HomePage() {
 
   return (
     <div
+      data-theme={viewIsMap ? "classic" : undefined}
       style={{
         display: viewIsMap ? (isMobile ? "block" : "flex") : "block",
         flexDirection: viewIsMap && !isMobile ? "column" : undefined,
@@ -902,6 +907,7 @@ export function HomePage() {
         overflow: viewIsMap ? "hidden" : "visible",
         margin: 0,
         padding: 0,
+        ...(viewIsMap ? CLASSIC_MAP_THEME_STYLE : null),
       }}
     >
       {viewIsMap ? (

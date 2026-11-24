@@ -42,10 +42,10 @@ export function OverviewPage() {
     enabled: !insideSiteLayout,
   });
   const fontTheme = outlet?.platform?.brand?.theme ?? platformSettings?.brand?.theme;
-  const siteTheme = outlet?.platform?.siteTheme ?? platformSettings?.siteTheme;
-  const brandTheme = outlet?.platform?.brand?.theme ?? platformSettings?.brand?.theme;
+  // Marketing overview keeps classic navy chrome regardless of region preset.
+  const overviewTheme = { presetId: "classic" as const };
   useApplyPublicFonts(fontTheme);
-  useApplyPublicTheme(siteTheme, brandTheme);
+  useApplyPublicTheme(overviewTheme, undefined);
 
   useEffect(() => {
     if (i18n.language !== lang) {
@@ -280,7 +280,8 @@ export function OverviewPage() {
   return (
     <div
       className="hl-public"
-      style={{ ...publicFontCssVars(fontTheme), ...publicThemeStyle(siteTheme, brandTheme) }}
+      data-theme="classic"
+      style={{ ...publicFontCssVars(fontTheme), ...publicThemeStyle(overviewTheme) }}
     >
       <FloatingHeader hideMapViewButton />
       <main className="overview">

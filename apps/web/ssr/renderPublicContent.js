@@ -423,7 +423,15 @@ export async function buildPublicContentHtml({
 
   if (!CONTENT_KINDS.has(route.kind)) return null;
   const labels = labelsFor(route.lang);
-  const wrap = (html, lcpImage = null) => (html ? { html, lcpImage } : null);
+  const wrap = (html, lcpImage = null, theme = null) =>
+    html
+      ? {
+          html,
+          lcpImage,
+          siteTheme: theme?.siteTheme ?? null,
+          brandTheme: theme?.brandTheme ?? null,
+        }
+      : null;
 
   try {
     if (route.kind === "sites") {
@@ -483,26 +491,29 @@ export async function buildPublicContentHtml({
         route.kind === "town" ? route.slug : "",
         { exploreShell }
       );
-      return wrap(region.html, region.lcpImage);
+      return wrap(region.html, region.lcpImage, {
+        siteTheme: platform?.siteTheme ?? null,
+        brandTheme: platform?.brand?.theme ?? null,
+      });
     }
 
     if (route.kind === "place" || route.kind === "event") {
       if (!route.slug) return null;
-      const entity = await loadEntity(
-        base,
-        route.lang,
-        route.siteKey,
-        route.kind,
-        route.slug,
-        forward
-      );
+      const siteKeyHint = route.siteKey || "default";
+      const [entity, platform] = await Promise.all([
+        loadEntity(base, route.lang, route.siteKey, route.kind, route.slug, forward),
+        loadPlatform(base, route.lang, siteKeyHint, forward),
+      ]);
       if (!entity?.name && !entity?.slug) return null;
       const siteKey = route.siteKey || entity.siteKey || "";
       const html =
         route.kind === "place"
           ? renderPlaceBody(route.lang, siteKey, entity, labels)
           : renderEventBody(route.lang, siteKey, entity, labels);
-      return wrap(html);
+      return wrap(html, null, {
+        siteTheme: platform?.siteTheme ?? null,
+        brandTheme: platform?.brand?.theme ?? null,
+      });
     }
   } catch (error) {
     console.error(`[SSR] Public content failed for ${pathname}: ${error.message}`);

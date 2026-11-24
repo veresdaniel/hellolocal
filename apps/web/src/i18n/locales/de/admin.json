@@ -1836,7 +1836,12 @@
     "muted": "Gedämpfter Text",
     "onDark": "Text auf Dunkel",
     "onAccent": "Text auf Akzent",
-    "helpSite": "Öffentliche Farben für diesen Standort. Leer = Plattform-/Domain-Standard."
+    "helpSite": "Öffentliche Farben für diesen Standort. Leer = Plattform-/Domain-Standard.",
+    "presetLabel": "Design-Preset",
+    "presetClassic": "Klassisch (blau)",
+    "presetClassicHelp": "Aktueller Navy-Hintergrund und cremefarbene Karten. Die Kartenansicht nutzt immer dieses Chrome.",
+    "presetAtelier": "Atelier (2026 light)",
+    "presetAtelierHelp": "Helles Aggregator-Design: weiße Flächen, dunkle Tinte, zurückhaltender Akzent. Überblick und Karte bleiben klassisch."
   },
   "eventActive": "Aktiv",
   "eventActiveDescription": "Das Ereignis ist auf der öffentlichen Seite sichtbar",

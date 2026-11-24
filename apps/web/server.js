@@ -754,7 +754,11 @@ app.get('*', async (req, res, next) => {
       html = injectHostBootstrap(html, customDomain);
     }
     if (contentBody) {
-      html = injectPublicShellHead(html, { lcpImage });
+      html = injectPublicShellHead(html, {
+        lcpImage,
+        siteTheme: content?.siteTheme,
+        brandTheme: content?.brandTheme,
+      });
     }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     if (meta?.notFound) {
