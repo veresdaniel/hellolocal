@@ -1761,7 +1761,7 @@
   "statusCanceled": "Gekündigt",
   "quoteRecipientDescription": "Posteingang für Angebots- und Demoanfragen",
   "platformHost": {
-    "title": "Öffentliche Plattformadressen",
+    "title": "Öffentliche Plattformadressen + GTM",
     "help": "Mehrere Domains können die Plattform-Startseite sein. Jede kann in einer eigenen Sprache öffnen. Die erste ist die Standardadresse, wenn ein Link eine eigene Regionsdomain verlässt. www gilt ohne eigene Zeile. Leer bleibt nur hello-local.io.",
     "language": "Sprache",
     "add": "Domain hinzufügen",
