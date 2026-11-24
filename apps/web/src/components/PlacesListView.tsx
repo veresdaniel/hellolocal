@@ -510,7 +510,14 @@ export function PlacesListView({
           background: var(--hl-card);
           border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
           box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
-          min-height: 168px;
+          /* Match intro+image height so settings settle does not dump CLS. */
+          min-height: clamp(280px, 58vw, 440px);
+        }
+        .places-discover__chrome-skel-media {
+          aspect-ratio: 16 / 9;
+          border-radius: 10px;
+          margin-bottom: 12px;
+          overflow: hidden;
         }
         .places-discover__intro {
           display: grid;
@@ -739,6 +746,9 @@ export function PlacesListView({
               aria-label={t("common.loading")}
             >
               <div className="places-discover__chrome-skel-card">
+                <div className="places-discover__chrome-skel-media">
+                  <PublicSkeletonBlock style={{ width: "100%", height: "100%", display: "block" }} />
+                </div>
                 <PublicSkeletonBlock style={{ height: 18, width: "88%", marginBottom: 12 }} />
                 <PublicSkeletonBlock style={{ height: 18, width: "64%", marginBottom: 20 }} />
                 <PublicSkeletonBlock style={{ height: 44, width: "100%", borderRadius: 12 }} />
@@ -757,6 +767,10 @@ export function PlacesListView({
                   <ImageWithSkeleton
                     src={listIntroImage}
                     alt=""
+                    priority
+                    width={960}
+                    height={540}
+                    sizes="(max-width: 720px) 92vw, 40vw"
                     style={{
                       width: "100%",
                       height: "100%",
@@ -805,16 +819,19 @@ export function PlacesListView({
           ) : (
             <>
               <div className="places-grid">
-                {combinedItems.map((item) => {
+                {combinedItems.map((item, index) => {
                   if (item.type === "place") {
                     const place = item.data as Place;
-                    return <PlaceCard key={place.slug || place.id} place={place} />;
+                    return (
+                      <PlaceCard key={place.slug || place.id} place={place} index={index} />
+                    );
                   } else {
                     const event = item.data as Event;
                     return (
                       <EventGridCard
                         key={event.id}
                         event={event}
+                        index={index}
                         placeholderImage={platformSettings?.defaultEventPlaceholderCardImage}
                       />
                     );

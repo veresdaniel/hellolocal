@@ -11,9 +11,12 @@ import "../../styles/list-card.css";
 export function EventGridCard({
   event,
   placeholderImage,
+  index = 0,
 }: {
   event: Event;
   placeholderImage?: string | null;
+  /** Grid index — first cards are LCP candidates. */
+  index?: number;
 }) {
   const { lang, siteKey } = useRouteCtx();
   const { t } = useTranslation();
@@ -38,6 +41,10 @@ export function EventGridCard({
             <ImageWithSkeleton
               src={imageUrl}
               alt=""
+              priority={index < 2}
+              width={800}
+              height={500}
+              sizes="(max-width: 680px) 92vw, (max-width: 1040px) 45vw, 30vw"
               style={{
                 width: "100%",
                 height: "100%",

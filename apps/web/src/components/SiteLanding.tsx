@@ -33,8 +33,8 @@ export function SiteLanding({
               src={sanitizeImageUrl(landing.hero) || landing.hero}
               alt=""
               priority
-              width={1600}
-              height={700}
+              width={1200}
+              height={525}
               sizes="(max-width: 1080px) 100vw, 1080px"
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />

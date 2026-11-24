@@ -42,7 +42,8 @@ export function ImageWithSkeleton({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
-  const deliverySrc = preferModernImageUrl(src, { width: width && width > 0 ? width : 1600 });
+  // Default ~2× mobile card width; callers should pass display-oriented width.
+  const deliverySrc = preferModernImageUrl(src, { width: width && width > 0 ? width : 960 });
 
   // Cached images often fire onLoad before this effect; img.complete avoids a stuck skeleton.
   useEffect(() => {

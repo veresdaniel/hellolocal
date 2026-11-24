@@ -43,6 +43,9 @@ in prose as used in the product.
 - Event create/update requires a place (`placeId`); empty place is blocked in the UI.
 - Place price list: currency is a dropdown of catalog currencies (not free text).
 - PlaceCard / map popup prefer cardImage before heroImage fallback.
+- Site explore (e.g. helloetyek): list intro + first cards use LCP priority; picsum
+  placeholders fall back to marketing image; remote heroes (Wikimedia etc.) resize
+  via Cloudinary fetch when configured; discover chrome skeleton reserves intro height (CLS).
 
 ## [1.0.26-beta] - 2026-11-23
 

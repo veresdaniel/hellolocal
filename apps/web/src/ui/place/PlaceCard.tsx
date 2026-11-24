@@ -75,10 +75,11 @@ function getCategoryColor(categoryName: string | null | undefined): string {
 
 interface PlaceCardProps {
   place: Place;
+  /** Grid index — first cards are LCP candidates (eager + high priority). */
   index?: number;
 }
 
-export function PlaceCard({ place }: PlaceCardProps) {
+export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
   const { lang, siteKey } = useRouteCtx();
   const { t } = useTranslation();
   const categoryName = place.category || null;
@@ -114,6 +115,10 @@ export function PlaceCard({ place }: PlaceCardProps) {
             <ImageWithSkeleton
               src={imageUrl}
               alt={place.name}
+              priority={index < 2}
+              width={800}
+              height={500}
+              sizes="(max-width: 680px) 92vw, (max-width: 1040px) 45vw, 30vw"
               style={{
                 width: "100%",
                 height: "100%",
