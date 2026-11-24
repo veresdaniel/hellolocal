@@ -1255,66 +1255,6 @@ function OverviewTab({
         ) : null}
       </div>
 
-      {/* Quick actions */}
-      <div
-        style={{
-          marginTop: 32,
-          padding: 20,
-          background: "#f9fafb",
-          borderRadius: 12,
-          border: "1px solid #e5e7eb",
-        }}
-      >
-        <h4
-          style={{
-            marginBottom: 16,
-            fontSize: 18,
-            fontWeight: 600,
-            color: "#374151",
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          {t("admin.siteEdit.quickActions")}
-        </h4>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <button
-            onClick={() =>
-              window.open(
-                regionAddress({
-                  lang: site.languages?.[0] || "hu",
-                  slug: site.slug,
-                  primaryDomain: site.primaryDomain || site.siteDomains?.find((item) => item.isPrimary)?.domain,
-                }),
-                "_blank"
-              )
-            }
-            style={{
-              padding: "10px 20px",
-              border: "1px solid #d1d5db",
-              borderRadius: 8,
-              background: "var(--admin-surface)",
-              color: "#374151",
-              cursor: "pointer",
-              fontSize: 14,
-              fontWeight: 500,
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#f3f4f6";
-              e.currentTarget.style.borderColor = "#9ca3af";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "white";
-              e.currentTarget.style.borderColor = "#d1d5db";
-            }}
-          >
-            {t("admin.siteEdit.openPublicPage")}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
