@@ -167,6 +167,8 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
       <div className="list-card__body">
         <h3 className="list-card__title">{place.name}</h3>
 
+        {/* Wrappers stay mounted so desktop grid rows can reserve equal slot height;
+            mobile CSS collapses :empty. */}
         <div className="list-card__meta">
           {place.rating && (place.rating.avg !== null || place.rating.count !== null) ? (
             <StarRating
@@ -175,19 +177,17 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
               interactive={false}
               size="sm"
             />
-          ) : (
-            "\u00a0"
-          )}
+          ) : null}
         </div>
 
         {place.shortDescription ? (
           <SafeHtml html={place.shortDescription} className="list-card__copy" />
         ) : (
-          <div className="list-card__copy">&nbsp;</div>
+          <div className="list-card__copy" aria-hidden="true" />
         )}
 
         <div className="list-card__extra">
-          {place.priceBand && (
+          {place.priceBand ? (
             <Badge
               variant="priceBand"
               size="small"
@@ -199,7 +199,7 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
             >
               {visitorPriceLabel(place.priceBand || "")}
             </Badge>
-          )}
+          ) : null}
           {place.tags?.slice(0, 3).map((tag) => (
             <Badge key={tag} variant="tag" size="small">
               {tag}

@@ -26,6 +26,8 @@ in prose as used in the product.
 
 ### Changed
 
+- Place list cards: mobile collapses empty rating/tag/copy slots for tighter
+  cards; desktop keeps equal-height grid rows (reserved slots + stretch).
 - Place detail map: locked pan/zoom, marker centered; mobile height ~⅔.
 - Mobile gallery lightbox: drag-follow swipe with settle animation (no hard
   cut), no arrows; stronger close control.
