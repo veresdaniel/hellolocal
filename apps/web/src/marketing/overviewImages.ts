@@ -84,8 +84,15 @@ export const OVERVIEW_STORY_IMAGES = {
     defaultWebpW: 720,
     mobileWidths: [480, 720],
   }),
-  /** Below-fold only — avoid sharing LCP hero URLs (lazy + same src confuses Lighthouse). */
-  town: ladder("map-szeged", [1100], { w: 1100, h: 704 }, STORY_SIZES),
+  /**
+   * Below-fold story shot of the same map mock. Mobile-capped like other stories
+   * (1100-only overserved ~761 CSS px). Lazy + fetchpriority=low keeps it off LCP
+   * even though filenames overlap the hero ladder.
+   */
+  town: ladder("map-szeged", [480, 720, 960, 1100], { w: 960, h: 615 }, STORY_SIZES, {
+    defaultWebpW: 720,
+    mobileWidths: [480, 720],
+  }),
 } as const;
 
 export const OVERVIEW_CLOSING = ladder(

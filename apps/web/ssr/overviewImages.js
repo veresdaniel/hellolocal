@@ -62,10 +62,14 @@ export const OVERVIEW_STORY_IMAGES = {
   },
   town: {
     jpg: "/marketing/map-szeged.jpg",
-    webp: "/marketing/map-szeged-1100.webp",
-    width: 1100,
-    height: 704,
-    webpSrcSet: "/marketing/map-szeged-1100.webp 1100w",
+    webp: "/marketing/map-szeged-720.webp",
+    width: 960,
+    height: 615,
+    webpSrcSet:
+      "/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w, /marketing/map-szeged-960.webp 960w, /marketing/map-szeged-1100.webp 1100w",
+    webpSrcSetMobile:
+      "/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w",
+    mobileMedia: MOBILE_MEDIA,
     sizes: STORY_SIZES,
   },
 };
