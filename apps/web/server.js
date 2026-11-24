@@ -275,8 +275,43 @@ async function isCrawlBlockedByUnderConstruction(req) {
   return Boolean(gate?.enabled && !gate.allowed);
 }
 
+/**
+ * Static allow-all robots for Meta preview UAs.
+ * Dynamically generated robots (platform landing Disallow rules + empty Disallow)
+ * has caused Sharing Debugger to report HTTP 403 even when HTML returns 200 —
+ * Meta docs / community threads recommend a plain Allow group for facebookexternalhit.
+ */
+function metaSocialRobotsBody() {
+  return [
+    '# HelloLocal — Meta / social preview scrapers',
+    'User-agent: facebookexternalhit',
+    'Allow: /',
+    '',
+    'User-agent: Facebot',
+    'Allow: /',
+    '',
+    'User-agent: meta-externalagent',
+    'Allow: /',
+    '',
+    'User-agent: meta-externalfetcher',
+    'Allow: /',
+    '',
+  ].join('\n');
+}
+
 // Crawl files must be on the public host (Caddy → web), not only on api.*
 app.get('/robots.txt', async (req, res) => {
+  const ua = req.get('user-agent') || '';
+  if (isMetaRobotsBot(ua)) {
+    console.info(`[SEO] Meta robots.txt hit ua=${JSON.stringify(ua.slice(0, 120))}`);
+    return sendTextWithOptionalRange(
+      req,
+      res,
+      metaSocialRobotsBody(),
+      'text/plain; charset=utf-8',
+      'public, max-age=60'
+    );
+  }
   try {
     if (await isCrawlBlockedByUnderConstruction(req)) {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -537,6 +572,13 @@ app.get('*', async (req, res, next) => {
   if (isStaticFile) {
     // Let express.static handle it, or return 404 if not found
     return next();
+  }
+
+  const requestUa = req.get('user-agent') || '';
+  if (isMetaRobotsBot(requestUa)) {
+    console.info(
+      `[SEO] Meta HTML hit host=${req.get('x-forwarded-host') || req.get('host') || ''} path=${req.path} ua=${JSON.stringify(requestUa.slice(0, 120))}`
+    );
   }
 
   // URL hygiene: trailing slash → single canonical (except site root).

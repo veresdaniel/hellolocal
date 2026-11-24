@@ -29,8 +29,8 @@ function socialPreviewAllowBlock(): string[] {
     "# Social / OG preview scrapers (Meta reports robots Disallow as 403)",
   ];
   for (const ua of SOCIAL_PREVIEW_BOTS) {
-    // Empty Disallow = allow all for this UA (legacy Meta-friendly form).
-    lines.push(`User-agent: ${ua}`, "Allow: /", "Disallow:", "");
+    // Allow only — no empty `Disallow:` line (some Meta parsers treat it as block).
+    lines.push(`User-agent: ${ua}`, "Allow: /", "");
   }
   return lines;
 }

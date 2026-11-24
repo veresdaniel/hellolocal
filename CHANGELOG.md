@@ -16,6 +16,8 @@ in prose as used in the product.
 
 - Facebook Sharing Debugger false 403 on `robots.txt`: Meta UAs always get
   HTTP 206 for robots (even without `Range`), matching the known Meta quirk.
+- Meta preview bots get a static Allow-only `robots.txt` (no empty `Disallow:`,
+  no platform landing Disallow merge); drop empty Disallow from social UA groups.
 
 ### Added
 
