@@ -23,6 +23,7 @@ import { AdminHierarchyFilters } from "../../components/AdminHierarchyFilters";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import {
   getEvents,
+  getEvent,
   createEvent,
   updateEvent,
   deleteEvent,

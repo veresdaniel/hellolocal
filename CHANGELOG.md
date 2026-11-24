@@ -14,6 +14,8 @@ in prose as used in the product.
 
 ### Fixed
 
+- Admin towns edit crash: SEO fields used undefined `AiPostFormField`
+  (should be `AiPostFillField`); EventsPage `?edit=` missing `getEvent` import.
 - helloetyek explore lab LCP: SSR emit discover title + first `list-card` img
   (same markup PSI cites), preload `map-szeged-480.webp`, async `index.css`,
   `#hl-host-bootstrap` so HostScope skips `/api/domain` on first paint; SPA
