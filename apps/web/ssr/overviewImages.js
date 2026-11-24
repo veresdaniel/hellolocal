@@ -76,7 +76,9 @@ export const OVERVIEW_STORY_IMAGES = {
  * @param {{ eager?: boolean, className?: string }} [opts]
  */
 export function pictureHtml(img, alt, opts = {}) {
-  const loading = opts.eager ? 'loading="eager" fetchpriority="high"' : 'loading="lazy"';
+  const loading = opts.eager
+    ? 'loading="eager" fetchpriority="high"'
+    : 'loading="lazy" fetchpriority="low"';
   const cls = opts.className ? ` class="${opts.className}"` : "";
   const mobile =
     img.webpSrcSetMobile && img.mobileMedia

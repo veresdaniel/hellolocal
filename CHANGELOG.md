@@ -19,6 +19,10 @@ in prose as used in the product.
   `modulepreload` on that page (bandwidth for the map WebP); WebP as `<img src>`;
   long-cache hashed assets + marketing images; API `dns-prefetch` instead of
   unused CORS `preconnect`.
+- hellolocal.hu overview critical path: async-load SPA `index-*.css` (shell +
+  overview CSS stay blocking); strip admin Google Fonts hints; late API
+  `preconnect` only as SPA boots; LCP image preload before font preloads;
+  below-fold SSR images `fetchpriority=low`; idle-defer live-demo URL fetch.
 - Explore PageSpeed (helloetyek): stop shipping MapLibre on first paint — drop
   stale `vite.config.js` (Vite preferred it over `.ts`) and its `map-vendor`
   `manualChunks` entry that hosted `__vitePreload`, so every lazy route

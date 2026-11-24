@@ -47,21 +47,59 @@ export function resolveOverviewStylesheetHref(webRoot) {
 }
 
 /**
- * Defer the SPA entry module until after `load` + idle so the SSR hero can
- * become LCP before createRoot wipes `#root` (lab LCP was ~5s on Slow 4G).
+ * Overview first paint only needs Source Sans + shell/overview CSS.
+ * Drop SPA vendor preloads, admin Google Fonts, and make the fat index.css
+ * non-blocking so the LCP WebP is not stuck behind them on Slow 4G.
  * @param {string} html
  */
 export function deferOverviewSpaBoot(html) {
-  // Vendor modulepreloads compete with the LCP image on Slow 4G — drop them
-  // on the marketing landing only (SPA boot still loads deps normally).
   let next = html.replace(/<link\s+rel="modulepreload"[^>]*>\s*/gi, "");
+
+  // Admin Inter/Poppins — not used on the SSR overview (Source Sans is self-hosted).
+  next = next.replace(
+    /<link\s+rel="preconnect"\s+href="https:\/\/fonts\.googleapis\.com"\s*\/?>\s*/gi,
+    ""
+  );
+  next = next.replace(
+    /<link\s+rel="preconnect"\s+href="https:\/\/fonts\.gstatic\.com"[^>]*>\s*/gi,
+    ""
+  );
+  next = next.replace(
+    /<link\s+rel="preload"\s+as="style"\s+href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]+"[^>]*>\s*/gi,
+    ""
+  );
+  next = next.replace(
+    /<noscript>\s*<link\s+href="https:\/\/fonts\.googleapis\.com\/css2\?[^"]+"\s+rel="stylesheet"\s*\/?>\s*<\/noscript>\s*/gi,
+    ""
+  );
+
+  // Main SPA stylesheet is render-blocking (~12KiB) but overview already has
+  // inline shell + overview-*.css. Load index CSS async; SPA still applies it.
+  next = next.replace(
+    /<link\s+rel="stylesheet"\s+crossorigin\s+href="(\/assets\/index-[^"]+\.css)"\s*\/?>/i,
+    `<link rel="preload" as="style" href="$1" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="$1" /></noscript>`
+  );
 
   next = next.replace(
     /<script\s+type="module"\s+crossorigin\s+src="(\/assets\/index-[^"]+\.js)"\s*><\/script>/i,
     `<script type="module">
 (function(){
   var src="$1";
+  var apiOrigin="https://api.hello-local.io";
+  function warmApi(){
+    // CORS fetch needs matching crossorigin preconnect; inject late so PSI
+    // does not flag an unused early hint while SPA boot is idle-deferred.
+    if(document.querySelector('link[data-hl-api-preconnect]')) return;
+    var l=document.createElement("link");
+    l.rel="preconnect";
+    l.href=apiOrigin;
+    l.crossOrigin="";
+    l.setAttribute("data-hl-api-preconnect","1");
+    document.head.appendChild(l);
+  }
   function boot(){
+    warmApi();
     var s=document.createElement("script");
     s.type="module";
     s.crossOrigin="";
@@ -86,12 +124,27 @@ export function deferOverviewSpaBoot(html) {
  */
 export function injectOverviewShellHead(html, webRoot) {
   const sheet = resolveOverviewStylesheetHref(webRoot);
-  const block = `
-    <link rel="preload" as="image" href="/marketing/map-szeged-720.webp" type="image/webp" imagesrcset="/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w" imagesizes="(max-width: 860px) 100vw, 36vw" fetchpriority="high" />
+  const lcpPreload = `<link rel="preload" as="image" href="/marketing/map-szeged-720.webp" type="image/webp" imagesrcset="/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w" imagesizes="(max-width: 860px) 100vw, 36vw" fetchpriority="high" />`;
+  const shellBlock = `
     <style id="overview-shell">${OVERVIEW_SHELL_CSS}</style>
     ${sheet ? `<link rel="stylesheet" href="${sheet}" />` : ""}`;
-  let next = html.includes("</head>")
-    ? html.replace("</head>", `${block}\n  </head>`)
-    : `${block}${html}`;
+
+  // Put LCP preload immediately after the boot paint style so it outranks
+  // font preloads that follow in index.html.
+  let next = html;
+  if (next.includes('id="hl-first-paint"')) {
+    next = next.replace(
+      /(<style id="hl-first-paint">[\s\S]*?<\/style>)/i,
+      `$1\n    ${lcpPreload}`
+    );
+  } else if (next.includes("</head>")) {
+    next = next.replace("</head>", `    ${lcpPreload}\n  </head>`);
+  } else {
+    next = `${lcpPreload}${next}`;
+  }
+
+  next = next.includes("</head>")
+    ? next.replace("</head>", `${shellBlock}\n  </head>`)
+    : `${shellBlock}${next}`;
   return deferOverviewSpaBoot(next);
 }
