@@ -262,7 +262,7 @@ function renderRegionBody(lang, siteKey, platform, places, events, labels, townS
     const card = renderFirstListCard(lang, siteKey, places, platform);
     return {
       html: `
-    <main class="hl-ssr-explore">
+    <main class="hl-ssr hl-ssr-explore">
       <h1 class="places-discover__title">${escapeHtml(discoverTitle(lang, title))}</h1>
       ${card.html}
       ${
@@ -370,7 +370,11 @@ export function applyAdminRobots(html) {
  */
 export function injectRootContent(html, body) {
   if (!body) return html;
-  const wrapped = body.includes("hl-ssr")
+  // `hl-ssr-explore` contains the substring `hl-ssr` but is not the shell class.
+  // Skipping the wrapper left the list card unstyled, so the map placeholder
+  // painted full-bleed until the SPA replaced it.
+  const hasShellClass = /(?:^|[\s"'])hl-ssr(?:[\s"']|$)/.test(body);
+  const wrapped = hasShellClass
     ? body
     : `<article class="hl-ssr hl-public">${body}</article>`;
   if (html.includes('<div id="root"></div>')) {
