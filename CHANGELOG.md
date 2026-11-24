@@ -14,6 +14,9 @@ in prose as used in the product.
 
 ### Fixed
 
+- helloetyek list view 500: a CSS comment inside the PlacesListView `<style>`
+  template used backticks around `.hl-skel-list__filters`, which closed the
+  template early and threw `ReferenceError: skel is not defined`.
 - hellolocal.hu mobile LCP (~5.1s lab): previous `load`+3s-idle SPA defer let
   Lighthouse keep updating LCP after `createRoot` wiped the SSR hero; boot as
   soon as the hero WebP is ready, eager-load `OverviewPage` (no Suspense gap),

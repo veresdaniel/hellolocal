@@ -618,7 +618,7 @@ export function PlacesListView({
           min-width: 0;
           width: 100%;
           /* Reserve filter chrome (categories + kind + toggles + price) so chips
-             do not shove the grid — keep in sync with `.hl-skel-list__filters`. */
+             do not shove the grid — keep in sync with .hl-skel-list__filters. */
           min-height: 240px;
         }
         .places-discover__filters .map-filters-inline {
