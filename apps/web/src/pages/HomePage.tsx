@@ -1,5 +1,5 @@
 // src/pages/HomePage.tsx
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useRouteCtx } from "../app/useRouteCtx";
@@ -51,6 +51,11 @@ import {
 import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 import { framePoints } from "../lib/mapFrame";
 import { publicThemeCssVars } from "../styles/publicThemeColors";
+import {
+  armPublicSsrRevealFallback,
+  isPublicSsrPending,
+  revealPublicSpa,
+} from "../lib/publicSsrHold";
 
 // MapLibre only when map view is shown — keeps list/landing/overview free of map-vendor
 const MapComponent = lazy(() =>
@@ -134,6 +139,8 @@ export function HomePage() {
     setLandingDismissed(peekExploreRequest() !== null);
     clearExploreRequest();
   }, [siteKey]);
+
+  useEffect(() => armPublicSsrRevealFallback(8000), []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -805,12 +812,52 @@ export function HomePage() {
   const isCriticalDataLoading =
     isLoadingMapSettings || (isLoadingPlaces && !hasEverLoadedPlaces.current);
 
+  // Hold SSR until this page can paint the real destination (no skeleton flash).
+  useLayoutEffect(() => {
+    if (!isPublicSsrPending()) return;
+
+    const openingGate = !landingDismissed && !pathTown && !regionMap;
+    if (openingGate) {
+      if (isLoadingPlatformSettings || isLoadingTowns) return;
+      const landing = readSiteLanding(platformSettings?.site);
+      const isRegion = !!townsPayload?.isRegion && (townsPayload.towns?.length || 0) > 1;
+      if (isRegion || landing) {
+        revealPublicSpa();
+        return;
+      }
+    }
+
+    if (viewIsMap) {
+      if (!isCriticalDataLoading) revealPublicSpa();
+      return;
+    }
+
+    // List: wait for first places payload so card skeletons never replace SSR.
+    if (isLoadingPlaces && !hasEverLoadedPlaces.current) return;
+    if (isLoadingPlatformSettings || isLoadingTowns) return;
+    revealPublicSpa();
+  }, [
+    landingDismissed,
+    pathTown,
+    regionMap,
+    isLoadingPlatformSettings,
+    isLoadingTowns,
+    platformSettings,
+    townsPayload,
+    viewIsMap,
+    isCriticalDataLoading,
+    isLoadingPlaces,
+    placesData,
+  ]);
+
   // Wait for platform settings before choosing opening page vs map/list,
   // so a filled landing does not flash the map while settings load.
   // Multi-town régió → public region index of települések (only when régió exists).
   // Single-settlement sites (Szeged) keep current landing / map behavior.
   if (!landingDismissed && !pathTown && !regionMap) {
     if (isLoadingPlatformSettings || isLoadingTowns) {
+      // Keep parked SSR visible — never paint a skeleton under it.
+      if (isPublicSsrPending()) return null;
       // Paint the real discover H1 immediately (SSR og:title) so lab LCP is not
       // stuck behind platform/towns/places — matches PlacesListView title class.
       const bootName =
@@ -869,6 +916,7 @@ export function HomePage() {
   // card-grid skeleton. List view: skip this gate — PlacesListView already paints
   // FloatingHeader + filters + card skeletons, so a bare grid here caused CLS.
   if (viewIsMap && isCriticalDataLoading) {
+    if (isPublicSsrPending()) return null;
     return (
       <div
         role="status"
@@ -882,6 +930,16 @@ export function HomePage() {
         }}
       />
     );
+  }
+
+  // List still hydrating under parked SSR — stay invisible until places arrive.
+  if (
+    isPublicSsrPending() &&
+    !viewIsMap &&
+    isLoadingPlaces &&
+    !hasEverLoadedPlaces.current
+  ) {
+    return null;
   }
 
   // If we have an error loading places, show error state

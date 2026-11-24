@@ -69,6 +69,19 @@
       html.hl-booting #root:not(.hl-public) {
         visibility: hidden;
       }
+      /* Parked SSR stays painted while React boots into a hidden #root. */
+      html.hl-spa-pending #root {
+        visibility: hidden !important;
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+      }
+      html.hl-spa-pending #hl-ssr-hold {
+        position: relative;
+        z-index: 1;
+        min-height: 100vh;
+      }
     </style>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />

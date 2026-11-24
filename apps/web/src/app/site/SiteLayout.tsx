@@ -20,6 +20,7 @@ import { publicFontCssVars } from "../../styles/publicFonts";
 import { useApplyPublicFonts } from "../../hooks/useApplyPublicFonts";
 import { useApplyPublicTheme, publicThemeStyle } from "../../hooks/useApplyPublicTheme";
 import { resolvePublicThemePreset } from "../../styles/publicThemeColors";
+import { isPublicSsrPending } from "../../lib/publicSsrHold";
 import { CookieConsent } from "../../components/CookieConsent";
 import { GoogleAnalytics } from "../../components/GoogleAnalytics";
 import { InsideSiteChrome, PlatformGaShell } from "../../components/PlatformGaShell";
@@ -110,6 +111,7 @@ export function SiteLayout() {
   const customHost =
     typeof window !== "undefined" && !isPlatformHost(window.location.hostname);
   if (customHost && scope.status === "loading") {
+    if (isPublicSsrPending()) return null;
     return (
       <div className="hl-public" style={{ minHeight: "100vh" }}>
         <PublicListSkeleton label={t("common.loading")} />
@@ -170,6 +172,7 @@ export function SiteLayout() {
   }
 
   if (isLoading) {
+    if (isPublicSsrPending()) return null;
     return (
       <div className="hl-public" style={{ minHeight: "100vh" }}>
         <PublicListSkeleton label={t("common.loading")} />
@@ -281,7 +284,11 @@ function SiteLayoutContent({
       {/* Landmark <main> covers WCAG bypass-blocks; no skip-link chip in the header. */}
       <main id="public-main" style={{ flex: "1 0 auto" }}>
         <InsideSiteChrome.Provider value={true}>
-          <Suspense fallback={<PublicListSkeleton label={t("common.loading")} />}>
+          <Suspense
+            fallback={
+              isPublicSsrPending() ? null : <PublicListSkeleton label={t("common.loading")} />
+            }
+          >
             <Outlet context={{ lang, siteKey, platform }} />
           </Suspense>
         </InsideSiteChrome.Provider>

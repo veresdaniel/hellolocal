@@ -2,7 +2,7 @@
  * Public place detail: hero, SEO, gallery, floorplans, ratings, products, map.
  * Resolves slug → canonical redirect via {@link useResolvedSlugRedirect}.
  */
-import { useMemo, useEffect, useRef, useState, lazy, Suspense } from "react";
+import { useMemo, useEffect, useLayoutEffect, useRef, useState, lazy, Suspense } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -56,6 +56,11 @@ const MapComponent = lazy(() =>
 );
 import { track } from "../lib/analytics/track";
 import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
+import {
+  armPublicSsrRevealFallback,
+  isPublicSsrPending,
+  revealPublicSpa,
+} from "../lib/publicSsrHold";
 
 /** Route page for a single public place (lazy-loaded from the router). */
 export function PlaceDetailPage() {
@@ -86,6 +91,8 @@ export function PlaceDetailPage() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  useEffect(() => armPublicSsrRevealFallback(8000), []);
+
   const resolveQ = useResolvedSlugRedirect({
     lang: lang ?? "",
     siteKey: siteKey ?? "",
@@ -112,6 +119,11 @@ export function PlaceDetailPage() {
   });
 
   usePublicGaOverride(place?.gaMeasurementId);
+
+  useLayoutEffect(() => {
+    if (!isPublicSsrPending()) return;
+    if (place || isError || resolveQ.isError) revealPublicSpa();
+  }, [place, isError, resolveQ.isError]);
 
   const queryClient = useQueryClient();
 
@@ -516,6 +528,7 @@ export function PlaceDetailPage() {
   }
 
   if (resolveQ.isLoading) {
+    if (isPublicSsrPending()) return null;
     return (
       <>
         <FloatingHeader visitorAuth />
@@ -547,6 +560,7 @@ export function PlaceDetailPage() {
 
   // Show skeleton while loading place (full-bleed hero + cream sheet — matches paint)
   if (isLoading) {
+    if (isPublicSsrPending()) return null;
     return (
       <>
         <FloatingHeader visitorAuth />

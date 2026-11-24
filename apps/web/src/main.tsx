@@ -23,6 +23,10 @@ import { useDefaultLanguage } from "./hooks/useDefaultLanguage";
 import { NotificationService } from "./services/notification.service";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import type { ReactNode } from "react";
+import { parkPublicSsr } from "./lib/publicSsrHold";
+
+/** Keep SSR HTML visible; React mounts into a cleared #root underneath. */
+parkPublicSsr();
 
 /** First paint was hidden via `html.hl-booting`; reveal once entry CSS has applied. */
 if (typeof document !== "undefined") {
