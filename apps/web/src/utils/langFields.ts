@@ -59,6 +59,71 @@ export function appendExtraLanguages(
   }
 }
 
+function isKeywordField(field: string): boolean {
+  return field.toLowerCase().includes("keyword");
+}
+
+/** Empty form state for every language x field (keywords* fields become []). */
+export function emptyLangFields(languages: string[], fields: string[]): Record<string, string | string[]> {
+  const out: Record<string, string | string[]> = {};
+  for (const lang of languages) {
+    for (const field of fields) {
+      out[langField(field, lang)] = isKeywordField(field) ? [] : "";
+    }
+  }
+  return out;
+}
+
+/**
+ * Build translation rows from a form: one row per language whose required field is non-empty,
+ * then append rows for any extra language keys present on the form.
+ */
+export function translationsFromForm(
+  form: object,
+  languages: string[],
+  requiredField: string,
+  fields: string[],
+  shared: Record<string, unknown> = {}
+): Array<Record<string, unknown>> {
+  const rows: Array<Record<string, unknown>> = [];
+  for (const lang of languages) {
+    const required = readLang(form, requiredField, lang).trim();
+    if (!required || rows.some((row) => row.lang === lang)) continue;
+    const row: Record<string, unknown> = { lang, [requiredField]: required, ...shared };
+    for (const field of fields) {
+      if (field === requiredField) continue;
+      const raw = (form as Record<string, unknown>)[langField(field, lang)];
+      if (Array.isArray(raw)) {
+        row[field] = raw;
+      } else if (isKeywordField(field)) {
+        row[field] =
+          typeof raw === "string"
+            ? raw
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean)
+            : [];
+      } else {
+        row[field] = typeof raw === "string" && raw.trim() ? raw : null;
+      }
+    }
+    rows.push(row);
+  }
+  appendExtraLanguages(rows, form, requiredField, fields, shared);
+  return rows;
+}
+
+/** Primary content language: "hu" when published, otherwise the first language. */
+export function primaryContentLang(languages: string[]): string {
+  return languages.includes("hu") ? "hu" : languages[0] || "hu";
+}
+
+/** Returns the langField key of the primary language when its required field is empty, else null. */
+export function requirePrimaryLangName(form: object, languages: string[], field: string): string | null {
+  const primary = primaryContentLang(languages);
+  return readLang(form, field, primary).trim() ? null : langField(field, primary);
+}
+
 export function mergeTranslations<T extends object>(
   base: T,
   translations: Array<{ lang: string } & Record<string, unknown>>,

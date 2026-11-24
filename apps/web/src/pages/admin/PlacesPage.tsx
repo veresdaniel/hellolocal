@@ -1,6 +1,16 @@
 // src/pages/admin/PlacesPage.tsx
 import { useState, useEffect, useRef, useContext } from "react";
-import { appendExtraLanguages, mergeTranslations, patchLang, readLang, readLangList } from "../../utils/langFields";
+import {
+  emptyLangFields,
+  mergeTranslations,
+  patchLang,
+  primaryContentLang,
+  readLang,
+  readLangList,
+  requirePrimaryLangName,
+  translationsFromForm,
+} from "../../utils/langFields";
+import { useContentLanguages } from "../../hooks/useContentLanguages";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAdminSite } from "../../contexts/useAdminSite";
@@ -212,6 +222,34 @@ function FloorplanSection({
   );
 }
 
+
+const PLACE_LANG_FIELDS = [
+  "name",
+  "slug",
+  "shortDescription",
+  "description",
+  "address",
+  "accessibility",
+  "seoTitle",
+  "seoDescription",
+  "seoImage",
+  "seoKeywords",
+];
+
+const PLACE_SHARED_FIELDS = (form: {
+  phone: string;
+  email: string;
+  website: string;
+  facebook: string;
+  whatsapp: string;
+}) => ({
+  phone: form.phone || null,
+  email: form.email || null,
+  website: form.website || null,
+  facebook: form.facebook || null,
+  whatsapp: form.whatsapp || null,
+});
+
 export function PlacesPage() {
   const { t, i18n } = useTranslation();
   const location = useLocation();
@@ -252,48 +290,20 @@ export function PlacesPage() {
     null
   );
   const [isSiteAdmin, setIsSiteAdmin] = useState(false);
+  const contentLanguages = useContentLanguages();
   const [formData, setFormData] = useState({
+    ...emptyLangFields(contentLanguages, PLACE_LANG_FIELDS),
     categoryId: "",
     parentPlaceId: "",
     townId: "",
     priceBandId: "",
     tagIds: [] as string[],
-    nameHu: "",
-    nameEn: "",
-    nameDe: "",
-    slugHu: "",
-    slugEn: "",
-    slugDe: "",
-    shortDescriptionHu: "",
-    shortDescriptionEn: "",
-    shortDescriptionDe: "",
-    descriptionHu: "",
-    descriptionEn: "",
-    descriptionDe: "",
-    addressHu: "",
-    addressEn: "",
-    addressDe: "",
     phone: "",
     email: "",
     website: "",
     facebook: "",
     whatsapp: "",
     openingHours: [] as OpeningHour[],
-    accessibilityHu: "",
-    accessibilityEn: "",
-    accessibilityDe: "",
-    seoTitleHu: "",
-    seoTitleEn: "",
-    seoTitleDe: "",
-    seoDescriptionHu: "",
-    seoDescriptionEn: "",
-    seoDescriptionDe: "",
-    seoImageHu: "",
-    seoImageEn: "",
-    seoImageDe: "",
-    seoKeywordsHu: [] as string[],
-    seoKeywordsEn: [] as string[],
-    seoKeywordsDe: [] as string[],
     heroImage: "",
     cardImage: "",
     mapImage: "",
@@ -514,7 +524,8 @@ export function PlacesPage() {
     const errors: Record<string, string> = {};
     if (!formData.categoryId) errors.categoryId = t("admin.validation.categoryRequired");
     if (!formData.townId) errors.townId = t("admin.validation.townRequired");
-    if (!formData.nameHu.trim()) errors.nameHu = t("admin.validation.hungarianNameRequired");
+    const missingNameKey = requirePrimaryLangName(formData, contentLanguages, "name");
+    if (missingNameKey) errors[missingNameKey] = t("admin.validation.hungarianNameRequired");
     if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
       errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
     }
@@ -528,94 +539,12 @@ export function PlacesPage() {
     if (!validateForm()) return;
 
     try {
-      const translations: Array<{
-        lang: string;
-        name: string;
-        description: string | null;
-        address: string | null;
-        phone: string | null;
-        email: string | null;
-        website: string | null;
-        facebook: string | null;
-        whatsapp: string | null;
-        accessibility: string | null;
-        seoTitle: string | null;
-        seoDescription: string | null;
-        seoImage: string | null;
-        seoKeywords: string[];
-        shortDescription?: string | null;
-      }> = [
-        {
-          lang: "hu",
-          name: formData.nameHu,
-          slug: formData.slugHu || null,
-          shortDescription: formData.shortDescriptionHu || null,
-          description: formData.descriptionHu || null,
-          address: formData.addressHu || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-          accessibility: formData.accessibilityHu || null,
-          seoTitle: formData.seoTitleHu || null,
-          seoDescription: formData.seoDescriptionHu || null,
-          seoImage: formData.seoImageHu || null,
-          seoKeywords: formData.seoKeywordsHu || [],
-        },
-      ];
-      if (formData.nameEn.trim()) {
-        translations.push({
-          lang: "en",
-          name: formData.nameEn,
-          slug: formData.slugEn || null,
-          shortDescription: formData.shortDescriptionEn || null,
-          description: formData.descriptionEn || null,
-          address: formData.addressEn || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-          accessibility: formData.accessibilityEn || null,
-          seoTitle: formData.seoTitleEn || null,
-          seoDescription: formData.seoDescriptionEn || null,
-          seoImage: formData.seoImageEn || null,
-          seoKeywords: formData.seoKeywordsEn || [],
-        });
-      }
-      if (formData.nameDe.trim()) {
-        translations.push({
-          lang: "de",
-          name: formData.nameDe,
-          slug: formData.slugDe || null,
-          shortDescription: formData.shortDescriptionDe || null,
-          description: formData.descriptionDe || null,
-          address: formData.addressDe || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-          accessibility: formData.accessibilityDe || null,
-          seoTitle: formData.seoTitleDe || null,
-          seoDescription: formData.seoDescriptionDe || null,
-          seoImage: formData.seoImageDe || null,
-          seoKeywords: formData.seoKeywordsDe || [],
-        });
-      }
-      appendExtraLanguages(
-        translations,
+      const translations = translationsFromForm(
         formData,
+        contentLanguages,
         "name",
-        ["slug", "shortDescription", "description", "address", "accessibility", "seoTitle", "seoDescription", "seoImage", "seoKeywords"],
-        {
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-        }
+        PLACE_LANG_FIELDS,
+        PLACE_SHARED_FIELDS(formData)
       );
 
       const townForCreate = towns.find((town) => town.id === formData.townId);
@@ -676,98 +605,13 @@ export function PlacesPage() {
           townId: formData.townId || null,
           priceBandId: formData.priceBandId || null,
           tagIds: formData.tagIds,
-          translations: (() => {
-            const translations: Array<{
-              lang: string;
-              name: string;
-              description: string | null;
-              address: string | null;
-              phone: string | null;
-              email: string | null;
-              website: string | null;
-              facebook: string | null;
-              whatsapp: string | null;
-              accessibility: string | null;
-              seoTitle: string | null;
-              seoDescription: string | null;
-              seoImage: string | null;
-              seoKeywords: string[];
-              shortDescription?: string | null;
-            }> = [
-              {
-                lang: "hu",
-                name: formData.nameHu,
-                slug: formData.slugHu || null,
-                shortDescription: formData.shortDescriptionHu || null,
-                description: formData.descriptionHu || null,
-                address: formData.addressHu || null,
-                phone: formData.phone || null,
-                email: formData.email || null,
-                website: formData.website || null,
-                facebook: formData.facebook || null,
-                whatsapp: formData.whatsapp || null,
-                accessibility: formData.accessibilityHu || null,
-                seoTitle: formData.seoTitleHu || null,
-                seoDescription: formData.seoDescriptionHu || null,
-                seoImage: formData.seoImageHu || null,
-                seoKeywords: formData.seoKeywordsHu || [],
-              },
-            ];
-            if (formData.nameEn.trim()) {
-              translations.push({
-                lang: "en",
-                name: formData.nameEn,
-                slug: formData.slugEn || null,
-                shortDescription: formData.shortDescriptionEn || null,
-                description: formData.descriptionEn || null,
-                address: formData.addressEn || null,
-                phone: formData.phone || null,
-                email: formData.email || null,
-                website: formData.website || null,
-                facebook: formData.facebook || null,
-                whatsapp: formData.whatsapp || null,
-                accessibility: formData.accessibilityEn || null,
-                seoTitle: formData.seoTitleEn || null,
-                seoDescription: formData.seoDescriptionEn || null,
-                seoImage: formData.seoImageEn || null,
-                seoKeywords: formData.seoKeywordsEn || [],
-              });
-            }
-            if (formData.nameDe.trim()) {
-              translations.push({
-                lang: "de",
-                name: formData.nameDe,
-                slug: formData.slugDe || null,
-                shortDescription: formData.shortDescriptionDe || null,
-                description: formData.descriptionDe || null,
-                address: formData.addressDe || null,
-                phone: formData.phone || null,
-                email: formData.email || null,
-                website: formData.website || null,
-                facebook: formData.facebook || null,
-                whatsapp: formData.whatsapp || null,
-                accessibility: formData.accessibilityDe || null,
-                seoTitle: formData.seoTitleDe || null,
-                seoDescription: formData.seoDescriptionDe || null,
-                seoImage: formData.seoImageDe || null,
-                seoKeywords: formData.seoKeywordsDe || [],
-              });
-            }
-            appendExtraLanguages(
-              translations,
-              formData,
-              "name",
-              ["slug", "shortDescription", "description", "address", "accessibility", "seoTitle", "seoDescription", "seoImage", "seoKeywords"],
-              {
-                phone: formData.phone || null,
-                email: formData.email || null,
-                website: formData.website || null,
-                facebook: formData.facebook || null,
-                whatsapp: formData.whatsapp || null,
-              }
-            );
-            return translations;
-          })(),
+          translations: translationsFromForm(
+            formData,
+            contentLanguages,
+            "name",
+            PLACE_LANG_FIELDS,
+            PLACE_SHARED_FIELDS(formData)
+          ),
           openingHours: formData.openingHours,
           heroImage: formData.heroImage || null,
           cardImage: formData.cardImage || null,
@@ -871,51 +715,23 @@ export function PlacesPage() {
   const startEdit = (place: Place) => {
     setEditingId(place.id);
     checkPlaceRole(place.id);
-    const hu = place.translations.find((t) => t.lang === "hu");
-    const en = place.translations.find((t) => t.lang === "en");
-    const de = place.translations.find((t) => t.lang === "de");
+    const hu =
+      place.translations.find((t) => t.lang === primaryContentLang(contentLanguages)) ||
+      place.translations.find((t) => t.lang === "hu") ||
+      place.translations[0];
     setFormData({
+      ...emptyLangFields(contentLanguages, PLACE_LANG_FIELDS),
       categoryId: place.categoryId,
       parentPlaceId: place.parentPlaceId || "",
       townId: place.townId || "",
       priceBandId: place.priceBandId || "",
       tagIds: place.tags.map((pt) => pt.tag.id),
-      nameHu: hu?.name || "",
-      nameEn: en?.name || "",
-      nameDe: de?.name || "",
-      slugHu: hu?.slug || "",
-      slugEn: en?.slug || "",
-      slugDe: de?.slug || "",
-      shortDescriptionHu: hu?.shortDescription || "",
-      shortDescriptionEn: en?.shortDescription || "",
-      shortDescriptionDe: de?.shortDescription || "",
-      descriptionHu: hu?.description || "",
-      descriptionEn: en?.description || "",
-      descriptionDe: de?.description || "",
-      addressHu: hu?.address || "",
-      addressEn: en?.address || "",
-      addressDe: de?.address || "",
       phone: hu?.phone || "",
       email: hu?.email || "",
       website: hu?.website || "",
       facebook: hu?.facebook || "",
       whatsapp: hu?.whatsapp || "",
       openingHours: place.openingHours || [],
-      accessibilityHu: hu?.accessibility || "",
-      accessibilityEn: en?.accessibility || "",
-      accessibilityDe: de?.accessibility || "",
-      seoTitleHu: hu?.seoTitle || "",
-      seoTitleEn: en?.seoTitle || "",
-      seoTitleDe: de?.seoTitle || "",
-      seoDescriptionHu: hu?.seoDescription || "",
-      seoDescriptionEn: en?.seoDescription || "",
-      seoDescriptionDe: de?.seoDescription || "",
-      seoImageHu: hu?.seoImage || "",
-      seoImageEn: en?.seoImage || "",
-      seoImageDe: de?.seoImage || "",
-      seoKeywordsHu: hu?.seoKeywords || [],
-      seoKeywordsEn: en?.seoKeywords || [],
-      seoKeywordsDe: de?.seoKeywords || [],
       heroImage: place.heroImage || "",
       cardImage: place.cardImage || "",
       mapImage: place.mapImage || "",
@@ -934,64 +750,24 @@ export function PlacesPage() {
       gaMeasurementId: place.gaMeasurementId || "",
     });
     setFormData((current) =>
-      mergeTranslations(current, place.translations, [
-        "name",
-        "slug",
-        "shortDescription",
-        "description",
-        "address",
-        "accessibility",
-        "seoTitle",
-        "seoDescription",
-        "seoImage",
-        "seoKeywords",
-      ])
+      mergeTranslations(current, place.translations, PLACE_LANG_FIELDS)
     );
   };
 
   const resetForm = () => {
     setFormData({
+      ...emptyLangFields(contentLanguages, PLACE_LANG_FIELDS),
       categoryId: "",
       parentPlaceId: "",
       townId: "",
       priceBandId: "",
       tagIds: [],
-      nameHu: "",
-      nameEn: "",
-      nameDe: "",
-      slugHu: "",
-      slugEn: "",
-      slugDe: "",
-      shortDescriptionHu: "",
-      shortDescriptionEn: "",
-      shortDescriptionDe: "",
-      descriptionHu: "",
-      descriptionEn: "",
-      descriptionDe: "",
-      addressHu: "",
-      addressEn: "",
-      addressDe: "",
       phone: "",
       email: "",
       website: "",
       facebook: "",
       whatsapp: "",
       openingHours: [],
-      accessibilityHu: "",
-      accessibilityEn: "",
-      accessibilityDe: "",
-      seoTitleHu: "",
-      seoTitleEn: "",
-      seoTitleDe: "",
-      seoDescriptionHu: "",
-      seoDescriptionEn: "",
-      seoDescriptionDe: "",
-      seoImageHu: "",
-      seoImageEn: "",
-      seoImageDe: "",
-      seoKeywordsHu: [],
-      seoKeywordsEn: [],
-      seoKeywordsDe: [],
       heroImage: "",
       cardImage: "",
       mapImage: "",
@@ -1070,44 +846,18 @@ export function PlacesPage() {
         setIsCreating(false);
         // Reset form data directly to avoid dependency issues
         setFormData({
+          ...emptyLangFields(contentLanguages, PLACE_LANG_FIELDS),
           categoryId: "",
           parentPlaceId: "",
           townId: "",
           priceBandId: "",
           tagIds: [],
-          nameHu: "",
-          nameEn: "",
-          nameDe: "",
-          shortDescriptionHu: "",
-          shortDescriptionEn: "",
-          shortDescriptionDe: "",
-          descriptionHu: "",
-          descriptionEn: "",
-          descriptionDe: "",
-          addressHu: "",
-          addressEn: "",
-          addressDe: "",
           phone: "",
           email: "",
           website: "",
           facebook: "",
           whatsapp: "",
           openingHours: [],
-          accessibilityHu: "",
-          accessibilityEn: "",
-          accessibilityDe: "",
-          seoTitleHu: "",
-          seoTitleEn: "",
-          seoTitleDe: "",
-          seoDescriptionHu: "",
-          seoDescriptionEn: "",
-          seoDescriptionDe: "",
-          seoImageHu: "",
-          seoImageEn: "",
-          seoImageDe: "",
-          seoKeywordsHu: [],
-          seoKeywordsEn: [],
-          seoKeywordsDe: [],
           heroImage: "",
           cardImage: "",
           mapImage: "",
@@ -1674,8 +1424,8 @@ export function PlacesPage() {
                 </label>
                 <CoordinateSuggestion
                   query={[
-                    formData.addressHu || formData.addressEn || formData.addressDe,
-                    formData.nameHu || formData.nameEn || formData.nameDe,
+                    contentLanguages.map((lang) => readLang(formData, "address", lang)).find(Boolean),
+                    contentLanguages.map((lang) => readLang(formData, "name", lang)).find(Boolean),
                     towns.find((town) => town.id === formData.townId)?.translations?.find(
                       (row: { lang: string }) => row.lang === "hu"
                     )?.name,

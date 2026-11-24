@@ -57,6 +57,7 @@ import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEdito
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
 import { AdminImageField } from "../../components/AdminImageField";
+import { LandingImagesEditor } from "../../components/LandingImagesEditor";
 
 const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
 const PLATFORM_HOST_SETTING_KEY = "platform.publicHost";
@@ -1535,6 +1536,23 @@ export function AppSettingsPage() {
               {isSavingShareImage ? t("common.loading") : t("admin.defaultShareImage.save")}
             </button>
           </div>
+        </div>
+      )}
+
+      {userIsSuperadmin && (
+        <div
+          style={{
+            marginBottom: 24,
+            background: "var(--admin-surface)",
+            borderRadius: 12,
+            border: "1px solid var(--admin-border-subtle)",
+            padding: 24,
+          }}
+        >
+          <h2 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 600 }}>
+            Landing képek (áttekintő)
+          </h2>
+          <LandingImagesEditor />
         </div>
       )}
 

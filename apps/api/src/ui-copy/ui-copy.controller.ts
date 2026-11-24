@@ -40,6 +40,16 @@ export class AdminUiCopyController {
     return this.copy.addLanguage(body?.code ?? "", user?.role);
   }
 
+  @Post("translate")
+  startTranslate(@Body() body: { lang?: string }, @CurrentUser() user: { role?: string }) {
+    return this.copy.startTranslate(body?.lang ?? "", user?.role);
+  }
+
+  @Get("translate/:jobId")
+  translateJob(@Param("jobId") jobId: string, @CurrentUser() user: { role?: string }) {
+    return this.copy.translateJob(jobId, user?.role);
+  }
+
   @Delete("languages/:code")
   removeLanguage(@Param("code") code: string, @CurrentUser() user: { role?: string }) {
     return this.copy.removeLanguage(code, user?.role);

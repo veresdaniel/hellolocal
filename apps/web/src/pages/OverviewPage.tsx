@@ -17,7 +17,7 @@ import { useApplyPublicTheme, publicThemeStyle } from "../hooks/useApplyPublicTh
 import { publicFontCssVars } from "../styles/publicFonts";
 import { getPublicUiLanguages } from "../api/uiCopy.api";
 import { MarketingPicture } from "../marketing/MarketingPicture";
-import { OVERVIEW_HERO_MAP } from "../marketing/overviewImages";
+import { resolveHeroImage, resolveShareImage } from "../marketing/landingCmsImages";
 import "../styles/overview.css";
 
 const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
@@ -182,7 +182,15 @@ export function OverviewPage() {
   const description = text("seoDescription") || text("subtitle") || title;
   const seoTitle = text("seoTitle") || title;
   const origin = typeof window === "undefined" ? "https://hello-local.io" : window.location.origin;
-  const image = `${origin}/marketing/hellolocal-share.jpg`;
+  const landingImages = platformSettings?.platform?.landingImages ?? null;
+  const heroImage = useMemo(
+    () => resolveHeroImage(landingImages, lang),
+    [landingImages, lang]
+  );
+  const sharePath =
+    resolveShareImage(landingImages, lang, platformSettings?.platform?.defaultShareImage) ||
+    "/marketing/hellolocal-share.jpg";
+  const image = sharePath.startsWith("http") ? sharePath : `${origin}${sharePath}`;
   const { data: uiLanguages } = useQuery({
     queryKey: ["ui-languages"],
     queryFn: getPublicUiLanguages,
@@ -303,7 +311,7 @@ export function OverviewPage() {
                   </span>
                 </div>
                 <MarketingPicture
-                  image={OVERVIEW_HERO_MAP}
+                  image={heroImage}
                   alt={text("shotCaption")}
                   priority
                 />

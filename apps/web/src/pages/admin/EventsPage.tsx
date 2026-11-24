@@ -1,6 +1,15 @@
 // src/pages/admin/EventsPage.tsx
 import { useState, useEffect, useContext } from "react";
-import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
+import {
+  emptyLangFields,
+  mergeTranslations,
+  patchLang,
+  primaryContentLang,
+  readLang,
+  requirePrimaryLangName,
+  translationsFromForm,
+} from "../../utils/langFields";
+import { useContentLanguages } from "../../hooks/useContentLanguages";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAdminSite } from "../../contexts/useAdminSite";
@@ -47,6 +56,31 @@ import type { Lang } from "../../types/enums";
 import { buildPublicUrl } from "../../app/urls";
 import { useToast } from "../../contexts/ToastContext";
 
+const EVENT_SHARED_FIELDS = (form: {
+  phone: string;
+  email: string;
+  website: string;
+  facebook: string;
+  whatsapp: string;
+}) => ({
+  phone: form.phone || null,
+  email: form.email || null,
+  website: form.website || null,
+  facebook: form.facebook || null,
+  whatsapp: form.whatsapp || null,
+});
+
+const EVENT_LANG_FIELDS = [
+  "title",
+  "slug",
+  "shortDescription",
+  "description",
+  "seoTitle",
+  "seoDescription",
+  "seoImage",
+  "seoKeywords",
+];
+
 export function EventsPage() {
   const { t, i18n } = useTranslation();
   const { showToast } = useToast();
@@ -84,35 +118,13 @@ export function EventsPage() {
     const params = new URLSearchParams(window.location.search);
     return params.get("new") === "true";
   });
+  const contentLanguages = useContentLanguages();
   const [formData, setFormData] = useState({
+    ...emptyLangFields(contentLanguages, EVENT_LANG_FIELDS),
     placeId: "",
     categoryId: "",
     categoryIds: [] as string[], // For multiple category selection
     tagIds: [] as string[],
-    titleHu: "",
-    titleEn: "",
-    titleDe: "",
-    slugHu: "",
-    slugEn: "",
-    slugDe: "",
-    shortDescriptionHu: "",
-    shortDescriptionEn: "",
-    shortDescriptionDe: "",
-    descriptionHu: "",
-    descriptionEn: "",
-    descriptionDe: "",
-    seoTitleHu: "",
-    seoTitleEn: "",
-    seoTitleDe: "",
-    seoDescriptionHu: "",
-    seoDescriptionEn: "",
-    seoDescriptionDe: "",
-    seoImageHu: "",
-    seoImageEn: "",
-    seoImageDe: "",
-    seoKeywordsHu: "",
-    seoKeywordsEn: "",
-    seoKeywordsDe: "",
     phone: "",
     email: "",
     website: "",
@@ -306,7 +318,8 @@ export function EventsPage() {
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!formData.titleHu.trim()) errors.titleHu = t("admin.validation.hungarianTitleRequired");
+    const missingTitleKey = requirePrimaryLangName(formData, contentLanguages, "title");
+    if (missingTitleKey) errors[missingTitleKey] = t("admin.validation.hungarianTitleRequired");
     if (!formData.startDate) errors.startDate = t("admin.validation.startDateRequired");
     if (!formData.placeId.trim()) errors.placeId = t("admin.validation.placeRequired");
     if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
@@ -321,63 +334,13 @@ export function EventsPage() {
     if (!validateForm()) return;
 
     try {
-      const translations: CreateEventDto["translations"] = [
-        {
-          lang: "hu",
-          title: formData.titleHu,
-          shortDescription: formData.shortDescriptionHu || null,
-          description: formData.descriptionHu || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-          seoTitle: formData.seoTitleHu || null,
-          seoDescription: formData.seoDescriptionHu || null,
-          seoImage: formData.seoImageHu || null,
-          seoKeywords: formData.seoKeywordsHu
-            ? formData.seoKeywordsHu.split(",").map((k) => k.trim())
-            : [],
-        },
-      ];
-      if (formData.titleEn.trim()) {
-        translations.push({
-          lang: "en",
-          title: formData.titleEn,
-          shortDescription: formData.shortDescriptionEn || null,
-          description: formData.descriptionEn || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-          seoTitle: formData.seoTitleEn || null,
-          seoDescription: formData.seoDescriptionEn || null,
-          seoImage: formData.seoImageEn || null,
-          seoKeywords: formData.seoKeywordsEn
-            ? formData.seoKeywordsEn.split(",").map((k) => k.trim())
-            : [],
-        });
-      }
-      if (formData.titleDe.trim()) {
-        translations.push({
-          lang: "de",
-          title: formData.titleDe,
-          shortDescription: formData.shortDescriptionDe || null,
-          description: formData.descriptionDe || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-          seoTitle: formData.seoTitleDe || null,
-          seoDescription: formData.seoDescriptionDe || null,
-          seoImage: formData.seoImageDe || null,
-          seoKeywords: formData.seoKeywordsDe
-            ? formData.seoKeywordsDe.split(",").map((k) => k.trim())
-            : [],
-        });
-      }
+      const translations = translationsFromForm(
+        formData,
+        contentLanguages,
+        "title",
+        EVENT_LANG_FIELDS,
+        EVENT_SHARED_FIELDS(formData)
+      ) as CreateEventDto["translations"];
 
       await createEvent({
         siteId: selectedSiteId,
@@ -421,66 +384,13 @@ export function EventsPage() {
     if (!validateForm()) return;
 
     try {
-      const translations: CreateEventDto["translations"] = [
-        {
-          lang: "hu",
-          title: formData.titleHu,
-          slug: formData.slugHu || null,
-          shortDescription: formData.shortDescriptionHu || null,
-          description: formData.descriptionHu || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-          seoTitle: formData.seoTitleHu || null,
-          seoDescription: formData.seoDescriptionHu || null,
-          seoImage: formData.seoImageHu || null,
-          seoKeywords: formData.seoKeywordsHu
-            ? formData.seoKeywordsHu.split(",").map((k) => k.trim())
-            : [],
-        },
-      ];
-      if (formData.titleEn.trim()) {
-        translations.push({
-          lang: "en",
-          title: formData.titleEn,
-          slug: formData.slugEn || null,
-          shortDescription: formData.shortDescriptionEn || null,
-          description: formData.descriptionEn || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-          seoTitle: formData.seoTitleEn || null,
-          seoDescription: formData.seoDescriptionEn || null,
-          seoImage: formData.seoImageEn || null,
-          seoKeywords: formData.seoKeywordsEn
-            ? formData.seoKeywordsEn.split(",").map((k) => k.trim())
-            : [],
-        });
-      }
-      if (formData.titleDe.trim()) {
-        translations.push({
-          lang: "de",
-          title: formData.titleDe,
-          slug: formData.slugDe || null,
-          shortDescription: formData.shortDescriptionDe || null,
-          description: formData.descriptionDe || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          website: formData.website || null,
-          facebook: formData.facebook || null,
-          whatsapp: formData.whatsapp || null,
-          seoTitle: formData.seoTitleDe || null,
-          seoDescription: formData.seoDescriptionDe || null,
-          seoImage: formData.seoImageDe || null,
-          seoKeywords: formData.seoKeywordsDe
-            ? formData.seoKeywordsDe.split(",").map((k) => k.trim())
-            : [],
-        });
-      }
+      const translations = translationsFromForm(
+        formData,
+        contentLanguages,
+        "title",
+        EVENT_LANG_FIELDS,
+        EVENT_SHARED_FIELDS(formData)
+      ) as CreateEventDto["translations"];
 
       await updateEvent(
         id,
@@ -550,40 +460,17 @@ export function EventsPage() {
 
   const startEdit = (event: Event) => {
     setEditingId(event.id);
-    const hu = findTranslation(event.translations, "hu" as Lang);
-    const en = findTranslation(event.translations, "en" as Lang);
-    const de = findTranslation(event.translations, "de" as Lang);
+    const hu =
+      findTranslation(event.translations, primaryContentLang(contentLanguages) as Lang) ||
+      findTranslation(event.translations, "hu" as Lang);
     setFormData({
+      ...emptyLangFields(contentLanguages, EVENT_LANG_FIELDS),
       placeId: event.placeId || "",
       categoryId: event.categoryId || "",
       categoryIds:
         event.categories?.map((ec) => ec.category.id) ||
         (event.categoryId ? [event.categoryId] : []),
       tagIds: event.tags.map((et) => et.tag.id),
-      titleHu: hu?.title || "",
-      titleEn: en?.title || "",
-      titleDe: de?.title || "",
-      slugHu: hu?.slug || "",
-      slugEn: en?.slug || "",
-      slugDe: de?.slug || "",
-      shortDescriptionHu: hu?.shortDescription || "",
-      shortDescriptionEn: en?.shortDescription || "",
-      shortDescriptionDe: de?.shortDescription || "",
-      descriptionHu: hu?.description || "",
-      descriptionEn: en?.description || "",
-      descriptionDe: de?.description || "",
-      seoTitleHu: hu?.seoTitle || "",
-      seoTitleEn: en?.seoTitle || "",
-      seoTitleDe: de?.seoTitle || "",
-      seoDescriptionHu: hu?.seoDescription || "",
-      seoDescriptionEn: en?.seoDescription || "",
-      seoDescriptionDe: de?.seoDescription || "",
-      seoImageHu: hu?.seoImage || "",
-      seoImageEn: en?.seoImage || "",
-      seoImageDe: de?.seoImage || "",
-      seoKeywordsHu: hu?.seoKeywords?.join(", ") || "",
-      seoKeywordsEn: en?.seoKeywords?.join(", ") || "",
-      seoKeywordsDe: de?.seoKeywords?.join(", ") || "",
       phone: hu?.phone || "",
       email: hu?.email || "",
       website: hu?.website || "",
@@ -604,38 +491,25 @@ export function EventsPage() {
       domainLang: event.domainLang || "hu",
       gaMeasurementId: event.gaMeasurementId || "",
     });
+    setFormData((current) =>
+      mergeTranslations(
+        current,
+        event.translations.map((row) => ({
+          ...row,
+          seoKeywords: row.seoKeywords?.join(", ") ?? null,
+        })),
+        EVENT_LANG_FIELDS
+      )
+    );
   };
 
   const resetForm = () => {
     setFormData({
+      ...emptyLangFields(contentLanguages, EVENT_LANG_FIELDS),
       placeId: "",
       categoryId: "",
       categoryIds: [],
       tagIds: [],
-      titleHu: "",
-      titleEn: "",
-      titleDe: "",
-      slugHu: "",
-      slugEn: "",
-      slugDe: "",
-      shortDescriptionHu: "",
-      shortDescriptionEn: "",
-      shortDescriptionDe: "",
-      descriptionHu: "",
-      descriptionEn: "",
-      descriptionDe: "",
-      seoTitleHu: "",
-      seoTitleEn: "",
-      seoTitleDe: "",
-      seoDescriptionHu: "",
-      seoDescriptionEn: "",
-      seoDescriptionDe: "",
-      seoImageHu: "",
-      seoImageEn: "",
-      seoImageDe: "",
-      seoKeywordsHu: "",
-      seoKeywordsEn: "",
-      seoKeywordsDe: "",
       phone: "",
       email: "",
       website: "",

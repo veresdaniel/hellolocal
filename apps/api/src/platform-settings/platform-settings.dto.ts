@@ -78,6 +78,11 @@ export type PlatformSettingsDto = {
     weekStartsOn: number; // 0 = Sunday, 1 = Monday
     /** Platform-wide OG/share image fallback (AppSetting). */
     defaultShareImage?: string | null;
+    /**
+     * Per-lang overview marketing images (Cloudinary URLs).
+     * Slots: hero, maker, service, quiet, town, closing, share.
+     */
+    landingImages?: Record<string, Partial<Record<string, string>>> | null;
     /** Free-plan trial days before auto-suspend (shown on pricing). */
     freeTrialDays?: number;
     /** Extensible currency catalog for landing plan cards. */

@@ -22,6 +22,11 @@ import {
   normalizeShareImageUrl,
 } from "../common/default-share-image";
 import {
+  LANDING_IMAGES_KEY,
+  parseLandingImages,
+  serializeLandingImages,
+} from "../common/landing-images";
+import {
   PLATFORM_LANDING_CRAWLABLE_DEFAULT,
   PLATFORM_LANDING_CRAWLABLE_KEY,
 } from "../common/platform-landing-crawlable";
@@ -104,6 +109,10 @@ export class AdminAppSettingsService {
         );
       }
       value = normalized;
+    }
+    if (key === LANDING_IMAGES_KEY) {
+      value = serializeLandingImages(parseLandingImages(value));
+      dto.type = "json";
     }
     const secret = SECRET_SETTING_KEYS.has(key);
     if (ENCRYPTED_AT_REST_KEYS.has(key) && value) {

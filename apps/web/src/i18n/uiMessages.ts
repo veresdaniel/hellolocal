@@ -1,4 +1,4 @@
-export const UI_COPY_NAMESPACES = ["public", "common", "cookieConsent", "error", "offline", "validation"] as const;
+export const UI_COPY_NAMESPACES = ["admin", "public", "common", "cookieConsent", "error", "offline", "validation"] as const;
 
 export function flattenMessages(source: unknown, prefix: string, out: Record<string, string>) {
   if (typeof source === "string") {

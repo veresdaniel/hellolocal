@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { languageLabel } from "../utils/langFields";
 import { flattenMessages, UI_COPY_NAMESPACES } from "../i18n/uiMessages";
 import {
   addUiLanguage,
   getUiMessages,
+  pollUiTranslateJob,
   removeUiLanguage,
   saveUiMessages,
+  startUiTranslate,
   syncUiCatalogs,
   type UiCopyEntry,
+  type UiTranslateJob,
 } from "../api/uiCopy.api";
 
 const PAGE_SIZE = 40;
@@ -29,6 +32,30 @@ function bundledCatalogs(): Record<string, Record<string, string>> {
     flattenMessages(data, namespace, catalogs[lang]);
   }
   return catalogs;
+}
+
+/** The API body limit is small; admin.json alone is ~100 KB, so send the seed in slices. */
+function catalogChunks(
+  catalogs: Record<string, Record<string, string>>,
+  maxChars = 30_000
+): Array<Record<string, Record<string, string>>> {
+  const chunks: Array<Record<string, Record<string, string>>> = [];
+  for (const [lang, messages] of Object.entries(catalogs)) {
+    let current: Record<string, string> = {};
+    let size = 0;
+    for (const [key, value] of Object.entries(messages)) {
+      const cost = key.length + value.length + 8;
+      if (size && size + cost > maxChars) {
+        chunks.push({ [lang]: current });
+        current = {};
+        size = 0;
+      }
+      current[key] = value;
+      size += cost;
+    }
+    if (size) chunks.push({ [lang]: current });
+  }
+  return chunks;
 }
 
 export type UiCopyKeyFilter = (key: string) => boolean;
@@ -55,12 +82,28 @@ export function UiCopyEditor({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [translating, setTranslating] = useState<{ lang: string; done: number; total: number } | null>(
+    null
+  );
+  const synced = useRef(false);
+  const unmounted = useRef({ cancelled: false });
+
+  useEffect(() => {
+    const flag = unmounted.current;
+    flag.cancelled = false;
+    return () => {
+      flag.cancelled = true;
+    };
+  }, []);
 
   const load = async (nextLang: string) => {
     setLoading(true);
     setError("");
     try {
-      await syncUiCatalogs(bundledCatalogs());
+      if (!synced.current) {
+        for (const chunk of catalogChunks(bundledCatalogs())) await syncUiCatalogs(chunk);
+        synced.current = true;
+      }
       const data = await getUiMessages(nextLang);
       setLanguages(data.languages);
       setLang(data.lang);
@@ -99,6 +142,33 @@ export function UiCopyEditor({
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const dirty = filtered.filter((entry) => (drafts[entry.key] ?? "") !== entry.value);
 
+  const watchTranslateJob = async (jobId: string, targetLang: string) => {
+    setTranslating({ lang: targetLang, done: 0, total: 0 });
+    try {
+      const job: UiTranslateJob = await pollUiTranslateJob(
+        jobId,
+        (progress) => setTranslating({ lang: targetLang, done: progress.done, total: progress.total }),
+        { signal: unmounted.current }
+      );
+      if (unmounted.current.cancelled) return;
+      setTranslating(null);
+      if (job.status === "failed") {
+        setError(t("admin.uiCopyTranslateFailed", { error: job.error || "?" }));
+      } else if (job.status === "done") {
+        setNotice(
+          job.error
+            ? t("admin.uiCopyTranslateDoneWarn", { error: job.error })
+            : t("admin.uiCopyTranslateDone")
+        );
+      }
+      await load(targetLang);
+    } catch (err) {
+      if (unmounted.current.cancelled) return;
+      setTranslating(null);
+      setError(err instanceof Error ? err.message : t("admin.uiCopyLoadFailed"));
+    }
+  };
+
   const addLanguage = async () => {
     setNotice("");
     setError("");
@@ -108,6 +178,19 @@ export function UiCopyEditor({
       setCode("");
       const added = code.trim().toLowerCase().split("-")[0];
       if (added) await load(added);
+      if (added && result.translateJobId) void watchTranslateJob(result.translateJobId, added);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("admin.uiCopyLoadFailed"));
+    }
+  };
+
+  const autoTranslate = async (target: string) => {
+    if (target === "hu" || translating) return;
+    setNotice("");
+    setError("");
+    try {
+      const job = await startUiTranslate(target);
+      void watchTranslateJob(job.id, target);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("admin.uiCopyLoadFailed"));
     }
@@ -150,6 +233,11 @@ export function UiCopyEditor({
     <div>
       {error ? (
         <p style={{ padding: 16, background: "#fff4f2", borderRadius: 12, color: "#8a2b16" }}>{error}</p>
+      ) : null}
+      {translating ? (
+        <p style={{ padding: 16, background: "#f4f2fb", borderRadius: 12, color: "#1b1730" }}>
+          {t("admin.uiCopyTranslating", { done: translating.done, total: translating.total })}
+        </p>
       ) : null}
       {notice ? (
         <p style={{ padding: 16, background: "#f3f7f1", borderRadius: 12, color: "#245c32" }}>{notice}</p>
@@ -277,6 +365,23 @@ export function UiCopyEditor({
                 </option>
               ))}
             </select>
+          ) : null}
+          {showLanguageManager && lang !== "hu" ? (
+            <button
+              type="button"
+              onClick={() => void autoTranslate(lang)}
+              disabled={Boolean(translating)}
+              style={{
+                border: "1px solid #1b1730",
+                borderRadius: 8,
+                background: "white",
+                color: "#1b1730",
+                padding: "10px 16px",
+                cursor: translating ? "default" : "pointer",
+              }}
+            >
+              {t("admin.uiCopyAutoTranslate")}
+            </button>
           ) : null}
           <button
             type="button"

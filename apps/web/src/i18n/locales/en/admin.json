@@ -407,6 +407,11 @@
   "uiCopyLoading": "Loading copy…",
   "uiCopyLoadFailed": "The copy could not be loaded. The migration is not on the database yet.",
   "uiCopyRemoveConfirm": "Delete the {{lang}} copy?",
+  "uiCopyTranslating": "Translating… ({{done}} / {{total}})",
+  "uiCopyTranslateDone": "Auto-translate finished.",
+  "uiCopyTranslateDoneWarn": "Auto-translate finished, but: {{error}}",
+  "uiCopyTranslateFailed": "Auto-translate failed: {{error}}",
+  "uiCopyAutoTranslate": "Auto-translate",
   "i18n": {
     "nav": "Localization",
     "title": "Localization",
@@ -417,6 +422,7 @@
     "groupPages": "Pages",
     "sections": {
       "general": "Shared UI (cookie, errors, validation)",
+      "adminChrome": "Admin chrome strings",
       "publicChrome": "Public chrome strings",
       "overview": "Overview / landing",
       "pricing": "Pricing",

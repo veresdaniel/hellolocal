@@ -46,8 +46,44 @@ export function getPublicUiLanguages() {
   );
 }
 
+export type UiTranslateStatus = "queued" | "running" | "done" | "failed";
+
+export type UiTranslateJob = {
+  id: string;
+  lang: string;
+  status: UiTranslateStatus;
+  total: number;
+  done: number;
+  error?: string;
+};
+
 export function addUiLanguage(code: string) {
-  return apiPost<{ languages: string[] }>("/admin/ui-copy/languages", { code });
+  return apiPost<{ languages: string[]; translateJobId?: string }>("/admin/ui-copy/languages", { code });
+}
+
+export function startUiTranslate(lang: string) {
+  return apiPost<UiTranslateJob>("/admin/ui-copy/translate", { lang });
+}
+
+export function getUiTranslateJob(jobId: string) {
+  return apiGet<UiTranslateJob>(`/admin/ui-copy/translate/${encodeURIComponent(jobId)}`);
+}
+
+/** Poll a translate job until it is done or failed. Calls `onProgress` after every poll. */
+export async function pollUiTranslateJob(
+  jobId: string,
+  onProgress?: (job: UiTranslateJob) => void,
+  options: { intervalMs?: number; timeoutMs?: number; signal?: { cancelled: boolean } } = {}
+): Promise<UiTranslateJob> {
+  const intervalMs = options.intervalMs ?? 2000;
+  const deadline = Date.now() + (options.timeoutMs ?? 30 * 60 * 1000);
+  for (;;) {
+    const job = await getUiTranslateJob(jobId);
+    onProgress?.(job);
+    if (job.status === "done" || job.status === "failed") return job;
+    if (options.signal?.cancelled || Date.now() > deadline) return job;
+    await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
+  }
 }
 
 export function removeUiLanguage(code: string) {

@@ -6,7 +6,13 @@ import { AdminAutocomplete } from "../../components/AdminAutocomplete";
  * Saving triggers a best-effort Facebook OG re-scrape when API credentials are configured.
  */
 import { useState, useEffect, useContext } from "react";
-import { appendExtraLanguages, mergeTranslations, patchLang, readLang } from "../../utils/langFields";
+import {
+  emptyLangFields,
+  mergeTranslations,
+  patchLang,
+  readLang,
+  translationsFromForm,
+} from "../../utils/langFields";
 import { useTranslation } from "react-i18next";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { usePageTitle } from "../../hooks/usePageTitle";
@@ -90,6 +96,28 @@ function isSiteEditTab(value: string | null): value is TabId {
   return !!value && (SITE_EDIT_TABS as string[]).includes(value);
 }
 
+const SITE_LANG_FIELDS = [
+  "name",
+  "shortDescription",
+  "description",
+  "heroImage",
+  "landingHtml",
+  "listIntroHtml",
+  "listIntroImage",
+  "seoTitle",
+  "seoDescription",
+  "seoImage",
+  "seoKeywords",
+];
+
+function siteContentLanguages(site: { languages?: string[]; translations?: Array<{ lang: string }> } | null): string[] {
+  const codes = site?.languages?.length
+    ? site.languages
+    : site?.translations?.map((item) => item.lang) || [];
+  const unique = codes.filter((code, index, list) => list.indexOf(code) === index);
+  return unique.length ? unique : [...LANG_VALUES];
+}
+
 export function SiteEditPage() {
   const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -144,40 +172,8 @@ export function SiteEditPage() {
     }
   }, [searchParams, membersOnly]);
   const [formData, setFormData] = useState({
+    ...emptyLangFields([...LANG_VALUES], SITE_LANG_FIELDS),
     // Overview tab
-    nameHu: "",
-    nameEn: "",
-    nameDe: "",
-    shortDescriptionHu: "",
-    shortDescriptionEn: "",
-    shortDescriptionDe: "",
-    descriptionHu: "",
-    descriptionEn: "",
-    descriptionDe: "",
-    heroImageHu: "",
-    heroImageEn: "",
-    heroImageDe: "",
-    landingHtmlHu: "",
-    landingHtmlEn: "",
-    landingHtmlDe: "",
-    listIntroHtmlHu: "",
-    listIntroHtmlEn: "",
-    listIntroHtmlDe: "",
-    listIntroImageHu: "",
-    listIntroImageEn: "",
-    listIntroImageDe: "",
-    seoTitleHu: "",
-    seoTitleEn: "",
-    seoTitleDe: "",
-    seoDescriptionHu: "",
-    seoDescriptionEn: "",
-    seoDescriptionDe: "",
-    seoImageHu: "",
-    seoImageEn: "",
-    seoImageDe: "",
-    seoKeywordsHu: "",
-    seoKeywordsEn: "",
-    seoKeywordsDe: "",
     isActive: true,
     brandId: "",
     // Subscription tab
@@ -256,44 +252,11 @@ export function SiteEditPage() {
       }
 
       // Populate form data
-      const translationHu = data.translations.find((t) => t.lang === "hu");
-      const translationEn = data.translations.find((t) => t.lang === "en");
-      const translationDe = data.translations.find((t) => t.lang === "de");
-
       setFormData(mergeTranslations({
-        nameHu: translationHu?.name || "",
-        nameEn: translationEn?.name || "",
-        nameDe: translationDe?.name || "",
-        shortDescriptionHu: translationHu?.shortDescription || "",
-        shortDescriptionEn: translationEn?.shortDescription || "",
-        shortDescriptionDe: translationDe?.shortDescription || "",
-        descriptionHu: translationHu?.description || "",
-        descriptionEn: translationEn?.description || "",
-        descriptionDe: translationDe?.description || "",
-        heroImageHu: translationHu?.heroImage || "",
-        heroImageEn: translationEn?.heroImage || "",
-        heroImageDe: translationDe?.heroImage || "",
-        landingHtmlHu: translationHu?.landingHtml || "",
-        landingHtmlEn: translationEn?.landingHtml || "",
-        landingHtmlDe: translationDe?.landingHtml || "",
-        listIntroHtmlHu: translationHu?.listIntroHtml || "",
-        listIntroHtmlEn: translationEn?.listIntroHtml || "",
-        listIntroHtmlDe: translationDe?.listIntroHtml || "",
-        listIntroImageHu: translationHu?.listIntroImage || "",
-        listIntroImageEn: translationEn?.listIntroImage || "",
-        listIntroImageDe: translationDe?.listIntroImage || "",
-        seoTitleHu: translationHu?.seoTitle || "",
-        seoTitleEn: translationEn?.seoTitle || "",
-        seoTitleDe: translationDe?.seoTitle || "",
-        seoDescriptionHu: translationHu?.seoDescription || "",
-        seoDescriptionEn: translationEn?.seoDescription || "",
-        seoDescriptionDe: translationDe?.seoDescription || "",
-        seoImageHu: translationHu?.seoImage || "",
-        seoImageEn: translationEn?.seoImage || "",
-        seoImageDe: translationDe?.seoImage || "",
-        seoKeywordsHu: (translationHu?.seoKeywords || []).join(", "),
-        seoKeywordsEn: (translationEn?.seoKeywords || []).join(", "),
-        seoKeywordsDe: (translationDe?.seoKeywords || []).join(", "),
+        ...emptyLangFields(
+          [...new Set([...siteContentLanguages(data), ...data.translations.map((row) => row.lang)])],
+          SITE_LANG_FIELDS
+        ),
         isActive: data.isActive,
         brandId: data.brandId,
         plan: data.plan || "basic",
@@ -305,18 +268,10 @@ export function SiteEditPage() {
         showAdvanced: false,
         gaMeasurementId: data.gaMeasurementId ?? "",
         themeColors: resolvePublicThemeColors(data.theme, data.brand?.theme),
-      }, data.translations, [
-        "name",
-        "shortDescription",
-        "description",
-        "heroImage",
-        "landingHtml",
-        "listIntroHtml",
-        "listIntroImage",
-        "seoTitle",
-        "seoDescription",
-        "seoImage",
-      ]));
+      }, data.translations.map((row) => ({
+        ...row,
+        seoKeywords: row.seoKeywords?.join(", ") ?? null,
+      })), SITE_LANG_FIELDS));
     } catch (err) {
       showToast(t("admin.errors.loadSiteFailed"), "error");
       console.error("Failed to load site", err);
@@ -384,73 +339,12 @@ export function SiteEditPage() {
         }
       }
 
-      const translations = [];
-      if (formData.nameHu) {
-        translations.push({
-          lang: "hu" as const,
-          name: formData.nameHu,
-          shortDescription: formData.shortDescriptionHu || null,
-          description: formData.descriptionHu || null,
-          heroImage: formData.heroImageHu || null,
-          landingHtml: formData.landingHtmlHu || null,
-          listIntroHtml: formData.listIntroHtmlHu || null,
-          listIntroImage: formData.listIntroImageHu || null,
-          seoTitle: formData.seoTitleHu || null,
-          seoDescription: formData.seoDescriptionHu || null,
-          seoImage: formData.seoImageHu || null,
-          seoKeywords: formData.seoKeywordsHu
-            ? formData.seoKeywordsHu.split(",").map((k) => k.trim()).filter(Boolean)
-            : [],
-        });
-      }
-      if (formData.nameEn) {
-        translations.push({
-          lang: "en" as const,
-          name: formData.nameEn,
-          shortDescription: formData.shortDescriptionEn || null,
-          description: formData.descriptionEn || null,
-          heroImage: formData.heroImageEn || null,
-          landingHtml: formData.landingHtmlEn || null,
-          listIntroHtml: formData.listIntroHtmlEn || null,
-          listIntroImage: formData.listIntroImageEn || null,
-          seoTitle: formData.seoTitleEn || null,
-          seoDescription: formData.seoDescriptionEn || null,
-          seoImage: formData.seoImageEn || null,
-          seoKeywords: formData.seoKeywordsEn
-            ? formData.seoKeywordsEn.split(",").map((k) => k.trim()).filter(Boolean)
-            : [],
-        });
-      }
-      if (formData.nameDe) {
-        translations.push({
-          lang: "de" as const,
-          name: formData.nameDe,
-          shortDescription: formData.shortDescriptionDe || null,
-          description: formData.descriptionDe || null,
-          heroImage: formData.heroImageDe || null,
-          landingHtml: formData.landingHtmlDe || null,
-          listIntroHtml: formData.listIntroHtmlDe || null,
-          listIntroImage: formData.listIntroImageDe || null,
-          seoTitle: formData.seoTitleDe || null,
-          seoDescription: formData.seoDescriptionDe || null,
-          seoImage: formData.seoImageDe || null,
-          seoKeywords: formData.seoKeywordsDe
-            ? formData.seoKeywordsDe.split(",").map((k) => k.trim()).filter(Boolean)
-            : [],
-        });
-      }
-      appendExtraLanguages(translations, formData, "name", [
-        "shortDescription",
-        "description",
-        "heroImage",
-        "landingHtml",
-        "listIntroHtml",
-        "listIntroImage",
-        "seoTitle",
-        "seoDescription",
-        "seoImage",
-        "seoKeywords",
-      ]);
+      const translations = translationsFromForm(
+        formData,
+        [...new Set([...siteContentLanguages(site), ...LANG_VALUES])],
+        "name",
+        SITE_LANG_FIELDS
+      ) as Parameters<typeof updateSite>[1]["translations"];
 
       const updateData = {
         brandId: formData.brandId,
@@ -1705,7 +1599,7 @@ function DomainTab({
         </h4>
         {site.siteKeys && site.siteKeys.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {LANG_VALUES.map((lang) => {
+            {[...new Set([...contentLanguages, ...(site.siteKeys ?? []).map((k) => k.lang)])].map((lang) => {
               const keysForLang = site.siteKeys?.filter((k) => k.lang === lang) || [];
               const primaryKey = keysForLang.find((k) => k.isPrimary);
               const aliases = keysForLang.filter((k) => !k.isPrimary);

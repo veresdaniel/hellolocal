@@ -1,7 +1,15 @@
 // src/pages/admin/TownsPage.tsx
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
+import {
+  emptyLangFields,
+  mergeTranslations,
+  patchLang,
+  readLang,
+  requirePrimaryLangName,
+  translationsFromForm,
+} from "../../utils/langFields";
+import { useContentLanguages } from "../../hooks/useContentLanguages";
 import { useTranslation } from "react-i18next";
 import { AuthContext } from "../../contexts/AuthContext";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
@@ -51,30 +59,20 @@ interface Town {
   }>;
 }
 
-function emptyTownForm(siteId = "") {
+const TOWN_LANG_FIELDS = [
+  "name",
+  "description",
+  "heroImage",
+  "seoTitle",
+  "seoDescription",
+  "seoImage",
+  "seoKeywords",
+];
+
+function emptyTownForm(siteId = "", languages: string[] = ["hu", "en", "de"]) {
   return {
+    ...emptyLangFields(languages, TOWN_LANG_FIELDS),
     siteId,
-    nameHu: "",
-    nameEn: "",
-    nameDe: "",
-    descriptionHu: "",
-    descriptionEn: "",
-    descriptionDe: "",
-    heroImageHu: "",
-    heroImageEn: "",
-    heroImageDe: "",
-    seoTitleHu: "",
-    seoTitleEn: "",
-    seoTitleDe: "",
-    seoDescriptionHu: "",
-    seoDescriptionEn: "",
-    seoDescriptionDe: "",
-    seoImageHu: "",
-    seoImageEn: "",
-    seoImageDe: "",
-    seoKeywordsHu: "",
-    seoKeywordsEn: "",
-    seoKeywordsDe: "",
     lat: "",
     lng: "",
     zoom: "",
@@ -109,7 +107,8 @@ export function TownsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [viewingTown, setViewingTown] = useState<Town | null>(null);
   const [townPlaces, setTownPlaces] = useState<Array<{ id: string; translations?: Array<{ lang: string; name: string }> }>>([]);
-  const [formData, setFormData] = useState(() => emptyTownForm());
+  const contentLanguages = useContentLanguages();
+  const [formData, setFormData] = useState(() => emptyTownForm("", contentLanguages));
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [regionZoom, setRegionZoom] = useState<number | null>(null);
 
@@ -184,7 +183,8 @@ export function TownsPage() {
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!formData.nameHu.trim()) errors.nameHu = t("admin.validation.hungarianNameRequired");
+    const missingNameKey = requirePrimaryLangName(formData, contentLanguages, "name");
+    if (missingNameKey) errors[missingNameKey] = t("admin.validation.hungarianNameRequired");
     if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
       errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
     }
@@ -198,65 +198,12 @@ export function TownsPage() {
     if (!validateForm()) return;
 
     try {
-      const translations: Array<{
-        lang: Lang;
-        name: string;
-        description: string | null;
-        heroImage: string | null;
-        seoTitle: string | null;
-        seoDescription: string | null;
-        seoImage: string | null;
-        seoKeywords: string[];
-      }> = [
-        {
-          lang: "hu",
-          name: formData.nameHu,
-          description: formData.descriptionHu || null,
-          heroImage: formData.heroImageHu || null,
-          seoTitle: formData.seoTitleHu || null,
-          seoDescription: formData.seoDescriptionHu || null,
-          seoImage: formData.seoImageHu || null,
-          seoKeywords: formData.seoKeywordsHu
-            ? formData.seoKeywordsHu.split(",").map((k) => k.trim())
-            : [],
-        },
-      ];
-      if (formData.nameEn.trim()) {
-        translations.push({
-          lang: "en",
-          name: formData.nameEn,
-          description: formData.descriptionEn || null,
-          heroImage: formData.heroImageEn || null,
-          seoTitle: formData.seoTitleEn || null,
-          seoDescription: formData.seoDescriptionEn || null,
-          seoImage: formData.seoImageEn || null,
-          seoKeywords: formData.seoKeywordsEn
-            ? formData.seoKeywordsEn.split(",").map((k) => k.trim())
-            : [],
-        });
-      }
-      if (formData.nameDe.trim()) {
-        translations.push({
-          lang: "de",
-          name: formData.nameDe,
-          description: formData.descriptionDe || null,
-          heroImage: formData.heroImageDe || null,
-          seoTitle: formData.seoTitleDe || null,
-          seoDescription: formData.seoDescriptionDe || null,
-          seoImage: formData.seoImageDe || null,
-          seoKeywords: formData.seoKeywordsDe
-            ? formData.seoKeywordsDe.split(",").map((k) => k.trim())
-            : [],
-        });
-      }
-      appendExtraLanguages(translations, formData, "name", [
-        "description",
-        "heroImage",
-        "seoTitle",
-        "seoDescription",
-        "seoImage",
-        "seoKeywords",
-      ]);
+      const translations = translationsFromForm(
+        formData,
+        contentLanguages,
+        "name",
+        TOWN_LANG_FIELDS
+      ) as Parameters<typeof createTown>[0]["translations"];
       await createTown({
         siteId: formData.siteId.trim() || null,
         translations,
@@ -285,65 +232,12 @@ export function TownsPage() {
     if (!validateForm()) return;
 
     try {
-      const translations: Array<{
-        lang: Lang;
-        name: string;
-        description: string | null;
-        heroImage: string | null;
-        seoTitle: string | null;
-        seoDescription: string | null;
-        seoImage: string | null;
-        seoKeywords: string[];
-      }> = [
-        {
-          lang: "hu",
-          name: formData.nameHu,
-          description: formData.descriptionHu || null,
-          heroImage: formData.heroImageHu || null,
-          seoTitle: formData.seoTitleHu || null,
-          seoDescription: formData.seoDescriptionHu || null,
-          seoImage: formData.seoImageHu || null,
-          seoKeywords: formData.seoKeywordsHu
-            ? formData.seoKeywordsHu.split(",").map((k) => k.trim())
-            : [],
-        },
-      ];
-      if (formData.nameEn.trim()) {
-        translations.push({
-          lang: "en",
-          name: formData.nameEn,
-          description: formData.descriptionEn || null,
-          heroImage: formData.heroImageEn || null,
-          seoTitle: formData.seoTitleEn || null,
-          seoDescription: formData.seoDescriptionEn || null,
-          seoImage: formData.seoImageEn || null,
-          seoKeywords: formData.seoKeywordsEn
-            ? formData.seoKeywordsEn.split(",").map((k) => k.trim())
-            : [],
-        });
-      }
-      if (formData.nameDe.trim()) {
-        translations.push({
-          lang: "de",
-          name: formData.nameDe,
-          description: formData.descriptionDe || null,
-          heroImage: formData.heroImageDe || null,
-          seoTitle: formData.seoTitleDe || null,
-          seoDescription: formData.seoDescriptionDe || null,
-          seoImage: formData.seoImageDe || null,
-          seoKeywords: formData.seoKeywordsDe
-            ? formData.seoKeywordsDe.split(",").map((k) => k.trim())
-            : [],
-        });
-      }
-      appendExtraLanguages(translations, formData, "name", [
-        "description",
-        "heroImage",
-        "seoTitle",
-        "seoDescription",
-        "seoImage",
-        "seoKeywords",
-      ]);
+      const translations = translationsFromForm(
+        formData,
+        contentLanguages,
+        "name",
+        TOWN_LANG_FIELDS
+      ) as Parameters<typeof createTown>[0]["translations"];
       await updateTown(
         id,
         {
@@ -387,32 +281,8 @@ export function TownsPage() {
 
   const startEdit = (town: Town) => {
     setEditingId(town.id);
-    const hu = findTranslation(town.translations, "hu" as Lang);
-    const en = findTranslation(town.translations, "en" as Lang);
-    const de = findTranslation(town.translations, "de" as Lang);
     setFormData({
-      ...emptyTownForm(town.siteId || ""),
-      nameHu: hu?.name || "",
-      nameEn: en?.name || "",
-      nameDe: de?.name || "",
-      descriptionHu: hu?.description || "",
-      descriptionEn: en?.description || "",
-      descriptionDe: de?.description || "",
-      heroImageHu: hu?.heroImage || "",
-      heroImageEn: en?.heroImage || "",
-      heroImageDe: de?.heroImage || "",
-      seoTitleHu: hu?.seoTitle || "",
-      seoTitleEn: en?.seoTitle || "",
-      seoTitleDe: de?.seoTitle || "",
-      seoDescriptionHu: hu?.seoDescription || "",
-      seoDescriptionEn: en?.seoDescription || "",
-      seoDescriptionDe: de?.seoDescription || "",
-      seoImageHu: hu?.seoImage || "",
-      seoImageEn: en?.seoImage || "",
-      seoImageDe: de?.seoImage || "",
-      seoKeywordsHu: hu?.seoKeywords?.join(", ") || "",
-      seoKeywordsEn: en?.seoKeywords?.join(", ") || "",
-      seoKeywordsDe: de?.seoKeywords?.join(", ") || "",
+      ...emptyTownForm(town.siteId || "", contentLanguages),
       lat: town.lat?.toString() || "",
       lng: town.lng?.toString() || "",
       zoom: town.zoom?.toString() || "",
@@ -423,11 +293,21 @@ export function TownsPage() {
       domainLang: town.domainLang || "hu",
       gaMeasurementId: town.gaMeasurementId || "",
     });
+    setFormData((current) =>
+      mergeTranslations(
+        current,
+        town.translations.map((row) => ({
+          ...row,
+          seoKeywords: row.seoKeywords?.join(", ") ?? null,
+        })),
+        TOWN_LANG_FIELDS
+      )
+    );
   };
 
   const resetForm = () => {
     // Pre-select current header site; user can clear to "no region".
-    setFormData(emptyTownForm(selectedSiteId || ""));
+    setFormData(emptyTownForm(selectedSiteId || "", contentLanguages));
     setFormErrors({});
   };
 
@@ -854,7 +734,7 @@ export function TownsPage() {
               {t("admin.location")} ({t("admin.coordinates")})
             </label>
             <CoordinateSuggestion
-              query={formData.nameHu || formData.nameEn || formData.nameDe}
+              query={contentLanguages.map((lang) => readLang(formData, "name", lang)).find(Boolean) || ""}
               filled={Boolean(formData.lat && formData.lng)}
               onApply={(lat, lng) =>
                 setFormData((prev) => ({ ...prev, lat: String(lat), lng: String(lng) }))

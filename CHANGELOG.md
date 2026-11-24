@@ -12,6 +12,24 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+### Added
+
+- Platform landing images CMS: per-language hero / story / closing / share
+  Cloudinary URLs via AppSetting `platform.landingImages` (admin App settings);
+  overview SSR + SPA resolve CMS URLs over bundled `/marketing` fallbacks.
+- UI language auto-translate job after add-language (admin + public + common
+  catalogs, plus `admin.*` in UiCopy). In-process job service
+  (`ui-translate.service.ts`, reuses content-draft AI key/provider), endpoints
+  `POST /api/admin/ui-copy/translate` and `GET .../translate/:jobId`,
+  `addLanguage` returns `translateJobId`; UiCopyEditor polls progress and has an
+  "Auto-fordítás" button; admin language switcher and currency-by-language card
+  follow DB UI languages.
+- Admin entity forms (places, events, towns, site edit) round-trip every code
+  in `site.languages[]`: new `langFields` helpers (`emptyLangFields`,
+  `translationsFromForm`, `primaryContentLang`, `requirePrimaryLangName`)
+  replace hardcoded hu/en/de state, validation and payload building; site edit
+  loads all translations and the Domain tab lists site keys per site language.
+
 ### Fixed
 
 - helloetyek list view 500: a CSS comment inside the PlacesListView `<style>`

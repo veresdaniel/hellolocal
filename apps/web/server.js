@@ -535,6 +535,7 @@ async function loadPlatformForOverview(lang) {
         landingCopy: null,
         planOverrides: null,
         defaultShareImage: null,
+        landingImages: null,
         landingIndexable: false,
         freeTrialDays: 30,
         currencyByLang: { hu: "HUF", en: "EUR", de: "EUR" },
@@ -544,10 +545,18 @@ async function loadPlatformForOverview(lang) {
     const data = await response.json();
     const planOverrides = data?.featureMatrix?.planOverrides ?? null;
     const trialRaw = Number(data?.platform?.freeTrialDays);
+    const landingImages = data?.platform?.landingImages || null;
+    const shareFromCms =
+      landingImages?.[lang]?.share ||
+      landingImages?.en?.share ||
+      landingImages?.hu?.share ||
+      null;
     const value = {
       landingCopy: planOverrides?.landingCopy?.[lang] ?? null,
       planOverrides,
-      defaultShareImage: data?.platform?.defaultShareImage || data?.seo?.defaultImage || null,
+      defaultShareImage:
+        shareFromCms || data?.platform?.defaultShareImage || data?.seo?.defaultImage || null,
+      landingImages,
       // Platform overview only; missing/false → noindex (gradual rollout default).
       landingIndexable: data?.seo?.landingIndexable === true,
       freeTrialDays: Number.isFinite(trialRaw) && trialRaw > 0 ? Math.floor(trialRaw) : 30,
@@ -561,6 +570,7 @@ async function loadPlatformForOverview(lang) {
       landingCopy: null,
       planOverrides: null,
       defaultShareImage: null,
+      landingImages: null,
       landingIndexable: false,
       freeTrialDays: 30,
       currencyByLang: { hu: "HUF", en: "EUR", de: "EUR" },
@@ -702,6 +712,7 @@ app.get('*', async (req, res, next) => {
           languages: uiCopy?.languages,
           planOverrides: platform.planOverrides,
           shareImage: platform.defaultShareImage || null,
+          landingImages: platform.landingImages || null,
           indexable: platform.landingIndexable === true,
           freeTrialDays: platform.freeTrialDays ?? 30,
           currencyByLang: platform.currencyByLang,

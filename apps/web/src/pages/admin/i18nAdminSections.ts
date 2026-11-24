@@ -1,5 +1,6 @@
 export type I18nSectionId =
   | "general"
+  | "adminChrome"
   | "publicChrome"
   | "overview"
   | "pricing"
@@ -24,6 +25,11 @@ export const I18N_SECTIONS: I18nSectionDef[] = [
     group: "general",
     prefixes: ["common.", "cookieConsent.", "error.", "offline.", "validation."],
     manageLanguages: true,
+  },
+  {
+    id: "adminChrome",
+    group: "general",
+    prefixes: ["admin."],
   },
   {
     id: "publicChrome",

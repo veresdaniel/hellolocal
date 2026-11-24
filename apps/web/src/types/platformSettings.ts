@@ -89,6 +89,8 @@ export type PlatformSettingsDto = {
     weekStartsOn: number; // 0 = Sunday, 1 = Monday
     /** Optional platform-wide OG/share image fallback. */
     defaultShareImage?: string | null;
+    /** Per-lang overview marketing images (Cloudinary URLs). */
+    landingImages?: Record<string, Partial<Record<string, string>>> | null;
     /** Free-plan trial days before auto-suspend. */
     freeTrialDays?: number;
     currencies?: Array<{

@@ -1,11 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DemoRequestForm } from "../components/DemoRequestForm";
 import { PlanPicker } from "../components/PlanPicker";
 import { LiveDemoLink } from "../components/LiveDemoLink";
 import type { Lang } from "../app/config";
 import { useLandingText } from "../hooks/useLandingText";
 import { MarketingPicture } from "../marketing/MarketingPicture";
-import { OVERVIEW_CLOSING, OVERVIEW_STORY_IMAGES } from "../marketing/overviewImages";
+import {
+  resolveClosingImage,
+  resolveStoryImage,
+} from "../marketing/landingCmsImages";
+import { getPlatformSettings } from "../api/places.api";
 
 const FEATURE_KEYS = ["places", "events", "map", "languages", "sites", "editors"] as const;
 const STORY_KEYS = ["maker", "service", "quiet", "town"] as const;
@@ -15,6 +20,23 @@ const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
 
 export function OverviewBelowFold({ lang }: { lang: Lang }) {
   const text = useLandingText(lang);
+  const { data: platformSettings } = useQuery({
+    queryKey: ["platformSettings", lang, "default", "theme"],
+    queryFn: () => getPlatformSettings(lang),
+    staleTime: 5 * 60 * 1000,
+  });
+  const landingImages = platformSettings?.platform?.landingImages ?? null;
+  const storyImages = useMemo(
+    () =>
+      Object.fromEntries(
+        STORY_KEYS.map((key) => [key, resolveStoryImage(landingImages, lang, key)])
+      ) as Record<(typeof STORY_KEYS)[number], ReturnType<typeof resolveStoryImage>>,
+    [landingImages, lang]
+  );
+  const closingImage = useMemo(
+    () => resolveClosingImage(landingImages, lang),
+    [landingImages, lang]
+  );
 
   useEffect(() => {
     const nodes = Array.from(document.querySelectorAll<HTMLElement>(".overview__story"));
@@ -63,7 +85,7 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
           >
             <div className="overview__frame">
               <MarketingPicture
-                image={OVERVIEW_STORY_IMAGES[key]}
+                image={storyImages[key]}
                 alt={text(`stories.${key}.alt`)}
               />
             </div>
@@ -126,7 +148,7 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
         </div>
         <MarketingPicture
           className="overview__close-map"
-          image={OVERVIEW_CLOSING}
+          image={closingImage}
           alt={text("closingImageAlt")}
         />
       </section>

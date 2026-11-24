@@ -387,6 +387,11 @@
   "uiCopyLoading": "Szövegek betöltése…",
   "uiCopyLoadFailed": "A szövegeket nem sikerült betölteni. A migráció még nincs az adatbázison.",
   "uiCopyRemoveConfirm": "Törlöd a(z) {{lang}} nyelv szövegeit?",
+  "uiCopyTranslating": "Fordítás folyamatban… ({{done}} / {{total}})",
+  "uiCopyTranslateDone": "Az automatikus fordítás kész.",
+  "uiCopyTranslateDoneWarn": "Az automatikus fordítás kész, de: {{error}}",
+  "uiCopyTranslateFailed": "Az automatikus fordítás nem sikerült: {{error}}",
+  "uiCopyAutoTranslate": "Auto-fordítás",
   "i18n": {
     "nav": "Nyelvesítés",
     "title": "Nyelvesítés",
@@ -397,6 +402,7 @@
     "groupPages": "Oldalak",
     "sections": {
       "general": "Közös UI (cookie, hiba, validáció)",
+      "adminChrome": "Admin felület szövegei",
       "publicChrome": "Publikus keretszövegek",
       "overview": "Áttekintő / nyitó",
       "pricing": "Árazás",

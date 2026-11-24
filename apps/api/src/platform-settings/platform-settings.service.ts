@@ -25,6 +25,11 @@ import {
   normalizeShareImageUrl,
 } from "../common/default-share-image";
 import {
+  LANDING_IMAGES_KEY,
+  parseLandingImages,
+  type LandingImagesByLang,
+} from "../common/landing-images";
+import {
   PLATFORM_LANDING_CRAWLABLE_DEFAULT,
   PLATFORM_LANDING_CRAWLABLE_KEY,
 } from "../common/platform-landing-crawlable";
@@ -443,6 +448,7 @@ export class PlatformSettingsService {
     timeFormat: "24h" | "12h";
     weekStartsOn: number;
     defaultShareImage: string | null;
+    landingImages: LandingImagesByLang;
     freeTrialDays: number;
     currencies: Array<{ code: string; name: string; plural: string; symbol: string | null }>;
     currencyByLang: CurrencyByLang;
@@ -454,6 +460,7 @@ export class PlatformSettingsService {
       timeFormatSetting,
       weekStartsOnSetting,
       shareImageSetting,
+      landingImagesSetting,
       freeTrialSetting,
       currencyByLangSetting,
       currencyRows,
@@ -463,6 +470,7 @@ export class PlatformSettingsService {
       this.prisma.appSetting.findUnique({ where: { key: "platform.timeFormat" } }),
       this.prisma.appSetting.findUnique({ where: { key: "platform.weekStartsOn" } }),
       this.prisma.appSetting.findUnique({ where: { key: DEFAULT_SHARE_IMAGE_KEY } }),
+      this.prisma.appSetting.findUnique({ where: { key: LANDING_IMAGES_KEY } }),
       this.prisma.appSetting.findUnique({ where: { key: FREE_TRIAL_DAYS_KEY } }),
       this.prisma.appSetting.findUnique({ where: { key: CURRENCY_BY_LANG_KEY } }),
       this.prisma.currency.findMany({ orderBy: { code: "asc" } }),
@@ -494,6 +502,7 @@ export class PlatformSettingsService {
       timeFormat: (timeFormatSetting?.value === "12h" ? "12h" : "24h") as "24h" | "12h",
       weekStartsOn: weekStartsOnSetting?.value ? parseInt(weekStartsOnSetting.value, 10) : 1,
       defaultShareImage: configuredShare || FALLBACK_SHARE_IMAGE_PATH,
+      landingImages: parseLandingImages(landingImagesSetting?.value),
       freeTrialDays: parseFreeTrialDays(freeTrialSetting?.value),
       currencies: currencies.map((row) => ({
         code: row.code,

@@ -407,6 +407,11 @@
   "uiCopyLoading": "Texte werden geladen…",
   "uiCopyLoadFailed": "Die Texte konnten nicht geladen werden. Die Migration liegt noch nicht auf der Datenbank.",
   "uiCopyRemoveConfirm": "Die Texte für {{lang}} löschen?",
+  "uiCopyTranslating": "Übersetzung läuft… ({{done}} / {{total}})",
+  "uiCopyTranslateDone": "Die automatische Übersetzung ist fertig.",
+  "uiCopyTranslateDoneWarn": "Die automatische Übersetzung ist fertig, aber: {{error}}",
+  "uiCopyTranslateFailed": "Die automatische Übersetzung ist fehlgeschlagen: {{error}}",
+  "uiCopyAutoTranslate": "Auto-Übersetzung",
   "i18n": {
     "nav": "Lokalisierung",
     "title": "Lokalisierung",
@@ -417,6 +422,7 @@
     "groupPages": "Seiten",
     "sections": {
       "general": "Gemeinsame UI (Cookie, Fehler, Validierung)",
+      "adminChrome": "Admin-Oberfläche",
       "publicChrome": "Öffentliche Rahmentexte",
       "overview": "Übersicht / Landing",
       "pricing": "Preise",

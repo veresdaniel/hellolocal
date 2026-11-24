@@ -10,7 +10,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { applySocialMeta, publicOrigin, SHARE_IMAGE_HEIGHT, SHARE_IMAGE_WIDTH } from "./socialMeta.js";
 import { injectOverviewShellHead } from "./overviewShellCss.js";
-import { OVERVIEW_HERO_MAP, OVERVIEW_STORY_IMAGES, pictureHtml } from "./overviewImages.js";
+import { heroPictureHtml, storyPictureHtml } from "./landingCmsImages.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const webRoot = join(here, "..");
@@ -237,13 +237,14 @@ function renderDifference(copy) {
     .join("");
 }
 
-function renderStories(copy) {
+function renderStories(copy, landingImages, lang) {
   if (!copy.stories) return "";
   return ["maker", "service", "quiet", "town"]
     .map((key) => {
       const story = copy.stories[key];
       if (!story) return "";
-      return `<article>${pictureHtml(OVERVIEW_STORY_IMAGES[key], escapeHtml(story.alt))}<h3>${escapeHtml(story.title)}</h3><p>${escapeHtml(story.text)}</p></article>`;
+      const picture = storyPictureHtml(landingImages, lang, key, escapeHtml(story.alt));
+      return `<article>${picture}<h3>${escapeHtml(story.title)}</h3><p>${escapeHtml(story.text)}</p></article>`;
     })
     .join("");
 }
@@ -361,6 +362,7 @@ export function renderOverviewDocument(
     languages,
     planOverrides,
     shareImage,
+    landingImages,
     indexable,
     pathname,
     shareUrl,
@@ -451,7 +453,7 @@ export function renderOverviewDocument(
       <p>${escapeHtml(copy.lead)}</p>
       <p><a href="/${lang}">${escapeHtml(copy.cta)}</a></p>
       <figure>
-        ${pictureHtml(OVERVIEW_HERO_MAP, escapeHtml(copy.shotCaption), { eager: true })}
+        ${heroPictureHtml(landingImages, lang, escapeHtml(copy.shotCaption))}
         <figcaption>${escapeHtml(copy.shotCaption)}</figcaption>
       </figure>
       <section>
@@ -462,7 +464,7 @@ export function renderOverviewDocument(
       <section>
         <h2>${escapeHtml(copy.storiesTitle || "")}</h2>
         <p>${escapeHtml(copy.storiesLead || "")}</p>
-        ${renderStories(copy)}
+        ${renderStories(copy, landingImages, lang)}
       </section>
       <section>
         <h2>${escapeHtml(copy.stepsTitle)}</h2>

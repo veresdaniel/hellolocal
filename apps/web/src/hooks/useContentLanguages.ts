@@ -19,7 +19,7 @@ export function useContentLanguages(): string[] {
   return useMemo(() => published(site?.languages), [site?.languages]);
 }
 
-/** Languages offered in the public header. The admin chrome stays on hu/en/de. */
+/** Languages offered in the header switcher: DB UI languages (admin copy is translated too); site languages added on public pages. */
 export function usePublishedLanguages(): string[] {
   const location = useLocation();
   const { lang, siteKey } = useRouteCtx();
@@ -34,15 +34,13 @@ export function usePublishedLanguages(): string[] {
   const uiLanguages = useQuery({
     queryKey: ["ui-languages"],
     queryFn: getPublicUiLanguages,
-    enabled: !isAdmin,
     staleTime: 60_000,
     retry: 1,
   });
   return useMemo(() => {
-    if (isAdmin) return [...LANG_VALUES];
     const interfaceLanguages = (uiLanguages.data?.languages ?? []).filter(isLang);
     const base = interfaceLanguages.length ? interfaceLanguages : [...LANG_VALUES];
-    if (!siteKey) return base;
+    if (isAdmin || !siteKey) return base;
     return [...new Set([...base, ...published(data?.languages)])];
   }, [isAdmin, uiLanguages.data?.languages, siteKey, data?.languages]);
 }

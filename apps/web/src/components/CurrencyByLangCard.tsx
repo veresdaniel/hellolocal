@@ -1,9 +1,11 @@
 import { AdminAutocomplete } from "./AdminAutocomplete";
 /**
- * Admin: map UI languages (hu/en/de) to a currency from the catalog.
+ * Admin: map UI languages (from the DB, hu/en/de by default) to a currency from the catalog.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { getPublicUiLanguages } from "../api/uiCopy.api";
 import {
   getCurrencyByLang,
   getPlatformCurrencies,
@@ -11,7 +13,7 @@ import {
   type PlatformCurrency,
 } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
-import { LANG_VALUES } from "../types/enums";
+import { LANG_VALUES, isLang } from "../types/enums";
 
 const DEFAULTS: Record<string, string> = { hu: "HUF", en: "EUR", de: "EUR" };
 
@@ -23,6 +25,16 @@ export function CurrencyByLangCard() {
   const [saved, setSaved] = useState<Record<string, string>>({ ...DEFAULTS });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { data: uiLanguages } = useQuery({
+    queryKey: ["ui-languages"],
+    queryFn: getPublicUiLanguages,
+    staleTime: 60_000,
+    retry: 1,
+  });
+  const langs = useMemo(() => {
+    const fromDb = (uiLanguages?.languages ?? []).filter(isLang);
+    return fromDb.length ? fromDb : [...LANG_VALUES];
+  }, [uiLanguages?.languages]);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +57,7 @@ export function CurrencyByLangCard() {
     };
   }, [showToast, t]);
 
-  const dirty = LANG_VALUES.some((lang) => byLang[lang] !== saved[lang]);
+  const dirty = langs.some((lang) => byLang[lang] !== saved[lang]);
 
   const save = async () => {
     setSaving(true);
@@ -80,7 +92,7 @@ export function CurrencyByLangCard() {
         <p>{t("common.loading")}</p>
       ) : (
         <div style={{ display: "grid", gap: 12, maxWidth: 420 }}>
-          {LANG_VALUES.map((lang) => (
+          {langs.map((lang) => (
             <label
               key={lang}
               style={{

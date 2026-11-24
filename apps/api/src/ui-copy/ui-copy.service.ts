@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { normalizeLanguageCode } from "../common/language-code";
 import { canEditCopy } from "../auth/copy-access";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
+import { UiTranslateService } from "./ui-translate.service";
 
 function assertPlatformCopyEditor(role?: string | null) {
   if (!canEditCopy({ role }, "platform")) {
@@ -10,7 +11,7 @@ function assertPlatformCopyEditor(role?: string | null) {
   }
 }
 
-const PREFIXES = ["public", "common", "cookieConsent", "error", "offline", "validation"] as const;
+const PREFIXES = ["admin", "public", "common", "cookieConsent", "error", "offline", "validation"] as const;
 const FALLBACK = "hu";
 
 export type UiCatalogs = Record<string, Record<string, string>>;
@@ -24,7 +25,10 @@ function isMessageKey(key: string): boolean {
 export class UiCopyService {
   private cache = new Map<string, { until: number; body: { languages: string[]; messages: Record<string, string> } }>();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly translator: UiTranslateService
+  ) {}
 
   private clearCache() {
     this.cache.clear();
@@ -105,7 +109,23 @@ export class UiCopyService {
         : []),
     ]);
     this.clearCache();
-    return this.languages();
+    const languages = await this.languages();
+    // Fire-and-forget: the editor polls the job id. Failure (e.g. no API key) keeps the hu copies.
+    const job = await this.translator
+      .startTranslateJob(normalized, role, () => this.clearCache())
+      .catch(() => null);
+    return { ...languages, ...(job ? { translateJobId: job.id } : {}) };
+  }
+
+  /** Manual (re)run of the auto-translate job for one language. */
+  async startTranslate(lang: string, role?: string | null) {
+    assertPlatformCopyEditor(role);
+    return this.translator.startTranslateJob(lang, role, () => this.clearCache());
+  }
+
+  translateJob(jobId: string, role?: string | null) {
+    assertPlatformCopyEditor(role);
+    return this.translator.getJob(jobId, role);
   }
 
   async removeLanguage(code: string, role?: string | null) {
