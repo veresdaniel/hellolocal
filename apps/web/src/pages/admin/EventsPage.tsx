@@ -48,8 +48,8 @@ import { AiAssistantPanel } from "../../components/AiAssistantPanel";
 import { SlugInput } from "../../components/SlugInput";
 import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { findTranslation } from "../../utils/langHelpers";
-import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
-import { GaMeasurementField } from "../../components/GaMeasurementField";
+import { isValidGtmContainerIdInput } from "../../lib/gtmContainerId";
+import { GtmContainerField } from "../../components/GtmContainerField";
 import { DomainInput } from "../../components/DomainInput";
 import { AdminCollapsibleSection } from "../../components/AdminCollapsibleSection";
 import { AdminImageField } from "../../components/AdminImageField";
@@ -144,7 +144,7 @@ export function EventsPage() {
     customDomain: "",
     customDomainEnabled: false,
     domainLang: "hu",
-    gaMeasurementId: "",
+    gtmContainerId: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
@@ -323,8 +323,8 @@ export function EventsPage() {
     if (missingTitleKey) errors[missingTitleKey] = t("admin.validation.hungarianTitleRequired");
     if (!formData.startDate) errors.startDate = t("admin.validation.startDateRequired");
     if (!formData.placeId.trim()) errors.placeId = t("admin.validation.placeRequired");
-    if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
-      errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
+    if (!isValidGtmContainerIdInput(formData.gtmContainerId)) {
+      errors.gtmContainerId = t("admin.googleAnalytics.invalidGtmId");
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -361,8 +361,8 @@ export function EventsPage() {
         lng: formData.lng ? parseFloat(formData.lng) : null,
         customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
         domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
-        gaMeasurementId: formData.gaMeasurementId.trim()
-          ? formData.gaMeasurementId.trim().toUpperCase()
+        gtmContainerId: formData.gtmContainerId.trim()
+          ? formData.gtmContainerId.trim().toUpperCase()
           : null,
       });
       setIsCreating(false);
@@ -412,8 +412,8 @@ export function EventsPage() {
           lng: formData.lng ? parseFloat(formData.lng) : null,
           customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
           domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
-          gaMeasurementId: formData.gaMeasurementId.trim()
-            ? formData.gaMeasurementId.trim().toUpperCase()
+          gtmContainerId: formData.gtmContainerId.trim()
+            ? formData.gtmContainerId.trim().toUpperCase()
             : null,
         },
         selectedSiteId || undefined
@@ -490,7 +490,7 @@ export function EventsPage() {
       customDomain: event.customDomain || "",
       customDomainEnabled: !!event.customDomain,
       domainLang: event.domainLang || "hu",
-      gaMeasurementId: event.gaMeasurementId || "",
+      gtmContainerId: event.gtmContainerId || "",
     });
     setFormData((current) =>
       mergeTranslations(
@@ -529,7 +529,7 @@ export function EventsPage() {
       customDomain: "",
       customDomainEnabled: false,
       domainLang: "hu",
-      gaMeasurementId: "",
+      gtmContainerId: "",
     });
     setFormErrors({});
   };
@@ -1541,13 +1541,13 @@ export function EventsPage() {
                   </div>
                 )}
               </LanguageAwareForm>
-              <GaMeasurementField
+              <GtmContainerField
               label={t("admin.googleAnalytics.eventLabel")}
               help={t("admin.googleAnalytics.eventHelp")}
-              value={formData.gaMeasurementId}
-              onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
-              error={formErrors.gaMeasurementId}
-              hint={t("admin.googleAnalytics.clearHint")}
+              value={formData.gtmContainerId}
+              onChange={(gtmContainerId) => setFormData({ ...formData, gtmContainerId })}
+              error={formErrors.gtmContainerId}
+              hint={t("admin.googleAnalytics.gtmClearHint")}
             />
               <CrawlableToggle
               checked={formData.isCrawlable}

@@ -1,16 +1,31 @@
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeDomainHost } from "./domain-host";
+import { normalizeGtmContainerId } from "./gtm-container-id";
 
-/** AppSetting key. One hostname per line, with an optional language. Empty keeps hello-local.io only. */
+/** AppSetting key. One hostname per line, with an optional language + GTM. Empty keeps hello-local.io only. */
 export const PLATFORM_PUBLIC_HOST_KEY = "platform.publicHost";
 
-export type PlatformPublicHostEntry = { host: string; lang: "hu" | "en" | "de" };
+export type PlatformPublicHostEntry = {
+  host: string;
+  lang: "hu" | "en" | "de";
+  /** Optional GTM container for this platform hostname only. */
+  gtmContainerId?: string | null;
+};
 
 const CACHE_MS = 30_000;
 let cache: { entries: PlatformPublicHostEntry[]; exp: number } | null = null;
 
 function asHostLang(raw: string | undefined): PlatformPublicHostEntry["lang"] | null {
   return raw === "hu" || raw === "en" || raw === "de" ? raw : null;
+}
+
+function asGtm(raw: string | undefined): string | null {
+  if (!raw) return null;
+  try {
+    return normalizeGtmContainerId(raw);
+  } catch {
+    return null;
+  }
 }
 
 /** Hostname only, without scheme or a leading www. Null when empty or reserved. */
@@ -21,9 +36,10 @@ export function parsePlatformPublicHost(raw: string | null | undefined): string 
 }
 
 /**
- * Several public platform hosts. One per line: `hellolocal.hu` or `hellolocal.hu hu`.
- * A line may still list several hosts separated by comma or space.
- * The second token is the opening language when it is hu, en, or de. Missing language is hu.
+ * Several public platform hosts. One per line:
+ * `hellolocal.hu`, `hellolocal.hu hu`, or `hellolocal.hu hu GTM-XXXX`.
+ * A line may still list several hosts separated by comma or space (lang/GTM only when
+ * the line is clearly host + lang [+ gtm]).
  * The first host is the default origin for links that leave a custom domain.
  */
 export function parsePlatformPublicHosts(
@@ -35,17 +51,29 @@ export function parsePlatformPublicHosts(
     .filter(Boolean);
   const hosts: PlatformPublicHostEntry[] = [];
   const seen = new Set<string>();
-  const push = (host: string, lang: PlatformPublicHostEntry["lang"]) => {
+  const push = (
+    host: string,
+    lang: PlatformPublicHostEntry["lang"],
+    gtmContainerId?: string | null
+  ) => {
     if (seen.has(host)) return;
     seen.add(host);
-    hosts.push({ host, lang });
+    hosts.push({ host, lang, gtmContainerId: gtmContainerId || null });
   };
   for (const line of lines) {
     const parts = line.split(/[\s,;|]+/).filter(Boolean);
-    if (parts.length === 2 && asHostLang(parts[1])) {
+    if (parts.length >= 2 && asHostLang(parts[1])) {
       const host = parsePlatformPublicHost(parts[0]);
       if (!host) return { error: parts[0] };
-      push(host, asHostLang(parts[1])!);
+      const gtm = parts[2] ? asGtm(parts[2]) : null;
+      if (parts[2] && !gtm) return { error: parts[2] };
+      push(host, asHostLang(parts[1])!, gtm);
+      continue;
+    }
+    if (parts.length === 2 && asGtm(parts[1])) {
+      const host = parsePlatformPublicHost(parts[0]);
+      if (!host) return { error: parts[0] };
+      push(host, "hu", asGtm(parts[1]));
       continue;
     }
     for (const part of parts) {
@@ -58,7 +86,12 @@ export function parsePlatformPublicHosts(
 }
 
 export function formatPlatformPublicHosts(hosts: readonly PlatformPublicHostEntry[]): string {
-  return hosts.map((entry) => `${entry.host} ${entry.lang}`).join("\n");
+  return hosts
+    .map((entry) => {
+      const gtm = entry.gtmContainerId?.trim();
+      return gtm ? `${entry.host} ${entry.lang} ${gtm}` : `${entry.host} ${entry.lang}`;
+    })
+    .join("\n");
 }
 
 export function clearPlatformPublicHostCache(): void {
@@ -73,6 +106,18 @@ export function matchingPlatformHost(
   const host = hostname.toLowerCase().split(":")[0].replace(/\.$/, "");
   for (const name of configured) {
     if (host === name || host === `www.${name}`) return name;
+  }
+  return null;
+}
+
+export function matchingPlatformHostEntry(
+  hostname: string,
+  entries: readonly PlatformPublicHostEntry[] | null | undefined
+): PlatformPublicHostEntry | null {
+  if (!entries?.length) return null;
+  const host = hostname.toLowerCase().split(":")[0].replace(/\.$/, "");
+  for (const entry of entries) {
+    if (host === entry.host || host === `www.${entry.host}`) return entry;
   }
   return null;
 }

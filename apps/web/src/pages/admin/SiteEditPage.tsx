@@ -59,8 +59,7 @@ import {
 } from "../../api/admin.api";
 import { SiteAnalyticsPage } from "./SiteAnalyticsPage";
 import { regionAddress } from "../../app/urls";
-import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
-import { GaMeasurementField } from "../../components/GaMeasurementField";
+import { isValidGtmContainerIdInput } from "../../lib/gtmContainerId";
 import {
   DEFAULT_PUBLIC_THEME_COLORS,
   DEFAULT_PUBLIC_THEME_PRESET,
@@ -327,7 +326,7 @@ export function SiteEditPage() {
     setFormErrors({});
 
     try {
-      if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
+      if (false && formData.gaMeasurementId) {
         setFormErrors({ gaMeasurementId: t("admin.googleAnalytics.invalidId") });
         showToast(t("admin.googleAnalytics.invalidId"), "error");
         setIsSaving(false);
@@ -1205,14 +1204,7 @@ function OverviewTab({
       </div>
 
       <div style={{ marginTop: 24 }}>
-        <GaMeasurementField
-          label={t("admin.googleAnalytics.siteLabel")}
-          help={t("admin.googleAnalytics.siteHelp")}
-          value={formData.gaMeasurementId}
-          onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
-          error={formErrors.gaMeasurementId}
-          hint={t("admin.googleAnalytics.clearHint")}
-        />
+
       </div>
 
       <div style={{ marginTop: 32 }}>
@@ -1259,13 +1251,13 @@ function OverviewTab({
   );
 }
 
-type DomainRow = { key: string; domain: string; defaultLang: string; isPrimary: boolean };
+type DomainRow = { key: string; domain: string; defaultLang: string; isPrimary: boolean; gtmContainerId: string };
 
 function domainRowsFromSite(site: Site, siteDefault: string): DomainRow[] {
   const stored = [...(site.siteDomains ?? [])].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
   if (!stored.length && site.primaryDomain) {
     return [
-      { key: "primary", domain: site.primaryDomain, defaultLang: siteDefault, isPrimary: true },
+      { key: "primary", domain: site.primaryDomain, defaultLang: siteDefault, isPrimary: true, gtmContainerId: "" },
       blankDomainRow(false, siteDefault),
     ];
   }
@@ -1275,6 +1267,7 @@ function domainRowsFromSite(site: Site, siteDefault: string): DomainRow[] {
     domain: item.domain,
     defaultLang: item.defaultLang || siteDefault,
     isPrimary: item.isPrimary,
+    gtmContainerId: item.gtmContainerId || "",
   }));
   // Always offer an empty subdomain slot so primary vs additional hosts stay obvious.
   if (!rows.some((row) => !row.domain.trim())) {
@@ -1292,6 +1285,7 @@ function blankDomainRow(isPrimary: boolean, defaultLang = "hu"): DomainRow {
     domain: "",
     defaultLang,
     isPrimary,
+    gtmContainerId: "",
   };
 }
 
@@ -1341,6 +1335,12 @@ function DomainTab({
   };
 
   const handleSaveDomains = async () => {
+    for (const row of filled) {
+      if (row.gtmContainerId.trim() && !isValidGtmContainerIdInput(row.gtmContainerId)) {
+        showToast(t("admin.googleAnalytics.invalidGtmId"), "error");
+        return;
+      }
+    }
     const hosts = filled.map((row) =>
       row.domain.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0]
     );
@@ -1366,6 +1366,9 @@ function DomainTab({
           domain: row.domain.trim(),
           defaultLang: row.defaultLang || siteDefault,
           isPrimary: row.isPrimary,
+          gtmContainerId: row.gtmContainerId.trim()
+            ? row.gtmContainerId.trim().toUpperCase()
+            : null,
         })),
       });
       showToast(t("admin.siteEdit.domain.domainAdded"), "success");
@@ -1465,6 +1468,26 @@ function DomainTab({
               >
                 <LanguageSelectOptions variant="endonym" />
               </select>
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 180px" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>
+                {t("admin.googleAnalytics.gtmLabel")}
+              </span>
+              <input
+                type="text"
+                value={row.gtmContainerId}
+                onChange={(e) => updateRow(row.key, { gtmContainerId: e.target.value })}
+                placeholder="GTM-XXXXXXX"
+                autoComplete="off"
+                spellCheck={false}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 6,
+                  fontSize: 15,
+                }}
+              />
             </label>
             <label style={{ display: "flex", alignItems: "center", gap: 8, paddingBottom: 8, cursor: "pointer" }}>
               <input
@@ -3021,7 +3044,7 @@ function SubscriptionTab({
   const handleSaveGa = async () => {
     if (!canEditGa) return;
     setGaError(null);
-    if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
+    if (false && formData.gaMeasurementId) {
       setGaError(t("admin.googleAnalytics.invalidId"));
       showToast(t("admin.googleAnalytics.invalidId"), "error");
       return;
@@ -3069,40 +3092,6 @@ function SubscriptionTab({
           }
         }
       `}</style>
-
-      {/* Per-subscriber Google Analytics (Site.gaMeasurementId) */}
-      <div
-        style={{
-          padding: "16px 24px",
-          background: "var(--admin-surface)",
-          borderRadius: 12,
-          border: "1px solid #e5e7eb",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-        }}
-      >
-        <GaMeasurementField
-          label={t("admin.googleAnalytics.subscriberLabel")}
-          help={t("admin.googleAnalytics.subscriberHelp")}
-          value={formData.gaMeasurementId}
-          onChange={(gaMeasurementId) => {
-            setGaError(null);
-            setFormData({ ...formData, gaMeasurementId });
-          }}
-          error={gaError}
-          hint={t("admin.googleAnalytics.clearHint")}
-          disabled={!canEditGa || isSavingGa}
-        />
-        {canEditGa && (
-          <button
-            type="button"
-            className="admin-btn admin-btn--primary"
-            onClick={handleSaveGa}
-            disabled={isSavingGa}
-          >
-            {isSavingGa ? t("common.loading") : t("admin.googleAnalytics.save")}
-          </button>
-        )}
-      </div>
 
       {/* A. Hero Blokk - Aktuális csomag (kompakt) */}
       <div

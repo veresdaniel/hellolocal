@@ -6,6 +6,10 @@ import {
   normalizeGaMeasurementId,
   PLATFORM_GA_MEASUREMENT_ID_KEY,
 } from "../common/ga-measurement-id";
+import {
+  normalizeGtmContainerId,
+  PLATFORM_GTM_CONTAINER_ID_KEY,
+} from "../common/gtm-container-id";
 import { encryptSecret } from "../common/secret-box";
 import { CONTENT_DRAFT_API_KEY } from "./content-draft.constants";
 import { UC_ACCESS_TOKEN_KEY } from "../under-construction/under-construction.constants";
@@ -84,6 +88,15 @@ export class AdminAppSettingsService {
         );
       }
     }
+    if (key === PLATFORM_GTM_CONTAINER_ID_KEY) {
+      try {
+        value = normalizeGtmContainerId(value) ?? "";
+      } catch {
+        throw new BadRequestException(
+          "Invalid Google Tag Manager container ID. Expected format: GTM-XXXXXXX"
+        );
+      }
+    }
     if (key === PLATFORM_PUBLIC_HOST_KEY) {
       const parsed = parsePlatformPublicHosts(value);
       if ("error" in parsed) {
@@ -159,6 +172,20 @@ export class AdminAppSettingsService {
     if (!value) return null;
     try {
       return normalizeGaMeasurementId(value);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Platform-wide GTM container for public platform hosts. Empty = disabled. */
+  async getPlatformGtmContainerId(): Promise<string | null> {
+    const setting = await this.prisma.appSetting.findUnique({
+      where: { key: PLATFORM_GTM_CONTAINER_ID_KEY },
+    });
+    const value = setting?.value?.trim() ?? "";
+    if (!value) return null;
+    try {
+      return normalizeGtmContainerId(value);
     } catch {
       return null;
     }

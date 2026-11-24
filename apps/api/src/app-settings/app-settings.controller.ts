@@ -1,10 +1,14 @@
 // src/app-settings/app-settings.controller.ts
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Headers, Query } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { AdminAppSettingsService } from "../admin/admin-app-settings.service";
 import { PrismaService } from "../prisma/prisma.service";
-import { readPlatformPublicHostEntries } from "../common/platform-public-host";
+import {
+  matchingPlatformHostEntry,
+  readPlatformPublicHostEntries,
+} from "../common/platform-public-host";
 import { LIVE_DEMO_URL_KEY, normalizeLiveDemoUrl } from "../common/live-demo-url";
+import { normalizeDomainHost } from "../common/domain-host";
 
 /**
  * Public controller for app settings that don't require authentication
@@ -47,6 +51,29 @@ export class AppSettingsController {
   async getPlatformGa() {
     const gaMeasurementId = await this.appSettingsService.getPlatformGaMeasurementId();
     return { gaMeasurementId };
+  }
+
+  /**
+   * GTM for platform public hosts. Prefers the matching host-row container
+   * (`hellolocal.hu hu GTM-…`), then the global platformGtmContainerId fallback.
+   */
+  @Get("/app-settings/platform-gtm")
+  async getPlatformGtm(
+    @Query("host") hostQuery?: string,
+    @Headers("x-forwarded-host") forwardedHost?: string,
+    @Headers("host") hostHeader?: string
+  ) {
+    const rawHost = hostQuery || forwardedHost || hostHeader || "";
+    const host = normalizeDomainHost(String(rawHost).split(",")[0] || "");
+    if (host) {
+      const entries = await readPlatformPublicHostEntries(this.prisma);
+      const match = matchingPlatformHostEntry(host, entries);
+      if (match?.gtmContainerId) {
+        return { gtmContainerId: match.gtmContainerId };
+      }
+    }
+    const gtmContainerId = await this.appSettingsService.getPlatformGtmContainerId();
+    return { gtmContainerId };
   }
 
   /**

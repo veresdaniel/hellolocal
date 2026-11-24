@@ -55,7 +55,7 @@ import { AdminHierarchyFilters } from "../../components/AdminHierarchyFilters";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { ScopedEventsList } from "../../components/ScopedEventsList";
 import { CoordinateSuggestion } from "../../components/CoordinateSuggestion";
-import { GaMeasurementField } from "../../components/GaMeasurementField";
+import { GtmContainerField } from "../../components/GtmContainerField";
 import { PlaceBillingSection } from "../../components/PlaceBillingSection";
 import { PlaceMembersPanel } from "../../components/PlaceMembersPanel";
 import { AdminImageField } from "../../components/AdminImageField";
@@ -67,7 +67,7 @@ import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 import { optionsFromTranslations } from "../../utils/adminSelectOptions";
 import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
-import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
+import { isValidGtmContainerIdInput } from "../../lib/gtmContainerId";
 import type { UserRole, SiteRole, Lang} from "../../types/enums";
 import { buildPublicUrl, entityPublicAddress } from "../../app/urls";
 
@@ -90,7 +90,7 @@ interface Place {
   mapImage?: string | null;
   customDomain?: string | null;
   domainLang?: string | null;
-  gaMeasurementId?: string | null;
+  gtmContainerId?: string | null;
   lat: number | null;
   lng: number | null;
   category: { translations: Array<{ lang: string; name: string }> };
@@ -317,7 +317,7 @@ export function PlacesPage() {
     customDomain: "",
     customDomainEnabled: false,
     domainLang: "hu",
-    gaMeasurementId: "",
+    gtmContainerId: "",
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const previousPathnameRef = useRef<string>(location.pathname);
@@ -526,8 +526,8 @@ export function PlacesPage() {
     if (!formData.townId) errors.townId = t("admin.validation.townRequired");
     const missingNameKey = requirePrimaryLangName(formData, contentLanguages, "name");
     if (missingNameKey) errors[missingNameKey] = t("admin.validation.hungarianNameRequired");
-    if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
-      errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
+    if (!isValidGtmContainerIdInput(formData.gtmContainerId)) {
+      errors.gtmContainerId = t("admin.googleAnalytics.invalidGtmId");
     }
     // English and German are optional
     setFormErrors(errors);
@@ -572,8 +572,8 @@ export function PlacesPage() {
           : null,
         customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
         domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
-        gaMeasurementId: formData.gaMeasurementId.trim()
-          ? formData.gaMeasurementId.trim().toUpperCase()
+        gtmContainerId: formData.gtmContainerId.trim()
+          ? formData.gtmContainerId.trim().toUpperCase()
           : null,
       });
       setIsCreating(false);
@@ -627,8 +627,8 @@ export function PlacesPage() {
             : null,
           customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
         domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
-          gaMeasurementId: formData.gaMeasurementId.trim()
-            ? formData.gaMeasurementId.trim().toUpperCase()
+          gtmContainerId: formData.gtmContainerId.trim()
+            ? formData.gtmContainerId.trim().toUpperCase()
             : null,
         },
         selectedSiteId || undefined
@@ -747,7 +747,7 @@ export function PlacesPage() {
       customDomain: place.customDomain || "",
       customDomainEnabled: !!place.customDomain,
       domainLang: place.domainLang || "hu",
-      gaMeasurementId: place.gaMeasurementId || "",
+      gtmContainerId: place.gtmContainerId || "",
     });
     setFormData((current) =>
       mergeTranslations(current, place.translations, PLACE_LANG_FIELDS)
@@ -781,7 +781,7 @@ export function PlacesPage() {
       customDomain: "",
       customDomainEnabled: false,
       domainLang: "hu",
-      gaMeasurementId: "",
+      gtmContainerId: "",
     });
     setFormErrors({});
   };
@@ -871,7 +871,7 @@ export function PlacesPage() {
           customDomain: "",
           customDomainEnabled: false,
           domainLang: "hu",
-          gaMeasurementId: "",
+          gtmContainerId: "",
         });
         setFormErrors({});
       }
@@ -1652,13 +1652,13 @@ export function PlacesPage() {
                   )}
                 </LanguageAwareForm>
               ) : null}
-              <GaMeasurementField
+              <GtmContainerField
               label={t("admin.googleAnalytics.placeLabel")}
               help={t("admin.googleAnalytics.placeHelp")}
-              value={formData.gaMeasurementId}
-              onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
-              error={formErrors.gaMeasurementId}
-              hint={t("admin.googleAnalytics.clearHint")}
+              value={formData.gtmContainerId}
+              onChange={(gtmContainerId) => setFormData({ ...formData, gtmContainerId })}
+              error={formErrors.gtmContainerId}
+              hint={t("admin.googleAnalytics.gtmClearHint")}
             />
               <CrawlableToggle
               checked={formData.isCrawlable}

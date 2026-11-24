@@ -34,7 +34,7 @@ import { PlaceUpsellService } from "../entitlements/place-upsell.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
 import { domainLanguage } from "../common/domain-lang";
-import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { normalizeGtmContainerId } from "../common/gtm-container-id";
 import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
 import { SitemapService } from "../seo/sitemap.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
@@ -59,8 +59,8 @@ export interface CreatePlaceDto {
   customDomain?: string | null;
   /** Language this hostname opens in. Ignored when customDomain is empty. */
   domainLang?: string | null;
-  /** GA4 measurement ID (G-…). Empty string or null inherits Town/Site. */
-  gaMeasurementId?: string | null;
+  /** GTM container ID (GTM-…). Empty string or null disables on this custom domain. */
+  gtmContainerId?: string | null;
   translations: Array<{
     lang: Lang;
     name: string;
@@ -105,8 +105,8 @@ export interface UpdatePlaceDto {
   customDomain?: string | null;
   /** Language this hostname opens in. Ignored when customDomain is empty. */
   domainLang?: string | null;
-  /** GA4 measurement ID (G-…). Empty string or null clears / inherits Town/Site. */
-  gaMeasurementId?: string | null;
+  /** GTM container ID (GTM-…). Empty string or null clears / disables on this custom domain. */
+  gtmContainerId?: string | null;
   translations?: Array<{
     lang: Lang;
     name: string;
@@ -552,7 +552,7 @@ export class AdminPlaceService {
       parentPlaceId,
       customDomain: customDomainRaw,
       domainLang: domainLangRaw,
-      gaMeasurementId: gaMeasurementIdRaw,
+      gtmContainerId: gtmContainerIdRaw,
       ...placeData
     } = dto;
     if (!dto.townId) {
@@ -581,13 +581,13 @@ export class AdminPlaceService {
             placeId: "__new__",
           })
         : null;
-    let gaMeasurementId: string | null = null;
-    if (gaMeasurementIdRaw !== undefined) {
+    let gtmContainerId: string | null = null;
+    if (gtmContainerIdRaw !== undefined) {
       try {
-        gaMeasurementId = normalizeGaMeasurementId(gaMeasurementIdRaw);
+        gtmContainerId = normalizeGtmContainerId(gtmContainerIdRaw);
       } catch {
         throw new BadRequestException(
-          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+          "Invalid Google Tag Manager container ID. Expected format: GTM-XXXXXXX"
         );
       }
     }
@@ -652,7 +652,7 @@ export class AdminPlaceService {
         parentPlaceId: parentPlaceId || null,
         customDomain,
         domainLang: domainLanguage(domainLangRaw, Boolean(customDomain)),
-        gaMeasurementId,
+        gtmContainerId,
         lat,
         lng,
         plan: dto.plan || "free",
@@ -818,7 +818,7 @@ export class AdminPlaceService {
       lng: _lng,
       customDomain: customDomainRaw,
       domainLang: domainLangRaw,
-      gaMeasurementId: gaMeasurementIdRaw,
+      gtmContainerId: gtmContainerIdRaw,
       ...restData
     } = dto;
 
@@ -837,12 +837,12 @@ export class AdminPlaceService {
       });
       updateData.domainLang = domainLanguage(domainLangRaw, Boolean(updateData.customDomain));
     }
-    if (gaMeasurementIdRaw !== undefined) {
+    if (gtmContainerIdRaw !== undefined) {
       try {
-        updateData.gaMeasurementId = normalizeGaMeasurementId(gaMeasurementIdRaw);
+        updateData.gtmContainerId = normalizeGtmContainerId(gtmContainerIdRaw);
       } catch {
         throw new BadRequestException(
-          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+          "Invalid Google Tag Manager container ID. Expected format: GTM-XXXXXXX"
         );
       }
     }

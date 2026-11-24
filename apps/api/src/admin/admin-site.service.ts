@@ -11,6 +11,7 @@ import { normalizeDomainHost } from "../common/domain-host";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
 import { isMissingColumn } from "../common/prisma-column";
 import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { normalizeGtmContainerId } from "../common/gtm-container-id";
 import { sanitizeSiteTheme } from "../common/public-theme-colors";
 import { SitemapService } from "../seo/sitemap.service";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
@@ -46,6 +47,8 @@ export interface SiteDomainInput {
   domain: string;
   defaultLang?: string | null;
   isPrimary?: boolean;
+  /** GTM container for this hostname only (GTM-…). Empty clears. */
+  gtmContainerId?: string | null;
 }
 
 export interface UpdateSiteDto {
@@ -111,7 +114,12 @@ export class AdminSiteService {
   private async syncDomains(siteId: string, rawEntries: SiteDomainInput[], siteLanguages: string[]) {
     const siteDefault = siteLanguages[0] || "hu";
     const allowed = new Set(siteLanguages.length ? siteLanguages : [siteDefault]);
-    const normalized: { domain: string; defaultLang: string; isPrimary: boolean }[] = [];
+    const normalized: {
+      domain: string;
+      defaultLang: string;
+      isPrimary: boolean;
+      gtmContainerId: string | null;
+    }[] = [];
     const seen = new Set<string>();
 
     for (const entry of rawEntries) {
@@ -135,7 +143,20 @@ export class AdminSiteService {
         }
         defaultLang = code;
       }
-      normalized.push({ domain, defaultLang, isPrimary: !!entry.isPrimary });
+      let gtmContainerId: string | null = null;
+      if (entry.gtmContainerId !== undefined && entry.gtmContainerId !== null) {
+        const trimmed = String(entry.gtmContainerId).trim();
+        if (trimmed) {
+          try {
+            gtmContainerId = normalizeGtmContainerId(trimmed);
+          } catch {
+            throw new BadRequestException(
+              `Érvénytelen GTM azonosító a(z) ${domain} domainhez. Várt formátum: GTM-XXXXXXX`
+            );
+          }
+        }
+      }
+      normalized.push({ domain, defaultLang, isPrimary: !!entry.isPrimary, gtmContainerId });
     }
 
     if (normalized.length) {
@@ -170,12 +191,14 @@ export class AdminSiteService {
             isPrimary: row.isPrimary,
             isActive: true,
             defaultLang: row.defaultLang,
+            gtmContainerId: row.gtmContainerId,
           },
           update: {
             siteId,
             isPrimary: row.isPrimary,
             isActive: true,
             defaultLang: row.defaultLang,
+            gtmContainerId: row.gtmContainerId,
           },
         });
       }
@@ -193,21 +216,30 @@ export class AdminSiteService {
   ) {
     const existing = await this.prisma.siteDomain.findMany({
       where: { siteId },
-      select: { domain: true, defaultLang: true, isPrimary: true },
+      select: { domain: true, defaultLang: true, isPrimary: true, gtmContainerId: true },
     });
     const primaryHost = raw?.trim() ? normalizeDomainHost(raw) : null;
     if (raw?.trim() && !primaryHost) {
       throw new BadRequestException(`Érvénytelen domain: „${raw.trim()}”. Példa: pelda.hu`);
     }
     const aliases = existing.filter((row) => !row.isPrimary && row.domain !== primaryHost);
+    const primaryExisting = existing.find((row) => row.domain === primaryHost);
     await this.syncDomains(
       siteId,
       [
         ...(primaryHost
-          ? [{ domain: primaryHost, defaultLang: siteLanguages[0] || "hu", isPrimary: true }]
+          ? [
+              {
+                domain: primaryHost,
+                defaultLang: siteLanguages[0] || "hu",
+                isPrimary: true,
+                gtmContainerId: primaryExisting?.gtmContainerId ?? null,
+              },
+            ]
           : []),
         ...aliases.map((row) => ({
           domain: row.domain,
+          gtmContainerId: row.gtmContainerId,
           defaultLang: row.defaultLang,
           isPrimary: false,
         })),

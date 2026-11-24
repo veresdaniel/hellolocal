@@ -26,12 +26,12 @@ import { AdminDataTable } from "../../components/AdminDataTable";
 import { TownMembersPanel } from "../../components/TownMembersPanel";
 import { ScopedEventsList } from "../../components/ScopedEventsList";
 import { CoordinateSuggestion } from "../../components/CoordinateSuggestion";
-import { GaMeasurementField } from "../../components/GaMeasurementField";
+import { GtmContainerField } from "../../components/GtmContainerField";
 import { DomainInput } from "../../components/DomainInput";
 import { CrawlableToggle } from "../../components/CrawlableToggle";
 import { AdminImageField } from "../../components/AdminImageField";
 import { findTranslation } from "../../utils/langHelpers";
-import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
+import { isValidGtmContainerIdInput } from "../../lib/gtmContainerId";
 import type { Lang} from "../../types/enums";
 
 interface Town {
@@ -42,7 +42,7 @@ interface Town {
   isCrawlable?: boolean;
   customDomain?: string | null;
   domainLang?: string | null;
-  gaMeasurementId?: string | null;
+  gtmContainerId?: string | null;
   lat: number | null;
   lng: number | null;
   zoom?: number | null;
@@ -81,7 +81,7 @@ function emptyTownForm(siteId = "", languages: string[] = ["hu", "en", "de"]) {
     customDomain: "",
     customDomainEnabled: false,
     domainLang: "hu",
-    gaMeasurementId: "",
+    gtmContainerId: "",
   };
 }
 
@@ -186,8 +186,8 @@ export function TownsPage() {
     const errors: Record<string, string> = {};
     const missingNameKey = requirePrimaryLangName(formData, contentLanguages, "name");
     if (missingNameKey) errors[missingNameKey] = t("admin.validation.hungarianNameRequired");
-    if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
-      errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
+    if (!isValidGtmContainerIdInput(formData.gtmContainerId)) {
+      errors.gtmContainerId = t("admin.googleAnalytics.invalidGtmId");
     }
     // English and German are optional
     setFormErrors(errors);
@@ -215,8 +215,8 @@ export function TownsPage() {
         isCrawlable: formData.isCrawlable,
         customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
         domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
-        gaMeasurementId: formData.gaMeasurementId.trim()
-          ? formData.gaMeasurementId.trim().toUpperCase()
+        gtmContainerId: formData.gtmContainerId.trim()
+          ? formData.gtmContainerId.trim().toUpperCase()
           : null,
       });
       setIsCreating(false);
@@ -251,8 +251,8 @@ export function TownsPage() {
           isCrawlable: formData.isCrawlable,
           customDomain: formData.customDomainEnabled ? formData.customDomain || null : null,
         domainLang: formData.customDomainEnabled ? formData.domainLang || "hu" : null,
-          gaMeasurementId: formData.gaMeasurementId.trim()
-            ? formData.gaMeasurementId.trim().toUpperCase()
+          gtmContainerId: formData.gtmContainerId.trim()
+            ? formData.gtmContainerId.trim().toUpperCase()
             : null,
         },
         undefined
@@ -292,7 +292,7 @@ export function TownsPage() {
       customDomain: town.customDomain || "",
       customDomainEnabled: !!town.customDomain,
       domainLang: town.domainLang || "hu",
-      gaMeasurementId: town.gaMeasurementId || "",
+      gtmContainerId: town.gtmContainerId || "",
     });
     setFormData((current) =>
       mergeTranslations(
@@ -721,13 +721,13 @@ export function TownsPage() {
             </p>
           </div>
 
-          <GaMeasurementField
+          <GtmContainerField
             label={t("admin.googleAnalytics.townLabel")}
             help={t("admin.googleAnalytics.townHelp")}
-            value={formData.gaMeasurementId}
-            onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
-            error={formErrors.gaMeasurementId}
-            hint={t("admin.googleAnalytics.clearHint")}
+            value={formData.gtmContainerId}
+            onChange={(gtmContainerId) => setFormData({ ...formData, gtmContainerId })}
+            error={formErrors.gtmContainerId}
+            hint={t("admin.googleAnalytics.gtmClearHint")}
           />
 
           <div style={{ marginBottom: 16 }}>

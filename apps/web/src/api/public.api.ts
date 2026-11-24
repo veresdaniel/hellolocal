@@ -218,6 +218,44 @@ export async function getPublicPlatformGa(): Promise<PlatformGaResponse> {
   return { gaMeasurementId: data.gaMeasurementId?.trim() || null };
 }
 
+export type PlatformGtmResponse = {
+  gtmContainerId: string | null;
+};
+
+export async function getPublicPlatformGtm(host?: string): Promise<PlatformGtmResponse> {
+  const apiBaseUrl = getApiBaseUrl();
+  const qs = host ? `?host=${encodeURIComponent(host)}` : "";
+  const res = await fetch(`${apiBaseUrl}/api/app-settings/platform-gtm${qs}`, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    return { gtmContainerId: null };
+  }
+
+  const data = (await res.json()) as PlatformGtmResponse;
+  return { gtmContainerId: data.gtmContainerId?.trim() || null };
+}
+
+/** GTM for the current hostname: platform host row first, then custom-domain resolve. */
+export async function resolvePublicHostGtm(hostname: string): Promise<string | null> {
+  const host = hostname.toLowerCase().split(":")[0].replace(/\.$/, "");
+  if (!host) return null;
+
+  const platform = await getPublicPlatformGtm(host);
+  if (platform.gtmContainerId) return platform.gtmContainerId;
+
+  const apiBaseUrl = getApiBaseUrl();
+  const res = await fetch(`${apiBaseUrl}/api/domain/${encodeURIComponent(host)}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as { gtmContainerId?: string | null };
+  return data.gtmContainerId?.trim() || null;
+}
+
 export type UnderConstructionPublicStatus = {
   enabled: boolean;
   allowed: boolean;

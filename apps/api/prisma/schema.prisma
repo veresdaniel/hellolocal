@@ -370,6 +370,9 @@ model Town {
   // GA4 measurement ID for this town's public pages (G-…). Null = inherit Site / disabled.
   gaMeasurementId String?
 
+  // GTM container when this town's customDomain is served (GTM-…). Null = none.
+  gtmContainerId String?
+
   // Map coordinates. zoom is optional and overrides the region map zoom.
   lat Float?
   lng Float?
@@ -543,6 +546,9 @@ model Place {
 
   // GA4 measurement ID for this place's public pages (G-…). Null = inherit Town/Site.
   gaMeasurementId String?
+
+  // GTM container when this place's customDomain is served (GTM-…). Null = none.
+  gtmContainerId String?
 
   // Map
   lat Float?
@@ -1081,6 +1087,9 @@ model Event {
   // GA4 measurement ID for this event's public page (G-…). Null = inherit Place/Town/Site.
   gaMeasurementId String?
 
+  // GTM container when this event's customDomain is served (GTM-…). Null = none.
+  gtmContainerId String?
+
   // Aggregated rating (read-only in v1; write later)
   ratingAvg   Float? // e.g. 4.6
   ratingCount Int? // e.g. 18
@@ -1221,6 +1230,9 @@ model SiteDomain {
 
   // Default language when this host is opened at "/" (empty/region default on save uses site languages[0])
   defaultLang String @default("hu") @db.VarChar(8)
+
+  // GTM container for this hostname only (GTM-…). Null/empty = no GTM on this domain.
+  gtmContainerId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1422,6 +1434,8 @@ model Collection {
   slug        String  @unique // URL path (domain nélkül)
   domain      String? @unique // opcionális custom domain
   domainLang  String? @db.VarChar(8)
+  // GTM container when this collection domain is served (GTM-…). Null = none.
+  gtmContainerId String?
   isActive    Boolean @default(false)
   isCrawlable Boolean @default(true) // SEO: ha false, akkor noindex meta tag
   order       Int     @default(0)

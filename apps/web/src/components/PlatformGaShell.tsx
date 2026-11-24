@@ -1,10 +1,10 @@
-// Platform public shell: cookie consent + platform-wide GA4 (not site IDs).
+// Platform public shell: cookie consent + host-scoped GTM (not legacy GA4).
 import { createContext, Suspense, useContext, useEffect, useState, type ReactNode } from "react";
 import { Outlet } from "react-router-dom";
 import { CookieConsent } from "./CookieConsent";
-import { GoogleAnalytics } from "./GoogleAnalytics";
+import { GoogleTagManager } from "./GoogleTagManager";
 import { PublicBootShell } from "./PublicSkeleton";
-import { getPublicPlatformGa } from "../api/public.api";
+import { resolvePublicHostGtm } from "../api/public.api";
 
 /** Set around a region layout so this shell does not add a second consent banner. */
 export const InsideSiteChrome = createContext(false);
@@ -15,36 +15,33 @@ type Props = {
 
 export function PlatformGaShell({ children }: Props) {
   const insideSite = useContext(InsideSiteChrome);
-  const [measurementId, setMeasurementId] = useState<string | null>(null);
+  const [gtmContainerId, setGtmContainerId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (insideSite) return;
     let cancelled = false;
-    getPublicPlatformGa()
-      .then((row) => {
-        if (!cancelled) setMeasurementId(row.gaMeasurementId);
+    const host = typeof window !== "undefined" ? window.location.hostname : "";
+    void resolvePublicHostGtm(host)
+      .then((id) => {
+        if (!cancelled) setGtmContainerId(id);
       })
       .catch(() => {
-        if (!cancelled) setMeasurementId(null);
+        if (!cancelled) setGtmContainerId(null);
       });
     return () => {
       cancelled = true;
     };
-  }, [insideSite]);
+  }, []);
 
   // Navy boot shell — white LoadingSpinner was flashing over SSR overview and
   // competing with LCP when a lazy child still suspends.
   const fallback = <PublicBootShell />;
 
-  if (insideSite) {
-    return <Suspense fallback={fallback}>{children ?? <Outlet />}</Suspense>;
-  }
-
   return (
     <>
       <Suspense fallback={fallback}>{children ?? <Outlet />}</Suspense>
-      <CookieConsent />
-      <GoogleAnalytics measurementId={measurementId} />
+      {!insideSite ? <CookieConsent /> : null}
+      {/* Host-scoped GTM on every public page for this hostname (platform + custom). */}
+      <GoogleTagManager containerId={gtmContainerId} />
     </>
   );
 }

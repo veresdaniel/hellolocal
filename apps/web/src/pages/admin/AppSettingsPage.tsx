@@ -59,23 +59,27 @@ import {
 } from "../../styles/publicThemeColors";
 import { PublicThemeColorsEditor } from "../../components/PublicThemeColorsEditor";
 import { AdminSettingsCollapsible } from "../../components/AdminSettingsCollapsible";
-import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
-import { GaMeasurementField } from "../../components/GaMeasurementField";
+import { isValidGtmContainerIdInput } from "../../lib/gtmContainerId";
+import { GtmContainerField } from "../../components/GtmContainerField";
 import { AdminImageField } from "../../components/AdminImageField";
 import { LandingImagesEditor } from "../../components/LandingImagesEditor";
 
-const PLATFORM_GA_SETTING_KEY = "platformGaMeasurementId";
+const PLATFORM_GTM_SETTING_KEY = "platformGtmContainerId";
 const PLATFORM_HOST_SETTING_KEY = "platform.publicHost";
 const LIVE_DEMO_URL_KEY = "platform.liveDemoUrl";
 const DEFAULT_SHARE_IMAGE_KEY = "platform.defaultShareImage";
 
-type PlatformHostRow = { key: string; host: string; lang: Lang };
+type PlatformHostRow = { key: string; host: string; lang: Lang; gtmContainerId: string };
 
 let platformHostRowSeq = 1;
 
-function nextPlatformHostRow(host = "", lang: Lang = "hu"): PlatformHostRow {
+function nextPlatformHostRow(
+  host = "",
+  lang: Lang = "hu",
+  gtmContainerId = ""
+): PlatformHostRow {
   platformHostRowSeq += 1;
-  return { key: `host-${platformHostRowSeq}`, host, lang };
+  return { key: `host-${platformHostRowSeq}`, host, lang, gtmContainerId };
 }
 
 function platformHostRowsFromValue(value: string): PlatformHostRow[] {
@@ -86,16 +90,28 @@ function platformHostRowsFromValue(value: string): PlatformHostRow[] {
   if (!lines.length) return [nextPlatformHostRow()];
   return lines.map((line) => {
     const parts = line.split(/[\s|]+/).filter(Boolean);
-    const lang = parts[1] === "en" || parts[1] === "de" ? parts[1] : "hu";
-    return nextPlatformHostRow(parts[0] ?? "", lang);
+    const host = parts[0] ?? "";
+    let lang: Lang = "hu";
+    let gtm = "";
+    if (parts[1] === "en" || parts[1] === "de" || parts[1] === "hu") {
+      lang = parts[1];
+      gtm = parts[2] ?? "";
+    } else if (parts[1] && /^GTM-/i.test(parts[1])) {
+      gtm = parts[1];
+    }
+    return nextPlatformHostRow(host, lang, gtm);
   });
 }
 
 function platformHostValueFromRows(rows: readonly PlatformHostRow[]): string {
   return rows
-    .map((row) => ({ host: row.host.trim().toLowerCase(), lang: row.lang }))
+    .map((row) => ({
+      host: row.host.trim().toLowerCase(),
+      lang: row.lang,
+      gtm: row.gtmContainerId.trim().toUpperCase(),
+    }))
     .filter((row) => row.host)
-    .map((row) => `${row.host} ${row.lang}`)
+    .map((row) => (row.gtm ? `${row.host} ${row.lang} ${row.gtm}` : `${row.host} ${row.lang}`))
     .join("\n");
 }
 /** Display-only mask; never a real key. Cleared on focus so a new key can be typed. */
@@ -137,9 +153,9 @@ export function AppSettingsPage() {
   const [isSavingLiveDemo, setIsSavingLiveDemo] = useState(false);
   const [defaultShareImage, setDefaultShareImage] = useState("");
   const [isSavingShareImage, setIsSavingShareImage] = useState(false);
-  const [platformGaId, setPlatformGaId] = useState("");
-  const [platformGaError, setPlatformGaError] = useState("");
-  const [isSavingPlatformGa, setIsSavingPlatformGa] = useState(false);
+  const [platformGtmId, setPlatformGtmId] = useState("");
+  const [platformGtmError, setPlatformGtmError] = useState("");
+  const [isSavingPlatformGtm, setIsSavingPlatformGtm] = useState(false);
   const [contentDraftKeyConfigured, setContentDraftKeyConfigured] = useState(false);
   const [contentDraftEnabled, setContentDraftEnabled] = useState(false);
   const [contentDraftProvider, setContentDraftProvider] =
@@ -232,12 +248,12 @@ export function AppSettingsPage() {
       .catch(() => {
         if (!cancelled) setDefaultShareImage("");
       });
-    getAppSetting(PLATFORM_GA_SETTING_KEY)
+    getAppSetting(PLATFORM_GTM_SETTING_KEY)
       .then((row) => {
-        if (!cancelled) setPlatformGaId(row?.value ?? "");
+        if (!cancelled) setPlatformGtmId(row?.value ?? "");
       })
       .catch(() => {
-        if (!cancelled) setPlatformGaId("");
+        if (!cancelled) setPlatformGtmId("");
       });
     getContentDraftStatus()
       .then((status) => {
@@ -374,6 +390,12 @@ export function AppSettingsPage() {
   };
 
   const handleSavePlatformHost = async () => {
+    for (const row of platformHostRows) {
+      if (!isValidGtmContainerIdInput(row.gtmContainerId)) {
+        showToast(t("admin.googleAnalytics.invalidGtmId"), "error");
+        return;
+      }
+    }
     try {
       setIsSavingPlatformHost(true);
       const value = platformHostValueFromRows(platformHostRows);
@@ -445,28 +467,28 @@ export function AppSettingsPage() {
     }
   };
 
-  const handleSavePlatformGa = async () => {
-    if (!isValidGaMeasurementIdInput(platformGaId)) {
-      setPlatformGaError(t("admin.googleAnalytics.invalidId"));
-      showToast(t("admin.googleAnalytics.invalidId"), "error");
+  const handleSavePlatformGtm = async () => {
+    if (!isValidGtmContainerIdInput(platformGtmId)) {
+      setPlatformGtmError(t("admin.googleAnalytics.invalidGtmId"));
+      showToast(t("admin.googleAnalytics.invalidGtmId"), "error");
       return;
     }
-    setPlatformGaError("");
+    setPlatformGtmError("");
     try {
-      setIsSavingPlatformGa(true);
-      const normalized = platformGaId.trim() ? platformGaId.trim().toUpperCase() : "";
+      setIsSavingPlatformGtm(true);
+      const normalized = platformGtmId.trim() ? platformGtmId.trim().toUpperCase() : "";
       await createAppSetting({
-        key: PLATFORM_GA_SETTING_KEY,
+        key: PLATFORM_GTM_SETTING_KEY,
         value: normalized,
         type: "string",
-        description: t("admin.googleAnalytics.platformDescription"),
+        description: t("admin.googleAnalytics.platformGtmDescription"),
       });
-      setPlatformGaId(normalized);
-      showToast(t("admin.googleAnalytics.saved"), "success");
+      setPlatformGtmId(normalized);
+      showToast(t("admin.googleAnalytics.gtmSaved"), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
     } finally {
-      setIsSavingPlatformGa(false);
+      setIsSavingPlatformGtm(false);
     }
   };
 
@@ -1288,48 +1310,16 @@ export function AppSettingsPage() {
       )}
 
       {userIsSuperadmin && (
-        <AdminSettingsCollapsible title={t("admin.googleAnalytics.platformTitle")}>
-          <GaMeasurementField
-            label={t("admin.googleAnalytics.platformTitle")}
-            help={t("admin.googleAnalytics.platformHelp")}
-            value={platformGaId}
-            onChange={(value) => {
-              setPlatformGaId(value);
-              if (platformGaError) setPlatformGaError("");
-            }}
-            error={platformGaError}
-            hint={t("admin.googleAnalytics.clearHint")}
-          />
-          <div style={{ marginTop: 12 }}>
-            <button
-              type="button"
-              onClick={() => void handleSavePlatformGa()}
-              disabled={isSavingPlatformGa}
-              style={{
-                minHeight: 42,
-                padding: "0 16px",
-                border: 0,
-                borderRadius: 999,
-                background: "var(--admin-primary)",
-                color: "var(--admin-on-primary)",
-                fontWeight: 600,
-                cursor: isSavingPlatformGa ? "wait" : "pointer",
-              }}
-            >
-              {isSavingPlatformGa ? t("common.loading") : t("admin.googleAnalytics.save")}
-            </button>
-          </div>
-        </AdminSettingsCollapsible>
-      )}
-
-      {userIsSuperadmin && (
         <AdminSettingsCollapsible title={t("admin.platformHost.title")}>
           <p style={{ margin: "0 0 16px", color: "var(--admin-muted)" }}>
             {t("admin.platformHost.help")}
           </p>
-          <div style={{ display: "grid", gap: 10, maxWidth: 560 }}>
+          <p style={{ margin: "0 0 16px", color: "var(--admin-muted)", fontSize: 14 }}>
+            {t("admin.googleAnalytics.platformHostGtmHelp")}
+          </p>
+          <div style={{ display: "grid", gap: 10, maxWidth: 720 }}>
             {platformHostRows.map((row) => (
-              <div key={row.key} style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <div key={row.key} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                 <input
                   autoComplete="off"
                   spellCheck={false}
@@ -1343,7 +1333,7 @@ export function AppSettingsPage() {
                     )
                   }
                   style={{
-                    flex: 1,
+                    flex: "1 1 180px",
                     minHeight: 42,
                     padding: "0 12px",
                     border: "1px solid #d9d3e4",
@@ -1374,6 +1364,21 @@ export function AppSettingsPage() {
                 >
                   <LanguageSelectOptions variant="endonym" codes={["hu", "en", "de"]} />
                 </select>
+                <div style={{ flex: "1 1 160px", minWidth: 140 }}>
+                  <GtmContainerField
+                    compact
+                    label={t("admin.googleAnalytics.gtmLabel")}
+                    value={row.gtmContainerId}
+                    onChange={(gtmContainerId) =>
+                      setPlatformHostRows((rows) =>
+                        rows.map((item) =>
+                          item.key === row.key ? { ...item, gtmContainerId } : item
+                        )
+                      )
+                    }
+                    hint={t("admin.googleAnalytics.gtmClearHint")}
+                  />
+                </div>
                 <button
                   type="button"
                   aria-label={t("admin.platformHost.remove")}
@@ -1410,6 +1415,37 @@ export function AppSettingsPage() {
               }}
             >
               {t("admin.platformHost.add")}
+            </button>
+          </div>
+          <div style={{ marginTop: 20 }}>
+            <GtmContainerField
+              label={t("admin.googleAnalytics.platformGtmFallbackLabel")}
+              help={t("admin.googleAnalytics.platformGtmFallbackHelp")}
+              value={platformGtmId}
+              onChange={(value) => {
+                setPlatformGtmId(value);
+                if (platformGtmError) setPlatformGtmError("");
+              }}
+              error={platformGtmError}
+              hint={t("admin.googleAnalytics.gtmClearHint")}
+            />
+            <button
+              type="button"
+              onClick={() => void handleSavePlatformGtm()}
+              disabled={isSavingPlatformGtm}
+              style={{
+                marginTop: 8,
+                minHeight: 42,
+                padding: "0 16px",
+                borderRadius: 999,
+                background: "var(--admin-surface)",
+                color: "var(--admin-ink)",
+                border: "1px solid var(--admin-border-subtle)",
+                fontWeight: 600,
+                cursor: isSavingPlatformGtm ? "wait" : "pointer",
+              }}
+            >
+              {isSavingPlatformGtm ? t("common.loading") : t("admin.googleAnalytics.saveGtmFallback")}
             </button>
           </div>
           <div style={{ marginTop: 12 }}>

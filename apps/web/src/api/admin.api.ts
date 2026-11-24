@@ -862,6 +862,7 @@ export interface Site {
     isActive: boolean;
     isPrimary: boolean;
     defaultLang: Lang;
+    gtmContainerId?: string | null;
     createdAt: string;
     updatedAt: string;
   }>;
@@ -942,6 +943,7 @@ export interface SiteDomainInput {
   domain: string;
   defaultLang?: string | null;
   isPrimary?: boolean;
+  gtmContainerId?: string | null;
 }
 
 // ——— Sites (regions) ———
@@ -1475,6 +1477,8 @@ export interface Event {
   domainLang?: string | null;
   /** GA4 measurement ID (G-…). Null = inherit Place/Town/Site. */
   gaMeasurementId?: string | null;
+  /** GTM container for this entity custom domain (GTM-…). */
+  gtmContainerId?: string | null;
   place?: {
     id: string;
     translations: Array<{ lang: string; name: string }>;
@@ -1519,6 +1523,8 @@ export interface CreateEventDto {
   domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty/null inherits Place/Town/Site. */
   gaMeasurementId?: string | null;
+  /** GTM container for this entity custom domain (GTM-…). */
+  gtmContainerId?: string | null;
   translations: Array<{
     lang: Lang;
     title: string;
@@ -1551,6 +1557,8 @@ export interface UpdateEventDto {
   domainLang?: string | null;
   /** GA4 measurement ID (G-…). Empty/null clears / inherits Place/Town/Site. */
   gaMeasurementId?: string | null;
+  /** GTM container for this entity custom domain (GTM-…). */
+  gtmContainerId?: string | null;
   translations?: Array<{
     lang: Lang;
     title: string;

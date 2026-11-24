@@ -5,7 +5,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { Lang } from "../common/language-code";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
 import { domainLanguage } from "../common/domain-lang";
-import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { normalizeGtmContainerId } from "../common/gtm-container-id";
 import { generateSlug } from "../slug/slug.helper";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
@@ -30,8 +30,8 @@ export interface CreateTownDto {
   customDomain?: string | null;
   /** Language this hostname opens in. Ignored when customDomain is empty. */
   domainLang?: string | null;
-  /** GA4 measurement ID (G-…). Empty string or null disables / inherits Site. */
-  gaMeasurementId?: string | null;
+  /** GTM container ID (GTM-…). Empty string or null disables on this custom domain. */
+  gtmContainerId?: string | null;
   translations: Array<{
     lang: Lang;
     name: string;
@@ -57,8 +57,8 @@ export interface UpdateTownDto {
   customDomain?: string | null;
   /** Language this hostname opens in. Ignored when customDomain is empty. */
   domainLang?: string | null;
-  /** GA4 measurement ID (G-…). Empty string or null clears / inherits Site. */
-  gaMeasurementId?: string | null;
+  /** GTM container ID (GTM-…). Empty string or null clears / disables on this custom domain. */
+  gtmContainerId?: string | null;
   translations?: Array<{
     lang: Lang;
     name: string;
@@ -206,13 +206,13 @@ export class AdminTownService {
           })
         : null;
 
-    let gaMeasurementId: string | null = null;
-    if (dto.gaMeasurementId !== undefined) {
+    let gtmContainerId: string | null = null;
+    if (dto.gtmContainerId !== undefined) {
       try {
-        gaMeasurementId = normalizeGaMeasurementId(dto.gaMeasurementId);
+        gtmContainerId = normalizeGtmContainerId(dto.gtmContainerId);
       } catch {
         throw new BadRequestException(
-          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+          "Invalid Google Tag Manager container ID. Expected format: GTM-XXXXXXX"
         );
       }
     }
@@ -230,7 +230,7 @@ export class AdminTownService {
         siteId,
         customDomain,
         domainLang: domainLanguage(dto.domainLang, Boolean(customDomain)),
-        gaMeasurementId,
+        gtmContainerId,
         isActive: dto.isActive ?? true,
         isCrawlable: dto.isCrawlable ?? true,
         lat: dto.lat ?? null,
@@ -278,7 +278,7 @@ export class AdminTownService {
       siteId?: string | null;
       customDomain?: string | null;
       domainLang?: string | null;
-      gaMeasurementId?: string | null;
+      gtmContainerId?: string | null;
     } = {};
 
     if (dto.isActive !== undefined) {
@@ -296,12 +296,12 @@ export class AdminTownService {
     if (dto.zoom !== undefined) {
       updateData.zoom = normalizeMapZoom(dto.zoom);
     }
-    if (dto.gaMeasurementId !== undefined) {
+    if (dto.gtmContainerId !== undefined) {
       try {
-        updateData.gaMeasurementId = normalizeGaMeasurementId(dto.gaMeasurementId);
+        updateData.gtmContainerId = normalizeGtmContainerId(dto.gtmContainerId);
       } catch {
         throw new BadRequestException(
-          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+          "Invalid Google Tag Manager container ID. Expected format: GTM-XXXXXXX"
         );
       }
     }

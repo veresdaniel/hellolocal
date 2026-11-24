@@ -21,6 +21,8 @@ export type DomainResolveResponse = {
   placeId?: string;
   /** Public entity slug for town/place so the frontend can open the entity path. */
   entitySlug?: string;
+  /** GTM container for this hostname only (GTM-…). Null when unset. */
+  gtmContainerId?: string | null;
 };
 
 /**
@@ -56,6 +58,7 @@ export class DomainResolveController {
         isActive: true,
         isPrimary: true,
         defaultLang: true,
+        gtmContainerId: true,
         site: { select: { id: true, slug: true, isActive: true, primaryDomain: true } },
       },
     });
@@ -67,6 +70,7 @@ export class DomainResolveController {
         defaultLang: siteDomain.defaultLang,
         domain,
         isPrimary: siteDomain.isPrimary || siteDomain.site.primaryDomain === domain,
+        gtmContainerId: siteDomain.gtmContainerId || null,
       };
     }
 
@@ -92,6 +96,7 @@ export class DomainResolveController {
         id: true,
         isActive: true,
         siteId: true,
+        gtmContainerId: true,
         site: { select: { id: true, slug: true, isActive: true, languages: true } },
         translations: { select: { lang: true, name: true } },
         domainLang: true,
@@ -119,6 +124,7 @@ export class DomainResolveController {
         defaultLang,
         domain,
         isPrimary: true,
+        gtmContainerId: town.gtmContainerId || null,
       };
     }
 
@@ -128,6 +134,7 @@ export class DomainResolveController {
         id: true,
         isActive: true,
         siteId: true,
+        gtmContainerId: true,
         site: { select: { slug: true, isActive: true, languages: true } },
         translations: { select: { lang: true, name: true } },
         domainLang: true,
@@ -155,12 +162,13 @@ export class DomainResolveController {
         defaultLang,
         domain,
         isPrimary: true,
+        gtmContainerId: place.gtmContainerId || null,
       };
     }
 
     const collection = await this.prisma.collection.findUnique({
       where: { domain },
-      select: { slug: true, isActive: true, domainLang: true },
+      select: { slug: true, isActive: true, domainLang: true, gtmContainerId: true },
     });
     if (collection?.isActive && collection.slug) {
       devLog.debug("[domain-resolve] matched collection", domain, collection.slug);
@@ -170,6 +178,7 @@ export class DomainResolveController {
         defaultLang: collection.domainLang || "hu",
         domain,
         isPrimary: true,
+        gtmContainerId: collection.gtmContainerId || null,
       };
     }
 
@@ -180,6 +189,7 @@ export class DomainResolveController {
         isActive: true,
         siteId: true,
         domainLang: true,
+        gtmContainerId: true,
         site: { select: { slug: true, isActive: true } },
         translations: { select: { lang: true, title: true } },
       },
@@ -204,6 +214,7 @@ export class DomainResolveController {
         defaultLang,
         domain,
         isPrimary: true,
+        gtmContainerId: event.gtmContainerId || null,
       };
     }
 

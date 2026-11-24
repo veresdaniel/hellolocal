@@ -22,12 +22,8 @@ import { useApplyPublicTheme, publicThemeStyle } from "../../hooks/useApplyPubli
 import { resolvePublicThemePreset } from "../../styles/publicThemeColors";
 import { isPublicSsrPending } from "../../lib/publicSsrHold";
 import { CookieConsent } from "../../components/CookieConsent";
-import { GoogleAnalytics } from "../../components/GoogleAnalytics";
 import { InsideSiteChrome, PlatformGaShell } from "../../components/PlatformGaShell";
-import {
-  PublicGaOverrideProvider,
-  usePublicGaOverrideId,
-} from "../../context/PublicGaOverrideContext";
+import { PublicGaOverrideProvider } from "../../context/PublicGaOverrideContext";
 
 const LegalPage = lazy(() =>
   import("../../pages/LegalPage").then((m) => ({ default: m.LegalPage }))
@@ -263,11 +259,7 @@ function SiteLayoutContent({
   useApplyPublicTheme(platform.siteTheme, platform.brand?.theme);
 
   const showCookieConsent = platform.features?.cookieConsent !== false;
-  const siteGaId = platform.analytics?.gaMeasurementId ?? null;
-  const pageGaOverride = usePublicGaOverrideId();
-  // Event/Place/Town pages may set a more specific ID; otherwise use Site GA.
-  // No platform fallback on site routes (platform pages use PlatformGaShell).
-  const activeGaId = pageGaOverride ?? siteGaId;
+  // Analytics: host-scoped GTM is loaded once in PlatformGaShell (domain / platform host).
 
   return (
     <div
@@ -300,7 +292,6 @@ function SiteLayoutContent({
         </div>
       )}
       {showCookieConsent ? <CookieConsent /> : null}
-      <GoogleAnalytics measurementId={activeGaId} />
     </div>
   );
 }

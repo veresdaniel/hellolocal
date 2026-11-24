@@ -11,7 +11,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { RbacService } from "../auth/rbac.service";
 import { EntitlementsService } from "../entitlements/entitlements.service";
 import { generateSlug } from "../slug/slug.helper";
-import { normalizeGaMeasurementId } from "../common/ga-measurement-id";
+import { normalizeGtmContainerId } from "../common/gtm-container-id";
 import { assertHostnameAvailable } from "../common/assert-hostname-available";
 import { domainLanguage } from "../common/domain-lang";
 import { assertSiteAllowsCustomDomain } from "../entitlements/assert-custom-domain-allowed";
@@ -29,8 +29,8 @@ export interface CreateEventDto {
   customDomain?: string | null;
   /** Language this hostname opens in. Ignored when customDomain is empty. */
   domainLang?: string | null;
-  /** GA4 measurement ID (G-…). Empty string or null inherits Place/Town/Site. */
-  gaMeasurementId?: string | null;
+  /** GTM container ID (GTM-…). Empty string or null disables on this custom domain. */
+  gtmContainerId?: string | null;
   translations: Array<{
     lang: Lang;
     title: string;
@@ -69,8 +69,8 @@ export interface UpdateEventDto {
   customDomain?: string | null;
   /** Language this hostname opens in. Ignored when customDomain is empty. */
   domainLang?: string | null;
-  /** GA4 measurement ID (G-…). Empty string or null clears / inherits Place/Town/Site. */
-  gaMeasurementId?: string | null;
+  /** GTM container ID (GTM-…). Empty string or null clears / disables on this custom domain. */
+  gtmContainerId?: string | null;
   translations?: Array<{
     lang: Lang;
     title: string;
@@ -587,7 +587,7 @@ export class AdminEventService {
       isPublished,
       customDomain: customDomainRaw,
       domainLang: domainLangRaw,
-      gaMeasurementId: gaMeasurementIdRaw,
+      gtmContainerId: gtmContainerIdRaw,
       ...eventData
     } = dto;
 
@@ -630,13 +630,13 @@ export class AdminEventService {
       });
     }
 
-    let gaMeasurementId: string | null = null;
-    if (gaMeasurementIdRaw !== undefined) {
+    let gtmContainerId: string | null = null;
+    if (gtmContainerIdRaw !== undefined) {
       try {
-        gaMeasurementId = normalizeGaMeasurementId(gaMeasurementIdRaw);
+        gtmContainerId = normalizeGtmContainerId(gtmContainerIdRaw);
       } catch {
         throw new BadRequestException(
-          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+          "Invalid Google Tag Manager container ID. Expected format: GTM-XXXXXXX"
         );
       }
     }
@@ -646,7 +646,7 @@ export class AdminEventService {
         ...eventData,
         customDomain,
         domainLang: domainLanguage(domainLangRaw, Boolean(customDomain)),
-        gaMeasurementId,
+        gtmContainerId,
         placeId: dto.placeId,
         ...(dto.createdByUserId ? { createdByUserId: dto.createdByUserId } : {}),
         startDate: typeof dto.startDate === "string" ? new Date(dto.startDate) : dto.startDate,
@@ -847,7 +847,7 @@ export class AdminEventService {
     }
 
     // Update event data
-    const { placeId: nextPlaceId, gaMeasurementId: gaMeasurementIdRaw, ...restEventData } =
+    const { placeId: nextPlaceId, gtmContainerId: gtmContainerIdRaw, ...restEventData } =
       eventData;
     const updateData: any = { ...restEventData };
 
@@ -880,12 +880,12 @@ export class AdminEventService {
       updateData.domainLang = domainLanguage(domainLangRaw, Boolean(updateData.customDomain));
     }
 
-    if (gaMeasurementIdRaw !== undefined) {
+    if (gtmContainerIdRaw !== undefined) {
       try {
-        updateData.gaMeasurementId = normalizeGaMeasurementId(gaMeasurementIdRaw);
+        updateData.gtmContainerId = normalizeGtmContainerId(gtmContainerIdRaw);
       } catch {
         throw new BadRequestException(
-          "Invalid Google Analytics measurement ID. Expected format: G-XXXXXXXX"
+          "Invalid Google Tag Manager container ID. Expected format: GTM-XXXXXXX"
         );
       }
     }
