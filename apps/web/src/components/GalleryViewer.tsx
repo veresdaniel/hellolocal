@@ -409,21 +409,14 @@ export function GalleryViewer({
         </div>
       </div>
 
-      {/* Fullscreen Modal */}
+      {/* Fullscreen Modal — one slide per viewport; mobile drag-follow swipe */}
       {isFullscreen && selectedIndex !== null && (
         <div
           style={{
             position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            inset: 0,
             backgroundColor: "rgba(0, 0, 0, 0.96)",
             zIndex: 9999,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
             animation: "fadeIn 0.2s ease-out",
           }}
           onClick={closeFullscreen}
@@ -542,7 +535,7 @@ export function GalleryViewer({
             </button>
           )}
 
-          {/* Image track — drag-follow swipe on mobile */}
+          {/* Clipped viewport: exactly one slide wide */}
           <div
             ref={swipeTrackRef}
             onClick={(e) => e.stopPropagation()}
@@ -558,26 +551,22 @@ export function GalleryViewer({
               setDragX(0);
             }}
             style={{
-              width: "100vw",
-              height: "100vh",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              animation: "zoomIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              paddingBottom: images[selectedIndex].caption || images.length > 1 ? "80px" : "20px",
+              position: "absolute",
+              inset: 0,
+              overflow: "hidden",
+              minWidth: 0,
               touchAction: isMobile && images.length > 1 ? "pan-y" : "auto",
               userSelect: "none",
-              overflow: "hidden",
-              position: "relative",
+              animation: "zoomIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
             <div
               style={{
                 display: "flex",
-                width: `${images.length * 100}vw`,
                 height: "100%",
-                transform: `translate3d(calc(${-selectedIndex * 100}vw + ${dragX}px), 0, 0)`,
+                width: `${images.length * 100}%`,
+                // % translate is relative to the track itself → -i/n * 100% = one viewport
+                transform: `translate3d(calc(${(-selectedIndex / images.length) * 100}% + ${dragX}px), 0, 0)`,
                 transition:
                   isDragging || !settleAnimating
                     ? "none"
@@ -589,14 +578,15 @@ export function GalleryViewer({
                 <div
                   key={image.id || image.src || index}
                   style={{
-                    width: "100vw",
+                    flex: `0 0 ${100 / images.length}%`,
+                    width: `${100 / images.length}%`,
+                    maxWidth: `${100 / images.length}%`,
                     height: "100%",
-                    flexShrink: 0,
+                    boxSizing: "border-box",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    padding: "20px",
-                    boxSizing: "border-box",
+                    padding: "56px 16px 96px",
                   }}
                 >
                   <img
@@ -604,8 +594,11 @@ export function GalleryViewer({
                     alt={image.alt || `Gallery image ${index + 1}`}
                     draggable={false}
                     style={{
+                      display: "block",
+                      width: "auto",
+                      height: "auto",
                       maxWidth: "100%",
-                      maxHeight: "calc(100vh - 100px)",
+                      maxHeight: "100%",
                       objectFit: "contain",
                       borderRadius: 8,
                       boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
@@ -616,54 +609,56 @@ export function GalleryViewer({
                 </div>
               ))}
             </div>
-            {(images[selectedIndex].caption || images.length > 1) && (
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 20,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  padding: "12px 20px",
-                  background: "rgba(0, 0, 0, 0.8)",
-                  borderRadius: 8,
-                  backdropFilter: "blur(10px)",
-                  maxWidth: "90vw",
-                  width: "auto",
-                  minWidth: "200px",
-                  pointerEvents: "none",
-                }}
-              >
-                {images[selectedIndex].caption && (
-                  <div
-                    style={{
-                      color: "white",
-                      fontSize: 16,
-                      lineHeight: 1.6,
-                      textAlign: "center",
-                      fontFamily:
-                        '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-                      marginBottom: images.length > 1 ? 8 : 0,
-                    }}
-                  >
-                    {images[selectedIndex].caption}
-                  </div>
-                )}
-                {images.length > 1 && (
-                  <div
-                    style={{
-                      color: "rgba(255, 255, 255, 0.8)",
-                      fontSize: 14,
-                      textAlign: "center",
-                      fontFamily:
-                        '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-                    }}
-                  >
-                    {selectedIndex + 1} / {images.length}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
+
+          {(images[selectedIndex].caption || images.length > 1) && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: "max(16px, env(safe-area-inset-bottom))",
+                left: "50%",
+                transform: "translateX(-50%)",
+                padding: "12px 20px",
+                background: "rgba(0, 0, 0, 0.8)",
+                borderRadius: 8,
+                backdropFilter: "blur(10px)",
+                maxWidth: "min(90vw, 420px)",
+                width: "auto",
+                minWidth: 160,
+                pointerEvents: "none",
+                zIndex: 10000,
+              }}
+            >
+              {images[selectedIndex].caption && (
+                <div
+                  style={{
+                    color: "white",
+                    fontSize: 16,
+                    lineHeight: 1.6,
+                    textAlign: "center",
+                    fontFamily:
+                      '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                    marginBottom: images.length > 1 ? 8 : 0,
+                  }}
+                >
+                  {images[selectedIndex].caption}
+                </div>
+              )}
+              {images.length > 1 && (
+                <div
+                  style={{
+                    color: "rgba(255, 255, 255, 0.8)",
+                    fontSize: 14,
+                    textAlign: "center",
+                    fontFamily:
+                      '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+                  }}
+                >
+                  {selectedIndex + 1} / {images.length}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </>

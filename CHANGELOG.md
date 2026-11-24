@@ -34,6 +34,8 @@ in prose as used in the product.
 
 ### Fixed
 
+- Mobile gallery lightbox: one full image per viewport (clipped track); swipe
+  no longer showed half of two slides side-by-side.
 - Custom-domain “Áttekintés” (footer + mobile/desktop nav) opens the
   language-matched platform marketing landing (e.g. helloetyek.hu/en →
   hellolocal.eu/en) instead of the region `/:lang` home.
