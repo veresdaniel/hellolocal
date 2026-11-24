@@ -8,25 +8,10 @@ export const PUBLIC_SSR_SHELL_CSS = `
 :root{--hl-bg:#1b1730;--hl-bg-mid:#1f2140;--hl-bg-deep:#16132a;--hl-on-dark:#f2f4fb;--hl-on-dark-strong:#fff;--hl-muted-on-dark:#a8b0c8;--hl-mist:#7a92c8;--hl-card:#fffdf9;--hl-ink:#1b1730;--font-body:"Source Sans 3",system-ui,-apple-system,sans-serif}
 html{background-color:var(--hl-bg);color:var(--hl-on-dark)}
 body{margin:0;min-height:100vh;background-color:var(--hl-bg);color:var(--hl-on-dark);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
-#root.hl-public,#hl-ssr-hold.hl-public{box-sizing:border-box;min-height:100vh;color:inherit;background:transparent;visibility:visible}
-#root>.hl-ssr,#hl-ssr-hold>.hl-ssr{box-sizing:border-box;min-height:100vh;padding:clamp(24px,4vw,48px) clamp(16px,4vw,28px);color:var(--hl-on-dark);font-size:17px;line-height:1.65;background:transparent}
-#root>.hl-ssr h1,#root>.hl-ssr h2,#hl-ssr-hold>.hl-ssr h1,#hl-ssr-hold>.hl-ssr h2{margin:0 0 .65em;font-weight:700;line-height:1.2;color:var(--hl-on-dark-strong)}
-#root>.hl-ssr h1,#hl-ssr-hold>.hl-ssr h1{font-size:clamp(1.75rem,4vw,2.5rem)}
-#root>.hl-ssr h2,#hl-ssr-hold>.hl-ssr h2{font-size:clamp(1.2rem,2.8vw,1.5rem);margin-top:2rem}
-#root>.hl-ssr p,#root>.hl-ssr li,#hl-ssr-hold>.hl-ssr p,#hl-ssr-hold>.hl-ssr li{color:var(--hl-on-dark)}
-#root>.hl-ssr a,#hl-ssr-hold>.hl-ssr a{color:var(--hl-mist);font-weight:600}
-#root>.hl-ssr ul,#hl-ssr-hold>.hl-ssr ul{padding-left:1.25rem}
-#root>.hl-ssr img,#hl-ssr-hold>.hl-ssr img{max-width:100%;height:auto;border-radius:12px}
-#root>.hl-ssr .places-discover__title,#hl-ssr-hold>.hl-ssr .places-discover__title{margin:0 0 1rem;font-size:clamp(1.65rem,5vw,2.25rem);letter-spacing:-0.02em}
-#root>.hl-ssr .hl-ssr-discover,#hl-ssr-hold>.hl-ssr .hl-ssr-discover{margin:0 0 1.5rem;max-width:420px}
-#root>.hl-ssr a.list-card--ssr,#hl-ssr-hold>.hl-ssr a.list-card--ssr{display:block;text-decoration:none;color:inherit;background:var(--hl-card);border-radius:14px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.22)}
-#root>.hl-ssr .list-card__media,#hl-ssr-hold>.hl-ssr .list-card__media{position:relative;aspect-ratio:16/10;background:#2a2540;overflow:hidden}
-#root>.hl-ssr .list-card__media-fill,#hl-ssr-hold>.hl-ssr .list-card__media-fill{position:absolute;inset:0}
-#root>.hl-ssr .list-card__media-fill img,#hl-ssr-hold>.hl-ssr .list-card__media-fill img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;border-radius:0;max-width:none}
-#root>.hl-ssr .list-card__body,#hl-ssr-hold>.hl-ssr .list-card__body{padding:12px 14px;color:var(--hl-ink);font-size:1rem}
-#root>.hl-ssr .hl-ssr-links,#hl-ssr-hold>.hl-ssr .hl-ssr-links{opacity:.92}
-html.hl-spa-pending #root{visibility:hidden!important;pointer-events:none;position:fixed;inset:0;z-index:0}
-html.hl-spa-pending #hl-ssr-hold{position:relative;z-index:1;min-height:100vh}
+#root.hl-public{box-sizing:border-box;min-height:100vh;color:inherit;background:transparent;visibility:visible}
+/* Humans never paint crawl SSR (avoids list-page flash); bots still read the HTML. */
+#root.hl-public>.hl-ssr,#hl-ssr-hold{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important;pointer-events:none!important}
+html.hl-spa-pending #root{visibility:hidden!important;pointer-events:none}
 `;
 
 /**
@@ -84,13 +69,14 @@ export function deferPublicSpaBoot(html) {
     s.src=src;
     document.body.appendChild(s);
   }
-  // Let the SSR h1 / list-card img paint as LCP, then boot on the next frames.
-  function afterSsr(go){
-    var h1=document.querySelector("#root.hl-public h1");
-    if(!h1){ go(); return; }
-    requestAnimationFrame(function(){ requestAnimationFrame(go); });
+  // Boot ASAP — crawl SSR is visually clipped; waiting for its h1 only delayed the SPA.
+  function schedule(){
+    if(typeof requestAnimationFrame==="function"){
+      requestAnimationFrame(function(){ requestAnimationFrame(boot); });
+    } else {
+      setTimeout(boot, 0);
+    }
   }
-  function schedule(){ afterSsr(boot); }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",schedule,{once:true});
   else schedule();
 })();

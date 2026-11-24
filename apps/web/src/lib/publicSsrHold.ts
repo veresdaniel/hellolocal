@@ -1,6 +1,7 @@
 /**
- * Keep crawlable SSR HTML visible until the SPA can paint the real public page.
- * createRoot clears `#root`; we park the SSR markup in `#hl-ssr-hold` first.
+ * Park crawlable SSR HTML beside `#root` before React mounts.
+ * The markup stays in the document for bots/SEO, but first-paint CSS keeps it
+ * visually hidden so humans only see the finished SPA (no raw-link flash).
  */
 
 const HOLD_ID = "hl-ssr-hold";

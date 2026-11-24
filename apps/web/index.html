@@ -65,22 +65,32 @@
         background-color: #f8fafc;
         color: #1b1730;
       }
-      /* Hide empty SPA shell until entry CSS applies. SSR bodies (.hl-public) stay visible with shell CSS. */
+      /* Hide empty SPA shell until entry CSS applies. */
       html.hl-booting #root:not(.hl-public) {
         visibility: hidden;
       }
-      /* Parked SSR stays painted while React boots into a hidden #root. */
+      /*
+        Crawlable SSR stays in the HTML for bots/SEO, but must not paint for humans —
+        otherwise custom-host home flashes a raw link list before PlacesListView.
+      */
+      #root.hl-public > .hl-ssr,
+      #hl-ssr-hold {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        clip-path: inset(50%) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+        pointer-events: none !important;
+      }
+      /* SPA stays invisible until HomePage/PlaceDetail signals ready content. */
       html.hl-spa-pending #root {
         visibility: hidden !important;
         pointer-events: none;
-        position: fixed;
-        inset: 0;
-        z-index: 0;
-      }
-      html.hl-spa-pending #hl-ssr-hold {
-        position: relative;
-        z-index: 1;
-        min-height: 100vh;
       }
     </style>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
