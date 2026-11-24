@@ -313,7 +313,7 @@ export function CollectionDetailPage() {
                     }}
                     style={{
                       cursor: "pointer",
-                      borderRadius: 12,
+                      borderRadius: "var(--hl-radius-card, 12px)",
                       overflow: "hidden",
                       padding: 0,
                       transition: "transform 0.2s, box-shadow 0.2s",

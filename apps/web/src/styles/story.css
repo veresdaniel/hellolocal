@@ -40,10 +40,10 @@
 
 .story__sheet {
   box-sizing: border-box;
-  width: min(760px, 100%);
+  width: min(var(--hl-sheet-max, 760px), 100%);
   margin: 0 auto;
   padding: clamp(28px, 5vw, 56px);
-  border-radius: 28px;
+  border-radius: var(--hl-radius-sheet, 28px);
   background: var(--card);
   box-shadow: 0 24px 60px rgba(28, 22, 18, 0.08);
 }
@@ -52,7 +52,7 @@
   width: min(1080px, 100%);
   margin: 0 auto 28px;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: var(--hl-radius-sheet, 28px);
   background: var(--card);
   aspect-ratio: 16 / 7;
   box-shadow: 0 24px 60px rgba(28, 22, 18, 0.08);

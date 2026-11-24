@@ -655,7 +655,7 @@ export function PlaceDetailPage() {
                   display: "block",
                 }}
                 skeletonStyle={{
-                  borderRadius: 16,
+                  borderRadius: "var(--hl-radius-card, 16px)",
                 }}
               />
 
@@ -782,7 +782,7 @@ export function PlaceDetailPage() {
             </div>
           )}
 
-          <div style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
+          <div style={{ maxWidth: "var(--hl-content-max, 960px)", margin: "0 auto", width: "100%" }}>
           {/* Title - directly below image with small offset */}
           <div style={{ margin: "0 16px 16px" }}>
             <h1
@@ -811,7 +811,7 @@ export function PlaceDetailPage() {
                 margin: "0 16px 24px",
                 background: "var(--hl-card)",
                 padding: "clamp(16px, 4vw, 32px)",
-                borderRadius: 16,
+                borderRadius: "var(--hl-radius-card, 16px)",
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
                 width: "calc(100% - 32px)",
                 maxWidth: "100%",
@@ -1018,7 +1018,7 @@ export function PlaceDetailPage() {
               style={{
                 margin: "0 16px 24px",
                 height: 468,
-                borderRadius: 12,
+                borderRadius: "var(--hl-radius-card, 12px)",
                 overflow: "hidden",
                 background: "rgba(27, 23, 48, 0.06)",
               }}
@@ -1121,7 +1121,7 @@ export function PlaceDetailPage() {
                       className="hl-content-card hl-contact-panel"
                       style={{
                         padding: isCompact ? "12px" : "16px",
-                        borderRadius: 12,
+                        borderRadius: "var(--hl-radius-card, 12px)",
                         display: "flex",
                         flexDirection: "column",
                       }}
@@ -1545,7 +1545,7 @@ export function PlaceDetailPage() {
                     className="hl-content-card hl-hours-panel"
                     style={{
                       padding: "16px",
-                      borderRadius: 12,
+                      borderRadius: "var(--hl-radius-card, 12px)",
                       minWidth: 0,
                       width: "100%",
                       boxSizing: "border-box",
@@ -1658,7 +1658,7 @@ export function PlaceDetailPage() {
                     style={{
                       background: "var(--hl-card)",
                       padding: "12px",
-                      borderRadius: 12,
+                      borderRadius: "var(--hl-radius-card, 12px)",
                       boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
                       border: "1px solid rgba(102, 126, 234, 0.1)",
                       display: "flex",
@@ -1719,7 +1719,7 @@ export function PlaceDetailPage() {
                       margin: "0 16px 32px",
                       background: "var(--hl-card)",
                       padding: "clamp(16px, 4vw, 32px)",
-                      borderRadius: 16,
+                      borderRadius: "var(--hl-radius-card, 16px)",
                       boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
                       width: "calc(100% - 32px)",
                       maxWidth: "100%",
@@ -1905,7 +1905,7 @@ export function PlaceDetailPage() {
                         padding: "16px 24px",
                         background: "#1b1730",
                         border: "none",
-                        borderRadius: 12,
+                        borderRadius: "var(--hl-radius-card, 12px)",
                         color: "white",
                         fontSize: "clamp(16px, 3vw, 18px)",
                         fontWeight: 600,
@@ -1963,7 +1963,7 @@ export function PlaceDetailPage() {
                   margin: "0 16px 32px",
                   background: "var(--hl-card)",
                   padding: "clamp(16px, 4vw, 32px)",
-                  borderRadius: 16,
+                  borderRadius: "var(--hl-radius-card, 16px)",
                   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
                   width: "calc(100% - 32px)",
                   maxWidth: "100%",
@@ -2148,7 +2148,7 @@ export function PlaceDetailPage() {
                     padding: "16px 24px",
                     background: "#1b1730",
                     border: "none",
-                    borderRadius: 12,
+                    borderRadius: "var(--hl-radius-card, 12px)",
                     color: "white",
                     fontSize: "clamp(16px, 3vw, 18px)",
                     fontWeight: 600,
@@ -2199,7 +2199,7 @@ export function PlaceDetailPage() {
               style={{
                 background: "var(--hl-card)",
                 padding: "clamp(20px, 4vw, 32px)",
-                borderRadius: 16,
+                borderRadius: "var(--hl-radius-card, 16px)",
                 boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
                 margin: "0 16px 32px",
                 border: "1px solid rgba(102, 126, 234, 0.1)",
@@ -2218,7 +2218,7 @@ export function PlaceDetailPage() {
               style={{
                 background: "var(--hl-card)",
                 padding: "clamp(20px, 4vw, 32px)",
-                borderRadius: 16,
+                borderRadius: "var(--hl-radius-card, 16px)",
                 boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
                 margin: "0 16px 32px",
                 border: "1px solid rgba(102, 126, 234, 0.1)",
@@ -2247,7 +2247,7 @@ export function PlaceDetailPage() {
                     style={{
                       padding: "clamp(16px, 4vw, 20px)",
                       background: "var(--hl-card)",
-                      borderRadius: 12,
+                      borderRadius: "var(--hl-radius-card, 12px)",
                       border: "1px solid #e0e0e0",
                     }}
                   >
@@ -2363,7 +2363,7 @@ export function PlaceDetailPage() {
               style={{
                 background: "var(--hl-card)",
                 padding: "clamp(20px, 4vw, 32px)",
-                borderRadius: 16,
+                borderRadius: "var(--hl-radius-card, 16px)",
                 boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
                 margin: "0 16px 32px",
               }}
@@ -2398,7 +2398,7 @@ export function PlaceDetailPage() {
               style={{
                 background: "var(--hl-card)",
                 padding: "clamp(20px, 4vw, 32px)",
-                borderRadius: 16,
+                borderRadius: "var(--hl-radius-card, 16px)",
                 boxShadow: "0 4px 16px rgba(0, 0, 0, 0.06)",
                 margin: "0 16px 32px",
                 border: "1px solid rgba(102, 126, 234, 0.1)",

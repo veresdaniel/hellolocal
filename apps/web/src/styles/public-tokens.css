@@ -53,6 +53,13 @@
   --mist: var(--hl-mist);
   /* Horizontal inset shared by list cards + footer. Grows with the viewport. */
   --hl-public-pad-x: clamp(16px, 1.8vw, 28px);
+  /* Content measure + radii (atelier overrides via theme CSS vars). */
+  --hl-content-max: 960px;
+  --hl-sheet-max: 760px;
+  --hl-radius-card: 16px;
+  --hl-radius-list: 20px;
+  --hl-radius-sheet: 28px;
+  --hl-radius-control: 10px;
 }
 
 .hl-public {

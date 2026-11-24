@@ -519,7 +519,7 @@ export function PlacesListView({
           gap: var(--pd-3);
           margin: 0 0 clamp(28px, 4vw, 40px);
           padding: var(--pd-3);
-          border-radius: 14px;
+          border-radius: var(--hl-radius-card, 14px);
           background: var(--hl-card);
           border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
           box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);

@@ -127,6 +127,7 @@ export function publicThemeCssVars(siteTheme, brandTheme) {
           `linear-gradient(180deg, ${c.bg} 0%, ${bgMid} 38%, ${c.bg} 72%, ${bgDeep} 100%)`,
         ].join(", ");
 
+  const atelier = presetId === "atelier";
   return {
     presetId,
     vars: {
@@ -141,18 +142,25 @@ export function publicThemeCssVars(siteTheme, brandTheme) {
       "--hl-ink-on-card": c.ink,
       "--hl-muted-on-card": c.muted,
       "--hl-on-dark": c.onDark,
-      "--hl-on-dark-strong": "#ffffff",
-      "--hl-ink-strong": c.onDark,
-      "--hl-muted-on-dark": mutedOnDark,
+      "--hl-on-dark-strong": atelier ? c.ink : "#ffffff",
+      "--hl-ink-strong": atelier ? c.ink : c.onDark,
+      "--hl-muted-on-dark": atelier ? c.muted : mutedOnDark,
       "--hl-on-accent": c.onAccent,
       "--hl-accent": c.accent,
       "--hl-header": c.header,
       "--hl-navy": c.header,
       "--hl-blue": blue,
       "--hl-mist": mist,
-      "--hl-line": hexToRgba(c.onDark, 0.14),
+      "--hl-line": hexToRgba(atelier ? c.ink : c.onDark, atelier ? 0.08 : 0.14),
       "--hl-line-on-card": hexToRgba(c.ink, 0.1),
       "--hl-bg-image": bgImage,
+      "--hl-content-max": atelier ? "clamp(960px, 78vw, 1120px)" : "960px",
+      "--hl-sheet-max": atelier ? "clamp(780px, 72vw, 920px)" : "760px",
+      "--hl-radius-card": atelier ? "8px" : "16px",
+      "--hl-radius-list": atelier ? "10px" : "20px",
+      "--hl-radius-sheet": atelier ? "12px" : "28px",
+      "--hl-radius-control": atelier ? "8px" : "10px",
+      "--hl-public-pad-x": atelier ? "clamp(16px, 1.5vw, 24px)" : "clamp(16px, 1.8vw, 28px)",
     },
   };
 }

@@ -701,7 +701,7 @@ export function EventDetailPage() {
             </div>
           )}
 
-          <div style={{ maxWidth: 960, margin: "0 auto", width: "100%" }}>
+          <div style={{ maxWidth: "var(--hl-content-max, 960px)", margin: "0 auto", width: "100%" }}>
           {event.category && <p className="hl-event__kicker">{event.category}</p>}
           <div style={{ margin: "0 16px 18px" }}>
             <h1
@@ -902,7 +902,7 @@ export function EventDetailPage() {
                 style={{
                   width: "100%",
                   height: 390,
-                  borderRadius: 12,
+                  borderRadius: "var(--hl-radius-card, 12px)",
                   overflow: "hidden",
                   padding: 0,
                   background: "rgba(27, 23, 48, 0.06)",

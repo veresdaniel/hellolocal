@@ -50,7 +50,7 @@
   padding: 0;
   margin: 0;
   background: var(--hl-card, #fffdf9);
-  border-radius: 20px;
+  border-radius: var(--hl-radius-list, 20px);
   border: 1px solid rgba(27, 23, 48, 0.06);
   border-top: 3px solid var(--list-accent);
   overflow: hidden;

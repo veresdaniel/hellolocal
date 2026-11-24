@@ -33,14 +33,14 @@
   background: var(--hl-card, #ffffff);
   border: 1px solid rgba(18, 20, 26, 0.08);
   box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04), 0 8px 24px rgba(18, 20, 26, 0.06);
-  border-radius: 14px;
+  border-radius: var(--hl-radius-card, 8px);
 }
 
 .hl-public[data-theme="atelier"] .list-card {
   background: var(--hl-card, #ffffff);
   border: 1px solid rgba(18, 20, 26, 0.08);
   border-top-width: 1px;
-  border-radius: 14px;
+  border-radius: var(--hl-radius-list, 10px);
   box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04), 0 10px 28px rgba(18, 20, 26, 0.06);
 }
 
@@ -52,6 +52,11 @@
   color: var(--hl-ink, #12141a);
 }
 
+.hl-public[data-theme="atelier"] .places-discover__intro {
+  border-radius: var(--hl-radius-card, 8px);
+  box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04), 0 8px 22px rgba(18, 20, 26, 0.05);
+}
+
 /* List filters / chips: light inputs, clear tap targets */
 .hl-public[data-theme="atelier"] .places-discover input[type="search"],
 .hl-public[data-theme="atelier"] .places-discover input[type="text"],
@@ -59,7 +64,7 @@
   background: #ffffff;
   color: var(--hl-ink, #12141a);
   border: 1px solid rgba(18, 20, 26, 0.14);
-  border-radius: 10px;
+  border-radius: var(--hl-radius-control, 8px);
   min-height: 44px;
 }
 
@@ -67,13 +72,32 @@
   min-height: 44px;
 }
 
-/* Place / event story sheets */
+/* Place / event story sheets — slightly wider, tighter corners */
 .hl-public[data-theme="atelier"] .hl-event,
 .hl-public[data-theme="atelier"] .story {
   background: var(--hl-card, #ffffff);
   color: var(--hl-ink, #12141a);
   border: 1px solid rgba(18, 20, 26, 0.08);
   box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04), 0 12px 32px rgba(18, 20, 26, 0.05);
+}
+
+.hl-public[data-theme="atelier"] .story__sheet {
+  width: min(var(--hl-sheet-max, 920px), 100%);
+  border-radius: var(--hl-radius-sheet, 12px);
+  box-shadow: 0 1px 2px rgba(18, 20, 26, 0.04), 0 12px 32px rgba(18, 20, 26, 0.05);
+}
+
+.hl-public[data-theme="atelier"] .story__hero {
+  border-radius: var(--hl-radius-sheet, 12px);
+}
+
+.hl-public[data-theme="atelier"] .hl-skel-page,
+.hl-public[data-theme="atelier"] .hl-skel-page--bleed .hl-skel-page__sheet {
+  max-width: var(--hl-content-max, 1120px);
+}
+
+.hl-public[data-theme="atelier"] .hl-skel-page__sheet {
+  border-radius: var(--hl-radius-sheet, 12px);
 }
 
 /* Contact + hours: full-width stacks on small screens */

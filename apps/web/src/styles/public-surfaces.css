@@ -44,7 +44,7 @@
   background: var(--hl-card, #fffdf9);
   color: var(--hl-ink, #1b1730);
   border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
-  border-radius: 16px;
+  border-radius: var(--hl-radius-card, 16px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
   box-sizing: border-box;
 }
