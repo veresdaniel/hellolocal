@@ -120,10 +120,10 @@ export function translationsToFormData<T extends LangFieldValues>(
  * Helper to avoid repeated .find() calls with hardcoded lang strings
  */
 export function findTranslation<T extends { lang: Lang }>(
-  translations: T[],
+  translations: T[] | null | undefined,
   lang: Lang
 ): T | undefined {
-  return translations.find((t) => t.lang === lang);
+  return translations?.find((t) => t.lang === lang);
 }
 
 /**

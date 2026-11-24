@@ -33,8 +33,11 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const isAdminPath =
+        typeof window !== "undefined" && window.location.pathname.includes("/admin/");
       return (
         <ServerErrorFallback
+          message={isAdminPath ? this.state.error?.message : undefined}
           stack={import.meta.env.DEV ? this.state.error?.stack : undefined}
         />
       );
@@ -45,7 +48,7 @@ export class ErrorBoundary extends Component<Props, State> {
 }
 
 /** Dedicated 500 experience — distinct from NotFoundPage (404) and EmptyResults. */
-function ServerErrorFallback({ stack }: { stack?: string }) {
+function ServerErrorFallback({ message, stack }: { message?: string; stack?: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { lang: langParam } = useParams<{ lang?: string }>();
@@ -155,6 +158,22 @@ function ServerErrorFallback({ stack }: { stack?: string }) {
         >
           {t("error.serverErrorDescription")}
         </p>
+        {message ? (
+          <p
+            style={{
+              marginBottom: 24,
+              padding: "12px 16px",
+              background: "rgba(0, 0, 0, 0.2)",
+              borderRadius: 8,
+              fontSize: 14,
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+              color: "rgba(255, 255, 255, 0.95)",
+              wordBreak: "break-word",
+            }}
+          >
+            {message}
+          </p>
+        ) : null}
         {import.meta.env.DEV && stack && (
           <details
             style={{

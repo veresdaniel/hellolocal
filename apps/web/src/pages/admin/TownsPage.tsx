@@ -114,9 +114,10 @@ export function TownsPage() {
 
   const siteLabel = (site: (typeof sites)[number]) => {
     const lang = (i18n.language || "hu").slice(0, 2);
+    const translations = site.translations ?? [];
     return (
-      site.translations.find((tr) => tr.lang === lang)?.name ||
-      site.translations.find((tr) => tr.lang === "hu")?.name ||
+      translations.find((tr) => tr.lang === lang)?.name ||
+      translations.find((tr) => tr.lang === "hu")?.name ||
       site.slug
     );
   };
@@ -533,7 +534,7 @@ export function TownsPage() {
                     <label style={{ display: "block", marginBottom: 4 }}>
                       {t("admin.seoTitle")}
                     </label>
-                    <AiPostFillField
+                    <AiPostFormField
                       draft={{
                         kind: "town",
                         field: "seoTitle",
@@ -563,7 +564,7 @@ export function TownsPage() {
                           borderRadius: 4,
                         }}
                       />
-                    </AiPostFillField>
+                    </AiPostFormField>
                     <small style={{ color: "#665d78", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoTitleHint") || "If empty, town name will be used"}
                     </small>
@@ -573,7 +574,7 @@ export function TownsPage() {
                     <label style={{ display: "block", marginBottom: 4 }}>
                       {t("admin.seoDescription")}
                     </label>
-                    <AiPostFillField
+                    <AiPostFormField
                       draft={{
                         kind: "town",
                         field: "seoDescription",
@@ -609,7 +610,7 @@ export function TownsPage() {
                           borderRadius: 4,
                         }}
                       />
-                    </AiPostFillField>
+                    </AiPostFormField>
                     <small style={{ color: "#665d78", fontSize: 12, marginTop: 4, display: "block" }}>
                       {t("admin.seoDescriptionHint") ||
                         "If empty, first sentences from the description will be used"}
