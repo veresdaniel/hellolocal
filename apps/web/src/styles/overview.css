@@ -241,8 +241,13 @@
   box-shadow:
     0 36px 80px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(122, 146, 200, 0.12);
-  animation: overview-mock-float 9s ease-in-out infinite alternate;
-  will-change: transform;
+}
+
+@media (min-width: 861px) and (prefers-reduced-motion: no-preference) {
+  .overview__window {
+    animation: overview-mock-float 9s ease-in-out infinite alternate;
+    will-change: transform;
+  }
 }
 
 .overview__chrome {
@@ -277,8 +282,14 @@
   height: clamp(260px, 34vw, 420px);
   object-fit: cover;
   object-position: 72% center;
-  animation: overview-drift 16s ease-in-out infinite alternate;
-  will-change: transform;
+}
+
+/* Keep LCP hero paint static on small screens; drift only on desktop. */
+@media (min-width: 861px) and (prefers-reduced-motion: no-preference) {
+  .overview__window img {
+    animation: overview-drift 16s ease-in-out infinite alternate;
+    will-change: transform;
+  }
 }
 
 .overview__caption {
@@ -588,6 +599,8 @@
 
   .overview__window img {
     height: 220px;
+    animation: none;
+    will-change: auto;
   }
 
   .overview__stats {

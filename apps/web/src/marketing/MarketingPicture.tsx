@@ -9,8 +9,18 @@ type Props = {
 
 /** Responsive WebP `<picture>` for overview marketing assets. */
 export function MarketingPicture({ image, alt, className, priority = false }: Props) {
+  const mobileMedia = image.mobileMedia || "(max-width: 860px)";
+
   return (
     <picture>
+      {image.webpSrcSetMobile ? (
+        <source
+          type="image/webp"
+          media={mobileMedia}
+          srcSet={image.webpSrcSetMobile}
+          sizes={image.sizes}
+        />
+      ) : null}
       <source type="image/webp" srcSet={image.webpSrcSet} sizes={image.sizes} />
       <img
         className={className}

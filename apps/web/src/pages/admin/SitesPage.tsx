@@ -25,6 +25,7 @@ import {
   type CardField,
 } from "../../components/AdminResponsiveTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
 import { AdminImageField } from "../../components/AdminImageField";
@@ -561,67 +562,16 @@ export function SitesPage() {
               }}
             >
               <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    color: formErrors.brandId ? "#dc2626" : "var(--admin-primary)",
-                    fontWeight: 600,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {t("admin.domain")} *
-                </label>
-                <select
+                <AdminAutocomplete
+                  label={t("admin.domain")}
+                  required
                   value={formData.brandId}
-                  onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "clamp(15px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    border: `2px solid ${formErrors.brandId ? "#fca5a5" : "var(--admin-primary-border)"}`,
-                    borderRadius: 8,
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                    background: formErrors.brandId ? "#fef2f2" : "white",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    if (!formErrors.brandId) {
-                      e.target.style.borderColor = "var(--admin-primary)";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-                    }
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = formErrors.brandId ? "#fca5a5" : "var(--admin-primary-border)";
-                    e.target.style.boxShadow = "none";
-                  }}
-                >
-                  <option value="">{t("admin.selectDomain")}</option>
-                  {brands.map((brand) => (
-                    <option key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.brandId && (
-                  <div
-                    style={{
-                      color: "#dc2626",
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      marginTop: 6,
-                      fontWeight: 500,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {formErrors.brandId}
-                  </div>
-                )}
+                  options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
+                  placeholder={t("admin.selectDomain")}
+                  clearOptionLabel={t("admin.selectDomain")}
+                  error={formErrors.brandId}
+                  onChange={(brandId) => setFormData({ ...formData, brandId })}
+                />
               </div>
               <div>
                 <DomainInput

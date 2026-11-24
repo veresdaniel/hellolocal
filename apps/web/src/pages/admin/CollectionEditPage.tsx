@@ -1,3 +1,4 @@
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 // src/pages/admin/CollectionEditPage.tsx
 import { useState, useEffect, useContext, useRef, useCallback, useMemo } from "react";
 import { appendExtraLanguages, patchLang, readLang } from "../../utils/langFields";
@@ -1717,25 +1718,17 @@ function ItemsTab({
             >
               {t("admin.collectionEdit.sortBy") || "Rendezés:"}
             </label>
-            <select
+            <AdminAutocomplete
               value={siteSortOrder}
-              onChange={(e) => setSiteSortOrder(e.target.value as "name" | "date")}
-              style={{
-                padding: "6px 10px",
-                border: "1px solid #d1d5db",
-                borderRadius: 6,
-                fontSize: "clamp(12px, 3vw, 14px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                background: "white",
-                cursor: "pointer",
-              }}
-            >
-              <option value="name">{t("admin.collectionEdit.sortByName") || "Név (ábécé)"}</option>
-              <option value="date">
-                {t("admin.collectionEdit.sortByDate") || "Létrehozás dátuma"}
-              </option>
-            </select>
+              options={[
+                { value: "name", label: t("admin.collectionEdit.sortByName") || "Név (ábécé)" },
+                { value: "date", label: t("admin.collectionEdit.sortByDate") || "Létrehozás dátuma" },
+              ]}
+              onChange={(v) => setSiteSortOrder(v as "name" | "date")}
+              fullWidth={false}
+              style={{ minWidth: 160 }}
+              inputStyle={{ padding: "6px 10px", fontSize: 14 }}
+            />
           </div>
         </div>
 

@@ -19,6 +19,7 @@ import {
   type ProductWriteInput,
 } from "../../api/products.api";
 import { AdminImageField } from "../../components/AdminImageField";
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 import { LANG_VALUES, type Lang } from "../../app/config";
 import "../../styles/products.css";
 
@@ -281,34 +282,24 @@ export function ProductsAdminPage() {
           </h2>
 
           <div className="catalog-admin__field catalog-admin__field--place">
-            <label htmlFor="catalog-place">
-              {t("admin.catalog.place")} <span className="catalog-admin__required">*</span>
-            </label>
-            <select
+            <AdminAutocomplete
               id="catalog-place"
+              label={
+                <>
+                  {t("admin.catalog.place")} <span className="catalog-admin__required">*</span>
+                </>
+              }
               required
               value={draft.placeId}
-              aria-invalid={Boolean(formErrors.placeId)}
-              className={formErrors.placeId ? "is-invalid" : undefined}
-              onChange={(event) => {
+              options={allPlaceOptions.map((place) => ({ value: place.id, label: place.label }))}
+              placeholder={isLoadingOptions ? "…" : t("admin.catalog.selectPlace")}
+              clearOptionLabel={t("admin.catalog.selectPlace")}
+              error={formErrors.placeId}
+              onChange={(placeId) => {
                 setFormErrors((current) => ({ ...current, placeId: undefined }));
-                patchDraft({ placeId: event.target.value });
+                patchDraft({ placeId });
               }}
-            >
-              <option value="" disabled>
-                {isLoadingOptions ? "…" : t("admin.catalog.selectPlace")}
-              </option>
-              {allPlaceOptions.map((place) => (
-                <option key={place.id} value={place.id}>
-                  {place.label}
-                </option>
-              ))}
-            </select>
-            {formErrors.placeId ? (
-              <p className="catalog-admin__error" role="alert">
-                {formErrors.placeId}
-              </p>
-            ) : null}
+            />
           </div>
 
           <div className="catalog-admin__langs" role="tablist" aria-label="Language">
@@ -506,39 +497,36 @@ export function ProductsAdminPage() {
               clearDisabled={!filtersActive}
             >
               <div className="admin-flist__filter">
-                <label htmlFor="catalog-filter-category">{t("admin.catalog.filters.category")}</label>
-                <select
+                <AdminAutocomplete
                   id="catalog-filter-category"
+                  label={t("admin.catalog.filters.category")}
                   value={categoryFilter}
-                  onChange={(event) => {
-                    setCategoryFilter(event.target.value);
+                  options={categories.map((category) => ({ value: category, label: category }))}
+                  clearOptionLabel={t("admin.catalog.filters.allCategories")}
+                  placeholder={t("admin.catalog.filters.allCategories")}
+                  inputStyle={{ padding: "8px 12px", fontSize: 14 }}
+                  onChange={(next) => {
+                    setCategoryFilter(next);
                     setPage(1);
                   }}
-                >
-                  <option value="">{t("admin.catalog.filters.allCategories")}</option>
-                  {categories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
               <div className="admin-flist__filter">
-                <label htmlFor="catalog-filter-visibility">
-                  {t("admin.catalog.filters.visibility")}
-                </label>
-                <select
+                <AdminAutocomplete
                   id="catalog-filter-visibility"
+                  label={t("admin.catalog.filters.visibility")}
                   value={visibilityFilter}
-                  onChange={(event) => {
-                    setVisibilityFilter(event.target.value as VisibilityFilter);
+                  options={[
+                    { value: "all", label: t("admin.catalog.filters.visibilityAll") },
+                    { value: "visible", label: t("admin.catalog.filters.visibilityVisible") },
+                    { value: "hidden", label: t("admin.catalog.filters.visibilityHidden") },
+                  ]}
+                  inputStyle={{ padding: "8px 12px", fontSize: 14 }}
+                  onChange={(next) => {
+                    setVisibilityFilter(next as VisibilityFilter);
                     setPage(1);
                   }}
-                >
-                  <option value="all">{t("admin.catalog.filters.visibilityAll")}</option>
-                  <option value="visible">{t("admin.catalog.filters.visibilityVisible")}</option>
-                  <option value="hidden">{t("admin.catalog.filters.visibilityHidden")}</option>
-                </select>
+                />
               </div>
             </AdminHierarchyFilters>
           }

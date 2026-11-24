@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AdminDataTable } from "./AdminDataTable";
 import { AdminRoleSelect } from "./AdminRoleSelect";
+import { AdminAutocomplete } from "./AdminAutocomplete";
 import {
   createAccessGrant,
   deleteAccessGrant,
@@ -107,36 +108,46 @@ export function UserAccessPanel() {
           {error}
         </p>
       ) : null}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-        <select value={userId} onChange={(event) => setUserId(event.target.value)} style={{ minHeight: 40 }}>
-          <option value="">{t("admin.access.user")}</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.firstName} {user.lastName} ({user.email})
-            </option>
-          ))}
-        </select>
-        <select
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16, alignItems: "flex-end" }}>
+        <AdminAutocomplete
+          value={userId}
+          options={users.map((user) => ({
+            value: user.id,
+            label: `${user.firstName} ${user.lastName} (${user.email})`,
+          }))}
+          clearOptionLabel={t("admin.access.user")}
+          placeholder={t("admin.access.user")}
+          onChange={setUserId}
+          fullWidth={false}
+          style={{ minWidth: 220, flex: 1 }}
+          inputStyle={{ minHeight: 40, padding: "8px 12px" }}
+        />
+        <AdminAutocomplete
           value={kind}
-          onChange={(event) => {
-            setKind(event.target.value as AccessKind);
+          options={[
+            { value: "region", label: t("admin.access.region") },
+            { value: "town", label: t("admin.access.town") },
+            { value: "place", label: t("admin.access.place") },
+          ]}
+          onChange={(next) => {
+            setKind(next as AccessKind);
             setTargetId("");
-            setRole(event.target.value === "region" ? "editor" : "editor");
+            setRole("editor");
           }}
-          style={{ minHeight: 40 }}
-        >
-          <option value="region">{t("admin.access.region")}</option>
-          <option value="town">{t("admin.access.town")}</option>
-          <option value="place">{t("admin.access.place")}</option>
-        </select>
-        <select value={targetId} onChange={(event) => setTargetId(event.target.value)} style={{ minHeight: 40 }}>
-          <option value="">{t("admin.access.target")}</option>
-          {targets.map((target) => (
-            <option key={target.id} value={target.id}>
-              {target.name}
-            </option>
-          ))}
-        </select>
+          fullWidth={false}
+          style={{ minWidth: 140 }}
+          inputStyle={{ minHeight: 40, padding: "8px 12px" }}
+        />
+        <AdminAutocomplete
+          value={targetId}
+          options={targets.map((target) => ({ value: target.id, label: target.name }))}
+          clearOptionLabel={t("admin.access.target")}
+          placeholder={t("admin.access.target")}
+          onChange={setTargetId}
+          fullWidth={false}
+          style={{ minWidth: 180, flex: 1 }}
+          inputStyle={{ minHeight: 40, padding: "8px 12px" }}
+        />
         <AdminRoleSelect value={role} onChange={setRole} options={roleOptions} />
         <button type="button" className="admin-btn admin-btn--primary" disabled={!userId || !targetId} onClick={() => void addGrant()}>
           {t("admin.access.add")}

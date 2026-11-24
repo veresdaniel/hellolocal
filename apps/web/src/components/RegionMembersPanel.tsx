@@ -13,6 +13,7 @@ import {
 } from "../api/admin.api";
 import { AdminDataTable } from "./AdminDataTable";
 import { AdminRoleSelect } from "./AdminRoleSelect";
+import { AdminAutocomplete } from "./AdminAutocomplete";
 
 type MembershipRole = "siteadmin" | "editor" | "viewer";
 
@@ -169,23 +170,20 @@ export function RegionMembersPanel({ siteId }: RegionMembersPanelProps) {
             gap: 12,
           }}
         >
-          <label style={{ fontWeight: 600 }}>
-            {t("admin.user")} *
-            <select
-              value={formData.userId}
-              disabled={!!editingId}
-              onChange={(event) => setFormData({ ...formData, userId: event.target.value })}
-              style={{ display: "block", width: "100%", marginTop: 6, padding: "10px 12px" }}
-            >
-              <option value="">{t("admin.selectUser")}</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.firstName} {user.lastName} ({user.email})
-                </option>
-              ))}
-            </select>
-          </label>
-          {formErrors.userId && <span style={{ color: "#dc3545" }}>{formErrors.userId}</span>}
+          <AdminAutocomplete
+            label={t("admin.user")}
+            required
+            value={formData.userId}
+            disabled={!!editingId}
+            options={users.map((user) => ({
+              value: user.id,
+              label: `${user.firstName} ${user.lastName} (${user.email})`,
+            }))}
+            clearOptionLabel={t("admin.selectUser")}
+            placeholder={t("admin.selectUser")}
+            error={formErrors.userId}
+            onChange={(userId) => setFormData({ ...formData, userId })}
+          />
           <label style={{ fontWeight: 600 }}>
             {t("admin.role")} *
             <AdminRoleSelect

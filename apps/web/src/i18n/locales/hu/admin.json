@@ -1884,5 +1884,16 @@
   "domains": "Domainek",
   "selectDomain": "Válassz domaint",
   "domainBadgeIcon": "Domain badge ikon",
-  "domainBadgeIconDescription": "Ez az ikon jelenik meg a domain badge-ben a publikus oldalakon"
+  "domainBadgeIconDescription": "Ez az ikon jelenik meg a domain badge-ben a publikus oldalakon",
+  "formSections": {
+    "images": "Képek",
+    "openingHours": "Nyitvatartás",
+    "contact": "Elérhetőségek",
+    "location": "Helyszín a térképen",
+    "seo": "SEO és indexelés",
+    "seoHint": "Meta mezők, keresőmotor-indexelés, Google Analytics",
+    "domain": "Domain beállítások",
+    "schedule": "Időpont és megjelenés",
+    "advanced": "Haladó / tagság"
+  }
 }

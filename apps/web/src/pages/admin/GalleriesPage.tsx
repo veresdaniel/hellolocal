@@ -1,3 +1,4 @@
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 // src/pages/admin/GalleriesPage.tsx
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
@@ -684,51 +685,41 @@ export function GalleriesPage() {
             <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
               {t("admin.galleries.layout")}
             </label>
-            <select
+            <AdminAutocomplete
               value={formData.layout}
-              onChange={(e) =>
+              options={[
+                { value: "grid", label: t("admin.galleries.layoutGrid") },
+                { value: "masonry", label: t("admin.galleries.layoutMasonry") },
+                { value: "carousel", label: t("admin.galleries.layoutCarousel") },
+              ]}
+              onChange={(layout) =>
                 setFormData((prev) => ({
                   ...prev,
-                  layout: e.target.value as "grid" | "masonry" | "carousel",
+                  layout: layout as "grid" | "masonry" | "carousel",
                 }))
               }
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-              }}
-            >
-              <option value="grid">{t("admin.galleries.layoutGrid")}</option>
-              <option value="masonry">{t("admin.galleries.layoutMasonry")}</option>
-              <option value="carousel">{t("admin.galleries.layoutCarousel")}</option>
-            </select>
+            />
           </div>
 
           <div style={{ marginBottom: "16px" }}>
             <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
               {t("admin.galleries.aspect")}
             </label>
-            <select
+            <AdminAutocomplete
               value={formData.aspect}
-              onChange={(e) =>
+              options={[
+                { value: "auto", label: t("admin.galleries.aspectAuto") },
+                { value: "square", label: t("admin.galleries.aspectSquare") },
+                { value: "4:3", label: t("admin.galleries.aspect4_3") },
+                { value: "16:9", label: t("admin.galleries.aspect16_9") },
+              ]}
+              onChange={(aspect) =>
                 setFormData((prev) => ({
                   ...prev,
-                  aspect: e.target.value as "auto" | "square" | "4:3" | "16:9",
+                  aspect: aspect as "auto" | "square" | "4:3" | "16:9",
                 }))
               }
-              style={{
-                width: "100%",
-                padding: "8px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-              }}
-            >
-              <option value="auto">{t("admin.galleries.aspectAuto")}</option>
-              <option value="square">{t("admin.galleries.aspectSquare")}</option>
-              <option value="4:3">{t("admin.galleries.aspect4_3")}</option>
-              <option value="16:9">{t("admin.galleries.aspect16_9")}</option>
-            </select>
+            />
           </div>
 
           <div style={{ marginBottom: "16px" }}>

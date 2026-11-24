@@ -1,3 +1,4 @@
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 /**
  * Region/site admin editor.
  * SEO / Social fields (seoTitle, seoDescription, seoImage) are optional admin overrides —
@@ -790,27 +791,15 @@ function OverviewTab({
         >
           {t("admin.domain")}
         </label>
-        <select
+        <AdminAutocomplete
           value={formData.brandId}
-          onChange={(e) => setFormData({ ...formData, brandId: e.target.value })}
-          style={{
-            width: "100%",
-            maxWidth: 400,
-            padding: "8px 12px",
-            border: "1px solid #d1d5db",
-            borderRadius: 6,
-            fontSize: 14,
-            fontFamily:
-              "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-          }}
-        >
-          <option value="">{t("admin.selectDomain")}</option>
-          {brands.map((brand) => (
-            <option key={brand.id} value={brand.id}>
-              {brand.name}
-            </option>
-          ))}
-        </select>
+          options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
+          clearOptionLabel={t("admin.selectDomain")}
+          placeholder={t("admin.selectDomain")}
+          onChange={(brandId) => setFormData({ ...formData, brandId })}
+          style={{ maxWidth: 400 }}
+          inputStyle={{ padding: "8px 12px", fontSize: 14 }}
+        />
       </div>
 
       <LanguageAwareForm>
@@ -2560,31 +2549,24 @@ function MapTab({
                 >
                   {t("admin.siteEdit.map.defaultTown")}
                 </label>
-                <select
+                <AdminAutocomplete
                   value={formData.townId}
-                  onChange={(e) => setFormData({ ...formData, townId: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #d1d5db",
-                    borderRadius: 6,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  <option value="">{t("admin.siteEdit.map.noTown")}</option>
-                  {towns.map((town) => {
-                    const translation =
-                      town.translations?.find((t: any) => t.lang === selectedLang) ||
-                      town.translations?.[0];
-                    return (
-                      <option key={town.id} value={town.id}>
-                        {translation?.name || town.id}
-                      </option>
-                    );
-                  })}
-                </select>
+                  options={[
+                    ...towns.map((town) => {
+                      const translation =
+                        town.translations?.find((tr: { lang: string }) => tr.lang === "hu") ||
+                        town.translations?.[0];
+                      return {
+                        value: town.id,
+                        label: translation?.name || town.id,
+                      };
+                    }),
+                  ]}
+                  clearOptionLabel={t("admin.siteEdit.map.noTown")}
+                  placeholder={t("admin.siteEdit.map.noTown")}
+                  onChange={(townId) => setFormData({ ...formData, townId })}
+                  inputStyle={{ padding: "8px 12px", fontSize: 14 }}
+                />
               </div>
 
               <div>

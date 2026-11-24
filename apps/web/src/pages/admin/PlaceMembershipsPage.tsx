@@ -23,6 +23,7 @@ import {
 } from "../../components/AdminResponsiveTable";
 import { AdminHierarchyFilters } from "../../components/AdminHierarchyFilters";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { isSuperadmin as checkIsSuperadmin } from "../../utils/roleHelpers";
 import type { Place } from "../../types/place";
@@ -385,157 +386,70 @@ export function PlaceMembershipsPage() {
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                {t("admin.place")} *
-              </label>
-              <select
-                value={formData.placeId}
-                onChange={(e) => setFormData({ ...formData, placeId: e.target.value })}
-                disabled={!!editingId}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.placeId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
-                  borderRadius: 8,
-                  boxSizing: "border-box",
-                }}
-              >
-                <option value="">{t("admin.selectPlace")}</option>
-                {Array.isArray(places) &&
-                  places.map((place) => (
-                    <option key={place.id} value={place.id}>
-                      {place.name || place.id}
-                    </option>
-                  ))}
-              </select>
-              {formErrors.placeId && (
-                <p
-                  style={{
-                    color: "#dc3545",
-                    fontSize: "clamp(13px, 3vw, 15px)",
-                    marginTop: 4,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {formErrors.placeId}
-                </p>
-              )}
-            </div>
+            <AdminAutocomplete
+              label={t("admin.place")}
+              required
+              value={formData.placeId}
+              options={(Array.isArray(places) ? places : []).map((place: { id: string; name?: string }) => ({
+                value: place.id,
+                label: place.name || place.id,
+              }))}
+              placeholder={t("admin.selectPlace")}
+              clearOptionLabel={t("admin.selectPlace")}
+              disabled={!!editingId}
+              error={formErrors.placeId}
+              onChange={(placeId) => setFormData({ ...formData, placeId })}
+            />
 
-            <div>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                {t("admin.user")} *
-              </label>
-              <select
-                value={formData.userId}
-                onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
-                disabled={!!editingId}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.userId ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
-                  borderRadius: 8,
-                  boxSizing: "border-box",
-                }}
-              >
-                <option value="">{t("admin.selectUser")}</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.firstName} {user.lastName} ({user.email})
-                  </option>
-                ))}
-              </select>
-              {formErrors.userId && (
-                <p
-                  style={{
-                    color: "#dc3545",
-                    fontSize: "clamp(13px, 3vw, 15px)",
-                    marginTop: 4,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {formErrors.userId}
-                </p>
-              )}
-            </div>
+            <AdminAutocomplete
+              label={t("admin.user")}
+              required
+              value={formData.userId}
+              options={users.map((user) => ({
+                value: user.id,
+                label: `${user.firstName} ${user.lastName} (${user.email})`,
+              }))}
+              placeholder={t("admin.selectUser")}
+              clearOptionLabel={t("admin.selectUser")}
+              disabled={!!editingId}
+              error={formErrors.userId}
+              onChange={(userId) => setFormData({ ...formData, userId })}
+            />
 
-            <div>
-              <label style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>
-                {t("admin.role")} *
-              </label>
-              <select
-                value={formData.role}
-                onChange={(e) => {
-                  const newRole = e.target.value as "owner" | "manager" | "editor";
-                  // Prevent manager from selecting owner
-                  if (
-                    newRole === "owner" &&
-                    currentUserPlaceRole === "manager" &&
-                    !isSuperadmin &&
-                    currentUser?.role !== "admin"
-                  ) {
-                    return;
-                  }
-                  setFormData({ ...formData, role: newRole });
-                }}
-                style={{
-                  width: "100%",
-                  padding: "12px 16px",
-                  fontSize: "clamp(15px, 3.5vw, 16px)",
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  border: formErrors.role ? "2px solid #dc3545" : "2px solid var(--admin-primary-border)",
-                  borderRadius: 8,
-                  boxSizing: "border-box",
-                }}
-              >
-                <option value="editor">{t("admin.roles.editor")}</option>
-                <option value="manager">{t("admin.roles.manager")}</option>
-                {/* Owner option only visible to superadmin, siteadmin, or current owner */}
-                {(isSuperadmin ||
-                  currentUser?.role === "admin" ||
-                  currentUserPlaceRole === "owner") && (
-                  <option value="owner">{t("admin.roles.owner")}</option>
-                )}
-              </select>
-              {/* Help text */}
-              <div
-                style={{
-                  marginTop: 8,
-                  fontSize: "clamp(13px, 3vw, 15px)",
-                  color: "#666",
-                  lineHeight: 1.5,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                <div>{t("admin.roleDescriptions.owner")}</div>
-                <div>{t("admin.roleDescriptions.manager")}</div>
-                <div>{t("admin.roleDescriptions.editor")}</div>
-              </div>
-              {formErrors.role && (
-                <p
-                  style={{
-                    color: "#dc3545",
-                    fontSize: "clamp(13px, 3vw, 15px)",
-                    marginTop: 4,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {formErrors.role}
-                </p>
-              )}
-            </div>
+            <AdminAutocomplete
+              label={t("admin.role")}
+              required
+              value={formData.role}
+              options={[
+                { value: "editor", label: t("admin.roles.editor") },
+                { value: "manager", label: t("admin.roles.manager") },
+                ...(isSuperadmin ||
+                currentUser?.role === "admin" ||
+                currentUserPlaceRole === "owner"
+                  ? [{ value: "owner", label: t("admin.roles.owner") }]
+                  : []),
+              ]}
+              error={formErrors.role}
+              hint={
+                <>
+                  <div>{t("admin.roleDescriptions.owner")}</div>
+                  <div>{t("admin.roleDescriptions.manager")}</div>
+                  <div>{t("admin.roleDescriptions.editor")}</div>
+                </>
+              }
+              onChange={(raw) => {
+                const newRole = raw as "owner" | "manager" | "editor";
+                if (
+                  newRole === "owner" &&
+                  currentUserPlaceRole === "manager" &&
+                  !isSuperadmin &&
+                  currentUser?.role !== "admin"
+                ) {
+                  return;
+                }
+                setFormData({ ...formData, role: newRole });
+              }}
+            />
           </div>
         </div>
       )}

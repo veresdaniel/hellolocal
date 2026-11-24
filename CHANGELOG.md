@@ -25,6 +25,13 @@ in prose as used in the product.
   latin-ext (HU glyphs / CLS); `HomePage` lazy so overview skips map-vendor.
 - Overview images: responsive WebP `srcset` (480/720/960/1100) with stronger
   compression; LCP preloads the 720w candidate.
+- Overview mobile LCP: hero/story `picture` sources cap at 720w below 860px;
+  preload `imagesrcset` omits 960w; hero mock animations desktop-only.
+- Map “my location”: do not persist stale GPS coords; refresh on PWA/tab resume
+  (`visibilitychange` / `pageshow` / `focus`) and `watchPosition` while moving.
+- Admin: searchable `AdminAutocomplete` replaces native `<select>` for places,
+  towns, sites, users, brands, currencies, hierarchy filters, roles, and similar
+  entity pickers (language / pagination / tiny enums kept as select).
 
 ### Added
 
@@ -40,7 +47,11 @@ in prose as used in the product.
 
 - Category CRUD (create/update/delete/reorder) is superadmin-only; editors still
   select categories on place/event forms. Categories tile moved to Platform.
-- Event create/update requires a place (`placeId`); empty place is blocked in the UI.
+- Event create/update requires a place; place is chosen via autocomplete of the
+  user’s linked places (all places for superadmin/siteadmin).
+- Admin place / event / curator forms: shared collapsible sections (images up
+  front; SEO+GA+crawlable, contact, opening hours, domain folded); publish /
+  inactive control always at the bottom.
 - Place price list: currency is a dropdown of catalog currencies (not free text).
 - PlaceCard / map popup prefer cardImage before heroImage fallback.
 - Site explore (e.g. helloetyek): list intro + first cards use LCP priority; picsum

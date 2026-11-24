@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import { AdminAutocomplete } from "./AdminAutocomplete";
 
 type AdminRoleOption = {
   value: string;
@@ -10,30 +10,19 @@ type AdminRoleSelectProps = {
   onChange: (value: string) => void;
   options: AdminRoleOption[];
   disabled?: boolean;
-  onClick?: (event: MouseEvent<HTMLSelectElement>) => void;
 };
 
-export function AdminRoleSelect({
-  value,
-  onChange,
-  options,
-  disabled,
-  onClick,
-}: AdminRoleSelectProps) {
+export function AdminRoleSelect({ value, onChange, options, disabled }: AdminRoleSelectProps) {
   return (
-    <select
+    <AdminAutocomplete
       className="admin-role-select"
-      data-role={value}
       value={value}
+      options={options}
+      onChange={onChange}
       disabled={disabled}
-      onClick={onClick}
-      onChange={(event) => onChange(event.target.value)}
-    >
-      {options.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
+      fullWidth={false}
+      style={{ minWidth: 160 }}
+      inputStyle={{ padding: "8px 12px", minHeight: 40 }}
+    />
   );
 }

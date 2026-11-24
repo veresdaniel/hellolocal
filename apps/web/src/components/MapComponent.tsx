@@ -14,6 +14,8 @@ import "../styles/map-markers.css";
 import { MAX_DISTANCE_KM } from "../app/config";
 import { useToast } from "../contexts/ToastContext";
 import { useFiltersStore } from "../stores/useFiltersStore";
+import { useLiveUserGeolocation } from "../hooks/useLiveUserGeolocation";
+import { GEO_FRESH, coordsFromPosition } from "../lib/geolocation";
 import { sanitizeImageUrl } from "../utils/urlValidation";
 import { devLog } from "../lib/devLog";
 import {
@@ -338,23 +340,14 @@ export function MapComponent({
   // Use userLocation from store if available, otherwise use prop
   const userLocation = userLocationFromStore || userLocationProp;
 
-  // Watch ID ref for geolocation
-  const watchIdRef = useRef<number | null>(null);
   const mapRef = useRef<MapRef | null>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
 
+  // Fresh GPS on enable / PWA resume + watch while moving (public maps only).
+  useLiveUserGeolocation({ enabled: Boolean(showUserLocation && !hideLocationButton) });
+
   const getMap = useCallback((): maplibregl.Map | null => {
     return mapRef.current?.getMap?.() ?? mapInstanceRef.current;
-  }, []);
-
-  // Cleanup geolocation watch on unmount
-  useEffect(() => {
-    return () => {
-      if (watchIdRef.current !== null && navigator.geolocation) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-    };
   }, []);
 
   const [routes, setRoutes] = useState<
@@ -1107,39 +1100,6 @@ export function MapComponent({
         hasUserLocation: showUserLocation && hasCoords(userLocation),
       });
 
-      const beginWatch = () => {
-        if (typeof navigator === "undefined" || !navigator.geolocation) return;
-        if (watchIdRef.current !== null) {
-          navigator.geolocation.clearWatch(watchIdRef.current);
-        }
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          (updatedPosition) => {
-            setUserLocation({
-              lat: updatedPosition.coords.latitude,
-              lng: updatedPosition.coords.longitude,
-            });
-          },
-          (error) => {
-            console.warn("Geolocation watch error:", error);
-            if (error.code === error.PERMISSION_DENIED) {
-              setShowUserLocation(false);
-              setUserLocation(null);
-              navigationMarkerIdRef.current = null;
-              setNavigationMarkerId(null);
-              setRoutes([]);
-              shouldHaveRoutesRef.current = false;
-              lastRouteFetchPosition.current = null;
-              showToast(t("public.locationPermissionDenied"), "warning");
-            }
-          },
-          {
-            enableHighAccuracy: true,
-            maximumAge: 30000,
-            timeout: 10000,
-          }
-        );
-      };
-
       if (showUserLocation && hasCoords(userLocation)) {
         lastRouteFetchPosition.current = {
           lat: userLocation.lat,
@@ -1156,16 +1116,12 @@ export function MapComponent({
         return;
       }
 
-      // One permission prompt, then enable "Itt vagy most" and draw the route in-place.
+      // Gesture-scoped permission + fresh fix; live watch continues via useLiveUserGeolocation.
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const origin = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
+          const origin = coordsFromPosition(position);
           setUserLocation(origin);
           setShowUserLocation(true);
-          beginWatch();
           lastRouteFetchPosition.current = {
             lat: origin.lat,
             lng: origin.lng,
@@ -1189,7 +1145,7 @@ export function MapComponent({
             showToast(t("public.locationPermissionPrompt"), "warning");
           }
         },
-        { enableHighAccuracy: true, maximumAge: 300000, timeout: 15000 }
+        GEO_FRESH
       );
     },
     [
@@ -1840,51 +1796,17 @@ export function MapComponent({
                   const checked = e.target.checked;
 
                   if (checked) {
-                    // The switch follows the click. A slow or missing fix must not leave it stuck off.
+                    // Toggle on immediately; live watch + resume refresh via useLiveUserGeolocation.
+                    // Still request in this gesture for iOS permission / first fix.
                     setShowUserLocation(true);
                     const localHost =
                       typeof window !== "undefined" &&
                       (window.location.hostname === "localhost" ||
                         window.location.hostname === "127.0.0.1");
-                    const useMapCenter = () => {
-                      if (localHost && Number.isFinite(latitude) && Number.isFinite(longitude)) {
-                        setUserLocation({ lat: latitude, lng: longitude });
-                      }
-                    };
-                    const startWatch = () => {
-                      if (!navigator.geolocation) return;
-                      if (watchIdRef.current !== null) {
-                        navigator.geolocation.clearWatch(watchIdRef.current);
-                      }
-                      watchIdRef.current = navigator.geolocation.watchPosition(
-                        (updatedPosition) => {
-                          setUserLocation({
-                            lat: updatedPosition.coords.latitude,
-                            lng: updatedPosition.coords.longitude,
-                          });
-                        },
-                        (error) => {
-                          console.warn("Geolocation watch error:", error);
-                          if (error.code === error.PERMISSION_DENIED) {
-                            setShowUserLocation(false);
-                            setUserLocation(null);
-                          }
-                        },
-                        {
-                          enableHighAccuracy: false,
-                          maximumAge: 30000,
-                          timeout: 10000,
-                        }
-                      );
-                    };
                     if (navigator.geolocation) {
                       navigator.geolocation.getCurrentPosition(
                         (position) => {
-                          setUserLocation({
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude,
-                          });
-                          startWatch();
+                          setUserLocation(coordsFromPosition(position));
                         },
                         (error) => {
                           console.warn("Geolocation error:", error);
@@ -1893,24 +1815,20 @@ export function MapComponent({
                             setUserLocation(null);
                             return;
                           }
-                          useMapCenter();
-                          startWatch();
+                          if (localHost && Number.isFinite(latitude) && Number.isFinite(longitude)) {
+                            setUserLocation({ lat: latitude, lng: longitude });
+                          }
                         },
-                        {
-                          enableHighAccuracy: false,
-                          maximumAge: 300000,
-                          timeout: 8000,
-                        }
+                        GEO_FRESH
                       );
-                    } else {
-                      useMapCenter();
+                    } else if (
+                      localHost &&
+                      Number.isFinite(latitude) &&
+                      Number.isFinite(longitude)
+                    ) {
+                      setUserLocation({ lat: latitude, lng: longitude });
                     }
                   } else {
-                    // User wants to disable location tracking
-                    if (watchIdRef.current !== null) {
-                      navigator.geolocation.clearWatch(watchIdRef.current);
-                      watchIdRef.current = null;
-                    }
                     setShowUserLocation(false);
                     setUserLocation(null);
                     setSelectedMarkerId(null);

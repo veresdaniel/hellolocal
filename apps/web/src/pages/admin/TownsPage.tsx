@@ -12,6 +12,7 @@ import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { MapComponent } from "../../components/MapComponent";
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { AdminDataTable } from "../../components/AdminDataTable";
 import { TownMembersPanel } from "../../components/TownMembersPanel";
@@ -519,27 +520,13 @@ export function TownsPage() {
                 ({t("common.optional")})
               </span>
             </label>
-            <select
+            <AdminAutocomplete
               value={formData.siteId || ""}
-              onChange={(e) => setFormData({ ...formData, siteId: e.target.value })}
-              style={{
-                width: "100%",
-                padding: 8,
-                fontSize: 16,
-                border: "1px solid #ddd",
-                borderRadius: 4,
-                background: "white",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              <option value="">{t("admin.noRegion")}</option>
-              {sites.map((site) => (
-                <option key={site.id} value={site.id}>
-                  {siteLabel(site)}
-                </option>
-              ))}
-            </select>
+              options={sites.map((site) => ({ value: site.id, label: siteLabel(site) }))}
+              clearOptionLabel={t("admin.noRegion")}
+              placeholder={t("admin.noRegion")}
+              onChange={(siteId) => setFormData({ ...formData, siteId })}
+            />
           </div>
 
           <LanguageAwareForm>

@@ -147,7 +147,8 @@ export function PlacesListView({
         },
         (error) => {
           console.warn("Geolocation error:", error);
-        }
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
       );
     }
   }, [within30Minutes, userLocation, storeFilters]);

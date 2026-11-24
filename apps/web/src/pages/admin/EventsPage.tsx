@@ -30,6 +30,7 @@ import { AuthContext } from "../../contexts/AuthContext";
 import { LanguageAwareForm } from "../../components/LanguageAwareForm";
 import { TagAutocomplete } from "../../components/TagAutocomplete";
 import { CategoryAutocomplete } from "../../components/CategoryAutocomplete";
+import { PlaceAutocomplete } from "../../components/PlaceAutocomplete";
 import { MapComponent } from "../../components/MapComponent";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
@@ -40,6 +41,7 @@ import { findTranslation } from "../../utils/langHelpers";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
 import { GaMeasurementField } from "../../components/GaMeasurementField";
 import { DomainInput } from "../../components/DomainInput";
+import { AdminCollapsibleSection } from "../../components/AdminCollapsibleSection";
 import { AdminImageField } from "../../components/AdminImageField";
 import type { Lang } from "../../types/enums";
 import { buildPublicUrl } from "../../app/urls";
@@ -853,76 +855,33 @@ export function EventsPage() {
               }}
             >
               <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    color: "var(--admin-primary)",
-                    fontWeight: 600,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {t("admin.places")} *
-                </label>
-                <select
-                  value={formData.placeId}
-                  required
-                  onChange={(e) => setFormData({ ...formData, placeId: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: 15,
-                    border: formErrors.placeId
-                      ? "2px solid #dc2626"
-                      : "2px solid var(--admin-primary-border)",
-                    borderRadius: 8,
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    background: "var(--admin-surface)",
-                    cursor: "pointer",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary)";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary-border)";
-                    e.target.style.boxShadow = "none";
-                  }}
-                >
-                  <option value="">{t("admin.selectPlace")}</option>
-                  {(() => {
-                    // RBAC: Show only user's places if not superadmin or siteadmin
-                    const isSuperadmin = currentUser?.role === "superadmin";
-                    const placesToShow = isSuperadmin || isSiteAdmin ? places : myPlaces;
-
-                    if (placesToShow.length === 0 && !isSuperadmin && !isSiteAdmin) {
-                      return (
-                        <option value="" disabled>
-                          {t("admin.noPlacesAvailable")}
-                        </option>
-                      );
+                <PlaceAutocomplete
+                  places={
+                    currentUser?.role === "superadmin" || isSiteAdmin ? places : myPlaces
+                  }
+                  selectedPlaceId={formData.placeId}
+                  onChange={(placeId) => {
+                    setFormData({ ...formData, placeId });
+                    if (formErrors.placeId) {
+                      setFormErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.placeId;
+                        return next;
+                      });
                     }
-
-                    return placesToShow.map((place) => {
-                      const huTranslation = place.translations?.find((t: any) => t.lang === "hu");
-                      const name = huTranslation?.name || place.translations?.[0]?.name || place.id;
-                      return (
-                        <option key={place.id} value={place.id}>
-                          {name}
-                        </option>
-                      );
-                    });
-                  })()}
-                </select>
-                {formErrors.placeId ? (
-                  <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6 }}>{formErrors.placeId}</div>
-                ) : null}
+                  }}
+                  label={t("admin.places")}
+                  placeholder={
+                    (currentUser?.role === "superadmin" || isSiteAdmin
+                      ? places
+                      : myPlaces
+                    ).length === 0
+                      ? t("admin.noPlacesAvailable")
+                      : t("admin.selectPlace")
+                  }
+                  required
+                  error={formErrors.placeId}
+                />
               </div>
               <div>
                 <CategoryAutocomplete
@@ -1144,178 +1103,183 @@ export function EventsPage() {
               )}
             </LanguageAwareForm>
 
-            {/* SEO Fields Section */}
-            <LanguageAwareForm>
-              {(selectedLang) => (
-                <div
-                  style={{
-                    marginTop: 24,
-                    padding: 16,
-                    background: "linear-gradient(135deg, var(--admin-primary)15 0%, var(--admin-primary-hover)15 100%)",
-                    borderRadius: 8,
-                    border: "1px solid var(--admin-primary)30",
-                  }}
-                >
-                  <h3
+
+            <AdminCollapsibleSection
+              title={t("admin.formSections.schedule")}
+              defaultOpen
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+{/* Start and End Date */}
+                <div>
+                  <label
                     style={{
-                      margin: "0 0 16px 0",
-                      fontSize: "clamp(16px, 3.5vw, 18px)",
+                      display: "block",
+                      marginBottom: 8,
+                      color: formErrors.startDate ? "#dc2626" : "var(--admin-primary)",
                       fontWeight: 600,
-                      color: "var(--admin-primary)",
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
                       fontFamily:
-                        "var(--admin-font-display)",
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     }}
                   >
-                    🔍 SEO {t("admin.settings")}
-                  </h3>
-
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4 }}>
-                      SEO {t("common.title")}
-                    </label>
-                    <AiPostfixField
-                      draft={{
-                        kind: "event",
-                        field: "seoTitle",
-                        lang: selectedLang,
-                        siteId: selectedSiteId || undefined,
-                        placeId: formData.placeId || undefined,
-                        name: readLang(formData, "title", selectedLang),
-                      }}
-                      value={readLang(formData, "seoTitle", selectedLang)}
-                      onApply={(text) =>
-                        setFormData((prev) => patchLang(prev, "seoTitle", selectedLang, text))
+                    {t("admin.startDate")} *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    style={{
+                      width: "100%",
+                      padding: "12px 16px",
+                      fontSize: 15,
+                      border: `2px solid ${formErrors.startDate ? "#fca5a5" : "var(--admin-primary-border)"}`,
+                      borderRadius: 8,
+                      outline: "none",
+                      transition: "all 0.3s ease",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      background: formErrors.startDate ? "#fef2f2" : "white",
+                      boxSizing: "border-box",
+                    }}
+                    onFocus={(e) => {
+                      if (!formErrors.startDate) {
+                        e.target.style.borderColor = "var(--admin-primary)";
+                        e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
                       }
-                    >
-                    <input
-                      type="text"
-                      value={
-                        readLang(formData, "seoTitle", selectedLang)
-                      }
-                      onChange={(e) => {
-                        setFormData(patchLang(formData, "seoTitle", selectedLang, e.target.value));
-                      }}
-                      placeholder={
-                        t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"
-                      }
-                      style={{
-                        width: "100%",
-                        padding: 8,
-                        fontSize: 16,
-                        border: "1px solid #ddd",
-                        borderRadius: 4,
-                      }}
-                    />
-                    </AiPostfixField>
-                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
-                      {t("admin.seoTitleHint") || "If empty, event name will be used"}
-                    </small>
-                  </div>
-
-                  <div style={{ marginBottom: 16 }}>
-                    <label style={{ display: "block", marginBottom: 4 }}>
-                      SEO {t("common.description")}
-                    </label>
-                    <AiPostfixField
-                      draft={{
-                        kind: "event",
-                        field: "seoDescription",
-                        lang: selectedLang,
-                        siteId: selectedSiteId || undefined,
-                        placeId: formData.placeId || undefined,
-                        name: readLang(formData, "title", selectedLang),
-                      }}
-                      value={readLang(formData, "seoDescription", selectedLang)}
-                      onApply={(text) =>
-                        setFormData((prev) =>
-                          patchLang(prev, "seoDescription", selectedLang, text)
-                        )
-                      }
-                      variant="textarea"
-                    >
-                    <textarea
-                      value={
-                        readLang(formData, "seoDescription", selectedLang)
-                      }
-                      onChange={(e) => {
-                        setFormData(patchLang(formData, "seoDescription", selectedLang, e.target.value));
-                      }}
-                      placeholder={
-                        t("admin.seoDescriptionPlaceholder") ||
-                        "SEO description (leave empty for auto)"
-                      }
-                      rows={3}
-                      style={{
-                        width: "100%",
-                        padding: 8,
-                        fontSize: 16,
-                        border: "1px solid #ddd",
-                        borderRadius: 4,
-                      }}
-                    />
-                    </AiPostfixField>
-                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
-                      {t("admin.seoDescriptionHint") ||
-                        "If empty, first 2 sentences from description will be used"}
-                    </small>
-                  </div>
-
-                  <AdminImageField
-                    label={`SEO ${t("common.image")}`}
-                    value={readLang(formData, "seoImage", selectedLang)}
-                    onChange={(url) =>
-                      setFormData(patchLang(formData, "seoImage", selectedLang, url))
-                    }
-                    folder="events/seo"
-                    placeholder={
-                      t("admin.seoImagePlaceholder") ||
-                      "SEO image URL (leave empty for hero image)"
-                    }
-                    description={t("admin.seoImageHint") || "If empty, hero image will be used"}
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = formErrors.startDate ? "#fca5a5" : "var(--admin-primary-border)";
+                      e.target.style.boxShadow = "none";
+                    }}
                   />
+                  {formErrors.startDate && (
+                    <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>
+                      {formErrors.startDate}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: 8,
+                      color: "var(--admin-primary)",
+                      fontWeight: 600,
+                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  >
+                    {t("admin.endDate")}
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    style={{
+                      width: "100%",
+                      padding: "12px 16px",
+                      fontSize: 15,
+                      border: "2px solid var(--admin-primary-border)",
+                      borderRadius: 8,
+                      outline: "none",
+                      transition: "all 0.3s ease",
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      boxSizing: "border-box",
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = "var(--admin-primary)";
+                      e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = "var(--admin-primary-border)";
+                      e.target.style.boxShadow = "none";
+                    }}
+                  />
+                </div>
 
-                  <div style={{ marginBottom: 0 }}>
-                    <label style={{ display: "block", marginBottom: 4 }}>
-                      {t("admin.seoKeywords")}
-                    </label>
+                
+
+                {/* Checkboxes */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      cursor: "pointer",
+                      fontSize: 15,
+                    }}
+                  >
                     <input
-                      type="text"
-                      value={
-                        readLang(formData, "seoKeywords", selectedLang)
-                      }
-                      onChange={(e) => {
-                        setFormData(patchLang(formData, "seoKeywords", selectedLang, e.target.value));
-                      }}
-                      placeholder={
-                        t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"
-                      }
-                      style={{
-                        width: "100%",
-                        padding: 8,
-                        fontSize: 16,
-                        border: "1px solid #ddd",
-                        borderRadius: 4,
-                      }}
+                      type="checkbox"
+                      checked={formData.isPinned}
+                      onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
+                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
                     />
-                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
-                      {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
-                    </small>
+                    <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("admin.isPinned")}</span>
+                  </label>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      cursor: "pointer",
+                      fontSize: 15,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.isRainSafe}
+                      onChange={(e) => setFormData({ ...formData, isRainSafe: e.target.checked })}
+                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
+                    />
+                    <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("common.isRainSafe")}</span>
+                  </label>
+                  <div style={{ fontSize: 12, color: "var(--hl-muted, #665d78)", marginTop: -8, marginLeft: 28 }}>
+                    {t("common.isRainSafeHint")}
+                  </div>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      cursor: "pointer",
+                      fontSize: 15,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.showOnMap}
+                      onChange={(e) => setFormData({ ...formData, showOnMap: e.target.checked })}
+                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
+                    />
+                    <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("admin.showOnMap")}</span>
+                  </label>
+                  <div style={{ fontSize: 12, color: "var(--hl-muted, #665d78)", marginTop: -8, marginLeft: 28 }}>
+                    {t("admin.showOnMapHint")}
                   </div>
                 </div>
-              )}
-            </LanguageAwareForm>
+              </div>
+            </AdminCollapsibleSection>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                gap: 16,
-                marginBottom: 16,
-              }}
+            <AdminCollapsibleSection
+              title={t("admin.formSections.images")}
+              defaultOpen
             >
-              {/* Bal oszlop: Telefon, Email, Website, Facebook, WhatsApp */}
+              <AdminImageField
+                  label={t("admin.heroImage")}
+                  value={formData.heroImage}
+                  onChange={(url) => setFormData({ ...formData, heroImage: url })}
+                  folder="events/hero"
+                  placeholder={t("admin.urlPlaceholder")}
+                />
+            </AdminCollapsibleSection>
+
+            <AdminCollapsibleSection title={t("admin.formSections.contact")}>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div>
+<div>
                   <label
                     style={{
                       fontFamily:
@@ -1466,172 +1430,10 @@ export function EventsPage() {
                   />
                 </div>
               </div>
+            </AdminCollapsibleSection>
 
-              {/* Jobb oszlop: Esemény specifikus információk */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {/* Start and End Date */}
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      color: formErrors.startDate ? "#dc2626" : "var(--admin-primary)",
-                      fontWeight: 600,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {t("admin.startDate")} *
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: 15,
-                      border: `2px solid ${formErrors.startDate ? "#fca5a5" : "var(--admin-primary-border)"}`,
-                      borderRadius: 8,
-                      outline: "none",
-                      transition: "all 0.3s ease",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      background: formErrors.startDate ? "#fef2f2" : "white",
-                      boxSizing: "border-box",
-                    }}
-                    onFocus={(e) => {
-                      if (!formErrors.startDate) {
-                        e.target.style.borderColor = "var(--admin-primary)";
-                        e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-                      }
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = formErrors.startDate ? "#fca5a5" : "var(--admin-primary-border)";
-                      e.target.style.boxShadow = "none";
-                    }}
-                  />
-                  {formErrors.startDate && (
-                    <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6, fontWeight: 500 }}>
-                      {formErrors.startDate}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      color: "var(--admin-primary)",
-                      fontWeight: 600,
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  >
-                    {t("admin.endDate")}
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    style={{
-                      width: "100%",
-                      padding: "12px 16px",
-                      fontSize: 15,
-                      border: "2px solid var(--admin-primary-border)",
-                      borderRadius: 8,
-                      outline: "none",
-                      transition: "all 0.3s ease",
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      boxSizing: "border-box",
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = "var(--admin-primary)";
-                      e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = "var(--admin-primary-border)";
-                      e.target.style.boxShadow = "none";
-                    }}
-                  />
-                </div>
-
-                <AdminImageField
-                  label={t("admin.heroImage")}
-                  value={formData.heroImage}
-                  onChange={(url) => setFormData({ ...formData, heroImage: url })}
-                  folder="events/hero"
-                  placeholder={t("admin.urlPlaceholder")}
-                />
-
-                {/* Checkboxes */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      cursor: "pointer",
-                      fontSize: 15,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.isPinned}
-                      onChange={(e) => setFormData({ ...formData, isPinned: e.target.checked })}
-                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
-                    />
-                    <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("admin.isPinned")}</span>
-                  </label>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      cursor: "pointer",
-                      fontSize: 15,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.isRainSafe}
-                      onChange={(e) => setFormData({ ...formData, isRainSafe: e.target.checked })}
-                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
-                    />
-                    <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("common.isRainSafe")}</span>
-                  </label>
-                  <div style={{ fontSize: 12, color: "var(--hl-muted, #665d78)", marginTop: -8, marginLeft: 28 }}>
-                    {t("common.isRainSafeHint")}
-                  </div>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      cursor: "pointer",
-                      fontSize: 15,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.showOnMap}
-                      onChange={(e) => setFormData({ ...formData, showOnMap: e.target.checked })}
-                      style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
-                    />
-                    <span style={{ color: "var(--hl-ink, #1b1730)", fontWeight: 500 }}>{t("admin.showOnMap")}</span>
-                  </label>
-                  <div style={{ fontSize: 12, color: "var(--hl-muted, #665d78)", marginTop: -8, marginLeft: 28 }}>
-                    {t("admin.showOnMapHint")}
-                  </div>
-                </div>
-              </div>
-
-              {/* Jobb oszlop: Térkép és koordináták */}
-              <div>
-                <label
+            <AdminCollapsibleSection title={t("admin.formSections.location")}>
+<label
                   style={{
                     display: "block",
                     marginBottom: 8,
@@ -1720,10 +1522,165 @@ export function EventsPage() {
                     />
                   </div>
                 </div>
-              </div>
-            </div>
+            </AdminCollapsibleSection>
 
-            <div style={{ marginBottom: 24 }}>
+            <AdminCollapsibleSection
+              title={t("admin.formSections.seo")}
+              hint={t("admin.formSections.seoHint")}
+            >
+              <LanguageAwareForm>
+                {(selectedLang) => (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+<div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>
+                      SEO {t("common.title")}
+                    </label>
+                    <AiPostfixField
+                      draft={{
+                        kind: "event",
+                        field: "seoTitle",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: formData.placeId || undefined,
+                        name: readLang(formData, "title", selectedLang),
+                      }}
+                      value={readLang(formData, "seoTitle", selectedLang)}
+                      onApply={(text) =>
+                        setFormData((prev) => patchLang(prev, "seoTitle", selectedLang, text))
+                      }
+                    >
+                    <input
+                      type="text"
+                      value={
+                        readLang(formData, "seoTitle", selectedLang)
+                      }
+                      onChange={(e) => {
+                        setFormData(patchLang(formData, "seoTitle", selectedLang, e.target.value));
+                      }}
+                      placeholder={
+                        t("admin.seoTitlePlaceholder") || "SEO title (leave empty for auto)"
+                      }
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        fontSize: 16,
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                      }}
+                    />
+                    </AiPostfixField>
+                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoTitleHint") || "If empty, event name will be used"}
+                    </small>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>
+                      SEO {t("common.description")}
+                    </label>
+                    <AiPostfixField
+                      draft={{
+                        kind: "event",
+                        field: "seoDescription",
+                        lang: selectedLang,
+                        siteId: selectedSiteId || undefined,
+                        placeId: formData.placeId || undefined,
+                        name: readLang(formData, "title", selectedLang),
+                      }}
+                      value={readLang(formData, "seoDescription", selectedLang)}
+                      onApply={(text) =>
+                        setFormData((prev) =>
+                          patchLang(prev, "seoDescription", selectedLang, text)
+                        )
+                      }
+                      variant="textarea"
+                    >
+                    <textarea
+                      value={
+                        readLang(formData, "seoDescription", selectedLang)
+                      }
+                      onChange={(e) => {
+                        setFormData(patchLang(formData, "seoDescription", selectedLang, e.target.value));
+                      }}
+                      placeholder={
+                        t("admin.seoDescriptionPlaceholder") ||
+                        "SEO description (leave empty for auto)"
+                      }
+                      rows={3}
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        fontSize: 16,
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                      }}
+                    />
+                    </AiPostfixField>
+                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoDescriptionHint") ||
+                        "If empty, first 2 sentences from description will be used"}
+                    </small>
+                  </div>
+
+                  <AdminImageField
+                    label={`SEO ${t("common.image")}`}
+                    value={readLang(formData, "seoImage", selectedLang)}
+                    onChange={(url) =>
+                      setFormData(patchLang(formData, "seoImage", selectedLang, url))
+                    }
+                    folder="events/seo"
+                    placeholder={
+                      t("admin.seoImagePlaceholder") ||
+                      "SEO image URL (leave empty for hero image)"
+                    }
+                    description={t("admin.seoImageHint") || "If empty, hero image will be used"}
+                  />
+
+                  <div style={{ marginBottom: 0 }}>
+                    <label style={{ display: "block", marginBottom: 4 }}>
+                      {t("admin.seoKeywords")}
+                    </label>
+                    <input
+                      type="text"
+                      value={
+                        readLang(formData, "seoKeywords", selectedLang)
+                      }
+                      onChange={(e) => {
+                        setFormData(patchLang(formData, "seoKeywords", selectedLang, e.target.value));
+                      }}
+                      placeholder={
+                        t("admin.seoKeywordsPlaceholder") || "keyword1, keyword2, keyword3"
+                      }
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        fontSize: 16,
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                      }}
+                    />
+                    <small style={{ color: "var(--hl-muted, #665d78)", fontSize: 12, marginTop: 4, display: "block" }}>
+                      {t("admin.seoKeywordsHint") || "Comma-separated keywords for search engines"}
+                    </small>
+                  </div>
+                  </div>
+                )}
+              </LanguageAwareForm>
+              <GaMeasurementField
+              label={t("admin.googleAnalytics.eventLabel")}
+              help={t("admin.googleAnalytics.eventHelp")}
+              value={formData.gaMeasurementId}
+              onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
+              error={formErrors.gaMeasurementId}
+              hint={t("admin.googleAnalytics.clearHint")}
+            />
+              <CrawlableToggle
+              checked={formData.isCrawlable}
+              onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
+            />
+            </AdminCollapsibleSection>
+
+            <AdminCollapsibleSection title={t("admin.formSections.domain")}>
               <DomainInput
                 value={formData.customDomain}
                 onChange={(value) => setFormData({ ...formData, customDomain: value })}
@@ -1735,16 +1692,7 @@ export function EventsPage() {
                 onLangChange={(domainLang) => setFormData({ ...formData, domainLang })}
                 label={t("admin.customDomain")}
               />
-            </div>
-
-            <GaMeasurementField
-              label={t("admin.googleAnalytics.eventLabel")}
-              help={t("admin.googleAnalytics.eventHelp")}
-              value={formData.gaMeasurementId}
-              onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
-              error={formErrors.gaMeasurementId}
-              hint={t("admin.googleAnalytics.clearHint")}
-            />
+            </AdminCollapsibleSection>
 
             {/* isActive checkbox - prominent at the bottom - visible to everyone */}
             <div
@@ -1807,10 +1755,8 @@ export function EventsPage() {
                 </div>
               </label>
             </div>
-            <CrawlableToggle
-              checked={formData.isCrawlable}
-              onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
-            />
+
+
           </div>
         </div>
       )}

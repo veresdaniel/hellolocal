@@ -15,6 +15,7 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { StaticPageCategoryAutocomplete } from "../../components/StaticPageCategoryAutocomplete";
 import { CrawlableToggle } from "../../components/CrawlableToggle";
+import { AdminCollapsibleSection } from "../../components/AdminCollapsibleSection";
 import { AdminImageField } from "../../components/AdminImageField";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
@@ -518,41 +519,6 @@ export function StaticPagesPage() {
             />
           </div>
 
-          {/* Active Checkbox - moved to top */}
-          <div
-            style={{
-              marginBottom: 16,
-              padding: "16px 20px",
-              background: "var(--admin-surface-subtle, #f8fafc)",
-              borderRadius: 12,
-              border: "2px solid var(--admin-primary-border)",
-            }}
-          >
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                cursor: "pointer",
-                fontSize: "clamp(14px, 3.5vw, 16px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "var(--admin-primary)" }}
-              />
-              <span style={{ color: "#333", fontWeight: 500 }}>{t("common.active")}</span>
-            </label>
-          </div>
-
-          <CrawlableToggle
-            checked={formData.isCrawlable}
-            onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
-          />
 
           <LanguageAwareForm>
             {(selectedLang) => (
@@ -691,30 +657,19 @@ export function StaticPagesPage() {
                   />
                 </div>
 
-                {/* SEO Fields Section */}
-                <div
-                  style={{
-                    marginTop: 24,
-                    padding: 16,
-                    background: "linear-gradient(135deg, var(--admin-primary)15 0%, var(--admin-primary-hover)15 100%)",
-                    borderRadius: 8,
-                    border: "1px solid var(--admin-primary)30",
-                  }}
-                >
-                  <h3
-                    style={{
-                      margin: "0 0 16px 0",
-                      fontSize: "clamp(16px, 3.5vw, 18px)",
-                      fontWeight: 600,
-                      color: "var(--admin-primary)",
-                      fontFamily:
-                        "var(--admin-font-display)",
-                    }}
-                  >
-                    🔍 SEO {t("admin.settings")}
-                  </h3>
+              </>
+            )}
+          </LanguageAwareForm>
 
-                  <div style={{ marginBottom: 16 }}>
+
+          <AdminCollapsibleSection
+            title={t("admin.formSections.seo")}
+            hint={t("admin.formSections.seoHint")}
+          >
+            <LanguageAwareForm>
+              {(selectedLang) => (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+<div style={{ marginBottom: 16 }}>
                     <label
                       style={{
                         display: "block",
@@ -885,9 +840,41 @@ export function StaticPagesPage() {
                     </small>
                   </div>
                 </div>
-              </>
-            )}
-          </LanguageAwareForm>
+              )}
+            </LanguageAwareForm>
+            <CrawlableToggle
+              checked={formData.isCrawlable}
+              onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
+            />
+          </AdminCollapsibleSection>
+
+          <div
+            className={`admin-form-status ${formData.isActive ? "admin-form-status--active" : "admin-form-status--inactive"}`}
+            style={{ color: "var(--hl-on-dark-strong, #ffffff)" }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                cursor: "pointer",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily:
+                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                style={{ width: 20, height: 20, cursor: "pointer", accentColor: "white" }}
+              />
+              <span style={{ fontWeight: 600 }}>
+                {formData.isActive ? t("common.active") : t("common.inactive")}
+              </span>
+            </label>
+          </div>
+
 
           <div style={{ display: "flex", gap: 8 }}>
             <button

@@ -1,3 +1,4 @@
+import { AdminAutocomplete } from "./AdminAutocomplete";
 /**
  * Admin: map UI languages (hu/en/de) to a currency from the catalog.
  */
@@ -91,26 +92,16 @@ export function CurrencyByLangCard() {
               }}
             >
               <span style={{ textTransform: "uppercase" }}>{lang}</span>
-              <select
+              <AdminAutocomplete
                 value={byLang[lang] || DEFAULTS[lang] || "HUF"}
                 disabled={saving}
-                onChange={(event) =>
-                  setByLang((current) => ({ ...current, [lang]: event.target.value }))
-                }
-                style={{
-                  padding: "8px 10px",
-                  borderRadius: 8,
-                  border: "1px solid var(--admin-border-subtle)",
-                  fontSize: 15,
-                }}
-              >
-                {currencies.map((currency) => (
-                  <option key={currency.code} value={currency.code}>
-                    {currency.code}
-                    {currency.symbol ? ` (${currency.symbol})` : ""} — {currency.name}
-                  </option>
-                ))}
-              </select>
+                options={currencies.map((currency) => ({
+                  value: currency.code,
+                  label: `${currency.code}${currency.symbol ? ` (${currency.symbol})` : ""} — ${currency.name}`,
+                }))}
+                onChange={(code) => setByLang((current) => ({ ...current, [lang]: code }))}
+                inputStyle={{ padding: "8px 10px", fontSize: 15 }}
+              />
             </label>
           ))}
           <button

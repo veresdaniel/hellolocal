@@ -28,6 +28,7 @@ import {
 } from "../../components/AdminResponsiveTable";
 import { ROLE_SUPERADMIN } from "../../types/enums";
 import { AdminRoleSelect } from "../../components/AdminRoleSelect";
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 import { UserScopeAssign } from "../../components/UserScopeAssign";
 
 export function UsersPage() {
@@ -592,24 +593,18 @@ export function UsersPage() {
                 >
                   {t("admin.role")} *
                 </label>
-                <select
+                <AdminAutocomplete
                   value={formData.role}
-                  onChange={(e) =>
-                    setFormData({ ...formData, role: e.target.value as CreateUserDto["role"] })
+                  options={[
+                    { value: "viewer", label: t("admin.roles.viewer") },
+                    { value: "editor", label: t("admin.roles.editor") },
+                    { value: "admin", label: t("admin.roles.admin") },
+                    { value: "superadmin", label: t("admin.roles.superadmin") },
+                  ]}
+                  onChange={(role) =>
+                    setFormData({ ...formData, role: role as CreateUserDto["role"] })
                   }
-                  style={{
-                    width: "100%",
-                    padding: 8,
-                    fontSize: 16,
-                    border: "1px solid #ddd",
-                    borderRadius: 4,
-                  }}
-                >
-                  <option value="viewer">{t("admin.roles.viewer")}</option>
-                  <option value="editor">{t("admin.roles.editor")}</option>
-                  <option value="admin">{t("admin.roles.admin")}</option>
-                  <option value="superadmin">{t("admin.roles.superadmin")}</option>
-                </select>
+                />
               </div>
             )}
             <div>
@@ -937,20 +932,21 @@ export function UsersPage() {
               key: "role",
               render: (user) => (
                 <div style={{ marginBottom: 8 }}>
-                  <AdminRoleSelect
-                    value={user.role}
-                    disabled={user.role === "superadmin" && user.id !== currentUser?.id}
-                    onClick={(event) => event.stopPropagation()}
-                    onChange={(role) =>
-                      handleRoleChange(user.id, role as UpdateUserRoleDto["role"])
-                    }
-                    options={[
-                      { value: "viewer", label: t("admin.roles.viewer") },
-                      { value: "editor", label: t("admin.roles.editor") },
-                      { value: "admin", label: t("admin.roles.admin") },
-                      { value: "superadmin", label: t("admin.roles.superadmin") },
-                    ]}
-                  />
+                  <div onClick={(event) => event.stopPropagation()}>
+                    <AdminRoleSelect
+                      value={user.role}
+                      disabled={user.role === "superadmin" && user.id !== currentUser?.id}
+                      onChange={(role) =>
+                        handleRoleChange(user.id, role as UpdateUserRoleDto["role"])
+                      }
+                      options={[
+                        { value: "viewer", label: t("admin.roles.viewer") },
+                        { value: "editor", label: t("admin.roles.editor") },
+                        { value: "admin", label: t("admin.roles.admin") },
+                        { value: "superadmin", label: t("admin.roles.superadmin") },
+                      ]}
+                    />
+                  </div>
                 </div>
               ),
             },

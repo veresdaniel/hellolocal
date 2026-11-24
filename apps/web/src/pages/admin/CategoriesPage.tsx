@@ -1,3 +1,4 @@
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 // src/pages/admin/CategoriesPage.tsx
 import { useState, useEffect } from "react";
 import { appendExtraLanguages, mergeTranslations, patchLang, readLang } from "../../utils/langFields";
@@ -447,23 +448,11 @@ export function CategoriesPage() {
           </LanguageAwareForm>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", marginBottom: 4 }}>
-              {t("admin.parentCategory") || "Szülő kategória"}
-            </label>
-            <select
+            <AdminAutocomplete
+              label={t("admin.parentCategory") || "Szülő kategória"}
               value={formData.parentId}
-              onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
-              style={{
-                width: "100%",
-                padding: 8,
-                fontSize: 16,
-                border: "1px solid #ddd",
-                borderRadius: 4,
-              }}
-            >
-              <option value="">{t("admin.noParentCategory")}</option>
-              {categories
-                .filter((cat) => !editingId || cat.id !== editingId) // Don't allow self as parent
+              options={categories
+                .filter((cat) => !editingId || cat.id !== editingId)
                 .map((cat) => {
                   const currentLang = (i18n.language || "hu").split("-")[0] as Lang;
                   const translation =
@@ -476,14 +465,15 @@ export function CategoriesPage() {
                         findTranslation(cat.parent.translations, "hu" as Lang)
                       )?.name || ""
                     : "";
-                  return (
-                    <option key={cat.id} value={cat.id}>
-                      {parentName ? `${parentName} > ` : ""}
-                      {displayName}
-                    </option>
-                  );
+                  return {
+                    value: cat.id,
+                    label: parentName ? `${displayName} (${parentName})` : displayName,
+                  };
                 })}
-            </select>
+              clearOptionLabel={t("admin.noParentCategory")}
+              placeholder={t("admin.noParentCategory")}
+              onChange={(parentId) => setFormData({ ...formData, parentId })}
+            />
           </div>
 
           <label style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>

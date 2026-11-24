@@ -6,6 +6,7 @@ import { LoadingSpinner } from "./LoadingSpinner";
 import { buildUrl } from "../app/urls";
 import { getHuTranslation } from "../utils/langHelpers";
 import { useToast } from "../contexts/ToastContext";
+import { AdminAutocomplete } from "./AdminAutocomplete";
 
 export function SiteSelector() {
   const { t } = useTranslation();
@@ -79,9 +80,8 @@ export function SiteSelector() {
     return huTranslation?.name || site.translations[0]?.name || site.slug;
   };
 
-  // Handle site selection with toast notification
-  const handleSiteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newSiteId = e.target.value || null;
+  const handleSiteChange = (raw: string) => {
+    const newSiteId = raw || null;
     setSelectedSiteId(newSiteId);
 
     if (newSiteId) {
@@ -123,28 +123,16 @@ export function SiteSelector() {
       {onlySite ? (
         <span style={nameStyle}>{getSiteName(onlySite)}</span>
       ) : (
-        <select
+        <AdminAutocomplete
           value={selectedSiteId || ""}
+          options={sites.map((site) => ({ value: site.id, label: getSiteName(site) }))}
           onChange={handleSiteChange}
-          aria-label={t("admin.selectSite")}
-          style={{
-            padding: "8px 16px",
-            fontSize: 16,
-            borderRadius: 4,
-            border: "1px solid #ddd",
-            background: "white",
-            cursor: "pointer",
-            fontFamily: nameStyle.fontFamily,
-            fontWeight: 400,
-          }}
-        >
-          {canClear ? <option value="">{t("admin.filters.noneSelected")}</option> : null}
-          {sites.map((site) => (
-            <option key={site.id} value={site.id}>
-              {getSiteName(site)}
-            </option>
-          ))}
-        </select>
+          clearOptionLabel={canClear ? t("admin.filters.noneSelected") : undefined}
+          placeholder={t("admin.selectSite")}
+          fullWidth={false}
+          style={{ minWidth: 180 }}
+          inputStyle={{ padding: "8px 16px", fontSize: 16 }}
+        />
       )}
       <button
         type="button"

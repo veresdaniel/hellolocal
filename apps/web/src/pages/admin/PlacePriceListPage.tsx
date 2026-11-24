@@ -1,3 +1,4 @@
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 // src/pages/admin/PlacePriceListPage.tsx
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -334,35 +335,21 @@ export function PlacePriceListPage() {
               >
                 {t("admin.currency")}
               </label>
-              <select
+              <AdminAutocomplete
                 value={currency || platformCurrency}
-                onChange={(e) => {
-                  setCurrency(e.target.value);
+                options={
+                  currencyOptions.length === 0
+                    ? [{ value: currency || platformCurrency, label: currency || platformCurrency }]
+                    : currencyOptions.map((c) => ({
+                        value: c.code,
+                        label: `${c.code}${c.symbol ? ` (${c.symbol})` : ""} — ${c.name}`,
+                      }))
+                }
+                onChange={(code) => {
+                  setCurrency(code);
                   setHasUnsavedChanges(true);
                 }}
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  border: "1px solid #ddd",
-                  borderRadius: 8,
-                  fontSize: "clamp(14px, 3.5vw, 16px)",
-                  fontFamily: "'Inter', system-ui, sans-serif",
-                  background: "#fff",
-                }}
-              >
-                {currencyOptions.length === 0 ? (
-                  <option value={currency || platformCurrency}>
-                    {currency || platformCurrency}
-                  </option>
-                ) : (
-                  currencyOptions.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.code}
-                      {c.symbol ? ` (${c.symbol})` : ""} — {c.name}
-                    </option>
-                  ))
-                )}
-              </select>
+              />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <input

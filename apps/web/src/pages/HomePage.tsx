@@ -265,61 +265,31 @@ export function HomePage() {
   );
   const hasRequestedLocation = useRef(false);
 
-  // Wait for store to hydrate before using userLocation
-  // Also manually check and set hydration flag if onRehydrateStorage didn't fire
+  // Hydration fallback; GPS pin is owned by MapComponent / useLiveUserGeolocation
   useEffect(() => {
-    // If store is not hydrated yet, check if we can manually detect hydration
     if (!_hasHydrated) {
-      // Check if localStorage has data (indicating store should be hydrated)
       try {
         const stored = localStorage.getItem("home-filters-storage");
         if (stored) {
-          const parsed = JSON.parse(stored);
-          const persistedLocation = parsed.state?.userLocation;
-          // If we have persisted data, manually trigger hydration after a short delay
           const timeoutId = setTimeout(() => {
             const storeState = useFiltersStore.getState();
-            if (!storeState._hasHydrated && persistedLocation) {
-              useFiltersStore.getState().setHasHydrated(true);
-              if (persistedLocation && persistedLocation.lat && persistedLocation.lng) {
-                setUserLocation(persistedLocation);
-              }
+            if (!storeState._hasHydrated) {
+              storeState.setHasHydrated(true);
             }
-          }, 50); // Small delay to allow zustand to finish
-
+          }, 50);
           return () => clearTimeout(timeoutId);
         }
-      } catch (e) {
-        // Failed to check localStorage for hydration
+      } catch {
+        // ignore
       }
     }
-  }, [_hasHydrated, userLocation, setUserLocation, showUserLocation]);
+  }, [_hasHydrated]);
 
-  // Clear userLocation when showUserLocation is disabled
-  // Or restore it from localStorage when enabled
-  // NOTE: watchPosition is handled entirely by MapComponent to prevent duplicate watches and infinite loops
+  // Clear pin when location toggle is off (live watch stops in MapComponent).
   useEffect(() => {
     if (!showUserLocation) {
-      // Reset hasRequestedLocation so we can request again when enabled
       hasRequestedLocation.current = false;
-      // Clear userLocation from store when disabled
       setUserLocation(null);
-    } else {
-      // When enabled, try to restore from localStorage immediately
-      try {
-        const stored = localStorage.getItem("home-filters-storage");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const savedLocation = parsed.state?.userLocation;
-          if (savedLocation && savedLocation.lat && savedLocation.lng) {
-            setUserLocation(savedLocation);
-            // Reset hasRequestedLocation to allow new request
-            hasRequestedLocation.current = false;
-          }
-        }
-      } catch (e) {
-        // Failed to restore location from localStorage
-      }
     }
   }, [showUserLocation, setUserLocation]);
 
@@ -356,7 +326,8 @@ export function HomePage() {
           if (error.code === error.PERMISSION_DENIED) {
             setLocationPermission("denied");
           }
-        }
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
       );
     }
   }, [within30Minutes, userLocation, locationPermission]);

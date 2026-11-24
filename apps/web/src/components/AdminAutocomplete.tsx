@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
 export type AdminAutocompleteOption = {
   value: string;
@@ -11,22 +11,52 @@ type AdminAutocompleteProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   emptyLabel?: string;
+  /** Extra first row that clears the value (e.g. “All towns”). */
+  clearOptionLabel?: string;
   disabled?: boolean;
   id?: string;
+  label?: ReactNode;
+  required?: boolean;
+  error?: string;
+  /** Hint under the field. */
+  hint?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
+  inputStyle?: CSSProperties;
+  /** Default full width of the parent. */
+  fullWidth?: boolean;
+};
+
+const labelStyle: CSSProperties = {
+  display: "block",
+  marginBottom: 8,
+  color: "var(--admin-primary)",
+  fontWeight: 600,
+  fontSize: "clamp(14px, 3.5vw, 16px)",
+  fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 };
 
 /**
- * Single-select autocomplete for admin forms.
- * Type to filter, arrows and Enter to choose, click a row, Escape to close.
+ * Single-select autocomplete for admin forms and filters.
+ * Type to filter, arrows + Enter to choose, Escape to close.
  */
 export function AdminAutocomplete({
   value,
   options,
   onChange,
   placeholder,
-  emptyLabel,
+  emptyLabel = "—",
+  clearOptionLabel,
   disabled,
   id,
+  label,
+  required = false,
+  error,
+  hint,
+  className,
+  style,
+  inputStyle,
+  fullWidth = true,
 }: AdminAutocompleteProps) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -35,14 +65,18 @@ export function AdminAutocomplete({
   const [active, setActive] = useState(0);
   const selected = options.find((option) => option.value === value) || null;
 
-  const filtered = useMemo(() => {
+  const rows = useMemo(() => {
+    const base = clearOptionLabel
+      ? [{ value: "", label: clearOptionLabel }, ...options]
+      : options;
     const needle = query.trim().toLowerCase();
-    if (!needle) return options;
-    return options.filter(
+    if (!needle) return base;
+    return base.filter(
       (option) =>
-        option.label.toLowerCase().includes(needle) || option.value.toLowerCase().includes(needle)
+        option.label.toLowerCase().includes(needle) ||
+        option.value.toLowerCase().includes(needle)
     );
-  }, [options, query]);
+  }, [options, query, clearOptionLabel]);
 
   useEffect(() => {
     setActive(0);
@@ -62,8 +96,25 @@ export function AdminAutocomplete({
     setOpen(false);
   };
 
+  const displayValue = open ? query : selected?.label || "";
+
   return (
-    <div ref={rootRef} style={{ position: "relative", width: "100%", maxWidth: 420 }}>
+    <div
+      ref={rootRef}
+      className={className}
+      style={{
+        position: "relative",
+        width: fullWidth ? "100%" : undefined,
+        maxWidth: fullWidth ? undefined : 420,
+        ...style,
+      }}
+    >
+      {label ? (
+        <label htmlFor={id} style={labelStyle}>
+          {label}
+          {required ? " *" : null}
+        </label>
+      ) : null}
       <input
         id={id}
         role="combobox"
@@ -71,9 +122,10 @@ export function AdminAutocomplete({
         aria-controls={listId}
         aria-autocomplete="list"
         disabled={disabled}
-        placeholder={placeholder}
-        value={open ? query : selected?.label || ""}
+        placeholder={placeholder || clearOptionLabel}
+        value={displayValue}
         onFocus={() => {
+          if (disabled) return;
           setOpen(true);
           setQuery("");
         }}
@@ -85,54 +137,71 @@ export function AdminAutocomplete({
           if (event.key === "ArrowDown") {
             event.preventDefault();
             setOpen(true);
-            setActive((index) => Math.min(index + 1, Math.max(filtered.length - 1, 0)));
+            setActive((index) => Math.min(index + 1, Math.max(rows.length - 1, 0)));
           } else if (event.key === "ArrowUp") {
             event.preventDefault();
             setActive((index) => Math.max(index - 1, 0));
-          } else if (event.key === "Enter" && open && filtered[active]) {
+          } else if (event.key === "Enter" && open && rows[active]) {
             event.preventDefault();
-            choose(filtered[active].value);
+            choose(rows[active].value);
           } else if (event.key === "Escape") {
             setOpen(false);
             setQuery("");
+          } else if (event.key === "Backspace" && !query && value && clearOptionLabel) {
+            choose("");
           }
         }}
         style={{
           width: "100%",
-          padding: "8px 12px",
-          border: "1px solid #d1d5db",
-          borderRadius: 6,
+          padding: "12px 16px",
           fontSize: 15,
+          border: error
+            ? "2px solid #dc2626"
+            : "2px solid var(--admin-primary-border, #c7d2fe)",
+          borderRadius: 8,
+          outline: "none",
           boxSizing: "border-box",
-          background: disabled ? "#f3f4f6" : "#fff",
+          background: disabled ? "#f3f4f6" : "var(--admin-surface, #fff)",
+          fontFamily:
+            "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          cursor: disabled ? "not-allowed" : "text",
+          ...inputStyle,
         }}
       />
+      {error ? (
+        <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6 }}>{error}</div>
+      ) : null}
+      {hint && !error ? (
+        <p className="admin-section-card__help" style={{ marginTop: 6 }}>
+          {hint}
+        </p>
+      ) : null}
       {open && !disabled ? (
         <ul
           id={listId}
           role="listbox"
           style={{
             position: "absolute",
-            zIndex: 30,
+            zIndex: 900,
             top: "calc(100% + 4px)",
             left: 0,
             right: 0,
-            maxHeight: 240,
+            maxHeight: 260,
             overflow: "auto",
             margin: 0,
             padding: 4,
             listStyle: "none",
             background: "#fff",
-            border: "1px solid #d1d5db",
-            borderRadius: 6,
+            border: "1px solid var(--admin-primary-border, #d1d5db)",
+            borderRadius: 8,
             boxShadow: "0 8px 24px rgba(15, 23, 42, 0.12)",
           }}
         >
-          {filtered.length === 0 ? (
+          {rows.length === 0 ? (
             <li style={{ padding: "8px 10px", color: "#6b7280", fontSize: 14 }}>{emptyLabel}</li>
           ) : (
-            filtered.map((option, index) => (
-              <li key={option.value} role="option" aria-selected={option.value === value}>
+            rows.map((option, index) => (
+              <li key={`${option.value || "__clear"}-${index}`} role="option" aria-selected={option.value === value}>
                 <button
                   type="button"
                   onMouseDown={(event) => event.preventDefault()}
@@ -144,12 +213,20 @@ export function AdminAutocomplete({
                     padding: "8px 10px",
                     border: "none",
                     borderRadius: 4,
-                    background: index === active ? "#eef2ff" : "transparent",
+                    background:
+                      index === active || option.value === value
+                        ? "rgba(37, 99, 235, 0.08)"
+                        : "transparent",
+                    color: option.value === value ? "var(--admin-primary, #2563eb)" : "inherit",
+                    fontWeight: option.value === value ? 600 : 400,
                     cursor: "pointer",
                     fontSize: 15,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
                   {option.label}
+                  {option.value === value ? " ✓" : null}
                 </button>
               </li>
             ))

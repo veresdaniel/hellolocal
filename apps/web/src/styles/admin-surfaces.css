@@ -689,3 +689,91 @@
   line-height: 1.5;
   color: var(--admin-muted);
 }
+
+/* Collapsible form sections (place / event / curator editors) */
+.admin-collapsible {
+  border: 1px solid var(--admin-border-subtle, rgba(15, 23, 42, 0.12));
+  border-radius: 12px;
+  background: var(--admin-surface-subtle, #f8fafc);
+  overflow: hidden;
+}
+
+.admin-collapsible + .admin-collapsible {
+  margin-top: 12px;
+}
+
+.admin-collapsible__summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  font-family: var(--admin-font-display);
+}
+
+.admin-collapsible__summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-collapsible__chevron {
+  flex: 0 0 auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.45rem;
+  border-right: 2px solid var(--admin-primary, #2563eb);
+  border-bottom: 2px solid var(--admin-primary, #2563eb);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.admin-collapsible[open] > .admin-collapsible__summary .admin-collapsible__chevron {
+  margin-top: 0.35rem;
+  transform: rotate(45deg);
+}
+
+.admin-collapsible__title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-collapsible__title {
+  font-size: clamp(15px, 3.2vw, 17px);
+  font-weight: 700;
+  color: var(--admin-primary, #2563eb);
+}
+
+.admin-collapsible__hint {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--admin-muted, #64748b);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.admin-collapsible__body {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-form-status {
+  margin-top: 8px;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 2px solid;
+}
+
+.admin-form-status--active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+}
+
+.admin-form-status--inactive {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: #ef4444;
+}

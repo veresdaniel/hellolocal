@@ -65,7 +65,8 @@ export const useFiltersStore = create<FiltersState>()(
     }),
     {
       name: "home-filters-storage", // localStorage key
-      // Persist userLocation for a short time (max 5 minutes old) to show on page refresh
+      // Do not persist userLocation — stale coords after moving / PWA resume.
+      // Prefer showUserLocation + a fresh GPS fix (see useLiveUserGeolocation).
       partialize: (state) => ({
         selectedCategories: state.selectedCategories,
         selectedPriceBands: state.selectedPriceBands,
@@ -73,17 +74,15 @@ export const useFiltersStore = create<FiltersState>()(
         hasEventToday: state.hasEventToday,
         within30Minutes: state.within30Minutes,
         rainSafe: state.rainSafe,
-        // Persist userLocation if it exists (will be validated on load)
-        userLocation: state.userLocation,
-        // Persist showUserLocation toggle state
         showUserLocation: state.showUserLocation,
-        // Don't persist _hasHydrated - it's runtime state
       }),
       onRehydrateStorage: () => (state) => {
-        // This callback is called after rehydration is complete
-        // Ensure showUserLocation has a default value if missing (migration)
         if (state && typeof state.showUserLocation === "undefined") {
           state.showUserLocation = false;
+        }
+        // Drop any legacy persisted pin from older clients.
+        if (state) {
+          state.userLocation = null;
         }
         state?.setHasHydrated(true);
       },

@@ -1862,5 +1862,16 @@
   "domains": "Domains",
   "selectDomain": "Select Domain",
   "domainBadgeIcon": "Domain Badge Icon",
-  "domainBadgeIconDescription": "Icon displayed in the domain badge on public pages"
+  "domainBadgeIconDescription": "Icon displayed in the domain badge on public pages",
+  "formSections": {
+    "images": "Images",
+    "openingHours": "Opening hours",
+    "contact": "Contact details",
+    "location": "Map location",
+    "seo": "SEO & indexing",
+    "seoHint": "Meta fields, search indexing, Google Analytics",
+    "domain": "Domain settings",
+    "schedule": "Schedule & display",
+    "advanced": "Advanced / membership"
+  }
 }

@@ -1863,5 +1863,16 @@
   "domains": "Domains",
   "selectDomain": "Domain auswählen",
   "domainBadgeIcon": "Domain-Abzeichen-Symbol",
-  "domainBadgeIconDescription": "Symbol, das im Domain-Abzeichen auf öffentlichen Seiten angezeigt wird"
+  "domainBadgeIconDescription": "Symbol, das im Domain-Abzeichen auf öffentlichen Seiten angezeigt wird",
+  "formSections": {
+    "images": "Bilder",
+    "openingHours": "Öffnungszeiten",
+    "contact": "Kontaktdaten",
+    "location": "Kartenstandort",
+    "seo": "SEO & Indexierung",
+    "seoHint": "Meta-Felder, Suchindexierung, Google Analytics",
+    "domain": "Domain-Einstellungen",
+    "schedule": "Termin & Darstellung",
+    "advanced": "Erweitert / Mitgliedschaft"
+  }
 }

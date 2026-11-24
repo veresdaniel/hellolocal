@@ -52,6 +52,9 @@ import { AdminImageField } from "../../components/AdminImageField";
 import { FloorplanEditor } from "../../components/FloorplanEditor";
 import { SlugInput } from "../../components/SlugInput";
 import { DomainInput } from "../../components/DomainInput";
+import { AdminCollapsibleSection } from "../../components/AdminCollapsibleSection";
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
+import { optionsFromTranslations } from "../../utils/adminSelectOptions";
 import { useAdminHierarchyFilters } from "../../hooks/useAdminHierarchyFilters";
 import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
 import { isValidGaMeasurementIdInput } from "../../lib/gaMeasurementId";
@@ -1215,141 +1218,43 @@ export function PlacesPage() {
                 />
               </div>
               <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    color: "var(--admin-primary)",
-                    fontWeight: 600,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {t("admin.placeTown")} *
-                </label>
-                <select
+                <AdminAutocomplete
+                  label={t("admin.placeTown")}
+                  required
                   value={formData.townId}
-                  onChange={(e) => {
-                    setFormData({ ...formData, townId: e.target.value });
+                  options={optionsFromTranslations(towns, i18n.language)}
+                  placeholder={t("admin.selectTown")}
+                  clearOptionLabel={t("admin.selectTown")}
+                  error={formErrors.townId}
+                  onChange={(townId) => {
+                    setFormData({ ...formData, townId });
                     if (formErrors.townId) setFormErrors((prev) => ({ ...prev, townId: "" }));
                   }}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: 15,
-                    border: "2px solid var(--admin-primary-border)",
-                    borderRadius: 8,
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    background: "var(--admin-surface)",
-                    cursor: "pointer",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary)";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary-border)";
-                    e.target.style.boxShadow = "none";
-                  }}
-                >
-                  <option value="">{t("admin.selectTown")}</option>
-                  {towns.map((town) => (
-                    <option key={town.id} value={town.id}>
-                      {town.translations.find((t: any) => t.lang === "hu")?.name || town.id}
-                    </option>
-                  ))}
-                </select>
-                {formErrors.townId ? (
-                  <p className="admin-section-card__help" style={{ color: "#b91c1c" }}>
-                    {formErrors.townId}
-                  </p>
-                ) : null}
+                />
               </div>
               <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    color: "var(--admin-primary)",
-                    fontWeight: 600,
-                    fontSize: "clamp(14px, 3.5vw, 16px)",
-                  }}
-                >
-                  {t("admin.parentPlace")}
-                </label>
-                <select
+                <AdminAutocomplete
+                  label={t("admin.parentPlace")}
                   value={formData.parentPlaceId}
-                  onChange={(e) => setFormData({ ...formData, parentPlaceId: e.target.value })}
-                  style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ddd" }}
-                >
-                  <option value="">{t("admin.noParentPlace")}</option>
-                  {parentChoices
-                    .filter((place) => place.id !== editingId)
-                    .map((place) => {
-                      const currentLang = (i18n.language || "hu").split("-")[0];
-                      const name =
-                        place.translations.find((item) => item.lang === currentLang)?.name ||
-                        place.translations.find((item) => item.lang === "hu")?.name ||
-                        place.id;
-                      return (
-                        <option key={place.id} value={place.id}>
-                          {name}
-                        </option>
-                      );
-                    })}
-                </select>
-                <p className="admin-section-card__help">{t("admin.parentPlaceHint")}</p>
+                  options={optionsFromTranslations(
+                    parentChoices.filter((place) => place.id !== editingId),
+                    i18n.language
+                  )}
+                  placeholder={t("admin.noParentPlace")}
+                  clearOptionLabel={t("admin.noParentPlace")}
+                  hint={t("admin.parentPlaceHint")}
+                  onChange={(parentPlaceId) => setFormData({ ...formData, parentPlaceId })}
+                />
               </div>
               <div>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    color: "var(--admin-primary)",
-                    fontWeight: 600,
-                    fontSize: "clamp(13px, 3vw, 14px)",
-                  }}
-                >
-                  {t("admin.priceBands")}
-                </label>
-                <select
+                <AdminAutocomplete
+                  label={t("admin.priceBands")}
                   value={formData.priceBandId}
-                  onChange={(e) => setFormData({ ...formData, priceBandId: e.target.value })}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: 15,
-                    border: "2px solid var(--admin-primary-border)",
-                    borderRadius: 8,
-                    outline: "none",
-                    transition: "all 0.3s ease",
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    background: "var(--admin-surface)",
-                    cursor: "pointer",
-                    boxSizing: "border-box",
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary)";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(37, 99, 235, 0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = "var(--admin-primary-border)";
-                    e.target.style.boxShadow = "none";
-                  }}
-                >
-                  <option value="">{t("admin.selectPriceBand")}</option>
-                  {priceBands.map((pb) => (
-                    <option key={pb.id} value={pb.id}>
-                      {pb.translations.find((t: any) => t.lang === "hu")?.name || pb.id}
-                    </option>
-                  ))}
-                </select>
+                  options={optionsFromTranslations(priceBands, i18n.language)}
+                  placeholder={t("admin.selectPriceBand")}
+                  clearOptionLabel={t("admin.selectPriceBand")}
+                  onChange={(priceBandId) => setFormData({ ...formData, priceBandId })}
+                />
               </div>
             </div>
 
@@ -1601,14 +1506,6 @@ export function PlacesPage() {
                   </div>
 
                   <div style={{ marginBottom: 16 }}>
-                    <label style={labelStyle}>{t("common.openingHoursEditor")}</label>
-                    <OpeningHoursEditor
-                      value={formData.openingHours}
-                      onChange={(hours) => setFormData({ ...formData, openingHours: hours })}
-                    />
-                  </div>
-
-                  <div style={{ marginBottom: 16 }}>
                     <label style={labelStyle}>{t("public.accessibility")}</label>
                     <TipTapEditorWithUpload
                       value={
@@ -1633,31 +1530,230 @@ export function PlacesPage() {
                     />
                   </div>
 
-                  {/* SEO Fields Section - only visible to owner/manager */}
-                  {canModifySeo() && (
-                    <div
-                      style={{
-                        marginTop: 24,
-                        padding: 16,
-                        background: "linear-gradient(135deg, var(--admin-primary)15 0%, var(--admin-primary-hover)15 100%)",
-                        borderRadius: 8,
-                        border: "1px solid var(--admin-primary)30",
-                      }}
-                    >
-                      <h3
-                        style={{
-                          margin: "0 0 16px 0",
-                          fontSize: "clamp(16px, 3.5vw, 18px)",
-                          fontWeight: 600,
-                          color: "var(--admin-primary)",
-                          fontFamily:
-                            "var(--admin-font-display)",
-                        }}
-                      >
-                        🔍 SEO {t("admin.settings")}
-                      </h3>
+                </div>
+              )}
+            </LanguageAwareForm>
 
-                      <div style={{ marginBottom: 16 }}>
+
+            <AdminCollapsibleSection
+              title={t("admin.formSections.images")}
+              defaultOpen
+            >
+              <AdminImageField
+              label={t("admin.heroImageUrl")}
+              value={formData.heroImage}
+              onChange={(url) => setFormData({ ...formData, heroImage: url })}
+              folder="places/hero"
+              description={t("admin.heroImageDescription")}
+            />
+
+            <AdminImageField
+              label={t("admin.cardImageUrl")}
+              value={formData.cardImage}
+              onChange={(url) => setFormData({ ...formData, cardImage: url })}
+              folder="places/card"
+              placeholder={t("admin.cardImagePlaceholder")}
+              description={t("admin.cardImageDescription")}
+            />
+
+            <AdminImageField
+              label={t("admin.mapImageUrl")}
+              value={formData.mapImage}
+              onChange={(url) => setFormData({ ...formData, mapImage: url })}
+              folder="places/map"
+              placeholder={t("admin.mapImagePlaceholder")}
+              description={t("admin.mapImageDescription")}
+            />
+            </AdminCollapsibleSection>
+
+            <AdminCollapsibleSection title={t("admin.formSections.openingHours")}>
+              <OpeningHoursEditor
+                value={formData.openingHours}
+                onChange={(hours) => setFormData({ ...formData, openingHours: hours })}
+              />
+            </AdminCollapsibleSection>
+
+            <AdminCollapsibleSection title={t("admin.formSections.contact")}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+<div>
+                  <label style={labelStyle}>📱 {t("public.phone")}</label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+36 30 123 4567"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>✉️ {t("public.email")}</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="info@example.com"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>🌐 {t("public.website")}</label>
+                  <input
+                    type="url"
+                    value={formData.website}
+                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    placeholder="https://example.com"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>📘 Facebook</label>
+                  <input
+                    type="url"
+                    value={formData.facebook}
+                    onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                    placeholder="https://facebook.com/yourpage"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>💬 WhatsApp</label>
+                  <input
+                    type="text"
+                    value={formData.whatsapp}
+                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                    placeholder="+36 30 123 4567"
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: "clamp(15px, 3.5vw, 16px)",
+                      border: "1px solid #ddd",
+                      borderRadius: 4,
+                      fontFamily:
+                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    }}
+                  />
+                </div>
+              </div>
+            </AdminCollapsibleSection>
+
+            <AdminCollapsibleSection title={t("admin.formSections.location")}>
+<label style={{ ...labelStyle, marginBottom: 8 }}>
+                  {t("admin.location")} ({t("admin.coordinates")})
+                </label>
+                <CoordinateSuggestion
+                  query={[
+                    formData.addressHu || formData.addressEn || formData.addressDe,
+                    formData.nameHu || formData.nameEn || formData.nameDe,
+                    towns.find((town) => town.id === formData.townId)?.translations?.find(
+                      (row: { lang: string }) => row.lang === "hu"
+                    )?.name,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  filled={Boolean(formData.lat && formData.lng)}
+                  onApply={(lat, lng) =>
+                    setFormData((prev) => ({ ...prev, lat: String(lat), lng: String(lng) }))
+                  }
+                />
+                <div style={{ marginBottom: 16 }}>
+                  <MapComponent
+                    latitude={formData.lat ? parseFloat(formData.lat) : null}
+                    longitude={formData.lng ? parseFloat(formData.lng) : null}
+                    onLocationChange={(lat, lng) => {
+                      setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
+                    }}
+                    height={500}
+                    interactive={true}
+                    hideLocationButton={true}
+                  />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+                      {t("admin.latitude")}
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={formData.lat}
+                      onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
+                      style={{
+                        width: "100%",
+                        padding: 12,
+                        fontSize: "clamp(15px, 3.5vw, 16px)",
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                      placeholder="47.4979"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>
+                      {t("admin.longitude")}
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={formData.lng}
+                      onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
+                      style={{
+                        width: "100%",
+                        padding: 12,
+                        fontSize: "clamp(15px, 3.5vw, 16px)",
+                        border: "1px solid #ddd",
+                        borderRadius: 4,
+                        fontFamily:
+                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                      }}
+                      placeholder="19.0402"
+                    />
+                  </div>
+                </div>
+            </AdminCollapsibleSection>
+
+            <AdminCollapsibleSection
+              title={t("admin.formSections.seo")}
+              hint={t("admin.formSections.seoHint")}
+            >
+              {canModifySeo() ? (
+                <LanguageAwareForm>
+                  {(selectedLang) => (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+<div style={{ marginBottom: 16 }}>
                         <label style={labelStyle}>SEO {t("common.title")}</label>
                         <AiPostfixField
                           draft={{
@@ -1804,192 +1900,24 @@ export function PlacesPage() {
                       </div>
                     </div>
                   )}
-                </div>
-              )}
-            </LanguageAwareForm>
+                </LanguageAwareForm>
+              ) : null}
+              <GaMeasurementField
+              label={t("admin.googleAnalytics.placeLabel")}
+              help={t("admin.googleAnalytics.placeHelp")}
+              value={formData.gaMeasurementId}
+              onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
+              error={formErrors.gaMeasurementId}
+              hint={t("admin.googleAnalytics.clearHint")}
+            />
+              <CrawlableToggle
+              checked={formData.isCrawlable}
+              onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
+            />
+            </AdminCollapsibleSection>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                gap: 16,
-                marginBottom: 16,
-              }}
-            >
-              {/* Bal oszlop: Telefon, Email, Website, Facebook, WhatsApp */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>📱 {t("public.phone")}</label>
-                  <input
-                    type="text"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+36 30 123 4567"
-                    style={{
-                      width: "100%",
-                      padding: 12,
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      border: "1px solid #ddd",
-                      borderRadius: 4,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>✉️ {t("public.email")}</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="info@example.com"
-                    style={{
-                      width: "100%",
-                      padding: 12,
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      border: "1px solid #ddd",
-                      borderRadius: 4,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>🌐 {t("public.website")}</label>
-                  <input
-                    type="url"
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                    placeholder="https://example.com"
-                    style={{
-                      width: "100%",
-                      padding: 12,
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      border: "1px solid #ddd",
-                      borderRadius: 4,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>📘 Facebook</label>
-                  <input
-                    type="url"
-                    value={formData.facebook}
-                    onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                    placeholder="https://facebook.com/yourpage"
-                    style={{
-                      width: "100%",
-                      padding: 12,
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      border: "1px solid #ddd",
-                      borderRadius: 4,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>💬 WhatsApp</label>
-                  <input
-                    type="text"
-                    value={formData.whatsapp}
-                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                    placeholder="+36 30 123 4567"
-                    style={{
-                      width: "100%",
-                      padding: 12,
-                      fontSize: "clamp(15px, 3.5vw, 16px)",
-                      border: "1px solid #ddd",
-                      borderRadius: 4,
-                      fontFamily:
-                        "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Jobb oszlop: Térkép és koordináták */}
-              <div>
-                <label style={{ ...labelStyle, marginBottom: 8 }}>
-                  {t("admin.location")} ({t("admin.coordinates")})
-                </label>
-                <CoordinateSuggestion
-                  query={[
-                    formData.addressHu || formData.addressEn || formData.addressDe,
-                    formData.nameHu || formData.nameEn || formData.nameDe,
-                    towns.find((town) => town.id === formData.townId)?.translations?.find(
-                      (row: { lang: string }) => row.lang === "hu"
-                    )?.name,
-                  ]
-                    .filter(Boolean)
-                    .join(", ")}
-                  filled={Boolean(formData.lat && formData.lng)}
-                  onApply={(lat, lng) =>
-                    setFormData((prev) => ({ ...prev, lat: String(lat), lng: String(lng) }))
-                  }
-                />
-                <div style={{ marginBottom: 16 }}>
-                  <MapComponent
-                    latitude={formData.lat ? parseFloat(formData.lat) : null}
-                    longitude={formData.lng ? parseFloat(formData.lng) : null}
-                    onLocationChange={(lat, lng) => {
-                      setFormData({ ...formData, lat: lat.toString(), lng: lng.toString() });
-                    }}
-                    height={500}
-                    interactive={true}
-                    hideLocationButton={true}
-                  />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                  <div>
-                    <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>
-                      {t("admin.latitude")}
-                    </label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={formData.lat}
-                      onChange={(e) => setFormData({ ...formData, lat: e.target.value })}
-                      style={{
-                        width: "100%",
-                        padding: 12,
-                        fontSize: "clamp(15px, 3.5vw, 16px)",
-                        border: "1px solid #ddd",
-                        borderRadius: 4,
-                        fontFamily:
-                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}
-                      placeholder="47.4979"
-                    />
-                  </div>
-                  <div>
-                    <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>
-                      {t("admin.longitude")}
-                    </label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={formData.lng}
-                      onChange={(e) => setFormData({ ...formData, lng: e.target.value })}
-                      style={{
-                        width: "100%",
-                        padding: 12,
-                        fontSize: "clamp(15px, 3.5vw, 16px)",
-                        border: "1px solid #ddd",
-                        borderRadius: 4,
-                        fontFamily:
-                          "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                      }}
-                      placeholder="19.0402"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 24 }}>
+            <AdminCollapsibleSection title={t("admin.formSections.domain")}>
+              <div style={{ marginBottom: 24 }}>
               <DomainInput
                 value={formData.customDomain}
                 onChange={(value) => setFormData({ ...formData, customDomain: value })}
@@ -2012,17 +1940,77 @@ export function PlacesPage() {
                 {t("admin.customDomainHierarchyHint")}
               </p>
             </div>
+            </AdminCollapsibleSection>
 
-            <GaMeasurementField
-              label={t("admin.googleAnalytics.placeLabel")}
-              help={t("admin.googleAnalytics.placeHelp")}
-              value={formData.gaMeasurementId}
-              onChange={(gaMeasurementId) => setFormData({ ...formData, gaMeasurementId })}
-              error={formErrors.gaMeasurementId}
-              hint={t("admin.googleAnalytics.clearHint")}
-            />
+            {/* Billing/Plan fields - visible to everyone, but modification disabled for editors */}
+            {editingId && (
+              <div style={{ marginBottom: 16 }}>
+                <PlaceBillingSection
+                  placeId={editingId}
+                  currentPlan={formData.plan}
+                  currentIsFeatured={formData.isFeatured}
+                  currentFeaturedUntil={formData.featuredUntil}
+                  siteId={selectedSiteId || ""}
+                  userRole={currentUser?.role || "viewer"}
+                  onPlanChange={async (newPlan) => {
+                    // Just update the form data - the PlaceBillingSection component
+                    // will handle the API call and update the subscription
+                    setFormData({ ...formData, plan: newPlan });
+                    // No need to reload the entire page or call updatePlace here
+                    // The subscription update is handled by PlaceBillingSection
+                  }}
+                  onFloorplanSubscriptionChange={() => {
+                    // Trigger refresh of FloorplanSection when subscription changes
+                    setFloorplanRefreshTrigger((prev) => prev + 1);
+                  }}
+                  onActiveFloorplanSubscriptionChange={(hasActive) => {
+                    setHasActiveFloorplanSubscription(hasActive);
+                    // Also trigger refresh when subscription status changes
+                    if (hasActive) {
+                      setFloorplanRefreshTrigger((prev) => prev + 1);
+                    }
+                  }}
+                />
+              </div>
+            )}
 
-            {/* isActive checkbox - prominent at the top - visible to everyone, but disabled for editors */}
+            {editingId ? (
+              <PlaceMembersPanel
+                placeId={editingId}
+                canManage={
+                  isSiteAdmin ||
+                  currentPlaceRole === "owner" ||
+                  currentPlaceRole === "manager"
+                }
+              />
+            ) : null}
+
+            {editingId ? (
+              <ScopedEventsList placeId={editingId} siteId={selectedSiteId || undefined} />
+            ) : null}
+
+            {/* Floorplans section - separate block, only visible if entitled */}
+            {editingId && selectedSiteId && (
+              <div
+                style={{
+                  marginTop: 32,
+                  padding: "clamp(24px, 5vw, 32px)",
+                  background: "var(--admin-surface)",
+                  borderRadius: 16,
+                  boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
+                  border: "1px solid rgba(37, 99, 235, 0.1)",
+                }}
+              >
+                <FloorplanSection
+                  placeId={editingId}
+                  siteId={selectedSiteId}
+                  refreshTrigger={floorplanRefreshTrigger}
+                  hasActiveSubscription={hasActiveFloorplanSubscription}
+                />
+              </div>
+            )}
+
+            {/* isActive — always last on the form */}
             <div
               style={{
                 marginBottom: 24,
@@ -2103,104 +2091,6 @@ export function PlacesPage() {
               </label>
             </div>
 
-            <CrawlableToggle
-              checked={formData.isCrawlable}
-              onChange={(isCrawlable) => setFormData({ ...formData, isCrawlable })}
-            />
-
-            <AdminImageField
-              label={t("admin.heroImageUrl")}
-              value={formData.heroImage}
-              onChange={(url) => setFormData({ ...formData, heroImage: url })}
-              folder="places/hero"
-              description={t("admin.heroImageDescription")}
-            />
-
-            <AdminImageField
-              label={t("admin.cardImageUrl")}
-              value={formData.cardImage}
-              onChange={(url) => setFormData({ ...formData, cardImage: url })}
-              folder="places/card"
-              placeholder={t("admin.cardImagePlaceholder")}
-              description={t("admin.cardImageDescription")}
-            />
-
-            <AdminImageField
-              label={t("admin.mapImageUrl")}
-              value={formData.mapImage}
-              onChange={(url) => setFormData({ ...formData, mapImage: url })}
-              folder="places/map"
-              placeholder={t("admin.mapImagePlaceholder")}
-              description={t("admin.mapImageDescription")}
-            />
-
-            {/* Billing/Plan fields - visible to everyone, but modification disabled for editors */}
-            {editingId && (
-              <div style={{ marginBottom: 16 }}>
-                <PlaceBillingSection
-                  placeId={editingId}
-                  currentPlan={formData.plan}
-                  currentIsFeatured={formData.isFeatured}
-                  currentFeaturedUntil={formData.featuredUntil}
-                  siteId={selectedSiteId || ""}
-                  userRole={currentUser?.role || "viewer"}
-                  onPlanChange={async (newPlan) => {
-                    // Just update the form data - the PlaceBillingSection component
-                    // will handle the API call and update the subscription
-                    setFormData({ ...formData, plan: newPlan });
-                    // No need to reload the entire page or call updatePlace here
-                    // The subscription update is handled by PlaceBillingSection
-                  }}
-                  onFloorplanSubscriptionChange={() => {
-                    // Trigger refresh of FloorplanSection when subscription changes
-                    setFloorplanRefreshTrigger((prev) => prev + 1);
-                  }}
-                  onActiveFloorplanSubscriptionChange={(hasActive) => {
-                    setHasActiveFloorplanSubscription(hasActive);
-                    // Also trigger refresh when subscription status changes
-                    if (hasActive) {
-                      setFloorplanRefreshTrigger((prev) => prev + 1);
-                    }
-                  }}
-                />
-              </div>
-            )}
-
-            {editingId ? (
-              <PlaceMembersPanel
-                placeId={editingId}
-                canManage={
-                  isSiteAdmin ||
-                  currentPlaceRole === "owner" ||
-                  currentPlaceRole === "manager"
-                }
-              />
-            ) : null}
-
-            {editingId ? (
-              <ScopedEventsList placeId={editingId} siteId={selectedSiteId || undefined} />
-            ) : null}
-
-            {/* Floorplans section - separate block, only visible if entitled */}
-            {editingId && selectedSiteId && (
-              <div
-                style={{
-                  marginTop: 32,
-                  padding: "clamp(24px, 5vw, 32px)",
-                  background: "var(--admin-surface)",
-                  borderRadius: 16,
-                  boxShadow: "0 8px 24px rgba(15, 23, 42, 0.08)",
-                  border: "1px solid rgba(37, 99, 235, 0.1)",
-                }}
-              >
-                <FloorplanSection
-                  placeId={editingId}
-                  siteId={selectedSiteId}
-                  refreshTrigger={floorplanRefreshTrigger}
-                  hasActiveSubscription={hasActiveFloorplanSubscription}
-                />
-              </div>
-            )}
           </div>
         </div>
       )}

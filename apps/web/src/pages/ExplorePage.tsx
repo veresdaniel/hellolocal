@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getPlaces, getPlatformSettings } from "../api/places.api";
@@ -23,122 +23,34 @@ export function ExplorePage() {
   const navigate = useNavigate();
   const [showMap, setShowMap] = useState(true);
 
-  // Get user location from store
+  // GPS pin + live updates: MapComponent / useLiveUserGeolocation
   const { userLocation, _hasHydrated, setUserLocation, showUserLocation } = useFiltersStore();
 
-  // Get user location if available
-  const watchIdRef = useRef<number | null>(null);
-  const hasRequestedLocation = useRef(false);
-
-  // Wait for store to hydrate before using userLocation
-  // Also manually check and set hydration flag if onRehydrateStorage didn't fire
   useEffect(() => {
-    // If store is not hydrated yet, check if we can manually detect hydration
     if (!_hasHydrated) {
-      // Check if localStorage has data (indicating store should be hydrated)
       try {
         const stored = localStorage.getItem("home-filters-storage");
         if (stored) {
-          const parsed = JSON.parse(stored);
-          const persistedLocation = parsed.state?.userLocation;
-          // If we have persisted data, manually trigger hydration after a short delay
           const timeoutId = setTimeout(() => {
             const storeState = useFiltersStore.getState();
-            if (!storeState._hasHydrated && persistedLocation) {
-              useFiltersStore.getState().setHasHydrated(true);
-              if (persistedLocation && persistedLocation.lat && persistedLocation.lng) {
-                setUserLocation(persistedLocation);
-              }
+            if (!storeState._hasHydrated) {
+              storeState.setHasHydrated(true);
             }
-          }, 50); // Small delay to allow zustand to finish
-
+          }, 50);
           return () => clearTimeout(timeoutId);
         }
-      } catch (e) {
-        // Failed to check localStorage for hydration
+      } catch {
+        // ignore
       }
     }
-  }, [_hasHydrated, userLocation, setUserLocation]);
+  }, [_hasHydrated]);
 
-  // Clear userLocation when showUserLocation is disabled
-  // Or restore it from localStorage when enabled
+  // Clear pin when the user turns location off (live watch stops in MapComponent).
   useEffect(() => {
     if (!showUserLocation) {
-      // Clear any existing watch
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-      // Reset hasRequestedLocation so we can request again when enabled
-      hasRequestedLocation.current = false;
-      // Clear userLocation from store when disabled
       setUserLocation(null);
-    } else {
-      // When enabled, try to restore from localStorage immediately
-      try {
-        const stored = localStorage.getItem("home-filters-storage");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const savedLocation = parsed.state?.userLocation;
-          if (savedLocation && savedLocation.lat && savedLocation.lng) {
-            setUserLocation(savedLocation);
-            // Reset hasRequestedLocation to allow new request
-            hasRequestedLocation.current = false;
-          }
-        }
-      } catch (e) {
-        // Failed to restore location from localStorage
-      }
     }
   }, [showUserLocation, setUserLocation]);
-
-  // Note: Geolocation is now handled by MapComponent checkbox onChange (user gesture context)
-  // This effect only watches for updates if we already have a location
-  useEffect(() => {
-    if (!navigator.geolocation || !showUserLocation) {
-      return;
-    }
-
-    // Only watch for updates if we already have a userLocation
-    // Don't request new location here - MapComponent handles that in user gesture context
-    const storeState = useFiltersStore.getState();
-    const currentUserLocation = userLocation || storeState.userLocation;
-
-    if (
-      currentUserLocation &&
-      typeof currentUserLocation.lat === "number" &&
-      typeof currentUserLocation.lng === "number"
-    ) {
-      // Only start watching if we're not already watching
-      if (watchIdRef.current === null) {
-        // Start watching for updates
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          (updatedPosition) => {
-            setUserLocation({
-              lat: updatedPosition.coords.latitude,
-              lng: updatedPosition.coords.longitude,
-            });
-          },
-          (error) => {
-            // Geolocation watch error
-          },
-          {
-            enableHighAccuracy: true,
-            maximumAge: 30000,
-            timeout: 10000,
-          }
-        );
-      }
-    }
-
-    // Cleanup watch on unmount
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-    };
-  }, [_hasHydrated, userLocation, setUserLocation, showUserLocation]);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["places", lang, siteKey],

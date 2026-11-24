@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AdminDataTable } from "./AdminDataTable";
+import { AdminAutocomplete } from "./AdminAutocomplete";
 import {
   createAccessGrant,
   deleteAccessGrant,
@@ -36,15 +37,20 @@ export function TownMembersPanel({ townId }: { townId: string }) {
       <h3 style={{ margin: "0 0 8px" }}>{t("admin.townMembers.title")}</h3>
       <p style={{ margin: "0 0 12px", color: "#475569" }}>{t("admin.townMembers.hint")}</p>
       {error ? <p style={{ color: "#991b1b" }}>{error}</p> : null}
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        <select value={userId} onChange={(event) => setUserId(event.target.value)} style={{ minHeight: 40, flex: 1 }}>
-          <option value="">{t("admin.access.user")}</option>
-          {users.map((user) => (
-            <option key={user.id} value={user.id}>
-              {user.firstName} {user.lastName} ({user.email})
-            </option>
-          ))}
-        </select>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "flex-end" }}>
+        <div style={{ flex: 1 }}>
+          <AdminAutocomplete
+            value={userId}
+            options={users.map((user) => ({
+              value: user.id,
+              label: `${user.firstName} ${user.lastName} (${user.email})`,
+            }))}
+            clearOptionLabel={t("admin.access.user")}
+            placeholder={t("admin.access.user")}
+            onChange={setUserId}
+            inputStyle={{ minHeight: 40, padding: "8px 12px" }}
+          />
+        </div>
         <button
           type="button"
           className="admin-btn admin-btn--primary"

@@ -17,6 +17,7 @@ import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload"
 import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
 import { LoadingSpinner as LoadingSpinnerComponent } from "../../components/LoadingSpinner";
 import { Pagination } from "../../components/Pagination";
+import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 import { CrawlableToggle } from "../../components/CrawlableToggle";
 import { AdminImageField } from "../../components/AdminImageField";
 import {
@@ -512,27 +513,21 @@ export function LegalPagesPage() {
               >
                 {t("admin.key")} *
               </label>
-              <select
+              <AdminAutocomplete
                 value={formData.key}
-                onChange={(e) =>
+                disabled={!!editingId}
+                options={[
+                  { value: "imprint", label: t("public.legal.imprint.title") },
+                  { value: "terms", label: t("public.legal.terms.title") },
+                  { value: "privacy", label: t("public.legal.privacy.title") },
+                ]}
+                onChange={(key) =>
                   setFormData({
                     ...formData,
-                    key: e.target.value as "imprint" | "terms" | "privacy",
+                    key: key as "imprint" | "terms" | "privacy",
                   })
                 }
-                disabled={!!editingId}
-                style={{
-                  width: "100%",
-                  padding: 8,
-                  fontSize: 16,
-                  border: "1px solid #ddd",
-                  borderRadius: 4,
-                }}
-              >
-                <option value="imprint">{t("public.legal.imprint.title")}</option>
-                <option value="terms">{t("public.legal.terms.title")}</option>
-                <option value="privacy">{t("public.legal.privacy.title")}</option>
-              </select>
+              />
             </div>
           )}
 

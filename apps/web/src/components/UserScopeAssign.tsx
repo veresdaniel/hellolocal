@@ -9,6 +9,8 @@ import {
   type AccessGrant,
   type Site,
 } from "../api/admin.api";
+import { AdminAutocomplete } from "./AdminAutocomplete";
+import { optionsFromTranslations } from "../utils/adminSelectOptions";
 
 function labelOf(translations: Array<{ lang: string; name: string }> | undefined, fallback: string) {
   return translations?.find((row) => row.lang === "hu")?.name || translations?.[0]?.name || fallback;
@@ -88,15 +90,17 @@ export function UserScopeAssign({ userId, sites }: { userId: string; sites: Site
           <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
             {t("admin.roles.townAdmin")}
           </label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <select value={townId} onChange={(event) => setTownId(event.target.value)} style={{ flex: 1, minHeight: 40 }}>
-              <option value="">{t("admin.selectTown")}</option>
-              {towns.map((town) => (
-                <option key={town.id} value={town.id}>
-                  {labelOf(town.translations, town.id)}
-                </option>
-              ))}
-            </select>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+            <div style={{ flex: 1 }}>
+              <AdminAutocomplete
+                value={townId}
+                options={optionsFromTranslations(towns)}
+                clearOptionLabel={t("admin.selectTown")}
+                placeholder={t("admin.selectTown")}
+                onChange={setTownId}
+                inputStyle={{ minHeight: 40, padding: "8px 12px" }}
+              />
+            </div>
             <button type="button" className="admin-btn admin-btn--primary" disabled={!townId} onClick={() => void add("town", townId)}>
               {t("admin.townMembers.add")}
             </button>
@@ -122,22 +126,28 @@ export function UserScopeAssign({ userId, sites }: { userId: string; sites: Site
                 {sites[0].translations?.find((row) => row.lang === "hu")?.name || sites[0].slug}
               </span>
             ) : (
-              <select value={siteId} onChange={(event) => setSiteId(event.target.value)} style={{ minHeight: 40 }}>
-                {sites.map((site) => (
-                  <option key={site.id} value={site.id}>
-                    {site.translations?.find((row) => row.lang === "hu")?.name || site.slug}
-                  </option>
-                ))}
-              </select>
+              <AdminAutocomplete
+                value={siteId}
+                options={sites.map((site) => ({
+                  value: site.id,
+                  label: site.translations?.find((row) => row.lang === "hu")?.name || site.slug,
+                }))}
+                onChange={setSiteId}
+                fullWidth={false}
+                style={{ minWidth: 160 }}
+                inputStyle={{ minHeight: 40, padding: "8px 12px" }}
+              />
             )}
-            <select value={placeId} onChange={(event) => setPlaceId(event.target.value)} style={{ flex: 1, minHeight: 40 }}>
-              <option value="">{t("admin.selectPlace")}</option>
-              {places.map((place) => (
-                <option key={place.id} value={place.id}>
-                  {labelOf(place.translations, place.id)}
-                </option>
-              ))}
-            </select>
+            <div style={{ flex: 1, minWidth: 180 }}>
+              <AdminAutocomplete
+                value={placeId}
+                options={optionsFromTranslations(places)}
+                clearOptionLabel={t("admin.selectPlace")}
+                placeholder={t("admin.selectPlace")}
+                onChange={setPlaceId}
+                inputStyle={{ minHeight: 40, padding: "8px 12px" }}
+              />
+            </div>
             <button type="button" className="admin-btn admin-btn--primary" disabled={!placeId} onClick={() => void add("place", placeId)}>
               {t("admin.townMembers.add")}
             </button>
