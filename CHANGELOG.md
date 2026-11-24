@@ -23,6 +23,8 @@ in prose as used in the product.
 - PageSpeed: overview marketing images serve WebP (+ sized JPG fallbacks);
   LCP map shot preloaded; Google Fonts no longer render-block; preload Source Sans
   latin-ext (HU glyphs / CLS); `HomePage` lazy so overview skips map-vendor.
+- Overview images: responsive WebP `srcset` (480/720/960/1100) with stronger
+  compression; LCP preloads the 720w candidate.
 
 ### Added
 
@@ -31,9 +33,14 @@ in prose as used in the product.
 - Shared `AdminImageField` (CDN) wired across admin image inputs (places, events,
   towns, collections, sites, brands/domains, SEO images, products, share image).
 - `/llms.txt` (Markdown H1 + links) for PageSpeed Agentic Browsing discoverability.
+- Admin content hub: dashboard tiles for New content / Places / Events / Curated
+  collections; one-step type picker at `/admin/content/new`.
 
 ### Changed
 
+- Category CRUD (create/update/delete/reorder) is superadmin-only; editors still
+  select categories on place/event forms. Categories tile moved to Platform.
+- Event create/update requires a place (`placeId`); empty place is blocked in the UI.
 - Place price list: currency is a dropdown of catalog currencies (not free text).
 - PlaceCard / map popup prefer cardImage before heroImage fallback.
 

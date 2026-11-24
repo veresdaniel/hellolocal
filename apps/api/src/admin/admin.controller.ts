@@ -183,7 +183,7 @@ export class AdminController {
   }
 
   @Post("/categories")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async createCategory(
     @Body() dto: CreateCategoryDto,
     @CurrentUser() user: { id: string; siteIds: string[] }
@@ -192,7 +192,6 @@ export class AdminController {
     if (!dto.siteId) {
       dto.siteId = await this.rbacService.defaultContentSiteId(user.id, undefined, user.siteIds);
     }
-    await this.rbacService.assertRegionEditorSite(user.id, dto.siteId);
     const result = await this.categoryService.create(dto);
 
     // Log the action with detailed description
@@ -214,7 +213,7 @@ export class AdminController {
   }
 
   @Put("/categories/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async updateCategory(
     @Param("id") id: string,
     @Body() dto: UpdateCategoryDto,
@@ -222,7 +221,6 @@ export class AdminController {
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
     const siteId = await this.rbacService.defaultContentSiteId(user.id, siteIdParam, user.siteIds);
-    await this.rbacService.assertRegionEditorSite(user.id, siteId);
     // Get old data for comparison
     const oldCategory = await this.categoryService.findOne(id, siteId);
     const result = await this.categoryService.update(id, siteId, dto);
@@ -259,14 +257,13 @@ export class AdminController {
   }
 
   @Delete("/categories/:id")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async deleteCategory(
     @Param("id") id: string,
     @Query("siteId") siteIdParam: string | undefined,
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
     const siteId = await this.rbacService.defaultContentSiteId(user.id, siteIdParam, user.siteIds);
-    await this.rbacService.assertRegionEditorSite(user.id, siteId);
     // Get category data before deletion for logging
     const category = await this.categoryService.findOne(id, siteId);
     const result = await this.categoryService.remove(id, siteId);
@@ -288,7 +285,7 @@ export class AdminController {
   }
 
   @Put("/categories/reorder")
-  @Roles(UserRole.superadmin, UserRole.admin, UserRole.editor)
+  @Roles(UserRole.superadmin)
   async reorderCategories(
     @Body()
     body: {
@@ -298,7 +295,6 @@ export class AdminController {
     @CurrentUser() user: { id: string; siteIds: string[] }
   ) {
     const siteId = await this.rbacService.defaultContentSiteId(user.id, body.siteId, user.siteIds);
-    await this.rbacService.assertRegionEditorSite(user.id, siteId);
     return this.categoryService.reorder(siteId, body.updates);
   }
 

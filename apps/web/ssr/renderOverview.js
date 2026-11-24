@@ -10,6 +10,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { applySocialMeta, publicOrigin, SHARE_IMAGE_HEIGHT, SHARE_IMAGE_WIDTH } from "./socialMeta.js";
 import { injectOverviewShellHead } from "./overviewShellCss.js";
+import { OVERVIEW_HERO_MAP, OVERVIEW_STORY_IMAGES, pictureHtml } from "./overviewImages.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const webRoot = join(here, "..");
@@ -224,12 +225,6 @@ function renderPlanCards(
   return cards.join("");
 }
 
-const STORY_IMAGES = {
-  maker: { webp: "/marketing/craft-workshop.webp", jpg: "/marketing/craft-workshop.jpg", w: 1100, h: 825 },
-  service: { webp: "/marketing/local-service.webp", jpg: "/marketing/local-service.jpg", w: 1100, h: 825 },
-  quiet: { webp: "/marketing/side-street.webp", jpg: "/marketing/side-street.jpg", w: 675, h: 900 },
-  town: { webp: "/marketing/map-szeged.webp", jpg: "/marketing/map-szeged.jpg", w: 1024, h: 656 },
-};
 
 function renderDifference(copy) {
   if (!copy.difference) return "";
@@ -248,8 +243,7 @@ function renderStories(copy) {
     .map((key) => {
       const story = copy.stories[key];
       if (!story) return "";
-      const img = STORY_IMAGES[key];
-      return `<article><picture><source srcset="${img.webp}" type="image/webp" /><img src="${img.jpg}" alt="${escapeHtml(story.alt)}" width="${img.w}" height="${img.h}" loading="lazy" decoding="async" /></picture><h3>${escapeHtml(story.title)}</h3><p>${escapeHtml(story.text)}</p></article>`;
+      return `<article>${pictureHtml(OVERVIEW_STORY_IMAGES[key], escapeHtml(story.alt))}<h3>${escapeHtml(story.title)}</h3><p>${escapeHtml(story.text)}</p></article>`;
     })
     .join("");
 }
@@ -457,10 +451,7 @@ export function renderOverviewDocument(
       <p>${escapeHtml(copy.lead)}</p>
       <p><a href="/${lang}">${escapeHtml(copy.cta)}</a></p>
       <figure>
-        <picture>
-          <source srcset="/marketing/map-szeged.webp" type="image/webp" />
-          <img src="/marketing/map-szeged.jpg" alt="${escapeHtml(copy.shotCaption)}" width="1024" height="656" fetchpriority="high" decoding="async" />
-        </picture>
+        ${pictureHtml(OVERVIEW_HERO_MAP, escapeHtml(copy.shotCaption), { eager: true })}
         <figcaption>${escapeHtml(copy.shotCaption)}</figcaption>
       </figure>
       <section>

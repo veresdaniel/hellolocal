@@ -16,6 +16,8 @@ import { useApplyPublicFonts } from "../hooks/useApplyPublicFonts";
 import { useApplyPublicTheme, publicThemeStyle } from "../hooks/useApplyPublicTheme";
 import { publicFontCssVars } from "../styles/publicFonts";
 import { getPublicUiLanguages } from "../api/uiCopy.api";
+import { MarketingPicture } from "../marketing/MarketingPicture";
+import { OVERVIEW_HERO_MAP } from "../marketing/overviewImages";
 import "../styles/overview.css";
 
 const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
@@ -300,18 +302,11 @@ export function OverviewPage() {
                     <i />
                   </span>
                 </div>
-                <picture>
-                  <source srcSet="/marketing/map-szeged.webp" type="image/webp" />
-                  <img
-                    src="/marketing/map-szeged.jpg"
-                    alt={text("shotCaption")}
-                    width={1024}
-                    height={656}
-                    loading="eager"
-                    decoding="async"
-                    fetchPriority="high"
-                  />
-                </picture>
+                <MarketingPicture
+                  image={OVERVIEW_HERO_MAP}
+                  alt={text("shotCaption")}
+                  priority
+                />
               </div>
               <figcaption className="overview__caption">{text("shotLabel")}</figcaption>
             </figure>

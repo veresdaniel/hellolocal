@@ -108,6 +108,14 @@ export function AdminDashboard() {
   // Régió card: superadmin label includes region settings; siteadmin/régióadmin sees memberships-only label.
   const contentCards = useMemo((): DashboardCardItem[] => {
     const tileCopy: Record<ContentTileId, DashboardCardItem> = {
+      newContent: {
+        key: "newContent",
+        title: t("admin.dashboardCards.newContent"),
+        description: t("admin.dashboardCards.newContentDesc"),
+        link: adminPath("/content/new"),
+        icon: "✨",
+        variant: "content",
+      },
       towns: {
         key: "towns",
         title: t("admin.dashboardCards.myTowns"),
@@ -124,20 +132,28 @@ export function AdminDashboard() {
         icon: "📍",
         variant: "content",
       },
+      events: {
+        key: "events",
+        title: t("admin.dashboardCards.events"),
+        description: t("admin.dashboardCards.eventsDesc"),
+        link: adminPath("/events"),
+        icon: "🗓️",
+        variant: "content",
+      },
+      collections: {
+        key: "collections",
+        title: t("admin.dashboardCards.collections"),
+        description: t("admin.dashboardCards.collectionsDesc"),
+        link: adminPath("/collections"),
+        icon: "📚",
+        variant: "content",
+      },
       access: {
         key: "access",
         title: t("admin.access.title"),
         description: t("admin.access.hint"),
         link: adminPath("/place-memberships"),
         icon: "🔐",
-        variant: "content",
-      },
-      categories: {
-        key: "categories",
-        title: t("admin.dashboardCards.categories"),
-        description: t("admin.dashboardCards.categoriesDesc"),
-        link: adminPath("/categories"),
-        icon: "📁",
         variant: "content",
       },
       eventLog: {
@@ -316,11 +332,11 @@ export function AdminDashboard() {
         variant: "admin",
       },
       {
-        key: "collections",
-        title: t("admin.dashboardCards.collections"),
-        description: t("admin.dashboardCards.collectionsDesc"),
-        link: adminPath("/collections"),
-        icon: "📚",
+        key: "categories",
+        title: t("admin.dashboardCards.categories"),
+        description: t("admin.dashboardCards.categoriesDesc"),
+        link: adminPath("/categories"),
+        icon: "📁",
         variant: "admin",
       },
       {

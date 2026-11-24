@@ -7,11 +7,14 @@ export type TileScope = {
   placeIds: string[];
 };
 
+/** Content-section dashboard tiles (daily editorial work). */
 export type ContentTileId =
+  | "newContent"
   | "towns"
   | "places"
+  | "events"
+  | "collections"
   | "access"
-  | "categories"
   | "eventLog"
   | "siteStatus";
 
@@ -39,18 +42,24 @@ export function scopeAllows(
   return scope.regionAdminSiteIds.length > 0;
 }
 
+/**
+ * Content hub tiles. Categories live under Platform (superadmin only), not here.
+ * Order: newContent → places → events → collections (superadmin) → towns/eventLog extras.
+ */
 export function visibleContentTiles(role: string | null, scope: TileScope | null): ContentTileId[] {
   if (role === "superadmin" || scope?.unrestricted) {
-    return ["places", "categories"];
+    return ["newContent", "places", "events", "collections"];
   }
   if (!scope) return [];
   const regionEditor = scope.regionEditorSiteIds.length > 0;
   const townAdmin = scope.townIds.length > 0 && !regionEditor;
   const placeAdmin = scope.placeIds.length > 0 && !regionEditor && scope.townIds.length === 0;
+  const canEditorial = regionEditor || townAdmin || placeAdmin;
   const tiles: ContentTileId[] = [];
   if (townAdmin) tiles.push("towns");
-  if (regionEditor || placeAdmin) tiles.push("places");
-  if (regionEditor) tiles.push("categories");
+  if (canEditorial) {
+    tiles.push("newContent", "places", "events");
+  }
   if (regionEditor || townAdmin || placeAdmin) tiles.push("eventLog");
   return tiles;
 }

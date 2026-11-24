@@ -306,6 +306,7 @@ export function EventsPage() {
     const errors: Record<string, string> = {};
     if (!formData.titleHu.trim()) errors.titleHu = t("admin.validation.hungarianTitleRequired");
     if (!formData.startDate) errors.startDate = t("admin.validation.startDateRequired");
+    if (!formData.placeId.trim()) errors.placeId = t("admin.validation.placeRequired");
     if (!isValidGaMeasurementIdInput(formData.gaMeasurementId)) {
       errors.gaMeasurementId = t("admin.googleAnalytics.invalidId");
     }
@@ -378,7 +379,7 @@ export function EventsPage() {
 
       await createEvent({
         siteId: selectedSiteId,
-        placeId: formData.placeId || null,
+        placeId: formData.placeId,
         categoryIds: formData.categoryIds,
         tagIds: formData.tagIds,
         translations,
@@ -404,9 +405,8 @@ export function EventsPage() {
       // Notify global cache manager that events have changed
       notifyEntityChanged("events");
 
-      // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
-      if (fromParam === "dashboard") {
+      if (fromParam === "dashboard" || fromParam === "new-content") {
         navigate(`/${(i18n.language || "hu").split("-")[0]}/admin`);
         return;
       }
@@ -483,7 +483,7 @@ export function EventsPage() {
       await updateEvent(
         id,
         {
-          placeId: formData.placeId || null,
+          placeId: formData.placeId,
           categoryIds: formData.categoryIds,
           tagIds: formData.tagIds,
           translations,
@@ -511,9 +511,8 @@ export function EventsPage() {
       // Notify global cache manager that events have changed
       notifyEntityChanged("events");
 
-      // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
-      if (fromParam === "dashboard") {
+      if (fromParam === "dashboard" || fromParam === "new-content") {
         navigate(`/${(i18n.language || "hu").split("-")[0]}/admin`);
         return;
       }
@@ -865,16 +864,19 @@ export function EventsPage() {
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   }}
                 >
-                  {t("admin.places")}
+                  {t("admin.places")} *
                 </label>
                 <select
                   value={formData.placeId}
+                  required
                   onChange={(e) => setFormData({ ...formData, placeId: e.target.value })}
                   style={{
                     width: "100%",
                     padding: "12px 16px",
                     fontSize: 15,
-                    border: "2px solid var(--admin-primary-border)",
+                    border: formErrors.placeId
+                      ? "2px solid #dc2626"
+                      : "2px solid var(--admin-primary-border)",
                     borderRadius: 8,
                     outline: "none",
                     transition: "all 0.3s ease",
@@ -918,6 +920,9 @@ export function EventsPage() {
                     });
                   })()}
                 </select>
+                {formErrors.placeId ? (
+                  <div style={{ color: "#dc2626", fontSize: 13, marginTop: 6 }}>{formErrors.placeId}</div>
+                ) : null}
               </div>
               <div>
                 <CategoryAutocomplete

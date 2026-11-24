@@ -172,6 +172,9 @@ const SiteStatusPage = lazy(() =>
 const CollectionsPage = lazy(() =>
   import("../pages/admin/CollectionsPage").then((m) => ({ default: m.CollectionsPage }))
 );
+const NewContentPage = lazy(() =>
+  import("../pages/admin/NewContentPage").then((m) => ({ default: m.NewContentPage }))
+);
 const CollectionEditPage = lazy(() =>
   import("../pages/admin/CollectionEditPage").then((m) => ({ default: m.CollectionEditPage }))
 );
@@ -545,9 +548,21 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "content/new",
+        element: (
+          <ProtectedRoute requiredRole="viewer" scopeGate="places">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <NewContentPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "categories",
         element: (
-          <ProtectedRoute requiredRole="editor" scopeGate="regionEditor">
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <CategoriesPage />

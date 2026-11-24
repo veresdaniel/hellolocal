@@ -651,9 +651,8 @@ export function PlacesPage() {
       notifyEntityChanged("places");
       showToast(t("admin.messages.placeCreated"), "success");
 
-      // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
-      if (fromParam === "dashboard") {
+      if (fromParam === "dashboard" || fromParam === "new-content") {
         navigate(`/${(i18n.language || "hu").split("-")[0]}/admin`);
         return;
       }
@@ -794,9 +793,8 @@ export function PlacesPage() {
       notifyEntityChanged("places");
       showToast(t("admin.messages.placeUpdated"), "success");
 
-      // If we came from dashboard, navigate back to dashboard
       const fromParam = searchParams.get("from");
-      if (fromParam === "dashboard") {
+      if (fromParam === "dashboard" || fromParam === "new-content") {
         navigate(`/${(i18n.language || "hu").split("-")[0]}/admin`);
         return;
       }
