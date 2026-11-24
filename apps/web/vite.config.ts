@@ -143,6 +143,10 @@ export default defineConfig(({ mode }) => {
       },
       rollupOptions: {
         output: {
+          // Do NOT put maplibre in object-form manualChunks: Rollup then hosts
+          // Vite's modulepreload helper inside map-vendor, so every lazy() route
+          // statically imports ~1MB of MapLibre (kills explore LCP). Map stays
+          // behind `import("../components/MapComponent")` only.
           manualChunks: {
             // React core libraries
             "react-vendor": ["react", "react-dom", "react-router-dom"],
@@ -150,8 +154,6 @@ export default defineConfig(({ mode }) => {
             "query-vendor": ["@tanstack/react-query"],
             // i18n libraries
             "i18n-vendor": ["i18next", "react-i18next", "i18next-browser-languagedetector"],
-            // Map libraries (large)
-            "map-vendor": ["maplibre-gl", "react-map-gl/maplibre"],
             // Editor libraries (large, only used in admin)
             "editor-vendor": [
               "@tiptap/react",

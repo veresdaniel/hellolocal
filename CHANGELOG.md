@@ -14,6 +14,14 @@ in prose as used in the product.
 
 ### Fixed
 
+- Explore PageSpeed (helloetyek): stop shipping MapLibre on first paint — drop
+  stale `vite.config.js` (Vite preferred it over `.ts`) and its `map-vendor`
+  `manualChunks` entry that hosted `__vitePreload`, so every lazy route
+  statically imported ~1MB of map code.
+- Explore LCP: Wikimedia place images rewrite to `thumb.wikimedia.org` at an
+  allowed width (Cloudinary fetch is restricted on this account).
+- Explore CLS: discover chrome skeleton matches search+filters height when the
+  site has no `listIntroHtml` (no more tall intro placeholder dump).
 - Facebook Sharing Debugger false 403 on `robots.txt`: Meta UAs always get
   HTTP 206 for robots (even without `Range`), matching the known Meta quirk.
 - Meta preview bots get a static Allow-only `robots.txt` (no empty `Disallow:`,

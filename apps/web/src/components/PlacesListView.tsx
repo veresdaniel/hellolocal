@@ -505,20 +505,12 @@ export function PlacesListView({
           gap: var(--pd-3);
           margin: 0 0 clamp(28px, 4vw, 40px);
         }
+        /* Match no-intro controls height (search + filters). A tall intro
+           skeleton caused ~0.5 CLS on sites without listIntroHtml. */
         .places-discover__chrome-skel-card {
-          padding: var(--pd-3);
-          border-radius: 14px;
-          background: var(--hl-card);
-          border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
-          /* Match intro+image height so settings settle does not dump CLS. */
-          min-height: clamp(280px, 58vw, 440px);
-        }
-        .places-discover__chrome-skel-media {
-          aspect-ratio: 16 / 9;
-          border-radius: 10px;
-          margin-bottom: 12px;
-          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          gap: var(--pd-3);
         }
         .places-discover__intro {
           display: grid;
@@ -747,14 +739,9 @@ export function PlacesListView({
               aria-label={t("common.loading")}
             >
               <div className="places-discover__chrome-skel-card">
-                <div className="places-discover__chrome-skel-media">
-                  <PublicSkeletonBlock style={{ width: "100%", height: "100%", display: "block" }} />
-                </div>
-                <PublicSkeletonBlock style={{ height: 18, width: "88%", marginBottom: 12 }} />
-                <PublicSkeletonBlock style={{ height: 18, width: "64%", marginBottom: 20 }} />
                 <PublicSkeletonBlock style={{ height: 44, width: "100%", borderRadius: 12 }} />
                 <PublicSkeletonBlock
-                  style={{ height: 72, width: "100%", marginTop: 12, borderRadius: 12 }}
+                  style={{ height: 148, width: "100%", borderRadius: 14 }}
                 />
               </div>
             </div>
