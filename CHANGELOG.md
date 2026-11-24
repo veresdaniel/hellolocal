@@ -25,6 +25,9 @@ in prose as used in the product.
   below-fold SSR images `fetchpriority=low`; idle-defer live-demo URL fetch.
 - hellolocal.hu overview story map: serve responsive 480/720 WebP on mobile
   instead of always downloading `map-szeged-1100.webp`.
+- Explore CLS (helloetyek): custom-host boot uses navy `PublicBootShell` instead
+  of the white `LoadingSpinner`; filter chrome min-height 240px aligned with
+  list skeleton; cookie banner fades in with opacity only.
 - Explore PageSpeed (helloetyek): stop shipping MapLibre on first paint — drop
   stale `vite.config.js` (Vite preferred it over `.ts`) and its `map-vendor`
   `manualChunks` entry that hosted `__vitePreload`, so every lazy route

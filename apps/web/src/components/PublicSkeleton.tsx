@@ -103,10 +103,31 @@ export function PublicListSkeleton({
           <div className="hl-skel hl-skel-list__chip" />
           <div className="hl-skel hl-skel-list__chip hl-skel-list__chip--wide" />
           <div className="hl-skel hl-skel-list__chip" />
+          <div className="hl-skel hl-skel-list__chip" />
+          <div className="hl-skel hl-skel-list__chip hl-skel-list__chip--wide" />
         </div>
         <PublicCardSkeletonGrid count={cardCount} variant="places" label={label} />
       </div>
       <span className="hl-skel-visually-hidden">{label}</span>
+    </div>
+  );
+}
+
+/**
+ * Navy boot shell for custom-host scope resolution — never the white
+ * {@link LoadingSpinner} (that flash was ~0.5 CLS on helloetyek PSI).
+ */
+export function PublicBootShell({ label = "Loading" }: { label?: string }) {
+  return (
+    <div
+      className="hl-public"
+      style={{
+        minHeight: "100vh",
+        background: "var(--hl-bg, #1b1730)",
+        color: "var(--hl-on-dark, #f2f4fb)",
+      }}
+    >
+      <PublicListSkeleton label={label} />
     </div>
   );
 }

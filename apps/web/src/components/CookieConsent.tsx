@@ -50,14 +50,11 @@ export function CookieConsent() {
         padding: isMobile ? 20 : 24,
         boxShadow: isMobile ? "0 -4px 20px rgba(0, 0, 0, 0.3)" : "0 8px 32px rgba(0, 0, 0, 0.4)",
         zIndex: 9999,
-        transform: isMobile
-          ? isAnimatingIn
-            ? "translateY(0)"
-            : "translateY(100%)"
-          : isAnimatingIn
-            ? "translateX(0) scale(1)"
-            : "translateX(100%) scale(0.9)",
-        transition: "all 0.3s ease-out",
+        // Opacity-only enter — avoid transform slides that some lab CLS
+        // attributions still attach to fixed cookie chrome.
+        opacity: isAnimatingIn ? 1 : 0,
+        transition: "opacity 0.25s ease-out",
+        pointerEvents: isAnimatingIn ? "auto" : "none",
         backdropFilter: "blur(10px)",
         borderRadius: isMobile ? "0" : 16,
         maxWidth: isMobile ? "100%" : 420,

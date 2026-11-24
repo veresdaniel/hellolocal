@@ -10,8 +10,8 @@ import { SiteLayout } from "./site/SiteLayout";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { DomainRedirect } from "../components/DomainRedirect";
 import { RootRedirect } from "../components/RootRedirect";
-import { LoadingSpinner } from "../components/LoadingSpinner";
 import { AdminPageSkeleton } from "../components/AdminPageSkeleton";
+import { PublicBootShell } from "../components/PublicSkeleton";
 import { PlatformGaShell } from "../components/PlatformGaShell";
 import { UnderConstructionGate } from "../components/UnderConstructionGate";
 import { ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN, ROLE_SUPERADMIN } from "../types/enums";
@@ -187,7 +187,7 @@ function PublicLangLayout() {
   const location = useLocation();
   const host = typeof window !== "undefined" ? window.location.hostname : "";
   if (host && !isPlatformHost(host) && scope.status === "loading") {
-    return <LoadingSpinner isLoading />;
+    return <PublicBootShell />;
   }
   const shortPath = canonicalHostPath(location.pathname, scope);
   if (shortPath) {
@@ -211,7 +211,7 @@ function LangIndex() {
   const scope = useHostScope();
   // Custom hosts resolve asynchronously — never flash the platform overview
   // (or "Rólunk"/landing copy) while domain lookup is still in flight.
-  if (scope.status === "loading") return <LoadingSpinner isLoading />;
+  if (scope.status === "loading") return <PublicBootShell />;
   if (scope.status === "ready" && scope.kind === "place") return <PlaceDetailPage />;
   if (scope.status === "ready" && scope.kind === "event") return <EventDetailPage />;
   if (scope.status === "ready" && scope.kind === "collection") return <CollectionDetailPage />;
@@ -223,7 +223,7 @@ function HostPlaceRoute() {
   const scope = useHostScope();
   const { lang, slug } = useParams<{ lang: string; slug: string }>();
   const safeLang: Lang = isLang(lang) ? lang : "hu";
-  if (scope.status === "loading") return <LoadingSpinner isLoading />;
+  if (scope.status === "loading") return <PublicBootShell />;
   if (scope.kind === "place" && slug === scope.entitySlug) {
     return <Navigate to={`/${safeLang}`} replace />;
   }
@@ -237,7 +237,7 @@ function HostEventRoute() {
   const scope = useHostScope();
   const { lang, slug } = useParams<{ lang: string; slug: string }>();
   const safeLang: Lang = isLang(lang) ? lang : "hu";
-  if (scope.status === "loading") return <LoadingSpinner isLoading />;
+  if (scope.status === "loading") return <PublicBootShell />;
   if (scope.kind === "event") {
     if (!slug || slug === scope.entitySlug) return <Navigate to={`/${safeLang}`} replace />;
     return <EventDetailPage />;
@@ -282,7 +282,7 @@ function HostOwnedPage({ tail, element }: { tail: string; element: ReactNode }) 
   const scope = useHostScope();
   const { lang } = useParams<{ lang: string }>();
   const safeLang: Lang = isLang(lang) ? lang : "hu";
-  if (scope.status === "loading") return <LoadingSpinner isLoading />;
+  if (scope.status === "loading") return <PublicBootShell />;
   if (scope.kind === "site" || scope.kind === "town" || scope.kind === "place" || scope.kind === "event") return <>{element}</>;
   return <Navigate to={`/${safeLang}/${DEFAULT_SITE_SLUG}/${tail}`} replace />;
 }

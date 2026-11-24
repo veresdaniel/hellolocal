@@ -617,8 +617,9 @@ export function PlacesListView({
         .places-discover__filters {
           min-width: 0;
           width: 100%;
-          /* Reserve filter chrome so category/price chips do not shove the grid. */
-          min-height: 148px;
+          /* Reserve filter chrome (categories + kind + toggles + price) so chips
+             do not shove the grid — keep in sync with `.hl-skel-list__filters`. */
+          min-height: 240px;
         }
         .places-discover__filters .map-filters-inline {
           padding: var(--pd-3);
@@ -626,7 +627,7 @@ export function PlacesListView({
           box-shadow: none;
           border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
           background: rgba(255, 255, 255, 0.55);
-          min-height: 148px;
+          min-height: 240px;
           box-sizing: border-box;
         }
         .places-discover__controls:not(.is-in-intro) .places-discover__search,
@@ -743,7 +744,7 @@ export function PlacesListView({
               <div className="places-discover__chrome-skel-card">
                 <PublicSkeletonBlock style={{ height: 44, width: "100%", borderRadius: 12 }} />
                 <PublicSkeletonBlock
-                  style={{ height: 148, width: "100%", borderRadius: 14 }}
+                  style={{ height: 240, width: "100%", borderRadius: 14 }}
                 />
               </div>
             </div>
