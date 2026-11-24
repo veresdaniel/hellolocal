@@ -64,7 +64,6 @@ import { GtmContainerField } from "../../components/GtmContainerField";
 import { AdminImageField } from "../../components/AdminImageField";
 import { LandingImagesEditor } from "../../components/LandingImagesEditor";
 
-const PLATFORM_GTM_SETTING_KEY = "platformGtmContainerId";
 const PLATFORM_HOST_SETTING_KEY = "platform.publicHost";
 const LIVE_DEMO_URL_KEY = "platform.liveDemoUrl";
 const DEFAULT_SHARE_IMAGE_KEY = "platform.defaultShareImage";
@@ -153,9 +152,6 @@ export function AppSettingsPage() {
   const [isSavingLiveDemo, setIsSavingLiveDemo] = useState(false);
   const [defaultShareImage, setDefaultShareImage] = useState("");
   const [isSavingShareImage, setIsSavingShareImage] = useState(false);
-  const [platformGtmId, setPlatformGtmId] = useState("");
-  const [platformGtmError, setPlatformGtmError] = useState("");
-  const [isSavingPlatformGtm, setIsSavingPlatformGtm] = useState(false);
   const [contentDraftKeyConfigured, setContentDraftKeyConfigured] = useState(false);
   const [contentDraftEnabled, setContentDraftEnabled] = useState(false);
   const [contentDraftProvider, setContentDraftProvider] =
@@ -247,13 +243,6 @@ export function AppSettingsPage() {
       })
       .catch(() => {
         if (!cancelled) setDefaultShareImage("");
-      });
-    getAppSetting(PLATFORM_GTM_SETTING_KEY)
-      .then((row) => {
-        if (!cancelled) setPlatformGtmId(row?.value ?? "");
-      })
-      .catch(() => {
-        if (!cancelled) setPlatformGtmId("");
       });
     getContentDraftStatus()
       .then((status) => {
@@ -464,31 +453,6 @@ export function AppSettingsPage() {
       showToast(err instanceof Error ? err.message : t("public.overview.plans.quote.failed"), "error");
     } finally {
       setIsSavingRecipient(false);
-    }
-  };
-
-  const handleSavePlatformGtm = async () => {
-    if (!isValidGtmContainerIdInput(platformGtmId)) {
-      setPlatformGtmError(t("admin.googleAnalytics.invalidGtmId"));
-      showToast(t("admin.googleAnalytics.invalidGtmId"), "error");
-      return;
-    }
-    setPlatformGtmError("");
-    try {
-      setIsSavingPlatformGtm(true);
-      const normalized = platformGtmId.trim() ? platformGtmId.trim().toUpperCase() : "";
-      await createAppSetting({
-        key: PLATFORM_GTM_SETTING_KEY,
-        value: normalized,
-        type: "string",
-        description: t("admin.googleAnalytics.platformGtmDescription"),
-      });
-      setPlatformGtmId(normalized);
-      showToast(t("admin.googleAnalytics.gtmSaved"), "success");
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : t("admin.errors.updateFailed"), "error");
-    } finally {
-      setIsSavingPlatformGtm(false);
     }
   };
 
@@ -1415,37 +1379,6 @@ export function AppSettingsPage() {
               }}
             >
               {t("admin.platformHost.add")}
-            </button>
-          </div>
-          <div style={{ marginTop: 20 }}>
-            <GtmContainerField
-              label={t("admin.googleAnalytics.platformGtmFallbackLabel")}
-              help={t("admin.googleAnalytics.platformGtmFallbackHelp")}
-              value={platformGtmId}
-              onChange={(value) => {
-                setPlatformGtmId(value);
-                if (platformGtmError) setPlatformGtmError("");
-              }}
-              error={platformGtmError}
-              hint={t("admin.googleAnalytics.gtmClearHint")}
-            />
-            <button
-              type="button"
-              onClick={() => void handleSavePlatformGtm()}
-              disabled={isSavingPlatformGtm}
-              style={{
-                marginTop: 8,
-                minHeight: 42,
-                padding: "0 16px",
-                borderRadius: 999,
-                background: "var(--admin-surface)",
-                color: "var(--admin-ink)",
-                border: "1px solid var(--admin-border-subtle)",
-                fontWeight: 600,
-                cursor: isSavingPlatformGtm ? "wait" : "pointer",
-              }}
-            >
-              {isSavingPlatformGtm ? t("common.loading") : t("admin.googleAnalytics.saveGtmFallback")}
             </button>
           </div>
           <div style={{ marginTop: 12 }}>

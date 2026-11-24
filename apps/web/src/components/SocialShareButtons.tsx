@@ -1,14 +1,23 @@
 // src/components/SocialShareButtons.tsx
 import { useTranslation } from "react-i18next";
+import { trackGtmShare } from "../lib/gtmEvents";
 
 interface SocialShareButtonsProps {
   url: string;
   title: string;
   description?: string;
   image?: string;
+  contentType?: string;
+  itemId?: string;
 }
 
-export function SocialShareButtons({ url, title, description }: SocialShareButtonsProps) {
+export function SocialShareButtons({
+  url,
+  title,
+  description,
+  contentType = "page",
+  itemId,
+}: SocialShareButtonsProps) {
   const { t } = useTranslation();
 
   const encodedUrl = encodeURIComponent(url);
@@ -28,6 +37,7 @@ export function SocialShareButtons({ url, title, description }: SocialShareButto
   };
 
   const handleShare = (platform: keyof typeof shareLinks) => {
+    trackGtmShare({ method: platform, contentType, itemId });
     const shareUrl = shareLinks[platform];
     if (platform === "email") {
       window.location.href = shareUrl;
@@ -37,6 +47,7 @@ export function SocialShareButtons({ url, title, description }: SocialShareButto
   };
 
   const handleCopyLink = async () => {
+    trackGtmShare({ method: "copy", contentType, itemId });
     try {
       await navigator.clipboard.writeText(url);
       alert(t("public.linkCopied"));

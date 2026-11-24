@@ -1,7 +1,12 @@
 // src/components/CookieConsent.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { acceptCookieConsent, hasCookieConsent } from "../lib/cookieConsent";
+import {
+  acceptCookieConsent,
+  dismissCookieConsent,
+  hasCookieConsent,
+  COOKIE_CONSENT_OPEN_EVENT,
+} from "../lib/cookieConsent";
 
 export function CookieConsent() {
   const { t } = useTranslation();
@@ -10,6 +15,19 @@ export function CookieConsent() {
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth < 768 : false
   );
+
+  const showBanner = (immediate = false) => {
+    if (immediate) {
+      setIsVisible(true);
+      window.setTimeout(() => setIsAnimatingIn(true), 20);
+      return;
+    }
+    const showTimer = window.setTimeout(() => {
+      setIsVisible(true);
+      window.setTimeout(() => setIsAnimatingIn(true), 50);
+    }, 2000);
+    return showTimer;
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -20,28 +38,48 @@ export function CookieConsent() {
   }, []);
 
   useEffect(() => {
+    // Already accepted → stay hidden until user opens settings.
     if (hasCookieConsent()) return;
 
-    // After first paint / lab LCP window — early fixed chrome still shows up
-    // in PSI filmstrips and can compete with the overview hero.
-    const showTimer = window.setTimeout(() => {
-      setIsVisible(true);
-      window.setTimeout(() => setIsAnimatingIn(true), 50);
-    }, 3500);
-
-    return () => window.clearTimeout(showTimer);
+    const showTimer = showBanner(false);
+    return () => {
+      if (showTimer) window.clearTimeout(showTimer);
+    };
   }, []);
 
-  const handleAccept = () => {
-    acceptCookieConsent();
+  useEffect(() => {
+    const onOpen = () => {
+      setIsVisible(true);
+      window.setTimeout(() => setIsAnimatingIn(true), 20);
+    };
+    window.addEventListener(COOKIE_CONSENT_OPEN_EVENT, onOpen);
+    return () => window.removeEventListener(COOKIE_CONSENT_OPEN_EVENT, onOpen);
+  }, []);
+
+  const hide = () => {
     setIsAnimatingIn(false);
     window.setTimeout(() => setIsVisible(false), 300);
   };
 
+  const handleAccept = () => {
+    acceptCookieConsent();
+    hide();
+  };
+
+  const handleDismiss = () => {
+    dismissCookieConsent();
+    hide();
+  };
+
   if (!isVisible) return null;
+
+  const alreadyAccepted = hasCookieConsent();
 
   return (
     <div
+      role="dialog"
+      aria-live="polite"
+      aria-label={t("cookieConsent.message")}
       style={{
         position: "fixed",
         bottom: isMobile ? 0 : 20,
@@ -49,11 +87,10 @@ export function CookieConsent() {
         right: isMobile ? 0 : 20,
         background: "rgba(0, 0, 0, 0.95)",
         color: "white",
-        padding: isMobile ? 20 : 24,
+        padding: isMobile ? "20px 20px max(20px, env(safe-area-inset-bottom))" : 24,
         boxShadow: isMobile ? "0 -4px 20px rgba(0, 0, 0, 0.3)" : "0 8px 32px rgba(0, 0, 0, 0.4)",
-        zIndex: 9999,
-        // Opacity-only enter — avoid transform slides that some lab CLS
-        // attributions still attach to fixed cookie chrome.
+        // Above map dock (~1300); below open mobile menu (12000).
+        zIndex: 11000,
         opacity: isAnimatingIn ? 1 : 0,
         transition: "opacity 0.25s ease-out",
         pointerEvents: isAnimatingIn ? "auto" : "none",
@@ -64,30 +101,23 @@ export function CookieConsent() {
         fontFamily: "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-        }}
-      >
-        <div>
-          <p
-            style={{
-              margin: 0,
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              lineHeight: 1.5,
-              color: "rgba(255, 255, 255, 0.95)",
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-            }}
-          >
-            {t("cookieConsent.message")}
-          </p>
-        </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: "clamp(14px, 3.5vw, 16px)",
+            lineHeight: 1.5,
+            color: "rgba(255, 255, 255, 0.95)",
+          }}
+        >
+          {alreadyAccepted
+            ? t("cookieConsent.acceptedMessage")
+            : t("cookieConsent.message")}
+        </p>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button
+            type="button"
             onClick={handleAccept}
             style={{
               flex: isMobile ? 1 : "none",
@@ -98,55 +128,36 @@ export function CookieConsent() {
               borderRadius: 8,
               cursor: "pointer",
               fontSize: "clamp(14px, 3.5vw, 16px)",
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              fontFamily: "inherit",
               fontWeight: 600,
-              transition: "all 0.2s ease",
               boxShadow: "0 4px 12px rgba(255, 255, 255, 0.2)",
               whiteSpace: "nowrap",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = "0 6px 16px rgba(255, 255, 255, 0.3)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 4px 12px rgba(255, 255, 255, 0.2)";
-            }}
           >
-            {t("cookieConsent.accept")}
+            {alreadyAccepted ? t("cookieConsent.ok") : t("cookieConsent.accept")}
           </button>
 
-          <button
-            onClick={handleAccept}
-            style={{
-              flex: isMobile ? 1 : "none",
-              padding: "12px 20px",
-              background: "transparent",
-              color: "rgba(255, 255, 255, 0.8)",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
-              borderRadius: 8,
-              cursor: "pointer",
-              fontSize: "clamp(14px, 3.5vw, 16px)",
-              fontFamily:
-                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              fontWeight: 500,
-              transition: "all 0.2s ease",
-              whiteSpace: "nowrap",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
-              e.currentTarget.style.color = "white";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
-            }}
-          >
-            {t("cookieConsent.close")}
-          </button>
+          {!alreadyAccepted ? (
+            <button
+              type="button"
+              onClick={handleDismiss}
+              style={{
+                flex: isMobile ? 1 : "none",
+                padding: "12px 20px",
+                background: "transparent",
+                color: "rgba(255, 255, 255, 0.85)",
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontSize: "clamp(14px, 3.5vw, 16px)",
+                fontFamily: "inherit",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {t("cookieConsent.later")}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

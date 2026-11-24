@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { requestDemo } from "../api/public.api";
+import { trackGtmGenerateLead } from "../lib/gtmEvents";
 import { publicFormErrorMessage, usePublicFormShield } from "./PublicFormShield";
 import "../styles/plan-picker.css";
 
@@ -36,6 +37,7 @@ export function DemoRequestForm() {
         message: message.trim(),
         ...(await shield.payload()),
       });
+      trackGtmGenerateLead("demo_request");
       if (result.emailed) setStatus("sent");
       else if (result.reason === "no_recipient") setStatus("noRecipient");
       else setStatus("stored");

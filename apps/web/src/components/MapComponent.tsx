@@ -1254,27 +1254,39 @@ export function MapComponent({
         ref={mapRef}
         {...viewState}
         onMove={(evt) => {
+          // Locked maps (place detail) must not follow gestures or drift.
+          if (!interactive) return;
           setViewState(evt.viewState);
           if (onZoomChange) {
             onZoomChange(evt.viewState.zoom);
           }
         }}
-        onClick={handleMapClick}
-        style={{ width: "100%", height: "100%" }}
+        onClick={interactive ? handleMapClick : undefined}
+        style={{
+          width: "100%",
+          height: "100%",
+          // Block all pointer/touch interaction when locked (pan/zoom/rotate).
+          pointerEvents: interactive ? "auto" : "none",
+        }}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mapLib={maplibregl as any}
         mapStyle={memoizedMapStyle as any}
         cursor={interactive && onLocationChange ? "crosshair" : "default"}
         dragRotate={false}
-        touchZoomRotate={true}
+        touchZoomRotate={interactive}
         touchPitch={false}
-        dragPan={true}
+        dragPan={interactive}
+        scrollZoom={interactive}
+        doubleClickZoom={interactive}
+        keyboard={interactive}
+        boxZoom={interactive}
+        attributionControl={interactive}
         onLoad={(evt) => {
           // Reduce scroll wheel zoom sensitivity
           // Default is 1/450, using 1/800 makes it much less sensitive
           const map = evt.target;
           mapInstanceRef.current = map;
-          if (map && map.scrollZoom) {
+          if (interactive && map?.scrollZoom) {
             map.scrollZoom.setWheelZoomRate(1 / 800);
           }
           // Kick a repaint once the style reports ready — OSM previously hung forever.

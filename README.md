@@ -16,7 +16,7 @@ Multi-tenant local tourism platform for Hungarian regions and destinations (e.g.
 - **i18n** — Hungarian, English, German (i18next); per-language slugs and **hreflang** alternates
 - **SEO & Open Graph** — SSR meta injection (`apps/web/server.js`), Schema.org/JSON-LD, chunked **sitemaps** + **robots.txt** scoped by hostname
 - **Under-construction** gate with staff / preview access to public pages
-- **Google Analytics 4** (consent-gated), platform and per-site measurement IDs
+- **Google Tag Manager → GA4** (consent-gated): per-host `GTM-…` in admin; public `dataLayer` events (see [docs/analytics-gtm.md](docs/analytics-gtm.md))
 - **Web Push** subscriptions (VAPID); visitor accounts / starring where enabled
 - Loading **skeletons** aimed at reducing CLS on public surfaces
 
@@ -25,7 +25,7 @@ Multi-tenant local tourism platform for Hungarian regions and destinations (e.g.
 - Role-based access: superadmin, admin, editor, viewer (+ **2FA** TOTP)
 - CRUD for sites, domains, places, events, collections, towns, categories, tags, price bands, galleries, static/legal pages
 - Memberships, analytics dashboards, subscriptions / products, i18n & UI copy tools
-- App settings: SEO, map defaults, **GA**, **platform landing crawl** toggle, **Facebook social-preview refresh**
+- App settings: SEO, map defaults, **GTM per platform host**, **platform landing crawl** toggle, **Facebook social-preview refresh**
 - Plan entitlements for custom domains / aliases
 
 ### Platform / ops
@@ -148,11 +148,31 @@ Render.com is **retired** in this repo. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT
 
 ---
 
+## Public analytics (GTM → GA4)
+
+Consent-gated `dataLayer` events on public pages only. Admin configures **`GTM-…` per hostname**; you wire triggers + GA4 tags in Tag Manager.
+
+| Event | Typical use |
+| --- | --- |
+| `page_view` | SPA route changes |
+| `scroll` | 25 / 50 / 75 / 90% |
+| `view_item` / `select_item` | Place & event detail / list card |
+| `contact_click` | Phone, email, website, social |
+| `share` | Share buttons |
+| `cta_click` / `generate_lead` | Landing demo CTA / form |
+| `login_click` / `sign_up_click` | Auth entry |
+| `select_content` | Soft nav (map view, etc.) |
+
+Full event parameters and **what to set in GTM / GA4**: [docs/analytics-gtm.md](docs/analytics-gtm.md).
+
+---
+
 ## Documentation
 
 | Doc | Topic |
 | --- | --- |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes |
+| [docs/analytics-gtm.md](docs/analytics-gtm.md) | GTM/GA4 public events + Tag Manager setup |
 | [docs/frontend-seo-middleware.md](docs/frontend-seo-middleware.md) | SSR SEO, sitemaps, robots |
 | [docs/domain-based-tenant-resolution.md](docs/domain-based-tenant-resolution.md) | Host → site / entity |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deploy summary |

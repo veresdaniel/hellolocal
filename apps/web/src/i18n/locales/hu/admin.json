@@ -1843,12 +1843,9 @@
   },
   "googleAnalytics": {
     "platformTitle": "Google Tag Manager (platform)",
-    "platformHelp": "GTM konténer a platform domainekhez. Elsődlegesen domainenként a Platform host sorokban állítható.",
-    "platformDescription": "Platform szintű GTM tartalék",
+    "platformHelp": "GTM konténer a platform domainekhez — domainenként a Platformcímek sorokban.",
+    "platformDescription": "Platform szintű GTM",
     "platformHostGtmHelp": "GTM konténer domainenként: csak az adott hoston töltődik (pl. hellolocal.hu → GTM-5KW93TVN). Cookie hozzájárulás után.",
-    "platformGtmFallbackLabel": "GTM tartalék (ha a host sor üres)",
-    "platformGtmFallbackHelp": "Akkor érvényes, ha a platform host sorban nincs GTM megadva. Üresen kikapcsolva.",
-    "platformGtmDescription": "Platform szintű GTM tartalék konténer",
     "gtmLabel": "Google Tag Manager",
     "gtmDomainHelp": "GTM konténer ehhez a domainhez. Csak ezen a hoston töltődik be. Üresen kikapcsolva.",
     "siteLabel": "Google Tag Manager",
@@ -1868,7 +1865,6 @@
     "invalidId": "Érvénytelen GA4 azonosító. Várt formátum: G-XXXXXXXX",
     "invalidGtmId": "Érvénytelen GTM azonosító. Várt formátum: GTM-XXXXXXX",
     "save": "Analytics mentése",
-    "saveGtmFallback": "GTM tartalék mentése",
     "saved": "Google Analytics beállítás elmentve",
     "gtmSaved": "Google Tag Manager beállítás elmentve"
   },

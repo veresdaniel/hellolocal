@@ -6,16 +6,28 @@ import { REGION_LIST_PATH } from "../app/entityPaths";
 import { resolveLiveDemoHref } from "../app/liveDemoUrl";
 import { buildUrl } from "../app/urls";
 import type { Lang } from "../app/config";
+import { trackGtmCtaClick } from "../lib/gtmEvents";
 
 export function LiveDemoLink({
   lang,
   className,
   children,
+  ctaId = "live_demo",
 }: {
   lang: Lang;
   className?: string;
   children: ReactNode;
+  ctaId?: string;
 }) {
+  const onTrack = () => {
+    const label =
+      typeof children === "string"
+        ? children
+        : Array.isArray(children) && typeof children[0] === "string"
+          ? children[0]
+          : undefined;
+    trackGtmCtaClick(ctaId, label);
+  };
   const fallback = buildUrl({ lang, path: REGION_LIST_PATH[lang] });
   // Don't contend with overview LCP / first API burst — resolve demo URL once idle.
   const [allowFetch, setAllowFetch] = useState(false);
@@ -43,13 +55,13 @@ export function LiveDemoLink({
   const target = resolveLiveDemoHref(data?.url, fallback);
   if (target.external) {
     return (
-      <a className={className} href={target.href}>
+      <a className={className} href={target.href} onClick={onTrack}>
         {children}
       </a>
     );
   }
   return (
-    <Link className={className} to={target.href}>
+    <Link className={className} to={target.href} onClick={onTrack}>
       {children}
     </Link>
   );

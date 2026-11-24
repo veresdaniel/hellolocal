@@ -21,7 +21,6 @@ import { useApplyPublicFonts } from "../../hooks/useApplyPublicFonts";
 import { useApplyPublicTheme, publicThemeStyle } from "../../hooks/useApplyPublicTheme";
 import { resolvePublicThemePreset } from "../../styles/publicThemeColors";
 import { isPublicSsrPending } from "../../lib/publicSsrHold";
-import { CookieConsent } from "../../components/CookieConsent";
 import { InsideSiteChrome, PlatformGaShell } from "../../components/PlatformGaShell";
 import { PublicGaOverrideProvider } from "../../context/PublicGaOverrideContext";
 
@@ -258,8 +257,7 @@ function SiteLayoutContent({
   useApplyPublicFonts(platform.brand?.theme);
   useApplyPublicTheme(platform.siteTheme, platform.brand?.theme);
 
-  const showCookieConsent = platform.features?.cookieConsent !== false;
-  // Analytics: host-scoped GTM is loaded once in PlatformGaShell (domain / platform host).
+  // Analytics: host-scoped GTM is loaded once in PlatformGaShell; consent UI is global (RootScrollLayout).
 
   return (
     <div
@@ -291,7 +289,6 @@ function SiteLayoutContent({
           <Footer lang={lang} siteSlug={siteKey} platform={platform} />
         </div>
       )}
-      {showCookieConsent ? <CookieConsent /> : null}
     </div>
   );
 }

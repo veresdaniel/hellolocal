@@ -1,5 +1,9 @@
 {
-  "message": "Ez az oldal sütiket használ a legjobb felhasználói élmény biztosításához. A folytatással elfogadod a sütik használatát.",
+  "message": "Az oldal analitikai sütiket használ a jobb élményhez. Elfogadhatod most, vagy később a menü / lábléc Süti beállítások pontjából.",
+  "acceptedMessage": "Az analitikai sütik jelenleg engedélyezve vannak ezen az eszközön.",
   "accept": "Elfogadom",
-  "close": "Bezárás"
+  "later": "Most nem",
+  "ok": "Rendben",
+  "settings": "Süti beállítások",
+  "close": "Most nem"
 }

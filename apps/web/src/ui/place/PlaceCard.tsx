@@ -12,6 +12,7 @@ import { Badge } from "../../components/Badge";
 import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
 import { StarRating } from "../../components/StarRating";
 import { visitorPriceLabel } from "../../utils/priceLabel";
+import { trackGtmSelectItem } from "../../lib/gtmEvents";
 import "../../styles/list-card.css";
 
 // Function to get color for category
@@ -277,6 +278,15 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
   return (
     <Link
       to={buildUrl({ lang, siteKey, path: placeEntityPath(lang, place.slug) })}
+      onClick={() =>
+        trackGtmSelectItem({
+          itemId: place.id,
+          itemName: place.name,
+          itemCategory: place.category || undefined,
+          itemType: "place",
+          listName: "places_list",
+        })
+      }
       style={{
         textDecoration: "none",
         color: "inherit",

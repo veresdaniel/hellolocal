@@ -1788,8 +1788,8 @@
   },
   "googleAnalytics": {
     "platformTitle": "Google Tag Manager (platform)",
-    "platformHelp": "GA4 measurement ID for platform pages (overview, pricing, login, multi-place list). Leave empty to disable. Region/town/place/event pages use their own hierarchy — no platform fallback.",
-    "platformDescription": "Platform-wide GA4 measurement ID",
+    "platformHelp": "GTM container for platform domains — set per host in Public platform addresses.",
+    "platformDescription": "Platform GTM",
     "siteLabel": "Google Analytics (GA4)",
     "siteHelp": "Optional GA4 ID for this region (Site). Used when town/place/event have none. Leave empty to disable at this level.",
     "townLabel": "Google Tag Manager",
@@ -1807,13 +1807,9 @@
     "save": "Save analytics",
     "saved": "Google Analytics setting saved",
     "platformHostGtmHelp": "Per-domain GTM: loads only on that host (e.g. hellolocal.hu → GTM-5KW93TVN). After cookie consent.",
-    "platformGtmFallbackLabel": "GTM fallback (if host row empty)",
-    "platformGtmFallbackHelp": "Used when the platform host row has no GTM. Empty disables.",
-    "platformGtmDescription": "Platform GTM fallback container",
     "gtmLabel": "Google Tag Manager",
     "gtmClearHint": "Format: GTM-XXXXXXX. Empty = disabled on this domain.",
     "invalidGtmId": "Invalid GTM ID. Expected format: GTM-XXXXXXX",
-    "saveGtmFallback": "Save GTM fallback",
     "gtmSaved": "Google Tag Manager setting saved"
   },
   "typography": {

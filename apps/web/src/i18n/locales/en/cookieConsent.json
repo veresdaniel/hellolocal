@@ -1,5 +1,9 @@
 {
-  "message": "This site uses cookies to provide the best user experience. By continuing, you accept the use of cookies.",
+  "message": "This site uses analytics cookies for a better experience. You can accept now, or later from Cookie settings in the menu / footer.",
+  "acceptedMessage": "Analytics cookies are currently enabled on this device.",
   "accept": "Accept",
-  "close": "Close"
+  "later": "Not now",
+  "ok": "OK",
+  "settings": "Cookie settings",
+  "close": "Not now"
 }

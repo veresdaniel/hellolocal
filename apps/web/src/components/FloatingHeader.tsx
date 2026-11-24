@@ -24,6 +24,8 @@ import { USER_KEY } from "../constants/authStorage";
 import { rememberAuthReturn } from "../auth/visitorAuth";
 import { useViewHeading } from "../app/viewTitle";
 import { HeaderCrumb } from "./HeaderCrumb";
+import { openCookieConsentSettings } from "../lib/cookieConsent";
+import { trackGtmAuthClick, trackGtmSelectContent } from "../lib/gtmEvents";
 
 interface FloatingHeaderProps {
   onMapViewClick?: () => void;
@@ -940,10 +942,10 @@ export function FloatingHeader({
               overflowY: "auto",
               overflowX: "hidden",
               WebkitOverflowScrolling: "touch",
-              padding: "80px 24px max(24px, env(safe-area-inset-bottom))",
+              padding: "72px 20px max(20px, env(safe-area-inset-bottom))",
               display: "flex",
               flexDirection: "column",
-              gap: 12,
+              gap: 10,
               boxSizing: "border-box",
             }}
             onClick={(e) => {
@@ -1011,6 +1013,7 @@ export function FloatingHeader({
                   <Link
                     to={buildUrl({ lang, path: "login" })}
                     onClick={() => {
+                      trackGtmAuthClick("login");
                       rememberAuthReturn();
                       setIsMobileMenuOpen(false);
                     }}
@@ -1021,6 +1024,7 @@ export function FloatingHeader({
                   <Link
                     to={buildUrl({ lang, path: "register" })}
                     onClick={() => {
+                      trackGtmAuthClick("register");
                       rememberAuthReturn();
                       setIsMobileMenuOpen(false);
                     }}
@@ -1115,17 +1119,17 @@ export function FloatingHeader({
                 to={platformLandingPath(lang)}
                 onClick={() => setIsMobileMenuOpen(false)}
                 style={{
-                  margin: "12px 0 0",
+                  margin: 0,
                   background: "var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08))",
                   border: "1px solid rgba(27, 23, 48, 0.16)",
                   borderRadius: 12,
                   color: "var(--hl-nav-on-drawer, #1b1730)",
-                  fontSize: 18,
+                  fontSize: 17,
                   fontWeight: 600,
                   fontFamily:
                     "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                   textDecoration: "none",
-                  padding: "16px 24px",
+                  padding: "14px 20px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1159,6 +1163,7 @@ export function FloatingHeader({
                 <button
                   onClick={() => {
                     setIsMobileMenuOpen(false);
+                    trackGtmSelectContent("map_view");
                     openSiteExplore("map");
                     if (onMapViewClick) {
                       onMapViewClick();
@@ -1180,17 +1185,17 @@ export function FloatingHeader({
                     }
                   }}
                   style={{
-                    margin: "12px 0",
+                    margin: 0,
                     background: "rgba(196, 92, 38, 0.1)",
                     border: "1px solid rgba(196, 92, 38, 0.3)",
                     borderRadius: 12,
                     color: "#c45c26",
-                    fontSize: 18,
+                    fontSize: 17,
                     fontWeight: 600,
                     fontFamily:
                       "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                     cursor: "pointer",
-                    padding: "16px 24px",
+                    padding: "14px 20px",
                     transition: "all 0.2s",
                     display: "flex",
                     alignItems: "center",
@@ -1214,204 +1219,98 @@ export function FloatingHeader({
             </>
             )}
 
-            {/* Language selector in mobile menu */}
+            {/* Secondary links — compact list (was oversized padding / minHeight) */}
             <div
               style={{
-                padding: "20px 24px",
+                marginTop: 4,
+                paddingTop: 12,
                 borderTop: "1px solid rgba(0, 0, 0, 0.1)",
-                marginTop: 12,
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
               }}
             >
-              <LanguageSelector />
+              <div style={{ padding: "4px 8px 8px" }}>
+                <LanguageSelector />
+              </div>
+              {(
+                [
+                  {
+                    key: "imprint",
+                    to: buildUrl({ lang, siteKey, path: legalSegment(lang, "imprint") }),
+                    label: t("public.legal.imprint.title"),
+                    active: pathnameHasLegal(location.pathname, "imprint"),
+                  },
+                  {
+                    key: "terms",
+                    to: buildUrl({ lang, siteKey, path: legalSegment(lang, "terms") }),
+                    label: t("public.legal.terms.title"),
+                    active: pathnameHasLegal(location.pathname, "terms"),
+                  },
+                  {
+                    key: "privacy",
+                    to: buildUrl({ lang, siteKey, path: legalSegment(lang, "privacy") }),
+                    label: t("public.legal.privacy.title"),
+                    active: pathnameHasLegal(location.pathname, "privacy"),
+                  },
+                  {
+                    key: "static",
+                    to: buildUrl({ lang, siteKey, path: "static-pages" }),
+                    label: t("admin.dashboardCards.staticPages"),
+                    active: location.pathname.includes("static-pages"),
+                  },
+                ] as const
+              ).map((item) => (
+                <Link
+                  key={item.key}
+                  to={item.to}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  style={{
+                    textDecoration: "none",
+                    color: "#1a1a1a",
+                    fontSize: 16,
+                    fontWeight: 500,
+                    fontFamily:
+                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                    padding: "10px 12px",
+                    minHeight: 44,
+                    borderRadius: 10,
+                    background: item.active ? "rgba(196, 92, 38, 0.1)" : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    touchAction: "manipulation",
+                  }}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  openCookieConsentSettings();
+                }}
+                style={{
+                  textAlign: "left",
+                  color: "#1a1a1a",
+                  fontSize: 16,
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  padding: "10px 12px",
+                  minHeight: 44,
+                  borderRadius: 10,
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  touchAction: "manipulation",
+                }}
+              >
+                {t("cookieConsent.settings")}
+              </button>
             </div>
-            <Link
-              to={buildUrl({ lang, siteKey, path: legalSegment(lang, "imprint") })}
-              onClick={() => setIsMobileMenuOpen(false)}
-              style={{
-                textDecoration: "none",
-                color: "#1a1a1a",
-                fontSize: 20,
-                fontWeight: 500,
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                padding: "20px 24px",
-                minHeight: "56px",
-                borderRadius: 12,
-                transition: "all 0.2s",
-                background: pathnameHasLegal(location.pathname, "imprint")
-                  ? "rgba(196, 92, 38, 0.1)"
-                  : "transparent",
-                display: "flex",
-                alignItems: "center",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "rgba(196, 92, 38, 0.2)",
-              }}
-              onTouchStart={(e) => {
-                if (!pathnameHasLegal(location.pathname, "imprint")) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onTouchEnd={(e) => {
-                if (!pathnameHasLegal(location.pathname, "imprint")) {
-                  setTimeout(() => {
-                    e.currentTarget.style.background = "transparent";
-                  }, 150);
-                }
-              }}
-              onMouseEnter={(e) => {
-                if (!pathnameHasLegal(location.pathname, "imprint")) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!pathnameHasLegal(location.pathname, "imprint")) {
-                  e.currentTarget.style.background = "transparent";
-                }
-              }}
-            >
-              {t("public.legal.imprint.title")}
-            </Link>
-            <Link
-              to={buildUrl({ lang, siteKey, path: legalSegment(lang, "terms") })}
-              onClick={() => setIsMobileMenuOpen(false)}
-              style={{
-                textDecoration: "none",
-                color: "#1a1a1a",
-                fontSize: 20,
-                fontWeight: 500,
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                padding: "20px 24px",
-                minHeight: "56px",
-                borderRadius: 12,
-                transition: "all 0.2s",
-                background: pathnameHasLegal(location.pathname, "terms")
-                  ? "rgba(196, 92, 38, 0.1)"
-                  : "transparent",
-                display: "flex",
-                alignItems: "center",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "rgba(196, 92, 38, 0.2)",
-              }}
-              onTouchStart={(e) => {
-                if (!pathnameHasLegal(location.pathname, "terms")) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onTouchEnd={(e) => {
-                if (!pathnameHasLegal(location.pathname, "terms")) {
-                  setTimeout(() => {
-                    e.currentTarget.style.background = "transparent";
-                  }, 150);
-                }
-              }}
-              onMouseEnter={(e) => {
-                if (!pathnameHasLegal(location.pathname, "terms")) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!pathnameHasLegal(location.pathname, "terms")) {
-                  e.currentTarget.style.background = "transparent";
-                }
-              }}
-            >
-              {t("public.legal.terms.title")}
-            </Link>
-            <Link
-              to={buildUrl({ lang, siteKey, path: legalSegment(lang, "privacy") })}
-              onClick={() => setIsMobileMenuOpen(false)}
-              style={{
-                textDecoration: "none",
-                color: "#1a1a1a",
-                fontSize: 20,
-                fontWeight: 500,
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                padding: "20px 24px",
-                minHeight: "56px",
-                borderRadius: 12,
-                transition: "all 0.2s",
-                background: pathnameHasLegal(location.pathname, "privacy")
-                  ? "rgba(196, 92, 38, 0.1)"
-                  : "transparent",
-                display: "flex",
-                alignItems: "center",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "rgba(196, 92, 38, 0.2)",
-              }}
-              onTouchStart={(e) => {
-                if (!pathnameHasLegal(location.pathname, "privacy")) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onTouchEnd={(e) => {
-                if (!pathnameHasLegal(location.pathname, "privacy")) {
-                  setTimeout(() => {
-                    e.currentTarget.style.background = "transparent";
-                  }, 150);
-                }
-              }}
-              onMouseEnter={(e) => {
-                if (!pathnameHasLegal(location.pathname, "privacy")) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!pathnameHasLegal(location.pathname, "privacy")) {
-                  e.currentTarget.style.background = "transparent";
-                }
-              }}
-            >
-              {t("public.legal.privacy.title")}
-            </Link>
-            <Link
-              to={buildUrl({ lang, siteKey, path: "static-pages" })}
-              onClick={() => setIsMobileMenuOpen(false)}
-              style={{
-                textDecoration: "none",
-                color: "#1a1a1a",
-                fontSize: 20,
-                fontWeight: 500,
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                padding: "20px 24px",
-                minHeight: "56px",
-                borderRadius: 12,
-                transition: "all 0.2s",
-                background: location.pathname.includes("static-pages")
-                  ? "rgba(196, 92, 38, 0.1)"
-                  : "transparent",
-                display: "flex",
-                alignItems: "center",
-                touchAction: "manipulation",
-                WebkitTapHighlightColor: "rgba(196, 92, 38, 0.2)",
-              }}
-              onTouchStart={(e) => {
-                if (!location.pathname.includes("static-pages")) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onTouchEnd={(e) => {
-                if (!location.pathname.includes("static-pages")) {
-                  setTimeout(() => {
-                    e.currentTarget.style.background = "transparent";
-                  }, 150);
-                }
-              }}
-              onMouseEnter={(e) => {
-                if (!location.pathname.includes("static-pages")) {
-                  e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!location.pathname.includes("static-pages")) {
-                  e.currentTarget.style.background = "transparent";
-                }
-              }}
-            >
-              {t("admin.dashboardCards.staticPages")}
-            </Link>
 
             {/* Username + logout — end of mobile menu */}
             {user && showAuthButtons && (

@@ -12,8 +12,29 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+### Added
+
+- Public GTM `dataLayer` events (consent-gated, admin skipped): `page_view`,
+  `scroll`, `view_item`, `select_item`, `contact_click`, `share`, `cta_click`,
+  `generate_lead`, auth clicks, `select_content`; docs in
+  [docs/analytics-gtm.md](docs/analytics-gtm.md) and README.
+- Cookie settings re-open from mobile menu + footer; dismiss (“Most nem”) no
+  longer counts as accept.
+- Sample image seed script (`pnpm db:seed-sample-images`) for blank place
+  hero/card/map and related translation image fields.
+- Global public analytics + cookie consent shell (covers map view / overview).
+
+### Changed
+
+- Place detail map: locked pan/zoom, marker centered; mobile height ~⅔.
+- Mobile gallery lightbox: swipe, no arrows; stronger close control.
+- Mobile nav secondary links: tighter spacing; platform GTM fallback UI removed
+  (per-host GTM only).
+
 ### Fixed
 
+- SPA list → detail kept scroll position; `ScrollRestoration` resets on forward
+  navigations.
 - Admin towns edit crash: SEO fields referenced undefined `AiPostFillField`
   (correct export is `AiPostFormField`); EventsPage `?edit=` missing `getEvent`
   import.

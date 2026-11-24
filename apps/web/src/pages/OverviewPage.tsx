@@ -18,6 +18,7 @@ import { publicFontCssVars } from "../styles/publicFonts";
 import { getPublicUiLanguages } from "../api/uiCopy.api";
 import { MarketingPicture } from "../marketing/MarketingPicture";
 import { resolveHeroImage, resolveShareImage } from "../marketing/landingCmsImages";
+import { trackGtmSelectContent } from "../lib/gtmEvents";
 import "../styles/overview.css";
 
 const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
@@ -294,10 +295,14 @@ export function OverviewPage() {
               <h1>{title}</h1>
               <p className="overview__lead">{text("lead")}</p>
               <div className="overview__actions">
-                <LiveDemoLink className="overview__cta" lang={lang}>
+                <LiveDemoLink className="overview__cta" lang={lang} ctaId="hero_live_demo">
                   {text("cta")}
                 </LiveDemoLink>
-                <a className="overview__ghost" href="#how">
+                <a
+                  className="overview__ghost"
+                  href="#how"
+                  onClick={() => trackGtmSelectContent("hero_how_it_works")}
+                >
                   {text("ctaSecondary")}
                 </a>
               </div>

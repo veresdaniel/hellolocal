@@ -187,15 +187,23 @@
   gap: 8px;
 }
 
-.hl-footer .hl-footer__nav a {
+.hl-footer .hl-footer__nav a,
+.hl-footer .hl-footer__nav .hl-footer__text-btn {
   color: var(--hl-footer-fg, #fff);
   text-decoration: none;
   font-size: 15px;
   font-weight: 500;
   line-height: 1.35;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
 }
 
-.hl-footer .hl-footer__nav a:hover {
+.hl-footer .hl-footer__nav a:hover,
+.hl-footer .hl-footer__nav .hl-footer__text-btn:hover {
   color: var(--hl-footer-fg, #fff);
   text-decoration: underline;
   text-underline-offset: 3px;

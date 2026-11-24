@@ -4,7 +4,14 @@
  */
 // src/app/routes.tsx
 import { lazy, Suspense, type ReactNode } from "react";
-import { createBrowserRouter, Outlet, useParams, Navigate, useLocation } from "react-router-dom";
+import {
+  createBrowserRouter,
+  Outlet,
+  ScrollRestoration,
+  useParams,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { HAS_MULTIPLE_SITES, DEFAULT_SITE_SLUG, type Lang, isLang } from "./config";
 import { SiteLayout } from "./site/SiteLayout";
 import { ProtectedRoute } from "../components/ProtectedRoute";
@@ -13,7 +20,9 @@ import { RootRedirect } from "../components/RootRedirect";
 import { AdminPageSkeleton } from "../components/AdminPageSkeleton";
 import { PublicBootShell } from "../components/PublicSkeleton";
 import { PlatformGaShell } from "../components/PlatformGaShell";
+import { PublicAnalytics } from "../components/PublicAnalytics";
 import { UnderConstructionGate } from "../components/UnderConstructionGate";
+import { CookieConsent } from "../components/CookieConsent";
 import { ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN, ROLE_SUPERADMIN } from "../types/enums";
 import { LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, mapViewSegment, OVERVIEW_PATH_ALIASES, PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH, type LegalPageKey } from "./entityPaths";
 import { canonicalHostPath, useHostScope } from "./hostScope";
@@ -484,8 +493,25 @@ const createPublicRoutes = () => {
   }
 };
 
+/** Resets window scroll on forward navigations; restores position on browser Back. */
+function RootScrollLayout() {
+  return (
+    <>
+      <ScrollRestoration />
+      {/* Public dataLayer events (page_view, scroll). Admin paths skipped. */}
+      <PublicAnalytics />
+      {/* One global consent UI — covers overview, map view, and site pages. */}
+      <CookieConsent />
+      <Outlet />
+    </>
+  );
+}
+
 /** Top-level browser router: offline, legacy admin redirects, platform + custom-host trees. */
 export const router = createBrowserRouter([
+  {
+    element: <RootScrollLayout />,
+    children: [
   // Offline page - accessible without language prefix for service worker redirects
   { path: "/offline", element: <OfflinePage /> },
 
@@ -988,6 +1014,8 @@ export const router = createBrowserRouter([
       { path: "/", element: <RootRedirect /> },
       ...createPublicRoutes(),
       { path: "*", element: <NotFoundPage /> },
+    ],
+  },
     ],
   },
 ]);

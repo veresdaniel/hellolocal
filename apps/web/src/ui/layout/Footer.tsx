@@ -8,6 +8,7 @@ import type { PlatformSettings } from "../../app/site/SiteOutletContext";
 import { legalSegment, platformLandingPath } from "../../app/entityPaths";
 import { buildUrl } from "../../app/urls";
 import { usePlatformSettingsContextOptional } from "../../context/PlatformSettingsContext";
+import { openCookieConsentSettings } from "../../lib/cookieConsent";
 
 export function Footer({
   lang,
@@ -239,6 +240,24 @@ export function Footer({
               >
                 {t("public.legal.privacy.title")}
               </Link>
+              <button
+                type="button"
+                onClick={() => openCookieConsentSettings()}
+                style={{
+                  color: "white",
+                  background: "transparent",
+                  border: "none",
+                  padding: 0,
+                  fontSize: 15,
+                  fontWeight: 500,
+                  fontFamily:
+                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                  opacity: 0.9,
+                  cursor: "pointer",
+                }}
+              >
+                {t("cookieConsent.settings")}
+              </button>
               <Link
                 to={platformLandingPath(lang)}
                 style={{
@@ -353,6 +372,15 @@ export function Footer({
                   <li><Link to={imprint}>{t("public.legal.imprint.title")}</Link></li>
                   <li><Link to={terms}>{t("public.legal.terms.title")}</Link></li>
                   <li><Link to={privacy}>{t("public.legal.privacy.title")}</Link></li>
+                  <li>
+                    <button
+                      type="button"
+                      className="hl-footer__text-btn"
+                      onClick={() => openCookieConsentSettings()}
+                    >
+                      {t("cookieConsent.settings")}
+                    </button>
+                  </li>
                 </ul>
               </div>
               <div>

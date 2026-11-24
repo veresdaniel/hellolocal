@@ -42,6 +42,7 @@ import { getPlaceMemberships, getSiteMemberships } from "../api/admin.api";
 import { isSuperadmin, isAdmin, canEdit } from "../utils/roleHelpers";
 import { GalleryViewer } from "../components/GalleryViewer";
 import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
+import { trackGtmViewItem } from "../lib/gtmEvents";
 
 function formatEventWhen(startIso: string, endIso: string | null | undefined, lang: string) {
   const start = new Date(startIso);
@@ -102,6 +103,15 @@ export function EventDetailPage() {
   });
 
   usePublicGaOverride(event?.gaMeasurementId);
+
+  useEffect(() => {
+    if (!event?.id) return;
+    trackGtmViewItem({
+      itemId: event.id,
+      itemName: event.name,
+      itemType: "event",
+    });
+  }, [event?.id, event?.name]);
 
   const queryClient = useQueryClient();
 
@@ -828,6 +838,8 @@ export function EventDetailPage() {
                   title={event.name}
                   description={event.shortDescription || event.description || ""}
                   image={event.heroImage || undefined}
+                  contentType="event"
+                  itemId={event.id}
                 />
               </div>
             </div>

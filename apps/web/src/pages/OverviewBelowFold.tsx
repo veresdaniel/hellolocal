@@ -142,7 +142,7 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
         <div className="overview__close-copy">
           <h2>{text("closingTitle")}</h2>
           <p>{text("closingText")}</p>
-          <LiveDemoLink className="overview__cta" lang={lang}>
+          <LiveDemoLink className="overview__cta" lang={lang} ctaId="closing_live_demo">
             {text("cta")}
           </LiveDemoLink>
         </div>

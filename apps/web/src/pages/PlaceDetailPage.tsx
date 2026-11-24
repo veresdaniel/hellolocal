@@ -55,6 +55,7 @@ const MapComponent = lazy(() =>
   import("../components/MapComponent").then((module) => ({ default: module.MapComponent }))
 );
 import { track } from "../lib/analytics/track";
+import { trackGtmContactClick, trackGtmViewItem } from "../lib/gtmEvents";
 import { usePublicGaOverride } from "../context/PublicGaOverrideContext";
 import {
   armPublicSsrRevealFallback,
@@ -119,6 +120,16 @@ export function PlaceDetailPage() {
   });
 
   usePublicGaOverride(place?.gaMeasurementId);
+
+  useEffect(() => {
+    if (!place?.id) return;
+    trackGtmViewItem({
+      itemId: place.id,
+      itemName: place.name,
+      itemCategory: place.category || undefined,
+      itemType: "place",
+    });
+  }, [place?.id, place?.name, place?.category]);
 
   useLayoutEffect(() => {
     if (!isPublicSsrPending()) return;
@@ -970,6 +981,8 @@ export function PlaceDetailPage() {
                     title={place.name}
                     description={place.description || ""}
                     image={place.heroImage || undefined}
+                    contentType="place"
+                    itemId={place.id}
                   />
                 </div>
               </div>
@@ -1015,6 +1028,8 @@ export function PlaceDetailPage() {
                     title={place.name}
                     description={place.description || ""}
                     image={place.heroImage || undefined}
+                    contentType="place"
+                    itemId={place.id}
                   />
                 </div>
               </div>
@@ -1022,10 +1037,14 @@ export function PlaceDetailPage() {
           </div>
 
           {place.location?.lat != null && place.location.lng != null && (
+            (() => {
+              // Mobile: ~2/3 of desktop height; map stays locked and centered on the place.
+              const mapHeight = isMobile ? 312 : 468;
+              return (
             <div
               style={{
                 margin: "0 16px 24px",
-                height: 468,
+                height: mapHeight,
                 borderRadius: "var(--hl-radius-card, 12px)",
                 overflow: "hidden",
                 background: "rgba(27, 23, 48, 0.06)",
@@ -1042,8 +1061,8 @@ export function PlaceDetailPage() {
                   latitude={place.location.lat}
                   longitude={place.location.lng}
                   defaultZoom={16}
-                  height={468}
-                  interactive
+                  height={mapHeight}
+                  interactive={false}
                   hideLocationButton
                   markers={[
                     {
@@ -1056,6 +1075,8 @@ export function PlaceDetailPage() {
                 />
               </Suspense>
             </div>
+              );
+            })()
           )}
 
           {/* Contact and Opening Hours side by side */}
@@ -1248,6 +1269,14 @@ export function PlaceDetailPage() {
                             </strong>
                             <a
                               href={`tel:${place.contact.phone.replace(/\s/g, "")}`}
+                              onClick={() =>
+                                trackGtmContactClick({
+                                  method: "phone",
+                                  itemId: place.id,
+                                  itemName: place.name,
+                                  itemType: "place",
+                                })
+                              }
                               style={{
                                 color: "white",
                                 textDecoration: "none",
@@ -1310,6 +1339,14 @@ export function PlaceDetailPage() {
                             </strong>
                             <a
                               href={`mailto:${place.contact.email}`}
+                              onClick={() =>
+                                trackGtmContactClick({
+                                  method: "email",
+                                  itemId: place.id,
+                                  itemName: place.name,
+                                  itemType: "place",
+                                })
+                              }
                               style={{
                                 color: "white",
                                 textDecoration: "none",
@@ -1375,6 +1412,14 @@ export function PlaceDetailPage() {
                               href={place.contact.website}
                               target="_blank"
                               rel="noopener noreferrer"
+                              onClick={() =>
+                                trackGtmContactClick({
+                                  method: "website",
+                                  itemId: place.id,
+                                  itemName: place.name,
+                                  itemType: "place",
+                                })
+                              }
                               style={{
                                 color: "white",
                                 textDecoration: "none",
@@ -1440,6 +1485,14 @@ export function PlaceDetailPage() {
                               href={place.contact.facebook}
                               target="_blank"
                               rel="noopener noreferrer"
+                              onClick={() =>
+                                trackGtmContactClick({
+                                  method: "facebook",
+                                  itemId: place.id,
+                                  itemName: place.name,
+                                  itemType: "place",
+                                })
+                              }
                               style={{
                                 color: "white",
                                 textDecoration: "none",
@@ -1506,6 +1559,14 @@ export function PlaceDetailPage() {
                             </strong>
                             <a
                               href={`https://wa.me/${place.contact.whatsapp.replace(/[^\d]/g, "")}`}
+                              onClick={() =>
+                                trackGtmContactClick({
+                                  method: "whatsapp",
+                                  itemId: place.id,
+                                  itemName: place.name,
+                                  itemType: "place",
+                                })
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               style={{

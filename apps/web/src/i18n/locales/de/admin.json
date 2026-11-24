@@ -1788,9 +1788,9 @@
     "missing": "Keine Koordinaten für diesen Namen oder diese Adresse."
   },
   "googleAnalytics": {
-    "platformTitle": "Google Analytics (Plattform)",
-    "platformHelp": "GA4-Mess-ID für Plattformseiten (Übersicht, Preise, Login, Multi-Standort-Liste). Leer = deaktiviert. Region/Gemeinde/Ort/Event-Seiten nutzen ihre eigene Hierarchie — kein Plattform-Fallback.",
-    "platformDescription": "Plattformweite GA4-Mess-ID",
+    "platformTitle": "Google Tag Manager (Plattform)",
+    "platformHelp": "GTM-Container für Plattform-Domains — pro Host unter Öffentliche Plattformadressen.",
+    "platformDescription": "Plattform-GTM",
     "siteLabel": "Google Analytics (GA4)",
     "siteHelp": "Optionale GA4-ID für diese Region (Site). Gilt, wenn Gemeinde/Ort/Event keine eigene setzen. Leer = auf dieser Ebene deaktiviert.",
     "townLabel": "Google Tag Manager",
@@ -1808,13 +1808,9 @@
     "save": "Analytics speichern",
     "saved": "Google-Analytics-Einstellung gespeichert",
     "platformHostGtmHelp": "GTM-Container pro Domain: lädt nur auf diesem Host. Nach Cookie-Zustimmung.",
-    "platformGtmFallbackLabel": "GTM-Fallback (wenn Host-Zeile leer)",
-    "platformGtmFallbackHelp": "Gilt, wenn in der Host-Zeile kein GTM steht. Leer = aus.",
-    "platformGtmDescription": "Platform GTM fallback container",
     "gtmLabel": "Google Tag Manager",
     "gtmClearHint": "Format: GTM-XXXXXXX. Leer = auf dieser Domain aus.",
     "invalidGtmId": "Ungültige GTM-ID. Erwartetes Format: GTM-XXXXXXX",
-    "saveGtmFallback": "GTM-Fallback speichern",
     "gtmSaved": "Google Tag Manager Einstellung gespeichert"
   },
   "typography": {

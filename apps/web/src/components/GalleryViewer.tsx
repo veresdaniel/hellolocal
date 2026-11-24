@@ -1,7 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { ImageWithSkeleton } from "./ImageWithSkeleton";
 import { sanitizeImageUrl } from "../utils/urlValidation";
+
+const MOBILE_MQ = "(max-width: 767px)";
+const SWIPE_THRESHOLD_PX = 48;
 
 // Add CSS animations
 const styleSheet = document.createElement("style");
@@ -48,8 +51,21 @@ export function GalleryViewer({
   const { t, i18n } = useTranslation();
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia(MOBILE_MQ).matches : false
+  );
+  const swipeStartX = useRef<number | null>(null);
+  const swipeStartY = useRef<number | null>(null);
 
-  // Keyboard navigation
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ);
+    const onChange = () => setIsMobile(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  // Keyboard navigation (desktop / accessibility)
   useEffect(() => {
     if (!isFullscreen || selectedIndex === null) return;
 
@@ -104,6 +120,22 @@ export function GalleryViewer({
   const goToNext = () => {
     if (selectedIndex === null) return;
     setSelectedIndex(selectedIndex < images.length - 1 ? selectedIndex + 1 : 0);
+  };
+
+  const onSwipeStart = (clientX: number, clientY: number) => {
+    swipeStartX.current = clientX;
+    swipeStartY.current = clientY;
+  };
+
+  const onSwipeEnd = (clientX: number, clientY: number) => {
+    if (swipeStartX.current == null || swipeStartY.current == null) return;
+    const dx = clientX - swipeStartX.current;
+    const dy = clientY - swipeStartY.current;
+    swipeStartX.current = null;
+    swipeStartY.current = null;
+    if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) < Math.abs(dy)) return;
+    if (dx < 0) goToNext();
+    else goToPrevious();
   };
 
   if (!images || images.length === 0) return null;
@@ -308,43 +340,49 @@ export function GalleryViewer({
           }}
           onClick={closeFullscreen}
         >
-          {/* Close button */}
+          {/* Close button — larger / higher contrast on mobile */}
           <button
+            type="button"
+            aria-label={t("common.close", { defaultValue: "Close" })}
             onClick={(e) => {
               e.stopPropagation();
               closeFullscreen();
             }}
             style={{
               position: "absolute",
-              top: 20,
-              right: 20,
-              background: "rgba(255, 255, 255, 0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
+              top: isMobile ? "max(12px, env(safe-area-inset-top))" : 20,
+              right: isMobile ? "max(12px, env(safe-area-inset-right))" : 20,
+              background: isMobile ? "rgba(255, 255, 255, 0.95)" : "rgba(255, 255, 255, 0.1)",
+              border: isMobile ? "none" : "1px solid rgba(255, 255, 255, 0.2)",
               borderRadius: "50%",
-              width: 40,
-              height: 40,
-              color: "white",
-              fontSize: 24,
+              width: isMobile ? 52 : 40,
+              height: isMobile ? 52 : 40,
+              color: isMobile ? "#111" : "white",
+              fontSize: isMobile ? 32 : 24,
+              lineHeight: 1,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              transition: "background 0.2s ease",
+              transition: "background 0.2s ease, transform 0.15s ease",
               zIndex: 10000,
+              boxShadow: isMobile ? "0 4px 18px rgba(0, 0, 0, 0.45)" : "none",
+              fontWeight: 600,
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+              if (!isMobile) e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+              if (!isMobile) e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
             }}
           >
             ×
           </button>
 
-          {/* Previous button */}
-          {images.length > 1 && (
+          {/* Previous / next — desktop only; mobile uses swipe */}
+          {!isMobile && images.length > 1 && (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 goToPrevious();
@@ -379,9 +417,9 @@ export function GalleryViewer({
             </button>
           )}
 
-          {/* Next button */}
-          {images.length > 1 && (
+          {!isMobile && images.length > 1 && (
             <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 goToNext();
@@ -416,9 +454,17 @@ export function GalleryViewer({
             </button>
           )}
 
-          {/* Image container */}
+          {/* Image container — swipeable on mobile */}
           <div
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => {
+              if (e.touches.length !== 1) return;
+              onSwipeStart(e.touches[0].clientX, e.touches[0].clientY);
+            }}
+            onTouchEnd={(e) => {
+              if (!e.changedTouches.length) return;
+              onSwipeEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+            }}
             style={{
               width: "100vw",
               height: "100vh",
@@ -428,11 +474,14 @@ export function GalleryViewer({
               justifyContent: "center",
               animation: "zoomIn 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               paddingBottom: images[selectedIndex].caption || images.length > 1 ? "80px" : "20px",
+              touchAction: "pan-y",
+              userSelect: "none",
             }}
           >
             <img
               src={sanitizeImageUrl(images[selectedIndex].src) || ""}
               alt={images[selectedIndex].alt || `Gallery image ${selectedIndex + 1}`}
+              draggable={false}
               style={{
                 maxWidth: "100%",
                 maxHeight: "calc(100vh - 100px)",
@@ -440,6 +489,7 @@ export function GalleryViewer({
                 borderRadius: 8,
                 boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
                 transition: "opacity 0.3s ease",
+                pointerEvents: "none",
               }}
             />
             {(images[selectedIndex].caption || images.length > 1) && (

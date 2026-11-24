@@ -1,5 +1,9 @@
 {
-  "message": "Diese Website verwendet Cookies, um die beste Benutzererfahrung zu bieten. Durch Fortfahren akzeptieren Sie die Verwendung von Cookies.",
+  "message": "Diese Seite nutzt Analyse-Cookies für ein besseres Erlebnis. Du kannst jetzt zustimmen oder später unter Cookie-Einstellungen im Menü / Footer.",
+  "acceptedMessage": "Analyse-Cookies sind auf diesem Gerät derzeit aktiviert.",
   "accept": "Akzeptieren",
-  "close": "Schließen"
+  "later": "Jetzt nicht",
+  "ok": "OK",
+  "settings": "Cookie-Einstellungen",
+  "close": "Jetzt nicht"
 }
