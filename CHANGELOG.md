@@ -14,6 +14,11 @@ in prose as used in the product.
 
 ### Fixed
 
+- hellolocal.hu mobile LCP: defer SPA boot on overview SSR until `load`+idle so
+  `createRoot` does not wipe the SSR hero before lab LCP settles; drop vendor
+  `modulepreload` on that page (bandwidth for the map WebP); WebP as `<img src>`;
+  long-cache hashed assets + marketing images; API `dns-prefetch` instead of
+  unused CORS `preconnect`.
 - Explore PageSpeed (helloetyek): stop shipping MapLibre on first paint — drop
   stale `vite.config.js` (Vite preferred it over `.ts`) and its `map-vendor`
   `manualChunks` entry that hosted `__vitePreload`, so every lazy route

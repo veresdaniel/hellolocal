@@ -78,7 +78,8 @@
     <!-- Public default is self-hosted Source Sans 3. Inter/Poppins (admin + optional brand) load async. -->
     <link rel="preload" href="/fonts/source-sans-3-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/source-sans-3-latin-ext.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preconnect" href="https://api.hello-local.io" crossorigin />
+    <!-- dns-prefetch early; CORS preconnect after first paint via SPA (avoids unused crossorigin hint). -->
+    <link rel="dns-prefetch" href="https://api.hello-local.io" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

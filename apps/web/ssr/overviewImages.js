@@ -82,5 +82,7 @@ export function pictureHtml(img, alt, opts = {}) {
     img.webpSrcSetMobile && img.mobileMedia
       ? `<source type="image/webp" media="${img.mobileMedia}" srcset="${img.webpSrcSetMobile}" sizes="${img.sizes}" />`
       : "";
-  return `<picture>${mobile}<source type="image/webp" srcset="${img.webpSrcSet}" sizes="${img.sizes}" /><img${cls} src="${img.jpg}" alt="${alt}" width="${img.width}" height="${img.height}" ${loading} decoding="async" /></picture>`;
+  // Prefer WebP as the <img src> so LCP never falls back to the heavy JPG master.
+  const imgSrc = img.webp || img.jpg;
+  return `<picture>${mobile}<source type="image/webp" srcset="${img.webpSrcSet}" sizes="${img.sizes}" /><img${cls} src="${imgSrc}" alt="${alt}" width="${img.width}" height="${img.height}" ${loading} decoding="async" /></picture>`;
 }

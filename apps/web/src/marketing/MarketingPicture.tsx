@@ -24,7 +24,7 @@ export function MarketingPicture({ image, alt, className, priority = false }: Pr
       <source type="image/webp" srcSet={image.webpSrcSet} sizes={image.sizes} />
       <img
         className={className}
-        src={image.jpg}
+        src={image.webp || image.jpg}
         alt={alt}
         width={image.width}
         height={image.height}

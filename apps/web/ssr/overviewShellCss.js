@@ -17,9 +17,10 @@ body{margin:0;min-height:100vh;background-color:var(--hl-bg);background-image:ra
 #root>.overview--ssr h2{font-size:clamp(1.35rem,3.2vw,1.85rem);margin-top:2.5rem}
 #root>.overview--ssr p,#root>.overview--ssr li{color:var(--hl-on-dark)}
 #root>.overview--ssr a{color:var(--hl-mist);font-weight:600}
-#root>.overview--ssr img{max-width:100%;height:auto;border-radius:12px}
-#root>.overview--ssr figure{margin:2rem 0}
+#root>.overview--ssr img{display:block;width:100%;max-width:100%;height:auto;border-radius:12px}
+#root>.overview--ssr figure{margin:1.25rem 0 2rem;max-width:100%}
 #root>.overview--ssr figcaption{margin-top:.5rem;color:var(--hl-muted-on-dark);font-size:.95rem}
+@media (max-width:860px){#root>.overview--ssr{padding-top:clamp(72px,12vw,96px)}#root>.overview--ssr h1{font-size:clamp(1.75rem,7vw,2.35rem)}}
 `;
 
 let cachedOverviewCssHref = /** @type {string | null | undefined} */ (undefined);
@@ -46,6 +47,40 @@ export function resolveOverviewStylesheetHref(webRoot) {
 }
 
 /**
+ * Defer the SPA entry module until after `load` + idle so the SSR hero can
+ * become LCP before createRoot wipes `#root` (lab LCP was ~5s on Slow 4G).
+ * @param {string} html
+ */
+export function deferOverviewSpaBoot(html) {
+  // Vendor modulepreloads compete with the LCP image on Slow 4G — drop them
+  // on the marketing landing only (SPA boot still loads deps normally).
+  let next = html.replace(/<link\s+rel="modulepreload"[^>]*>\s*/gi, "");
+
+  next = next.replace(
+    /<script\s+type="module"\s+crossorigin\s+src="(\/assets\/index-[^"]+\.js)"\s*><\/script>/i,
+    `<script type="module">
+(function(){
+  var src="$1";
+  function boot(){
+    var s=document.createElement("script");
+    s.type="module";
+    s.crossOrigin="";
+    s.src=src;
+    document.body.appendChild(s);
+  }
+  function schedule(){
+    if("requestIdleCallback" in window) requestIdleCallback(boot,{timeout:3000});
+    else setTimeout(boot,50);
+  }
+  if(document.readyState==="complete") schedule();
+  else window.addEventListener("load",schedule,{once:true});
+})();
+</script>`
+  );
+  return next;
+}
+
+/**
  * @param {string} html
  * @param {string} webRoot apps/web directory (dirname of server.js)
  */
@@ -55,8 +90,8 @@ export function injectOverviewShellHead(html, webRoot) {
     <link rel="preload" as="image" href="/marketing/map-szeged-720.webp" type="image/webp" imagesrcset="/marketing/map-szeged-480.webp 480w, /marketing/map-szeged-720.webp 720w" imagesizes="(max-width: 860px) 100vw, 36vw" fetchpriority="high" />
     <style id="overview-shell">${OVERVIEW_SHELL_CSS}</style>
     ${sheet ? `<link rel="stylesheet" href="${sheet}" />` : ""}`;
-  if (html.includes("</head>")) {
-    return html.replace("</head>", `${block}\n  </head>`);
-  }
-  return `${block}${html}`;
+  let next = html.includes("</head>")
+    ? html.replace("</head>", `${block}\n  </head>`)
+    : `${block}${html}`;
+  return deferOverviewSpaBoot(next);
 }

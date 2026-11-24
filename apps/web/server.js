@@ -462,7 +462,7 @@ async function fetchBotSchema(req) {
 app.use(express.static(path.join(__dirname, 'dist'), {
   // Don't serve index.html for static file requests
   index: false,
-  // Set proper MIME types
+  // Set proper MIME types + long cache for hashed / marketing assets (PSI).
   setHeaders: (res, filePath) => {
     // Ensure JavaScript files have correct MIME type
     if (filePath.endsWith('.js')) {
@@ -471,6 +471,15 @@ app.use(express.static(path.join(__dirname, 'dist'), {
       res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     } else if (filePath.endsWith('.css')) {
       res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    }
+
+    const rel = filePath.replace(/\\/g, '/');
+    if (/\/assets\/[^/]+-[A-Za-z0-9_-]{6,}\.(js|css|woff2?)$/.test(rel)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    } else if (/\/marketing\/[^/]+\.(webp|jpe?g|png|svg)$/i.test(rel)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+    } else if (/\/fonts\/[^/]+\.woff2$/i.test(rel)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
   }
 }));
