@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -19,6 +19,12 @@ import { getPublicUiLanguages } from "../api/uiCopy.api";
 import { MarketingPicture } from "../marketing/MarketingPicture";
 import { resolveHeroImage, resolveShareImage } from "../marketing/landingCmsImages";
 import { trackGtmSelectContent } from "../lib/gtmEvents";
+import {
+  armPublicSsrRevealFallback,
+  isPublicSsrPending,
+  revealPublicSpa,
+  whenPublicStylesReady,
+} from "../lib/publicSsrHold";
 import "../styles/overview.css";
 
 const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
@@ -54,6 +60,28 @@ export function OverviewPage() {
       localStorage.setItem("i18nextLng", lang);
     }
   }, [i18n, lang]);
+
+  // Reveal only after async SPA CSS is applied — otherwise the hero FOUCs.
+  useLayoutEffect(() => {
+    if (!isPublicSsrPending()) {
+      document.documentElement.classList.remove("hl-booting");
+      return;
+    }
+    let cancelled = false;
+    const disarm = armPublicSsrRevealFallback(8000);
+    void whenPublicStylesReady().then(() => {
+      if (cancelled) return;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!cancelled) revealPublicSpa();
+        });
+      });
+    });
+    return () => {
+      cancelled = true;
+      disarm();
+    };
+  }, []);
 
   const foldSentinel = useRef<HTMLDivElement>(null);
   const [showBelow, setShowBelow] = useState(false);

@@ -10,17 +10,14 @@ export const OVERVIEW_SHELL_CSS = `
 :root{--hl-bg:#1b1730;--hl-bg-mid:#1f2140;--hl-bg-deep:#16132a;--hl-on-dark:#f2f4fb;--hl-on-dark-strong:#fff;--hl-muted-on-dark:#a8b0c8;--hl-accent:#c45c26;--hl-mist:#7a92c8;--font-body:"Source Sans 3",system-ui,-apple-system,sans-serif}
 html{background-color:var(--hl-bg);color:var(--hl-on-dark)}
 body{margin:0;min-height:100vh;background-color:var(--hl-bg);background-image:radial-gradient(980px 560px at 8% -4%,rgba(61,90,154,.55),transparent 58%),radial-gradient(820px 520px at 100% 8%,rgba(122,146,200,.28),transparent 52%),linear-gradient(180deg,var(--hl-bg) 0%,var(--hl-bg-mid) 38%,var(--hl-bg) 72%,var(--hl-bg-deep) 100%);color:var(--hl-on-dark);font-family:var(--font-body);-webkit-font-smoothing:antialiased}
-#root.hl-public{min-height:100vh;color:inherit;background:transparent;visibility:visible}
-#root>.overview--ssr{box-sizing:border-box;max-width:1120px;margin:0 auto;padding:clamp(96px,14vw,128px) clamp(16px,4vw,28px) clamp(64px,8vw,96px);color:var(--hl-on-dark);font-size:17px;line-height:1.65}
-#root>.overview--ssr h1,#root>.overview--ssr h2,#root>.overview--ssr h3{margin:0 0 .65em;font-weight:700;line-height:1.15;color:var(--hl-on-dark-strong)}
-#root>.overview--ssr h1{font-size:clamp(2rem,5vw,3.25rem)}
-#root>.overview--ssr h2{font-size:clamp(1.35rem,3.2vw,1.85rem);margin-top:2.5rem}
-#root>.overview--ssr p,#root>.overview--ssr li{color:var(--hl-on-dark)}
-#root>.overview--ssr a{color:var(--hl-mist);font-weight:600}
-#root>.overview--ssr img{display:block;width:100%;max-width:100%;height:auto;border-radius:12px}
-#root>.overview--ssr figure{margin:1.25rem 0 2rem;max-width:100%}
-#root>.overview--ssr figcaption{margin-top:.5rem;color:var(--hl-muted-on-dark);font-size:.95rem}
-@media (max-width:860px){#root>.overview--ssr{padding-top:clamp(72px,12vw,96px)}#root>.overview--ssr h1{font-size:clamp(1.75rem,7vw,2.35rem)}}
+#root.hl-public{min-height:100vh;color:inherit;background:transparent}
+/* Humans never see the crawl SSR or a CSS-less SPA hero — navy boot until reveal. */
+#root.hl-public>.overview--ssr,#hl-ssr-hold{
+  position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important;pointer-events:none!important
+}
+html.hl-spa-pending #root,html.hl-boot-public:has(#root.hl-public>.overview--ssr) #root{
+  visibility:hidden!important;pointer-events:none
+}
 `;
 
 let cachedOverviewCssHref = /** @type {string | null | undefined} */ (undefined);

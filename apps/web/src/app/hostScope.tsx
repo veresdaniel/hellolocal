@@ -91,7 +91,11 @@ export function useHostScope(): HostScope {
 /** Server painted platform marketing overview → treat host as platform before API hosts load. */
 function hasOverviewSsr(): boolean {
   if (typeof document === "undefined") return false;
-  return Boolean(document.querySelector(".overview--ssr, #root > .overview"));
+  return Boolean(
+    document.querySelector(
+      ".overview--ssr, #root > .overview, #hl-ssr-hold .overview--ssr, #hl-ssr-hold main.overview"
+    )
+  );
 }
 
 export function HostScopeProvider({ children }: { children: ReactNode }) {

@@ -23,14 +23,24 @@ import { useDefaultLanguage } from "./hooks/useDefaultLanguage";
 import { NotificationService } from "./services/notification.service";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import type { ReactNode } from "react";
-import { parkPublicSsr } from "./lib/publicSsrHold";
+import {
+  armPublicSsrRevealFallback,
+  isOverviewSsrBoot,
+  parkPublicSsr,
+} from "./lib/publicSsrHold";
 
-/** Keep SSR HTML visible; React mounts into a cleared #root underneath. */
+/** Keep SSR HTML for bots; React mounts into a cleared #root underneath. */
 parkPublicSsr();
 
-/** First paint was hidden via `html.hl-booting`; reveal once entry CSS has applied. */
 if (typeof document !== "undefined") {
-  document.documentElement.classList.remove("hl-booting");
+  // Platform overview: keep #root hidden until OverviewPage + async CSS are ready
+  // (deferred index.css otherwise FOUCs the hero). Other routes clear boot paint now.
+  if (isOverviewSsrBoot()) {
+    document.documentElement.classList.add("hl-spa-pending");
+    armPublicSsrRevealFallback(8000);
+  } else {
+    document.documentElement.classList.remove("hl-booting");
+  }
 }
 
 // Backup filter for "tabReply" deprecation warnings from browser extensions
