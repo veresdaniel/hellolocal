@@ -27,7 +27,7 @@ import {
 } from "../lib/publicSsrHold";
 import "../styles/overview.css";
 
-const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
+const FAQ_KEYS = ["app", "languages", "editors", "towns", "maps"] as const;
 const OverviewBelowFold = lazy(() =>
   import("./OverviewBelowFold").then((module) => ({ default: module.OverviewBelowFold }))
 );
@@ -353,6 +353,13 @@ export function OverviewPage() {
               <figcaption className="overview__caption">{text("shotLabel")}</figcaption>
             </figure>
           </header>
+
+          {(text("introP1") || text("introP2")) && (
+            <section className="overview__intro overview__rise" aria-label={text("menu")}>
+              {text("introP1") ? <p>{text("introP1")}</p> : null}
+              {text("introP2") ? <p>{text("introP2")}</p> : null}
+            </section>
+          )}
 
           <ul className="overview__stats">
             <li>

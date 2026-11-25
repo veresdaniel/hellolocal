@@ -145,6 +145,22 @@
   line-height: 1.55;
 }
 
+.overview__intro {
+  max-width: 46rem;
+  margin: clamp(28px, 4vw, 40px) 0 0;
+  color: var(--muted);
+  font-size: clamp(16px, 1.05vw, 18px);
+  line-height: 1.65;
+}
+
+.overview__intro p {
+  margin: 0 0 1em;
+}
+
+.overview__intro p:last-child {
+  margin-bottom: 0;
+}
+
 .overview__actions {
   display: flex;
   flex-wrap: wrap;

@@ -16,7 +16,7 @@ const FEATURE_KEYS = ["places", "events", "map", "languages", "sites", "editors"
 const STORY_KEYS = ["maker", "service", "quiet", "town"] as const;
 const STEP_KEYS = ["collect", "publish", "share"] as const;
 const DIFFERENCE_KEYS = ["hidden", "traffic", "region"] as const;
-const FAQ_KEYS = ["app", "languages", "editors", "towns"] as const;
+const FAQ_KEYS = ["app", "languages", "editors", "towns", "maps"] as const;
 
 export function OverviewBelowFold({ lang }: { lang: Lang }) {
   const text = useLandingText(lang);

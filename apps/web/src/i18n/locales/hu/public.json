@@ -45,18 +45,20 @@
   },
   "overview": {
     "menu": "Áttekintés",
-    "eyebrow": "Önkormányzatoknak, turisztikai irodáknak és helyi vállalkozóknak",
-    "title": "A látogató egy térképen találja meg a helyeiteket és a programjaitokat.",
-    "lead": "Helyek, programok és a térkép egy oldalon vannak. A vendég a telefonján nyitja meg, és elindul.",
-    "differenceKicker": "Miért más",
-    "differenceTitle": "A kevésbé ismert hely is kap vendéget",
-    "differenceLead": "A műhely, a pince és a mellékutca is fent van a térképen. Aki a helyet viszi, a saját lapját írja. A hivatal vagy az iroda egy linken adja tovább a vendégnek.",
-    "seoTitle": "HelloLocal | Helyi helyek, kézművesek és környékek egy térképen",
-    "seoDescription": "Kézművesek, helyi szolgáltatások és a kevésbé látható helyek egy térképen. Hivataloknak, turisztikai irodáknak és azoknak, akik nincsenek a főutcán.",
-    "keywords": "helyi vállalkozás, kézműves, helyi szolgáltatás, település, régió, önkormányzat, turisztikai iroda, HelloLocal",
+    "eyebrow": "Önkormányzatoknak, turisztikai irodáknak és helyi vállalkozásoknak",
+    "title": "Egy térképen a régiótok helyei és programjai — app nélkül.",
+    "lead": "A látogató a telefonján nyitja meg, szűr, és elindul. Ti egy linken adjátok tovább.",
+    "introP1": "A HelloLocal böngészőből elérhető helyi turisztikai térkép: egy felületen gyűjti össze egy régió látnivalóit, szolgáltatásait, vendéglátóhelyeit, különleges helyszíneit és programjait. Nem kell alkalmazást letölteni, regisztrálni vagy több weboldal között keresgélni.",
+    "introP2": "Egy régió értékét nemcsak a legismertebb látványosságok adják. Ott vannak a családi pincék, a kézműves műhelyek, az eldugott éttermek és a helyi termelők is. A HelloLocal ezeknek ad közös, könnyen megosztható megjelenést — a hely gazdája írja a saját oldalát, a hivatal vagy a turisztikai iroda pedig egyetlen linken adja tovább a vendégnek.",
+    "differenceKicker": "Miért más, mint egy általános térkép",
+    "differenceTitle": "Nem a világatlasz, hanem a ti régiótok",
+    "differenceLead": "A Google Térkép mindent mutat. A HelloLocal azt emeli ki, ami nálatok számít: a helyi kínálatot, naprakész programokkal, a helyek saját szövegeivel és egy megosztható linken.",
+    "seoTitle": "HelloLocal | Helyi helyek és programok egy régiós térképen",
+    "seoDescription": "Böngészős turisztikai térkép önkormányzatoknak, turisztikai irodáknak és helyi vállalkozásoknak. Helyek, programok, több nyelv — app nélkül, egy linken.",
+    "keywords": "helyi turizmus, régiós térkép, önkormányzat, turisztikai iroda, helyi vállalkozás, kézműves, HelloLocal",
     "cta": "Nézd meg élőben",
     "ctaSecondary": "Hogyan működik",
-    "shotCaption": "Szeged a térképen: a helyek, a szűrők és a következő programok egy képernyőn.",
+    "shotCaption": "Szeged a térképen: helyek, szűrők és a következő programok egy képernyőn.",
     "shotLabel": "Élő térkép",
     "statsLanguagesValue": "3",
     "statsLanguages": "magyar, angol és német",
@@ -64,110 +66,114 @@
     "statsMap": "térkép a helyeknek és a programoknak",
     "statsAppValue": "Nincs app",
     "statsApp": "a vendég a böngészőben nyitja meg",
-    "featuresTitle": "Amit a vendég használni tud",
-    "featuresLead": "Nyitvatartás, a mai program, és az a hely is, amelyik nincs a főtéren.",
+    "featuresTitle": "Amit a vendég és ti is használtok",
+    "featuresLead": "Térkép és lista, nyitvatartás, mai programok, több nyelv — és a tartalom a helyiek kezében marad.",
     "stepsTitle": "Három lépés a vendégig",
     "difference": {
       "hidden": {
-        "title": "Amit eddig csak a helyiek ismertek",
-        "text": "Udvar, műhely, piaci asztal, pince, egy sarokkal beljebb. Felkerül a térképre, és a vendég odatalál."
+        "title": "Ami eddig csak a helyieké volt",
+        "text": "Udvar, műhely, piaci asztal, pince, egy sarokkal beljebb. Felkerül a térképre, és a vendég odatalál — nem vész el a nagy világatlaszban."
       },
       "traffic": {
-        "title": "Vendég, kis hirdetési keretből",
-        "text": "A hivatal vagy az iroda linkje hozza a látogatót. A hirdetési keret kicsi maradhat."
+        "title": "Egy link a hivatali és irodai kommunikációban",
+        "text": "Weboldalra, hírlevélbe, QR-kódra, plakátra. Kis marketingkeretből is egységes megjelenés — nem kell külön hirdetési gépezet."
       },
       "region": {
-        "title": "Egy régió, külön térképekkel",
-        "text": "Több település elfér egymás mellett, mindegyik a saját közönségével. A kézműves megmarad a saját környékén."
+        "title": "Ország → régió → település → hely",
+        "text": "Több település elfér egy rendszerben, mindegyik a saját közönségével. A kisebb településnek nem kell egyedül felépítenie a teljes turisztikai oldalt."
       }
     },
-    "storiesTitle": "Kinek szól",
-    "storiesLead": "A kézművesnek, a szolgáltatónak, és annak a hivatalnak vagy irodának, amelyik egy linken adja tovább őket a vendégnek.",
-    "faqTitle": "Amit általában megkérdeznek",
-    "closingTitle": "A következő vendég a térképről indul.",
-    "closingText": "Nyisd meg, és képzeld a saját helyeidet a pontok helyére: a műhelyt, a pincét, a szolgáltatást vagy az egész környéket.",
+    "storiesTitle": "Három szereplő, egy közös térkép",
+    "storiesLead": "A vendég felfedez. A vállalkozás a saját oldalát gondozza. Az önkormányzat vagy a turisztikai szervezet egy linken mutatja meg az egészet.",
+    "faqTitle": "Gyakori kérdések",
+    "closingTitle": "Mutassátok meg a régiótokat egy térképen.",
+    "closingText": "Nyisd meg az élő példát, és képzeld a saját helyeidet a pontok helyére: a műhelyt, a pincét, a szolgáltatást vagy az egész környéket.",
     "closingImageAlt": "Túrázó sárga hátizsákkal egy hegyi ösvényen",
     "steps": {
       "collect": {
-        "title": "Felkerül, aki eddig kimaradt",
-        "text": "Műhely, bolt, pince, szolgáltatás. Kép, nyitvatartás, és egy oldal, amit a vendég továbbküldhet."
+        "title": "Felkerülnek a helyek",
+        "text": "Látnivaló, vendéglátás, szolgáltatás, kézműves. Kép, nyitvatartás, és egy oldal, amit a vendég továbbküldhet."
       },
       "publish": {
         "title": "A programok naprakészek maradnak",
-        "text": "A következő hetek a térkép mellett vannak. Ami véget ért, lekerül, ami ezen a hétvégén van, elöl marad."
+        "text": "A következő hetek a térkép mellett vannak. Ami véget ért, lekerül; ami ezen a hétvégén van, elöl marad."
       },
       "share": {
         "title": "Egy link a vendégnek",
-        "text": "A saját nyelvén nyitja meg, szűr, és elindul. A telefon böngészőjében működik."
+        "text": "Saját domainnel is (például helloetyek.hu), a vendég nyelvén. Telefon böngészőjében működik — nincs új app."
       }
     },
     "faq": {
       "app": {
         "q": "Kell a vendégnek alkalmazást letöltenie?",
-        "a": "A térkép és a programok a böngészőben nyílnak, telefonon és számítógépen is."
+        "a": "Nem. A térkép és a programok a böngészőben nyílnak, telefonon és számítógépen is. Belépés csak az értékeléshez kell."
       },
       "languages": {
-        "q": "Külön oldal készül minden nyelvhez?",
-        "a": "Ahány nyelven a vendég érkezik, annyi külön cím készül. A kereső a megfelelő nyelven találja meg."
+        "q": "Hogyan működik a több nyelv?",
+        "a": "Magyar, angol és német. A tartalmak nyelvenként külön kezelhetők — nem egyszerű gépi fordítás. A kereső a megfelelő nyelvi címen találja meg az oldalt."
       },
       "editors": {
         "q": "Ki írja a szöveget?",
-        "a": "Aki a helyet viszi: a kézműves, a szolgáltató, vagy a hivatal és az iroda munkatársa. Mindenki a saját részét gondozza. Van hozzá AI-generátor, és analitika a forgalomról."
+        "a": "Aki a helyet viszi: a vállalkozó, a szolgáltató, vagy a hivatal és az iroda munkatársa. Mindenki a saját részét gondozza. AI-segéd és forgalmi összesítő is van — a látogatók személyes adatai nem eladók."
       },
       "towns": {
         "q": "Egy rendszerben elfér több település?",
-        "a": "Igen. Egy régió több települést is vihet. Mindegyiknek saját térképe és programja van, a vendég a megnyitott helyszínnél marad."
+        "a": "Igen. Országon belül régiók, régión belül települések. Mindegyiknek megmarad a saját arculata; a vendég a megnyitott helyszínnél marad."
+      },
+      "maps": {
+        "q": "Miért nem elég a Google Térkép?",
+        "a": "A Google Térkép a világ minden pontját mutatja. A HelloLocal a ti régiótokat: kurált helyi kínálat, naprakész programok, a helyek saját bemutatkozása, saját domain, és egy megosztható link a turisztikai kommunikációhoz. Nem hirdetési piactér, és nem kell új appot erőltetni a vendégre."
       }
     },
     "features": {
       "places": {
-        "title": "A műhely is megtalálható",
-        "text": "Nyitvatartással és egy oldallal kerül a térképre, amit a vendég továbbküldhet. A kevésbé ismert hely is látszik."
+        "title": "Helyek saját oldallal",
+        "text": "Nyitvatartás, képek, bemutatkozás. A kevésbé ismert hely is látszik — nem csak az, ami a főtéren van."
       },
       "events": {
-        "title": "A hétvégi program elöl marad",
-        "text": "Ami véget ért, lekerül. Ami most van soron, azt látja a vendég először."
+        "title": "Programok, amelyek elöl maradnak",
+        "text": "Ami véget ért, lekerül. Ami most van soron, azt látja a vendég először — spontán hétvégére is."
       },
       "map": {
-        "title": "Erről a térképről el lehet indulni",
-        "text": "A vendég látja, mi van nyitva, mi jó esőben, és hol van ma program. Telefonon is használható marad."
+        "title": "Térkép, amiről el lehet indulni",
+        "text": "Szűrők: mi van nyitva, mi jó esőben, hol van ma program. Mobilbarát, regisztráció nélkül."
       },
       "languages": {
-        "title": "A vendég a saját nyelvén olvassa",
-        "text": "A tartalom a vendég nyelvén készül, azon a címen, amin keres. Ugyanazt a térképet kapja."
+        "title": "Három nyelv, külön tartalommal",
+        "text": "A vállalkozás az adott nyelv közönségéhez igazíthatja a bemutatkozását. A nyelvi változatok saját címen is elérhetők."
       },
       "sites": {
-        "title": "Több település, külön programokkal",
-        "text": "Egy régió több helyszínt is összefoghat. Mindegyik térképe és programja külön marad, a vendég nem csúszik át a szomszédba."
+        "title": "Saját domain a régiónak",
+        "text": "A platform (hellolocal.hu) a szolgáltatást mutatja. A régió saját címe — például helloetyek.hu — rögtön a térség kínálatát nyitja."
       },
       "editors": {
-        "title": "Aki a helyet viszi, az írja",
-        "text": "A kézműves, a szolgáltató vagy a település munkatársa a saját szövegét gondozza. AI-generátorral is megírathatja, és látja a forgalmat. A vendég azt látja, ami éppen igaz."
+        "title": "A tartalom a helyieké",
+        "text": "Nem központi szerkesztőség ír helyettetek. AI segíthet a szövegben; a forgalomról összesített számokat kaptok — személyes adatokat nem árulunk."
       }
     },
     "stories": {
       "maker": {
-        "kicker": "Kézműves",
+        "kicker": "Helyi vállalkozás",
         "title": "A műhely saját oldalt kap",
-        "text": "Kerámia, textil, lekvár, méz. Kép, nyitvatartás, és egy pont, amit a vendég továbbküldhet.",
+        "text": "Kerámia, textil, lekvár, pince. Kép, nyitvatartás, program — amit ti frissítetek, azt látja a vendég.",
         "alt": "Kézzel készült kerámiatálak egy műhelyasztalon"
       },
       "service": {
-        "kicker": "Helyi szolgáltatás",
-        "title": "A saját neve van elöl",
-        "text": "Fodrász, szabó, biciklis, masszőr. A vendég a környéket nézi, és az ő nevüket, az ő címüket látja.",
+        "kicker": "Szolgáltató",
+        "title": "A saját nevetek van elöl",
+        "text": "Vendéglátás, szállás, helyi szolgáltatás. A vendég a környéket nézi, és a ti címeteket találja — nem egy távoli listát.",
         "alt": "Kis biciklis műhely, szerszámokkal és egy kerékkel a padon"
       },
       "quiet": {
-        "kicker": "Ami nincs szem előtt",
-        "title": "Egy sarokkal beljebb",
-        "text": "Udvar, műhely, piaci asztal, a főutcától elfordulva. Felkerül az is, akit eddig csak a helyiek ismertek.",
+        "kicker": "Rejtett értékek",
+        "title": "Egy sarokkal beljebb is számít",
+        "text": "Udvar, piaci asztal, helytörténeti pont. Felkerül az is, akit eddig csak a helyiek ismertek.",
         "alt": "Nyitott udvar kapuja egy csendes mellékutcában"
       },
       "town": {
-        "kicker": "Hivatal és turisztikai iroda",
-        "title": "Aki össze tudja gyűjteni őket",
-        "text": "Összegyűjti a helyi vállalkozókat, és egy linken adja tovább a látogatónak, a vendég nyelvén.",
+        "kicker": "Önkormányzat és turisztikai iroda",
+        "title": "Egy felület, egy link",
+        "text": "Összegyűjtitek a települések és a környék kínálatát. Beilleszthető a weboldalra, használható kampányban — akár tematikus kurátoroldalakkal is.",
         "alt": "Élő térkép a helyi helyekkel és programokkal"
       }
     },
@@ -192,8 +198,6 @@
       "required": "Add meg a nevet és az emailt.",
       "invalidEmail": "Ez nem tűnik email címnek."
     },
-    "plansTitle": "Csomagok",
-    "plansLead": "Havonta. Látszódj, minden helyeden, vagy egy település.",
     "plans": {
       "priceUnit": "/ hó",
       "freePrice": "Ingyenes",

@@ -46,128 +46,134 @@
   "overview": {
     "menu": "Überblick",
     "eyebrow": "Für Gemeinden, Tourismusbüros und lokale Betriebe",
-    "title": "Gäste finden eure Orte und Veranstaltungen auf einer Karte",
-    "lead": "Orte, Termine und die Karte stehen auf einer Seite. Der Gast öffnet sie auf dem Handy und geht los.",
-    "differenceKicker": "Warum es anders ist",
-    "differenceTitle": "Auch der weniger bekannte Ort bekommt Gäste",
-    "differenceLead": "Werkstatt, Keller und Seitengasse stehen auf der Karte. Wer den Ort führt, schreibt die eigene Seite. Gemeinde oder Büro gibt sie mit einem Link weiter.",
-    "seoTitle": "HelloLocal | Lokale Orte, Handwerk und Gegenden auf einer Karte",
-    "seoDescription": "Handwerk, lokale Dienste und die weniger sichtbaren Orte auf einer Karte. Für Gemeinden, Tourismusbüros und die, die nicht an der Hauptstraße liegen.",
-    "keywords": "lokaler Betrieb, Handwerk, Dienstleistung, Gemeinde, Region, Tourismusbüro, HelloLocal",
+    "title": "Eure Orte und Termine auf einer Karte — ohne App.",
+    "lead": "Gäste öffnen sie am Handy, filtern und gehen los. Ihr teilt einen Link.",
+    "introP1": "HelloLocal ist eine lokale Tourismuskarte im Browser. Sie versammelt Sehenswürdigkeiten, Dienstleistungen, Gastronomie, besondere Orte und Veranstaltungen einer Region auf einer Oberfläche. Keine App, keine Anmeldung zum Stöbern, kein Hin- und Herspringen zwischen Websites.",
+    "introP2": "Eine Region ist mehr als ihre bekannten Highlights. Familienweingüter, Handwerksstätten, versteckte Restaurants und lokale Erzeuger verdienen eine gemeinsame, leicht teilbare Präsenz. Wer den Ort führt, schreibt die eigene Seite; Gemeinde oder Tourismusbüro gibt alles mit einem Link weiter.",
+    "differenceKicker": "Warum das keine gewöhnliche Karte ist",
+    "differenceTitle": "Nicht der Weltatlas — eure Region",
+    "differenceLead": "Google Maps zeigt alles. HelloLocal hebt hervor, was vor Ort zählt: kuratierte Orte, aktuelle Termine, Texte von den Betreibern und ein teilbarer Link.",
+    "seoTitle": "HelloLocal | Lokale Orte und Termine auf einer Regionalkarte",
+    "seoDescription": "Tourismuskarte im Browser für Gemeinden, Tourismusbüros und lokale Betriebe. Orte, Termine, mehrere Sprachen — ohne App, mit einem Link.",
+    "keywords": "lokaler Tourismus, Regionalkarte, Gemeinde, Tourismusbüro, lokaler Betrieb, Handwerk, HelloLocal",
     "cta": "Live ansehen",
     "ctaSecondary": "So funktioniert es",
-    "shotCaption": "Szeged auf der Karte: Orte, Filter und die nächsten Veranstaltungen auf einem Bildschirm.",
+    "shotCaption": "Szeged auf der Karte: Orte, Filter und die nächsten Termine auf einem Bildschirm.",
     "shotLabel": "Live-Karte",
     "statsLanguagesValue": "3",
     "statsLanguages": "Ungarisch, Englisch und Deutsch",
     "statsMapValue": "1",
     "statsMap": "Karte für Orte und Veranstaltungen",
     "statsAppValue": "Keine App",
-    "statsApp": "der Gast öffnet die Seite im Browser",
-    "featuresTitle": "Was der Gast benutzen kann",
-    "featuresLead": "Öffnungszeiten, das Programm von heute, und der Ort abseits des Hauptplatzes.",
+    "statsApp": "Gäste öffnen die Seite im Browser",
+    "featuresTitle": "Was Gäste — und ihr — bekommt",
+    "featuresLead": "Karte und Liste, Öffnungszeiten, heutige Termine, mehrere Sprachen — und Inhalte, die in lokalen Händen bleiben.",
     "stepsTitle": "Drei Schritte bis zum Gast",
     "difference": {
       "hidden": {
-        "title": "Was bisher nur die Einheimischen kannten",
-        "text": "Hof, Werkstatt, Marktstand, Keller, eine Ecke weiter. Es kommt auf die Karte, und der Gast findet hin."
+        "title": "Was bisher nur Einheimische kannten",
+        "text": "Hof, Werkstatt, Marktstand, Keller, eine Abbiegung weiter. Es kommt auf die Karte, damit Gäste es finden — statt im Weltatlas unterzugehen."
       },
       "traffic": {
-        "title": "Gäste aus einem kleinen Werbebudget",
-        "text": "Der Link der Gemeinde oder des Büros bringt die Besucher. Das Werbebudget kann klein bleiben."
+        "title": "Ein Link für Amts- und Tourismuskanäle",
+        "text": "Website, Newsletter, QR-Code, Plakat. Einheitliche Präsenz aus kleinem Marketingbudget — ohne Werbeapparat."
       },
       "region": {
-        "title": "Eine Region, getrennte Karten",
-        "text": "Mehrere Orte stehen nebeneinander, jeder mit eigenem Publikum. Das Handwerk bleibt in der eigenen Gegend."
+        "title": "Land → Region → Ort → Betrieb",
+        "text": "Mehrere Gemeinden teilen ein System, jede mit eigenem Publikum. Kleinere Orte müssen keine komplette Tourismusseite allein aufbauen."
       }
     },
-    "storiesTitle": "Für wen",
-    "storiesLead": "Für das Handwerk, den Dienst und für die Gemeinde oder das Büro, das sie dem Gast mit einem Link weitergibt.",
-    "faqTitle": "Was meistens gefragt wird",
-    "closingTitle": "Der nächste Gast startet von der Karte.",
-    "closingText": "Öffne sie und stell dir deine eigenen Orte an diesen Punkten vor: die Werkstatt, den Keller, den Dienst oder die ganze Gegend.",
+    "storiesTitle": "Drei Rollen, eine gemeinsame Karte",
+    "storiesLead": "Gäste entdecken. Betriebe pflegen ihre Seiten. Gemeinden und Tourismusbüros zeigen das Ganze mit einem Link.",
+    "faqTitle": "Häufige Fragen",
+    "closingTitle": "Zeigt eure Region auf einer Karte.",
+    "closingText": "Öffnet das Live-Beispiel und stellt euch eure Orte an diesen Punkten vor: Werkstatt, Keller, Dienst oder die ganze Gegend.",
     "closingImageAlt": "Eine Person mit gelbem Rucksack auf einem Bergpfad",
     "steps": {
       "collect": {
-        "title": "Wer bisher fehlte, kommt drauf",
-        "text": "Werkstatt, Laden, Keller, Dienst. Foto, Öffnungszeiten und eine Seite, die der Gast weiterleiten kann."
+        "title": "Orte kommen auf die Karte",
+        "text": "Sehenswürdigkeiten, Gastronomie, Dienste, Handwerk. Fotos, Öffnungszeiten und eine Seite, die Gäste weiterleiten können."
       },
       "publish": {
-        "title": "Das Programm bleibt aktuell",
-        "text": "Die kommenden Wochen stehen neben der Karte. Was vorbei ist, fällt weg, was an diesem Wochenende ist, bleibt vorn."
+        "title": "Termine bleiben aktuell",
+        "text": "Die kommenden Wochen stehen neben der Karte. Was vorbei ist, fällt weg; was an diesem Wochenende ist, bleibt vorn."
       },
       "share": {
         "title": "Ein Link für den Gast",
-        "text": "Er öffnet ihn in seiner Sprache, filtert und geht los. Es läuft im Browser des Telefons."
+        "text": "Optional unter eigener Domain (zum Beispiel helloetyek.hu), in der Sprache des Gastes. Läuft im Handy-Browser — keine neue App."
       }
     },
     "faq": {
       "app": {
         "q": "Muss der Gast eine App laden?",
-        "a": "Karte und Programm öffnen sich im Browser, auf dem Telefon und am Computer."
+        "a": "Nein. Karte und Programm öffnen sich im Browser, am Telefon und am Computer. Anmeldung braucht es nur für Bewertungen."
       },
       "languages": {
-        "q": "Gibt es für jede Sprache eine eigene Seite?",
-        "a": "Für jede Sprache, in der der Gast ankommt, gibt es eine eigene Adresse. Die Suche findet die Seite dann in dieser Sprache."
+        "q": "Wie funktionieren mehrere Sprachen?",
+        "a": "Ungarisch, Englisch und Deutsch. Inhalte werden je Sprache gepflegt — keine stumpfe Maschinenübersetzung. Die Suche findet jede Sprachversion unter eigener Adresse."
       },
       "editors": {
         "q": "Wer schreibt den Text?",
-        "a": "Wer den Ort führt: das Handwerk, der Dienst oder jemand aus der Gemeinde oder dem Büro. Jeder pflegt seinen Teil. Ein KI-Generator schreibt mit, und die Analytik zeigt den Verkehr."
+        "a": "Wer den Ort führt: Betrieb, Dienst oder Mitarbeitende in Gemeinde und Büro. Jeder pflegt seinen Teil. Eine KI kann beim Text helfen; Besucherzahlen kommen als Summe — personenbezogene Daten verkaufen wir nicht."
       },
       "towns": {
         "q": "Können mehrere Orte ein System teilen?",
-        "a": "Ja. Eine Region kann mehrere Orte tragen. Jeder hat eine eigene Karte und ein eigenes Programm, der Gast bleibt bei dem, den er geöffnet hat."
+        "a": "Ja. Länder enthalten Regionen, Regionen Orte. Jeder behält seinen Charakter; der Gast bleibt bei dem Standort, den er geöffnet hat."
+      },
+      "maps": {
+        "q": "Warum reicht Google Maps nicht?",
+        "a": "Google Maps zeigt die ganze Welt. HelloLocal zeigt eure Region: kuratiertes lokales Angebot, aktuelle Termine, Seiten von den Betreibern, optional eigene Domain und ein teilbarer Link für die Tourismuskommunikation. Kein Werbemarktplatz, und keine neue App für Gäste."
       }
     },
     "features": {
       "places": {
-        "title": "Die Werkstatt ist auch zu finden",
-        "text": "Sie kommt mit Öffnungszeiten und einer Seite auf die Karte, die der Gast weiterleiten kann. Auch der weniger bekannte Ort ist sichtbar."
+        "title": "Orte mit eigener Seite",
+        "text": "Öffnungszeiten, Fotos, Vorstellung. Auch weniger bekannte Orte sind sichtbar — nicht nur der Hauptplatz."
       },
       "events": {
-        "title": "Das Wochenendprogramm bleibt vorn",
-        "text": "Was vorbei ist, fällt weg. Was jetzt ansteht, sieht der Gast zuerst."
+        "title": "Termine, die vorn bleiben",
+        "text": "Was vorbei ist, fällt weg. Was jetzt ansteht, sieht der Gast zuerst — auch für ein spontanes Wochenende."
       },
       "map": {
-        "title": "Von dieser Karte kann man losgehen",
-        "text": "Der Gast sieht, was offen ist, was bei Regen taugt und wo heute etwas stattfindet. Auf dem Telefon bleibt die Karte benutzbar."
+        "title": "Eine Karte zum Losgehen",
+        "text": "Filter für geöffnet, regenfest und heutige Termine. Mobilfreundlich, ohne Anmeldung zum Stöbern."
       },
       "languages": {
-        "title": "Der Gast liest in seiner Sprache",
-        "text": "Die Inhalte entstehen in der Sprache des Gastes, unter der Adresse dieser Sprache. Er bekommt dieselbe Karte."
+        "title": "Drei Sprachen, echte Inhalte",
+        "text": "Betriebe können jede Sprache an ihr Publikum anpassen. Sprachversionen können eigene Webadressen haben."
       },
       "sites": {
-        "title": "Mehrere Orte, getrennte Programme",
-        "text": "Eine Region kann mehrere Standorte zusammenfassen. Karte und Programm bleiben getrennt, der Gast rutscht nicht zum Nachbarn hinüber."
+        "title": "Eigene Domain für die Region",
+        "text": "hellolocal.hu zeigt das Produkt. Eine Regionsdomain — zum Beispiel helloetyek.hu — öffnet direkt die Karte der Gegend."
       },
       "editors": {
-        "title": "Wer den Ort führt, schreibt ihn",
-        "text": "Handwerk, Dienst oder jemand aus dem Ort pflegt den eigenen Text. Mit einem KI-Generator lässt er ihn schreiben und sieht den Verkehr. Der Gast sieht, was gerade stimmt."
+        "title": "Inhalte bleiben lokal",
+        "text": "Keine Zentralredaktion schreibt für euch. KI kann beim Text helfen; ihr bekommt aggregierte Besucherzahlen — keine verkauften Personendaten."
       }
     },
     "stories": {
       "maker": {
-        "kicker": "Handwerk",
+        "kicker": "Lokaler Betrieb",
         "title": "Die Werkstatt bekommt eine eigene Seite",
-        "text": "Keramik, Leinen, Marmelade, Honig. Foto, Öffnungszeiten und einen Punkt, den der Gast weiterleiten kann.",
+        "text": "Keramik, Textil, Marmelade, Keller. Fotos, Öffnungszeiten, Termine — Gäste sehen, was ihr aktuell haltet.",
         "alt": "Handgemachte Keramikschalen auf einem Werkstatttisch"
       },
       "service": {
-        "kicker": "Ein lokaler Dienst",
-        "title": "Der eigene Name steht vorn",
-        "text": "Friseur, Schneider, Fahrradwerkstatt, Massage. Der Gast schaut sich die Gegend an und sieht ihren Namen und ihre Adresse.",
+        "kicker": "Dienstleistung",
+        "title": "Euer Name steht vorn",
+        "text": "Gastronomie, Unterkunft, lokaler Dienst. Gäste schauen die Gegend an und finden eure Adresse — keine ferne Generikliste.",
         "alt": "Eine kleine Fahrradwerkstatt mit Werkzeug und einem Rad auf der Bank"
       },
       "quiet": {
-        "kicker": "Abseits der Hauptstraße",
-        "title": "Eine Ecke weiter",
-        "text": "Hof, Werkstatt, Marktstand, eine Abbiegung von der Hauptstraße. Auch das kommt auf die Karte, was bisher nur die Einheimischen kannten.",
+        "kicker": "Versteckte Werte",
+        "title": "Eine Ecke weiter zählt auch",
+        "text": "Hof, Marktstand, ortsgeschichtlicher Punkt. Auch das kommt auf die Karte, was bisher nur Einheimische kannten.",
         "alt": "Ein offenes Hoftor in einer ruhigen Seitengasse"
       },
       "town": {
         "kicker": "Gemeinde und Tourismusbüro",
-        "title": "Wer sie sammeln kann",
-        "text": "Sie sammelt die lokalen Betriebe und gibt dem Gast einen Link, in der Sprache des Gastes.",
+        "title": "Eine Oberfläche, ein Link",
+        "text": "Ihr sammelt das Angebot der Orte und der Umgebung. Einbettbar auf der Website, nutzbar in Kampagnen — inklusive thematischer Kuratorseiten.",
         "alt": "Eine lebendige Karte mit lokalen Orten und Veranstaltungen"
       }
     },
@@ -192,8 +198,6 @@
       "required": "Bitte Name und E-Mail angeben.",
       "invalidEmail": "Das sieht nicht nach einer E-Mail-Adresse aus."
     },
-    "plansTitle": "Pakete",
-    "plansLead": "Monatliche Preise. Sichtbar werden, an jedem Ort oder eine Gemeinde.",
     "plans": {
       "priceUnit": "/ Monat",
       "freePrice": "Kostenlos",

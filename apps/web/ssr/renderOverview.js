@@ -406,11 +406,13 @@ export function renderOverviewDocument(
     (code) => `<link rel="alternate" hreflang="${code}" href="${origin}/${code}" />`
   ).join("");
 
-  const questions = ["app", "languages", "editors", "towns"].map((key) => ({
-    "@type": "Question",
-    name: copy.faq[key].q,
-    acceptedAnswer: { "@type": "Answer", text: copy.faq[key].a },
-  }));
+  const questions = ["app", "languages", "editors", "towns", "maps"]
+    .filter((key) => copy.faq?.[key]?.q)
+    .map((key) => ({
+      "@type": "Question",
+      name: copy.faq[key].q,
+      acceptedAnswer: { "@type": "Answer", text: copy.faq[key].a },
+    }));
   const jsonLd = JSON.stringify({
     "@context": "https://schema.org",
     "@graph": [
@@ -446,6 +448,13 @@ export function renderOverviewDocument(
     currencies
   );
 
+  const introBlock =
+    copy.introP1 || copy.introP2
+      ? `<section>${copy.introP1 ? `<p>${escapeHtml(copy.introP1)}</p>` : ""}${
+          copy.introP2 ? `<p>${escapeHtml(copy.introP2)}</p>` : ""
+        }</section>`
+      : "";
+
   const body = `
     <main class="overview overview--ssr">
       <p>${escapeHtml(copy.eyebrow)}</p>
@@ -456,6 +465,7 @@ export function renderOverviewDocument(
         ${heroPictureHtml(landingImages, lang, escapeHtml(copy.shotCaption))}
         <figcaption>${escapeHtml(copy.shotCaption)}</figcaption>
       </figure>
+      ${introBlock}
       <section>
         <h2>${escapeHtml(copy.differenceTitle || "")}</h2>
         <p>${escapeHtml(copy.differenceLead || "")}</p>

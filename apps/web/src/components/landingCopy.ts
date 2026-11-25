@@ -27,6 +27,8 @@ export const LANDING_GROUPS: LandingGroup[] = [
       field("eyebrow", ["Felirat", "Eyebrow", "Dachzeile"]),
       field("title", ["Cím", "Title", "Titel"], true),
       field("lead", ["Bevezető", "Lead", "Einleitung"], true),
+      field("introP1", ["Bemutatkozás 1. bekezdés", "Intro paragraph 1", "Einstieg Absatz 1"], true),
+      field("introP2", ["Bemutatkozás 2. bekezdés", "Intro paragraph 2", "Einstieg Absatz 2"], true),
       field("cta", ["Elsődleges gomb", "Primary button", "Primäre Schaltfläche"]),
       field("ctaSecondary", ["Második gomb", "Second button", "Zweite Schaltfläche"]),
       field("shotLabel", ["Képaláírás", "Image label", "Bildunterschrift"]),
@@ -127,6 +129,8 @@ export const LANDING_GROUPS: LandingGroup[] = [
       field("faq.editors.a", ["Szerkesztők válasza", "Editors answer", "Redaktion-Antwort"], true),
       field("faq.towns.q", ["Települések kérdése", "Towns question", "Gemeinden-Frage"]),
       field("faq.towns.a", ["Települések válasza", "Towns answer", "Gemeinden-Antwort"], true),
+      field("faq.maps.q", ["Google Térkép kérdése", "Google Maps question", "Google-Maps-Frage"]),
+      field("faq.maps.a", ["Google Térkép válasza", "Google Maps answer", "Google-Maps-Antwort"], true),
     ],
   },
   {

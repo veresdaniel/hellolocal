@@ -26,6 +26,10 @@ in prose as used in the product.
 
 ### Changed
 
+- Platform landing copy (hu/en/de): clearer marketing voice from the product
+  concept — intro paragraphs, Google Maps FAQ, stronger region/domain framing;
+  admin Landing copy editor fields for `introP1` / `introP2`.
+- Superadmin dashboard cards: Countries → Region & memberships → Settlements.
 - Place list filters: drop fixed 240px min-height so the panel hugs chip rows
   (skeleton matches).
 - Place list cards: mobile collapses empty rating/tag/copy slots for tighter

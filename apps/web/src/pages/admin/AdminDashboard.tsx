@@ -293,19 +293,19 @@ export function AdminDashboard() {
         variant: "admin",
       },
       {
-        key: "towns",
-        title: t("admin.dashboardCards.contentHierarchy"),
-        description: t("admin.dashboardCards.contentHierarchyDesc"),
-        link: adminPath("/towns"),
-        icon: "🏘️",
-        variant: "admin",
-      },
-      {
         key: "regionMemberships",
         title: t("admin.dashboardCards.regionAndMemberships"),
         description: t("admin.dashboardCards.regionAndMembershipsDesc"),
         link: adminPath("/site-memberships"),
         icon: "🗺️",
+        variant: "admin",
+      },
+      {
+        key: "towns",
+        title: t("admin.dashboardCards.contentHierarchy"),
+        description: t("admin.dashboardCards.contentHierarchyDesc"),
+        link: adminPath("/towns"),
+        icon: "🏘️",
         variant: "admin",
       },
       {
