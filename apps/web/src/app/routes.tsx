@@ -224,6 +224,7 @@ function LangIndex() {
   const scope = useHostScope();
   // Custom hosts resolve asynchronously — never flash the platform overview
   // (or "Rólunk"/landing copy) while domain lookup is still in flight.
+  // Plain navy boot only (no list-card skeleton — that flashed on platform /:lang).
   if (scope.status === "loading") return <PublicBootShell />;
   if (scope.status === "ready" && scope.kind === "place") return <PlaceDetailPage />;
   if (scope.status === "ready" && scope.kind === "event") return <EventDetailPage />;

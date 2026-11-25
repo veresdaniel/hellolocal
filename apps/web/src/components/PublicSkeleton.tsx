@@ -120,20 +120,25 @@ export function PublicListSkeleton({
 }
 
 /**
- * Navy boot shell for custom-host scope resolution — never the white
- * {@link LoadingSpinner} (that flash was ~0.5 CLS on helloetyek PSI).
+ * Navy boot shell for host resolution / lazy Suspense — never the white
+ * {@link LoadingSpinner}, and never {@link PublicListSkeleton} (that card grid
+ * flashed ~100ms over the platform overview while OverviewPage chunk loaded).
  */
 export function PublicBootShell({ label = "Loading" }: { label?: string }) {
   return (
     <div
       className="hl-public"
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label={label}
       style={{
         minHeight: "100vh",
         background: "var(--hl-bg, #1b1730)",
         color: "var(--hl-on-dark, #f2f4fb)",
       }}
     >
-      <PublicListSkeleton label={label} />
+      <span className="hl-skel-visually-hidden">{label}</span>
     </div>
   );
 }

@@ -88,10 +88,16 @@ export function useHostScope(): HostScope {
  * Sets scope to platform immediately for known platform hosts; otherwise stays
  * `loading` until `/api/domain/:host` returns.
  */
+/** Server painted platform marketing overview → treat host as platform before API hosts load. */
+function hasOverviewSsr(): boolean {
+  if (typeof document === "undefined") return false;
+  return Boolean(document.querySelector(".overview--ssr, #root > .overview"));
+}
+
 export function HostScopeProvider({ children }: { children: ReactNode }) {
   const host = typeof window !== "undefined" ? window.location.hostname : "";
   const [scope, setScope] = useState<HostScope>(() => {
-    if (!host || isPlatformHost(host)) return PLATFORM;
+    if (!host || isPlatformHost(host) || hasOverviewSsr()) return PLATFORM;
     const boot = readHostBootstrap();
     if (boot) return scopeFromResolve(boot);
     return { status: "loading", kind: "platform" };

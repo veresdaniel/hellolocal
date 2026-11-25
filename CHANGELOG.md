@@ -38,6 +38,9 @@ in prose as used in the product.
 
 ### Fixed
 
+- Platform overview load: no more brief place-card skeleton flash while the
+  lazy OverviewPage chunk loads (`PublicBootShell` is plain navy; hellolocal.hu/.eu
+  + overview SSR seed platform host scope immediately).
 - Mobile map: tapping a place name chip opens the info bubble (not only the
   pin); selected bubble shrinks when zooming out instead of looking larger.
 - Mobile gallery lightbox: one full image per viewport (clipped track); swipe

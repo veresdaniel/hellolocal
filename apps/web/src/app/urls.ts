@@ -33,6 +33,12 @@ const PLATFORM_HOSTS = new Set([
   "api.beta.hello-local.io",
   "devel.hello-local.io",
   "api.devel.hello-local.io",
+  // Production marketing hosts — sync allowlist so /:lang does not boot as
+  // "loading" (PublicBootShell) before getPublicPlatformHost returns.
+  "hellolocal.hu",
+  "www.hellolocal.hu",
+  "hellolocal.eu",
+  "www.hellolocal.eu",
 ]);
 
 /**
