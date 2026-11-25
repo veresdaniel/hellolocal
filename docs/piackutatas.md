@@ -6,7 +6,7 @@ A HelloLocal kis, fizetős B2B-termékként piacképes. Országos tömegpiackén
 
 ## Ki fizet
 
-A látogató ingyen nézi. A számla az önkormányzaté, a turisztikai irodáé, a TDM-é vagy a borvidéké lehet. 2025-ben a turisztikai szálláshelyeken 47,2 millió vendégéjszakát regisztráltak, 5,1%-kal többet, mint 2024-ben; a szálláshelyi bevétel folyó áron 1 194 milliárd forint volt (KSH). Ez a látogató kereslete. A HelloLocal számláját egy szervezet állítja ki.
+A látogató ingyen nézi. A számla az önkormányzaté, a turisztikai irodáé, a TDM-é vagy a borvidéké lehet. Ez a DMO-first vevőfeltételezés zárolt a P0 feature-sorrendhez ([p0-feature-specs.md](./p0-feature-specs.md)): claim/approval → embed/QR → import/bulk; a vállalkozó tartalomadó, nem az első számla. 2025-ben a turisztikai szálláshelyeken 47,2 millió vendégéjszakát regisztráltak, 5,1%-kal többet, mint 2024-ben; a szálláshelyi bevétel folyó áron 1 194 milliárd forint volt (KSH). Ez a látogató kereslete. A HelloLocal számláját egy szervezet állítja ki.
 
 | Szereplő | Fizet? | Miért |
 | --- | --- | --- |
