@@ -7,6 +7,7 @@ import { OVERVIEW_HERO_MAP, OVERVIEW_STORY_IMAGES, pictureHtml } from "./overvie
 
 export const LANDING_IMAGE_SLOTS = [
   "hero",
+  "mobile",
   "maker",
   "service",
   "quiet",
@@ -80,7 +81,7 @@ export function heroPictureHtml(images, lang, alt) {
 /**
  * @param {Record<string, Record<string, string>> | null | undefined} images
  * @param {string} lang
- * @param {"maker"|"service"|"quiet"|"civic"|"town"} key
+ * @param {"mobile"|"maker"|"service"|"quiet"|"civic"|"town"} key
  * @param {string} alt
  */
 export function storyPictureHtml(images, lang, key, alt) {

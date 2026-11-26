@@ -8,6 +8,7 @@ export const LANDING_IMAGES_KEY = "platform.landingImages";
 
 export const LANDING_IMAGE_SLOTS = [
   "hero",
+  "mobile",
   "maker",
   "service",
   "quiet",

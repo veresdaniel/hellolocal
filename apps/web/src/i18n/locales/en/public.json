@@ -153,6 +153,12 @@
       }
     },
     "stories": {
+      "mobile": {
+        "kicker": "From your phone, on the spot",
+        "title": "Add a place or event in minutes — right from your phone",
+        "text": "You do not need to sit down at a desk, and you do not have to wait for Monday in the office. If you are in the cellar, the workshop, or already at next weekend’s venue, HelloLocal’s mobile upload walks you through it in a few steps: a photo from the camera or gallery, a short intro, and optional GPS to put the pin on the map. After you save, the place or event is in the system — as a draft awaiting approval on the free plan, or live right away on paid plans. So the offer updates when something actually happens: new hours, a new table, a new concert, a new walk — not weeks later, when everyone has forgotten. Guests just need the link to show what is true right now.",
+        "alt": "Hands holding a phone with a mobile wizard for adding a local place"
+      },
       "maker": {
         "kicker": "Craft maker",
         "title": "The workshop gets its own page",

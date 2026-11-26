@@ -74,6 +74,9 @@ export const OVERVIEW_HERO_MAP = ladder(
 const STORY_SIZES = "(max-width: 860px) 92vw, 42vw";
 
 export const OVERVIEW_STORY_IMAGES = {
+  mobile: ladder("mobile-place-upload", [480, 720, 960, 1100], { w: 960, h: 720 }, STORY_SIZES, {
+    mobileWidths: [480, 720],
+  }),
   maker: ladder("craft-workshop", [480, 720, 960, 1100], { w: 960, h: 720 }, STORY_SIZES, {
     mobileWidths: [480, 720],
   }),

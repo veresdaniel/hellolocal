@@ -24,6 +24,18 @@ const STORY_SIZES = "(max-width: 860px) 92vw, 42vw";
 const MOBILE_MEDIA = "(max-width: 860px)";
 
 export const OVERVIEW_STORY_IMAGES = {
+  mobile: {
+    jpg: "/marketing/mobile-place-upload.jpg",
+    webp: "/marketing/mobile-place-upload-960.webp",
+    width: 960,
+    height: 720,
+    webpSrcSet:
+      "/marketing/mobile-place-upload-480.webp 480w, /marketing/mobile-place-upload-720.webp 720w, /marketing/mobile-place-upload-960.webp 960w, /marketing/mobile-place-upload-1100.webp 1100w",
+    webpSrcSetMobile:
+      "/marketing/mobile-place-upload-480.webp 480w, /marketing/mobile-place-upload-720.webp 720w",
+    mobileMedia: MOBILE_MEDIA,
+    sizes: STORY_SIZES,
+  },
   maker: {
     jpg: "/marketing/craft-workshop.jpg",
     webp: "/marketing/craft-workshop-960.webp",

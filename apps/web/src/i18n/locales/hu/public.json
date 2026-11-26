@@ -153,6 +153,12 @@
       }
     },
     "stories": {
+      "mobile": {
+        "kicker": "Mobilról, helyben",
+        "title": "Pillanatok alatt felkerül a hely és a program — a telefonodról",
+        "text": "Nem kell asztalhoz ülni, és nem kell a hétfői irodai napra várni. Ha a pincében állsz, a műhelyben vagy, vagy épp a következő hétvégi program helyszínén jársz, a HelloLocal mobil feltöltőjével pár lépésben felviszed, ami kell: fotó a kamerából vagy a galériából, rövid bemutatkozás, és ha szeretnéd, a GPS a térképre teszi a pontot. Mentés után a hely vagy az esemény a rendszerben van — free csomagnál draftként vár jóváhagyásra, fizetősöknél pedig azonnal élhet. Így a kínálat akkor frissül, amikor történik valami: új nyitvatartás, új asztal, új koncert, új túra — nem hetekkel később, amikor már mindenki elfelejtette. A vendégnek pedig az a fontos, hogy amikor megnyitja a linket, azt lássa, ami most igaz.",
+        "alt": "Telefon a kézben: hely feltöltése a HelloLocal mobil wizardjában"
+      },
       "maker": {
         "kicker": "Kézműves",
         "title": "A műhely saját oldalt kap",

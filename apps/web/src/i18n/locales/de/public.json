@@ -153,6 +153,12 @@
       }
     },
     "stories": {
+      "mobile": {
+        "kicker": "Vom Handy, vor Ort",
+        "title": "Ort und Termin in Minuten — direkt vom Smartphone",
+        "text": "Kein Schreibtisch nötig, und kein Warten auf den Montag im Büro. Stehst du im Keller, in der Werkstatt oder schon am Ort des nächsten Wochenendprogramms, führt dich HelloLocals mobiler Upload in wenigen Schritten: Foto aus Kamera oder Galerie, kurze Vorstellung, optional GPS für die Karte. Nach dem Speichern ist Ort oder Termin im System — beim Free-Plan als Entwurf zur Freigabe, bei bezahlten Plänen sofort live. So aktualisiert sich das Angebot, wenn etwas passiert: neue Öffnungszeiten, ein neuer Tisch, ein neues Konzert, eine neue Tour — nicht Wochen später, wenn es niemand mehr weiß. Gäste brauchen nur den Link und sehen, was jetzt stimmt.",
+        "alt": "Hände halten ein Smartphone mit dem HelloLocal-Upload für Orte"
+      },
       "maker": {
         "kicker": "Handwerk",
         "title": "Die Werkstatt bekommt eine eigene Seite",

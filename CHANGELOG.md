@@ -14,6 +14,8 @@ in prose as used in the product.
 
 ### Added
 
+- Platform landing story block for mobile place/event upload (image + DB
+  UiMessage copy hu/en/de; CMS slot `mobile`).
 - Profile password change (current + new) and admin user-edit password reset
   (emails new credentials); forgot-password sends SMTP link to reset page
   (public and admin paths).

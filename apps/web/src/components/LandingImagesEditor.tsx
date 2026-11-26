@@ -20,6 +20,7 @@ const LANDING_IMAGES_KEY = "platform.landingImages";
 
 const SLOT_LABEL: Record<LandingImageSlot, string> = {
   hero: "Hero / térkép",
+  mobile: "Story — mobil feltöltés",
   maker: "Story — kézműves",
   service: "Story — szolgáltatás",
   quiet: "Story — mellékutca",

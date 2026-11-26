@@ -13,7 +13,7 @@ import {
 import { getPlatformSettings } from "../api/places.api";
 
 const FEATURE_KEYS = ["places", "events", "map", "languages", "sites", "editors"] as const;
-const STORY_KEYS = ["maker", "service", "quiet", "civic", "town"] as const;
+const STORY_KEYS = ["mobile", "maker", "service", "quiet", "civic", "town"] as const;
 const STEP_KEYS = ["collect", "publish", "share"] as const;
 const DIFFERENCE_KEYS = ["hidden", "traffic", "region"] as const;
 const FAQ_KEYS = ["app", "languages", "editors", "towns", "maps"] as const;

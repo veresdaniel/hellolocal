@@ -12,6 +12,7 @@ import {
 
 export const LANDING_IMAGE_SLOTS = [
   "hero",
+  "mobile",
   "maker",
   "service",
   "quiet",
