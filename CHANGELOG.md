@@ -26,6 +26,8 @@ in prose as used in the product.
 
 ### Changed
 
+- Production deploy: clear leftover `\<id\>_hellolocal-*` containers before
+  `compose up` so a raced/interrupted recreate does not fail the GitHub Deploy.
 - Region home SEO: expose `seo.defaultKeywords` from SiteTranslation and inject
   them in SSR/CSR (so custom hosts like helloetyek.hu do not keep platform
   landing keywords).

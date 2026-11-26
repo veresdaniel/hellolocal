@@ -36,12 +36,21 @@ else
   PROFILE_ARGS=(--profile devel)
 fi
 
+# Interrupted `compose up` recreates leave names like `<id>_hellolocal-api-prod-1`
+# that block the next recreate ("container name already in use" / "No such container").
+stale_names="$(docker ps -a --format '{{.Names}}' | grep -E '^[0-9a-f]+_hellolocal-' || true)"
+if [ -n "$stale_names" ]; then
+  echo "Removing stale compose recreate leftovers:"
+  # shellcheck disable=SC2086
+  echo "$stale_names" | xargs -r docker rm -f
+fi
+
 docker compose \
   --env-file /opt/hellolocal/stack.env \
   -f /opt/hellolocal/prod/deploy/docker-compose.yml \
   --project-directory /opt/hellolocal/prod \
   "${PROFILE_ARGS[@]}" \
-  up -d --build "${SERVICES[@]}"
+  up -d --build --remove-orphans "${SERVICES[@]}"
 
 # git checkout replaces the Caddyfile with a new inode. The running proxy
 # keeps the previous file until the container is recreated.
