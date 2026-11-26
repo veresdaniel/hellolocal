@@ -132,6 +132,9 @@ export function DemoRequestForm() {
               <p className="overview-demo__kicker">{t("public.overview.demo.kicker")}</p>
               <h3 className="overview-demo__title">{t("public.overview.demo.title")}</h3>
               <p className="overview-demo__lead">{t("public.overview.demo.lead")}</p>
+              <p className="overview-demo__trust overview-demo__trust--aside">
+                {t("public.overview.demo.trust")}
+              </p>
             </header>
 
             <div className="overview-demo__grid">
@@ -222,7 +225,9 @@ export function DemoRequestForm() {
             {error ? <p className="overview-demo__banner-error">{error}</p> : null}
 
             <div className="overview-demo__footer">
-              <p className="overview-demo__trust">{t("public.overview.demo.trust")}</p>
+              <p className="overview-demo__trust overview-demo__trust--foot">
+                {t("public.overview.demo.trust")}
+              </p>
               <button className="overview-demo__submit" type="submit" disabled={sending}>
                 {sending ? t("public.overview.demo.sending") : t("public.overview.demo.submit")}
               </button>
