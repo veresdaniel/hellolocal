@@ -344,35 +344,86 @@
   }
 }
 
-.overview-demo__success {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 14px;
-  align-items: start;
-  padding: 18px 16px;
-  border-radius: 16px;
-  background: rgba(27, 23, 48, 0.05);
-  border: 1px solid var(--demo-line);
+.overview-demo.is-done .overview-demo__form {
+  padding-block: clamp(36px, 6vw, 56px);
 }
 
-.overview-demo__success-mark {
+.overview-demo__thanks {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+  padding: clamp(8px, 2vw, 16px) 4px;
+  animation: overview-demo-thanks-in 480ms ease both;
+}
+
+.overview-demo__thanks-icon {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 72px;
+  height: 72px;
   border-radius: 999px;
-  background: rgba(196, 92, 38, 0.14);
-  color: var(--demo-accent);
-  font-size: 1.1rem;
-  font-weight: 700;
 }
 
-.overview-demo__success p {
+.overview-demo__thanks-icon--ok {
+  color: #1f7a45;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 55%),
+    linear-gradient(160deg, rgba(46, 160, 90, 0.18), rgba(31, 122, 69, 0.1));
+  box-shadow: 0 10px 28px rgba(31, 122, 69, 0.16);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .overview-demo__thanks-icon--ok svg path:last-child {
+    stroke-dasharray: 36;
+    stroke-dashoffset: 36;
+    animation: overview-demo-check 520ms 180ms ease forwards;
+  }
+}
+
+@keyframes overview-demo-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.overview-demo__thanks-icon--warn {
+  color: #9a6700;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 55%),
+    linear-gradient(160deg, rgba(212, 167, 44, 0.2), rgba(154, 103, 0, 0.1));
+  box-shadow: 0 10px 28px rgba(154, 103, 0, 0.12);
+}
+
+.overview-demo__thanks-title {
   margin: 0;
+  max-width: 22ch;
   color: var(--demo-ink);
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.45;
+  font-family: var(--font-display, Poppins, system-ui, sans-serif);
+  font-size: clamp(1.55rem, 3.2vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.overview-demo__thanks-lead {
+  margin: 0;
+  max-width: 34rem;
+  color: var(--demo-muted);
+  font-size: clamp(1.02rem, 2vw, 1.15rem);
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+@keyframes overview-demo-thanks-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -385,6 +436,10 @@
 
   .overview-demo__submit:hover:not(:disabled) {
     transform: none;
+  }
+
+  .overview-demo__thanks {
+    animation: none;
   }
 }
 

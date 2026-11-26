@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import PhoneInput, { isValidPhoneNumber, type Country } from "react-phone-number-input";
 import { requestDemo } from "../api/public.api";
@@ -7,11 +7,37 @@ import { publicFormErrorMessage, usePublicFormShield } from "./PublicFormShield"
 import "react-phone-number-input/style.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const THANKS_RESET_MS = 30_000;
 
 function defaultCountry(lang: string): Country {
   if (lang.startsWith("de")) return "DE";
   if (lang.startsWith("en")) return "GB";
   return "HU";
+}
+
+function ThanksIcon({ tone }: { tone: "ok" | "warn" }) {
+  return (
+    <span className={`overview-demo__thanks-icon overview-demo__thanks-icon--${tone}`} aria-hidden="true">
+      {tone === "ok" ? (
+        <svg viewBox="0 0 48 48" width="48" height="48" fill="none">
+          <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2.5" opacity="0.28" />
+          <path
+            d="M14.5 24.5 21 31l12.5-14"
+            stroke="currentColor"
+            strokeWidth="3.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 48 48" width="48" height="48" fill="none">
+          <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2.5" opacity="0.28" />
+          <path d="M24 15v14" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
+          <circle cx="24" cy="34" r="1.8" fill="currentColor" />
+        </svg>
+      )}
+    </span>
+  );
 }
 
 export function DemoRequestForm() {
@@ -32,6 +58,22 @@ export function DemoRequestForm() {
   const [sending, setSending] = useState(false);
   const country = useMemo(() => defaultCountry(i18n.language || "hu"), [i18n.language]);
   const done = Boolean(status);
+  const thanksTone = status === "sent" ? "ok" : "warn";
+
+  useEffect(() => {
+    if (!status) return;
+    const timer = window.setTimeout(() => {
+      setStatus("");
+      setContactName("");
+      setEmail("");
+      setPhone(undefined);
+      setOrganization("");
+      setMessage("");
+      setFieldErrors({});
+      setError("");
+    }, THANKS_RESET_MS);
+    return () => window.clearTimeout(timer);
+  }, [status]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -70,21 +112,28 @@ export function DemoRequestForm() {
       <form className="overview-demo__form" noValidate onSubmit={onSubmit}>
         {shield.fields}
 
-        <header className="overview-demo__header">
-          <p className="overview-demo__kicker">{t("public.overview.demo.kicker")}</p>
-          <h3 className="overview-demo__title">{t("public.overview.demo.title")}</h3>
-          <p className="overview-demo__lead">{t("public.overview.demo.lead")}</p>
-        </header>
-
-        {done ? (
-          <div className="overview-demo__success" role="status">
-            <span className="overview-demo__success-mark" aria-hidden="true">
-              ✓
-            </span>
-            <p>{t(`public.overview.demo.${status}`)}</p>
+        {done && status ? (
+          <div
+            className={`overview-demo__thanks overview-demo__thanks--${thanksTone}`}
+            role="status"
+            aria-live="polite"
+          >
+            <ThanksIcon tone={thanksTone} />
+            <h3 className="overview-demo__thanks-title">
+              {t(`public.overview.demo.${status}Title`)}
+            </h3>
+            <p className="overview-demo__thanks-lead">
+              {t(`public.overview.demo.${status}Lead`)}
+            </p>
           </div>
         ) : (
           <>
+            <header className="overview-demo__header">
+              <p className="overview-demo__kicker">{t("public.overview.demo.kicker")}</p>
+              <h3 className="overview-demo__title">{t("public.overview.demo.title")}</h3>
+              <p className="overview-demo__lead">{t("public.overview.demo.lead")}</p>
+            </header>
+
             <div className="overview-demo__grid">
               <label className="overview-demo__field">
                 <span className="overview-demo__label">{t("public.overview.demo.name")}</span>
