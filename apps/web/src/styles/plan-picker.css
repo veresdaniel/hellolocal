@@ -429,6 +429,24 @@
   color: #1b1730;
 }
 
+.plan-quote__thanks {
+  display: grid;
+  gap: 12px;
+  padding: 12px 0 8px;
+  text-align: center;
+  grid-column: 1 / -1;
+}
+
+.plan-quote__thanks h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.4vw, 1.7rem);
+}
+
+.plan-quote__thanks .plan-quote__intro {
+  margin: 0 auto;
+  max-width: 28rem;
+}
+
 .plan-quote__submit {
   border: 0;
   cursor: pointer;
