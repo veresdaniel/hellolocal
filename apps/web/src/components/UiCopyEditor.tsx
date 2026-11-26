@@ -13,8 +13,12 @@ import {
   type UiCopyEntry,
   type UiTranslateJob,
 } from "../api/uiCopy.api";
+import { uiCopyFieldLabel } from "../pages/admin/uiCopyKeyLabels";
+import { TipTapEditorWithUpload } from "./TipTapEditorWithUpload";
+import { hasVisibleHtml } from "../utils/hasVisibleHtml";
 
-const PAGE_SIZE = 40;
+/** Rich editors are heavy — keep pages small (AdminDataTable cells are a poor fit). */
+const PAGE_SIZE = 8;
 const localeModules = import.meta.glob("../i18n/locales/*/*.json", {
   eager: true,
   import: "default",
@@ -451,41 +455,50 @@ export function UiCopyEditor({
         {loading ? <p>{t("admin.uiCopyLoading")}</p> : null}
         {!loading && !visible.length ? <p>{t("admin.uiCopyEmpty")}</p> : null}
 
-        <div style={{ display: "grid", gap: 12 }}>
-          {visible.map((entry) => (
-            <label key={entry.key} style={{ display: "grid", gap: 6 }}>
-              <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, color: "#666" }}>
-                {entry.key}
-              </span>
-              {lang !== "hu" && entry.reference ? (
-                <span style={{ color: "#777", fontSize: 13 }}>{entry.reference}</span>
-              ) : null}
-              <textarea
-                value={drafts[entry.key] ?? ""}
-                onChange={(event) =>
-                  setDrafts((current) => ({ ...current, [entry.key]: event.target.value }))
-                }
-                rows={Math.min(6, Math.max(2, Math.ceil((drafts[entry.key] || "").length / 90)))}
-                style={{
-                  width: "100%",
-                  border: "1px solid #ddd",
-                  borderRadius: 8,
-                  padding: 10,
-                  font: "inherit",
-                  boxSizing: "border-box",
-                }}
-              />
-            </label>
-          ))}
+        <div style={{ display: "grid", gap: 20 }}>
+          {visible.map((entry) => {
+            const value = drafts[entry.key] ?? "";
+            const tall = hasVisibleHtml(value) || value.length > 160;
+            return (
+              <div key={entry.key} style={{ display: "grid", gap: 6 }}>
+                <span style={{ fontWeight: 600, fontSize: 14, color: "#1b1730" }}>
+                  {uiCopyFieldLabel(entry.key, i18n.language || "hu")}
+                </span>
+                <span style={{ fontFamily: "ui-monospace, monospace", fontSize: 12, color: "#666" }}>
+                  {entry.key}
+                </span>
+                {lang !== "hu" && entry.reference ? (
+                  <span style={{ color: "#777", fontSize: 13 }}>{entry.reference}</span>
+                ) : null}
+                <TipTapEditorWithUpload
+                  value={value}
+                  onChange={(next) =>
+                    setDrafts((current) => ({ ...current, [entry.key]: next }))
+                  }
+                  height={tall ? 200 : 140}
+                  uploadFolder="editor/ui-copy"
+                />
+              </div>
+            );
+          })}
         </div>
 
         {pages > 1 ? (
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              marginTop: 16,
+              flexWrap: "wrap",
+            }}
+          >
             <button type="button" disabled={page === 0} onClick={() => setPage((current) => current - 1)}>
               ‹
             </button>
             <span>
               {page + 1} / {pages}
+              <span style={{ color: "#777", marginLeft: 8 }}>({filtered.length})</span>
             </span>
             <button
               type="button"

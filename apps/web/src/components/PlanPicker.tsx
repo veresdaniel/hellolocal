@@ -20,6 +20,7 @@ import {
   type PublicPlanNumbers,
 } from "./publicPlans";
 import { useLandingText } from "../hooks/useLandingText";
+import { LandingHtml, LandingInline, landingPlain } from "./LandingHtml";
 import "../styles/plan-picker.css";
 
 const LOCALE: Record<Lang, string> = { hu: "hu-HU", en: "en-GB", de: "de-DE" };
@@ -120,8 +121,10 @@ export function PlanPicker({ lang }: { lang: Lang }) {
       id="plans"
       ref={sectionRef}
     >
-      <h2>{text("plansTitle")}</h2>
-      <p>{text("plansLead")}</p>
+      <h2>
+        <LandingInline html={text("plansTitle")} />
+      </h2>
+      <LandingHtml html={text("plansLead")} as="div" />
       <div className="plan-picker__grid">
         {PUBLIC_PLAN_IDS.filter((id) => enabled[id]).map((id) => (
           <PlanCard
@@ -178,32 +181,31 @@ function PlanCard({
   return (
     <article className={`plan-picker__card${featured ? " is-featured" : ""} plan-picker__card--${id}`}>
       <div className="plan-picker__top">
-        <p className="plan-picker__kicker">{text(`plans.${id}.kicker`)}</p>
-        {featured ? <span className="plan-picker__badge">{text("plans.basic.badge")}</span> : null}
+        <LandingHtml html={text(`plans.${id}.kicker`)} className="plan-picker__kicker" as="div" />
+        {featured ? (
+          <LandingHtml html={text("plans.basic.badge")} className="plan-picker__badge" as="span" />
+        ) : null}
       </div>
-      <h3>{text(`plans.${id}.name`)}</h3>
+      <h3>
+        <LandingInline html={text(`plans.${id}.name`)} />
+      </h3>
       <p className="plan-picker__price">
-        {isFree ? (
-          <>
-            <span>{price}</span>
-            <small>{priceNote}</small>
-          </>
-        ) : (
-          <>
-            <span>{price}</span>
-            <small>{priceNote}</small>
-          </>
-        )}
+        <span>{price}</span>
+        <LandingHtml html={priceNote} as="small" />
       </p>
-      <p className="plan-picker__pitch">{pitch}</p>
+      <LandingHtml html={pitch} className="plan-picker__pitch" as="div" />
       <ul>
-        <li className="is-domain">{text(`plans.${id}.domain`)}</li>
+        <li className="is-domain">
+          <LandingInline html={text(`plans.${id}.domain`)} />
+        </li>
         {planBullets(numbers, lang, text).map((line) => (
-          <li key={line}>{line}</li>
+          <li key={landingPlain(line)}>
+            <LandingInline html={line} />
+          </li>
         ))}
       </ul>
       <Link className="plan-picker__cta" to={registerUrl}>
-        {text(`plans.${id}.cta`)}
+        <LandingInline html={text(`plans.${id}.cta`)} />
       </Link>
     </article>
   );
@@ -214,18 +216,28 @@ function MunicipalCard({ lang, onOpen }: { lang: Lang; onOpen: () => void }) {
   return (
     <article className="plan-picker__card plan-picker__card--municipal">
       <div className="plan-picker__top">
-        <p className="plan-picker__kicker">{text("plans.municipal.kicker")}</p>
+        <LandingHtml html={text("plans.municipal.kicker")} className="plan-picker__kicker" as="div" />
       </div>
-      <h3>{text("plans.municipal.name")}</h3>
-      <p className="plan-picker__pitch">{text("plans.municipal.pitch")}</p>
+      <h3>
+        <LandingInline html={text("plans.municipal.name")} />
+      </h3>
+      <LandingHtml html={text("plans.municipal.pitch")} className="plan-picker__pitch" as="div" />
       <ul>
-        <li className="is-domain">{text("plans.municipal.domain")}</li>
-        <li>{text("plans.municipal.places")}</li>
-        <li>{text("plans.municipal.events")}</li>
-        <li>{text("plans.municipal.languages")}</li>
+        <li className="is-domain">
+          <LandingInline html={text("plans.municipal.domain")} />
+        </li>
+        <li>
+          <LandingInline html={text("plans.municipal.places")} />
+        </li>
+        <li>
+          <LandingInline html={text("plans.municipal.events")} />
+        </li>
+        <li>
+          <LandingInline html={text("plans.municipal.languages")} />
+        </li>
       </ul>
       <button className="plan-picker__cta" type="button" onClick={onOpen}>
-        {text("plans.municipal.cta")}
+        <LandingInline html={text("plans.municipal.cta")} />
       </button>
     </article>
   );
@@ -345,26 +357,43 @@ function MunicipalQuote({ onClose }: { onClose: () => void }) {
         aria-labelledby="municipal-quote-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <button className="plan-quote-modal__close" type="button" onClick={onClose} aria-label={t("common.close")}>
+        <button
+          className="plan-quote-modal__close"
+          type="button"
+          onClick={onClose}
+          aria-label={landingPlain(t("common.close"))}
+        >
           ×
         </button>
         <form className="plan-quote" noValidate onSubmit={onSubmit}>
       {shield.fields}
       {status ? (
         <div className="plan-quote__thanks" role="status" aria-live="polite">
-          <h3 id="municipal-quote-title">{t(`public.overview.plans.quote.${status}Title`)}</h3>
-          <p className="plan-quote__intro">{t(`public.overview.plans.quote.${status}Lead`)}</p>
+          <h3 id="municipal-quote-title">
+            <LandingInline html={t(`public.overview.plans.quote.${status}Title`)} />
+          </h3>
+          <LandingHtml
+            html={t(`public.overview.plans.quote.${status}Lead`)}
+            className="plan-quote__intro"
+            as="div"
+          />
         </div>
       ) : (
         <>
-      <h3 id="municipal-quote-title">{t("public.overview.plans.municipal.cta")}</h3>
-      <p className="plan-quote__intro">{t("public.overview.plans.quote.intro")}</p>
+      <h3 id="municipal-quote-title">
+        <LandingInline html={t("public.overview.plans.municipal.cta")} />
+      </h3>
+      <LandingHtml
+        html={t("public.overview.plans.quote.intro")}
+        className="plan-quote__intro"
+        as="div"
+      />
       <label>
-        {t("public.overview.plans.quote.organization")}
+        <LandingInline html={t("public.overview.plans.quote.organization")} />
         <input
           name="organization"
           autoComplete="organization"
-          placeholder={t("public.overview.plans.quote.placeholderOrganization")}
+          placeholder={landingPlain(t("public.overview.plans.quote.placeholderOrganization"))}
           value={organization}
           onChange={(event) => setOrganization(event.target.value)}
           required
@@ -373,11 +402,11 @@ function MunicipalQuote({ onClose }: { onClose: () => void }) {
         {fieldErrors.organization ? <span className="plan-quote__field-error">{fieldErrors.organization}</span> : null}
       </label>
       <label>
-        {t("public.overview.plans.quote.contactName")}
+        <LandingInline html={t("public.overview.plans.quote.contactName")} />
         <input
           name="name"
           autoComplete="name"
-          placeholder={t("public.overview.plans.quote.placeholderContactName")}
+          placeholder={landingPlain(t("public.overview.plans.quote.placeholderContactName"))}
           value={contactName}
           onChange={(event) => setContactName(event.target.value)}
           required
@@ -386,12 +415,12 @@ function MunicipalQuote({ onClose }: { onClose: () => void }) {
         {fieldErrors.contactName ? <span className="plan-quote__field-error">{fieldErrors.contactName}</span> : null}
       </label>
       <label>
-        {t("public.overview.plans.quote.email")}
+        <LandingInline html={t("public.overview.plans.quote.email")} />
         <input
           name="email"
           type="email"
           autoComplete="email"
-          placeholder={t("public.overview.plans.quote.placeholderEmail")}
+          placeholder={landingPlain(t("public.overview.plans.quote.placeholderEmail"))}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -400,11 +429,11 @@ function MunicipalQuote({ onClose }: { onClose: () => void }) {
         {fieldErrors.email ? <span className="plan-quote__field-error">{fieldErrors.email}</span> : null}
       </label>
       <label>
-        {t("public.overview.plans.quote.message")}
+        <LandingInline html={t("public.overview.plans.quote.message")} />
         <textarea
           name="message"
           rows={4}
-          placeholder={t("public.overview.plans.quote.placeholderMessage")}
+          placeholder={landingPlain(t("public.overview.plans.quote.placeholderMessage"))}
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           required
@@ -415,9 +444,13 @@ function MunicipalQuote({ onClose }: { onClose: () => void }) {
       </label>
       {error ? <p className="plan-quote__error">{error}</p> : null}
       <button className="plan-picker__cta plan-quote__submit" type="submit" disabled={sending}>
-        {sending
-          ? t("public.overview.plans.quote.sending")
-          : t("public.overview.plans.quote.submit")}
+        <LandingInline
+          html={
+            sending
+              ? t("public.overview.plans.quote.sending")
+              : t("public.overview.plans.quote.submit")
+          }
+        />
         </button>
         </>
       )}

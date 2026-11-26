@@ -619,11 +619,13 @@
   line-height: 1.65;
 }
 
-.overview__intro p {
+.overview__intro p,
+.overview__intro > div {
   margin: 0 0 1em;
 }
 
-.overview__intro p:last-child {
+.overview__intro p:last-child,
+.overview__intro > div:last-child {
   margin-bottom: 0;
 }
 

@@ -14,6 +14,8 @@ in prose as used in the product.
 
 ### Added
 
+- Nyelvesítés field labels: human-readable titles for shared UI keys
+  (error/offline/common/…), technical key kept as subtitle.
 - Mobile place/event wizard: AI draft postfix on name/title and short
   description (same `AiPostfixField` gate as admin forms; HTML stripped to
   plain text in the wizard textarea).
@@ -29,6 +31,10 @@ in prose as used in the product.
 
 ### Changed
 
+- Nyelvesítés: all UiCopy fields use rich text (TipTap); platform overview
+  (CSR + SSR) renders copy as sanitized HTML so bold/links from admin show on
+  the landing. Placeholders/SEO/alt stay plain text. List + pager kept (not
+  AdminDataTable — rich editors do not fit table cells).
 - Google OAuth consent branding: same-origin callback via Caddy (`/api/auth/google*`)
   so Google shows the public host in use (e.g. hellolocal.hu) instead of always
   api.hello-local.io — add matching Authorized redirect URIs in Google Cloud.

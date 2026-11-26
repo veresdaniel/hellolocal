@@ -8,6 +8,7 @@ import {
   publicFormErrorMessage,
   usePublicFormShield,
 } from "./PublicFormShield";
+import { LandingHtml, LandingInline, landingPlain } from "./LandingHtml";
 import "react-phone-number-input/style.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -124,30 +125,46 @@ export function DemoRequestForm() {
           >
             <ThanksIcon tone={thanksTone} />
             <h3 className="overview-demo__thanks-title">
-              {t(`public.overview.demo.${status}Title`)}
+              <LandingInline html={t(`public.overview.demo.${status}Title`)} />
             </h3>
-            <p className="overview-demo__thanks-lead">
-              {t(`public.overview.demo.${status}Lead`)}
-            </p>
+            <LandingHtml
+              html={t(`public.overview.demo.${status}Lead`)}
+              className="overview-demo__thanks-lead"
+              as="div"
+            />
           </div>
         ) : (
           <>
             <header className="overview-demo__header">
-              <p className="overview-demo__kicker">{t("public.overview.demo.kicker")}</p>
-              <h3 className="overview-demo__title">{t("public.overview.demo.title")}</h3>
-              <p className="overview-demo__lead">{t("public.overview.demo.lead")}</p>
-              <p className="overview-demo__trust overview-demo__trust--aside">
-                {t("public.overview.demo.trust")}
-              </p>
+              <LandingHtml
+                html={t("public.overview.demo.kicker")}
+                className="overview-demo__kicker"
+                as="div"
+              />
+              <h3 className="overview-demo__title">
+                <LandingInline html={t("public.overview.demo.title")} />
+              </h3>
+              <LandingHtml
+                html={t("public.overview.demo.lead")}
+                className="overview-demo__lead"
+                as="div"
+              />
+              <LandingHtml
+                html={t("public.overview.demo.trust")}
+                className="overview-demo__trust overview-demo__trust--aside"
+                as="div"
+              />
             </header>
 
             <div className="overview-demo__grid">
               <label className="overview-demo__field">
-                <span className="overview-demo__label">{t("public.overview.demo.name")}</span>
+                <span className="overview-demo__label">
+                  <LandingInline html={t("public.overview.demo.name")} />
+                </span>
                 <input
                   name="name"
                   autoComplete="name"
-                  placeholder={t("public.overview.demo.placeholderName")}
+                  placeholder={landingPlain(t("public.overview.demo.placeholderName"))}
                   value={contactName}
                   onChange={(event) => setContactName(event.target.value)}
                   required
@@ -159,12 +176,14 @@ export function DemoRequestForm() {
               </label>
 
               <label className="overview-demo__field">
-                <span className="overview-demo__label">{t("public.overview.demo.email")}</span>
+                <span className="overview-demo__label">
+                  <LandingInline html={t("public.overview.demo.email")} />
+                </span>
                 <input
                   name="email"
                   type="email"
                   autoComplete="email"
-                  placeholder={t("public.overview.demo.placeholderEmail")}
+                  placeholder={landingPlain(t("public.overview.demo.placeholderEmail"))}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   required
@@ -176,7 +195,9 @@ export function DemoRequestForm() {
               </label>
 
               <label className="overview-demo__field">
-                <span className="overview-demo__label">{t("public.overview.demo.phone")}</span>
+                <span className="overview-demo__label">
+                  <LandingInline html={t("public.overview.demo.phone")} />
+                </span>
                 <PhoneInput
                   className="overview-demo__phone"
                   international
@@ -184,7 +205,7 @@ export function DemoRequestForm() {
                   countryCallingCodeEditable={false}
                   value={phone}
                   onChange={setPhone}
-                  placeholder={t("public.overview.demo.placeholderPhone")}
+                  placeholder={landingPlain(t("public.overview.demo.placeholderPhone"))}
                   numberInputProps={{
                     name: "phone",
                     autoComplete: "tel",
@@ -199,13 +220,17 @@ export function DemoRequestForm() {
 
               <label className="overview-demo__field">
                 <span className="overview-demo__label">
-                  {t("public.overview.demo.organization")}
-                  <span className="overview-demo__optional">{t("public.overview.demo.optional")}</span>
+                  <LandingInline html={t("public.overview.demo.organization")} />
+                  <LandingHtml
+                    html={t("public.overview.demo.optional")}
+                    className="overview-demo__optional"
+                    as="span"
+                  />
                 </span>
                 <input
                   name="organization"
                   autoComplete="organization"
-                  placeholder={t("public.overview.demo.placeholderOrganization")}
+                  placeholder={landingPlain(t("public.overview.demo.placeholderOrganization"))}
                   value={organization}
                   onChange={(event) => setOrganization(event.target.value)}
                 />
@@ -213,13 +238,17 @@ export function DemoRequestForm() {
 
               <label className="overview-demo__field overview-demo__field--full">
                 <span className="overview-demo__label">
-                  {t("public.overview.demo.message")}
-                  <span className="overview-demo__optional">{t("public.overview.demo.optional")}</span>
+                  <LandingInline html={t("public.overview.demo.message")} />
+                  <LandingHtml
+                    html={t("public.overview.demo.optional")}
+                    className="overview-demo__optional"
+                    as="span"
+                  />
                 </span>
                 <textarea
                   name="message"
                   rows={3}
-                  placeholder={t("public.overview.demo.placeholderMessage")}
+                  placeholder={landingPlain(t("public.overview.demo.placeholderMessage"))}
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
                 />
@@ -229,11 +258,17 @@ export function DemoRequestForm() {
             {error ? <p className="overview-demo__banner-error">{error}</p> : null}
 
             <div className="overview-demo__footer">
-              <p className="overview-demo__trust overview-demo__trust--foot">
-                {t("public.overview.demo.trust")}
-              </p>
+              <LandingHtml
+                html={t("public.overview.demo.trust")}
+                className="overview-demo__trust overview-demo__trust--foot"
+                as="div"
+              />
               <button className="overview-demo__submit" type="submit" disabled={sending}>
-                {sending ? t("public.overview.demo.sending") : t("public.overview.demo.submit")}
+                <LandingInline
+                  html={
+                    sending ? t("public.overview.demo.sending") : t("public.overview.demo.submit")
+                  }
+                />
               </button>
             </div>
           </>

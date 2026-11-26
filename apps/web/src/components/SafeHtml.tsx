@@ -5,7 +5,7 @@ type Props = {
   html: string | null | undefined;
   className?: string;
   style?: CSSProperties;
-  as?: "div" | "span" | "p" | "section" | "article";
+  as?: "div" | "span" | "p" | "section" | "article" | "small";
 };
 
 /** Renders TipTap/public HTML only after allowlist sanitization. */

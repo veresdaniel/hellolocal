@@ -11,6 +11,11 @@ import { fileURLToPath } from "url";
 import { applySocialMeta, publicOrigin, SHARE_IMAGE_HEIGHT, SHARE_IMAGE_WIDTH } from "./socialMeta.js";
 import { injectOverviewShellHead } from "./overviewShellCss.js";
 import { heroPictureHtml, storyPictureHtml } from "./landingCmsImages.js";
+import {
+  richToPlain,
+  sanitizeInlineHtml,
+  sanitizeRichHtml,
+} from "./sanitizeRichHtml.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const webRoot = join(here, "..");
@@ -210,14 +215,14 @@ function renderPlanCards(
         numbers.events <= 0 ? plans.eventsNone : fillCount(plans.events, numbers.events),
         numbers.languages <= 1 ? plans.languagesOne : fillCount(plans.languages, numbers.languages),
       ]
-        .map((line) => `<li>${escapeHtml(line)}</li>`)
+        .map((line) => `<li>${sanitizeInlineHtml(line)}</li>`)
         .join("");
-      return `<article><h3>${escapeHtml(plan.name)}</h3><p>${escapeHtml(price)}</p><p>${escapeHtml(pitch)}</p><ul>${bullets}</ul><p><a href="/${lang}/admin/register?plan=${id}">${escapeHtml(plan.cta)}</a></p></article>`;
+      return `<article><h3>${sanitizeInlineHtml(plan.name)}</h3><p>${escapeHtml(price)}</p><div>${sanitizeRichHtml(pitch)}</div><ul>${bullets}</ul><p><a href="/${lang}/admin/register?plan=${id}">${sanitizeInlineHtml(plan.cta)}</a></p></article>`;
     });
   if (planEnabled(planOverrides, "municipal") && plans.municipal) {
     const municipal = plans.municipal;
     cards.push(
-      `<article><h3>${escapeHtml(municipal.name)}</h3><p>${escapeHtml(municipal.pitch)}</p><ul><li>${escapeHtml(municipal.places)}</li><li>${escapeHtml(municipal.events)}</li><li>${escapeHtml(municipal.languages)}</li></ul><p>${escapeHtml(municipal.cta)}</p></article>`
+      `<article><h3>${sanitizeInlineHtml(municipal.name)}</h3><div>${sanitizeRichHtml(municipal.pitch)}</div><ul><li>${sanitizeInlineHtml(municipal.places)}</li><li>${sanitizeInlineHtml(municipal.events)}</li><li>${sanitizeInlineHtml(municipal.languages)}</li></ul><p>${sanitizeInlineHtml(municipal.cta)}</p></article>`
     );
   }
   return cards.join("");
@@ -230,7 +235,7 @@ function renderDifference(copy) {
     .map((key) => {
       const item = copy.difference[key];
       if (!item) return "";
-      return `<article><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.text)}</p></article>`;
+      return `<article><h3>${sanitizeInlineHtml(item.title)}</h3><div>${sanitizeRichHtml(item.text)}</div></article>`;
     })
     .join("");
 }
@@ -241,8 +246,8 @@ function renderStories(copy, landingImages, lang) {
     .map((key) => {
       const story = copy.stories[key];
       if (!story) return "";
-      const picture = storyPictureHtml(landingImages, lang, key, escapeHtml(story.alt));
-      return `<article>${picture}<h3>${escapeHtml(story.title)}</h3><p>${escapeHtml(story.text)}</p></article>`;
+      const picture = storyPictureHtml(landingImages, lang, key, escapeHtml(richToPlain(story.alt)));
+      return `<article>${picture}<h3>${sanitizeInlineHtml(story.title)}</h3><div>${sanitizeRichHtml(story.text)}</div></article>`;
     })
     .join("");
 }
@@ -399,7 +404,7 @@ export function renderOverviewDocument(
   } catch {
     // keep image
   }
-  const keywords = escapeHtml(copy.keywords);
+  const keywords = escapeHtml(richToPlain(copy.keywords));
   const alternates = published.map(
     (code) => `<link rel="alternate" hreflang="${code}" href="${origin}/${code}" />`
   ).join("");
@@ -408,8 +413,8 @@ export function renderOverviewDocument(
     .filter((key) => copy.faq?.[key]?.q)
     .map((key) => ({
       "@type": "Question",
-      name: copy.faq[key].q,
-      acceptedAnswer: { "@type": "Answer", text: copy.faq[key].a },
+      name: richToPlain(copy.faq[key].q),
+      acceptedAnswer: { "@type": "Answer", text: richToPlain(copy.faq[key].a) },
     }));
   const jsonLd = JSON.stringify({
     "@context": "https://schema.org",
@@ -420,7 +425,7 @@ export function renderOverviewDocument(
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         url,
-        description: copy.seoDescription,
+        description: richToPlain(copy.seoDescription),
         inLanguage: published,
         image,
       },
@@ -429,13 +434,13 @@ export function renderOverviewDocument(
   }).replace(/</g, "\\u003c");
 
   const featureItems = Object.values(copy.features)
-    .map((item) => `<li><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.text)}</p></li>`)
+    .map((item) => `<li><h3>${sanitizeInlineHtml(item.title)}</h3><div>${sanitizeRichHtml(item.text)}</div></li>`)
     .join("");
   const stepItems = Object.values(copy.steps)
-    .map((item) => `<li><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.text)}</p></li>`)
+    .map((item) => `<li><h3>${sanitizeInlineHtml(item.title)}</h3><div>${sanitizeRichHtml(item.text)}</div></li>`)
     .join("");
   const faqItems = Object.values(copy.faq)
-    .map((item) => `<article><h3>${escapeHtml(item.q)}</h3><p>${escapeHtml(item.a)}</p></article>`)
+    .map((item) => `<article><h3>${sanitizeInlineHtml(item.q)}</h3><div>${sanitizeRichHtml(item.a)}</div></article>`)
     .join("");
   const planItems = renderPlanCards(
     copy,
@@ -448,48 +453,48 @@ export function renderOverviewDocument(
 
   const introBlock =
     copy.introP1 || copy.introP2
-      ? `<section>${copy.introP1 ? `<p>${escapeHtml(copy.introP1)}</p>` : ""}${
-          copy.introP2 ? `<p>${escapeHtml(copy.introP2)}</p>` : ""
+      ? `<section>${copy.introP1 ? `<div>${sanitizeRichHtml(copy.introP1)}</div>` : ""}${
+          copy.introP2 ? `<div>${sanitizeRichHtml(copy.introP2)}</div>` : ""
         }</section>`
       : "";
 
   const body = `
     <main class="overview overview--ssr">
-      <p>${escapeHtml(copy.eyebrow)}</p>
-      <h1>${escapeHtml(copy.title)}</h1>
-      <p>${escapeHtml(copy.lead)}</p>
-      <p><a href="/${lang}">${escapeHtml(copy.cta)}</a></p>
+      <div>${sanitizeRichHtml(copy.eyebrow)}</div>
+      <h1>${sanitizeInlineHtml(copy.title)}</h1>
+      <div>${sanitizeRichHtml(copy.lead)}</div>
+      <p><a href="/${lang}">${sanitizeInlineHtml(copy.cta)}</a></p>
       <figure>
-        ${heroPictureHtml(landingImages, lang, escapeHtml(copy.shotCaption))}
-        <figcaption>${escapeHtml(copy.shotCaption)}</figcaption>
+        ${heroPictureHtml(landingImages, lang, escapeHtml(richToPlain(copy.shotCaption)))}
+        <figcaption>${sanitizeInlineHtml(copy.shotCaption)}</figcaption>
       </figure>
       ${introBlock}
       <section>
-        <h2>${escapeHtml(copy.differenceTitle || "")}</h2>
-        <p>${escapeHtml(copy.differenceLead || "")}</p>
+        <h2>${sanitizeInlineHtml(copy.differenceTitle || "")}</h2>
+        <div>${sanitizeRichHtml(copy.differenceLead || "")}</div>
         ${renderDifference(copy)}
       </section>
       <section>
-        <h2>${escapeHtml(copy.storiesTitle || "")}</h2>
-        <p>${escapeHtml(copy.storiesLead || "")}</p>
+        <h2>${sanitizeInlineHtml(copy.storiesTitle || "")}</h2>
+        <div>${sanitizeRichHtml(copy.storiesLead || "")}</div>
         ${renderStories(copy, landingImages, lang)}
       </section>
       <section>
-        <h2>${escapeHtml(copy.stepsTitle)}</h2>
+        <h2>${sanitizeInlineHtml(copy.stepsTitle)}</h2>
         <ol>${stepItems}</ol>
       </section>
       <section>
-        <h2>${escapeHtml(copy.featuresTitle)}</h2>
-        <p>${escapeHtml(copy.featuresLead)}</p>
+        <h2>${sanitizeInlineHtml(copy.featuresTitle)}</h2>
+        <div>${sanitizeRichHtml(copy.featuresLead)}</div>
         <ul>${featureItems}</ul>
       </section>
       <section>
-        <h2>${escapeHtml(copy.plansTitle || "")}</h2>
-        <p>${escapeHtml(copy.plansLead || "")}</p>
+        <h2>${sanitizeInlineHtml(copy.plansTitle || "")}</h2>
+        <div>${sanitizeRichHtml(copy.plansLead || "")}</div>
         ${planItems}
       </section>
       <section>
-        <h2>${escapeHtml(copy.faqTitle)}</h2>
+        <h2>${sanitizeInlineHtml(copy.faqTitle)}</h2>
         ${faqItems}
       </section>
     </main>`;
@@ -505,8 +510,8 @@ export function renderOverviewDocument(
 
   let html = applySocialMeta(indexHtml, {
     lang,
-    title: copy.seoTitle,
-    description: copy.seoDescription,
+    title: richToPlain(copy.seoTitle),
+    description: richToPlain(copy.seoDescription),
     url,
     image,
     imageWidth:

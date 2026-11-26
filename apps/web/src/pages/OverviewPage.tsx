@@ -7,6 +7,12 @@ import { Footer } from "../ui/layout/Footer";
 import { useSeo } from "../seo/useSeo";
 import { absoluteCanonical } from "../seo/canonical";
 import { LiveDemoLink } from "../components/LiveDemoLink";
+import {
+  LandingHtml,
+  LandingInline,
+  landingHasText,
+  landingPlain,
+} from "../components/LandingHtml";
 import { APP_LANGS, DEFAULT_LANG, type Lang, isLang } from "../app/config";
 import { platformLandingPath } from "../app/entityPaths";
 import { useRouteCtx } from "../app/useRouteCtx";
@@ -208,8 +214,11 @@ export function OverviewPage() {
   }, [lang]);
 
   const title = text("title");
-  const description = text("seoDescription") || text("subtitle") || title;
-  const seoTitle = text("seoTitle") || title;
+  const description =
+    landingPlain(text("seoDescription")) ||
+    landingPlain(text("subtitle")) ||
+    landingPlain(title);
+  const seoTitle = landingPlain(text("seoTitle")) || landingPlain(title);
   const origin = typeof window === "undefined" ? "https://hello-local.io" : window.location.origin;
   const landingImages = platformSettings?.platform?.landingImages ?? null;
   const heroImage = useMemo(
@@ -235,7 +244,7 @@ export function OverviewPage() {
     () => ({
       title: seoTitle,
       description,
-      keywords: text("keywords")
+      keywords: landingPlain(text("keywords"))
         .split(",")
         .map((word) => word.trim())
         .filter(Boolean),
@@ -287,10 +296,10 @@ export function OverviewPage() {
           "@type": "FAQPage",
           mainEntity: FAQ_KEYS.map((key) => ({
             "@type": "Question",
-            name: text(`faq.${key}.q`),
+            name: landingPlain(text(`faq.${key}.q`)),
             acceptedAnswer: {
               "@type": "Answer",
-              text: text(`faq.${key}.a`),
+              text: landingPlain(text(`faq.${key}.a`)),
             },
           })),
         },
@@ -319,19 +328,21 @@ export function OverviewPage() {
           <header className="overview__hero">
             <div className="overview__rise">
               <p className="overview__brand">HelloLocal</p>
-              <p className="overview__eyebrow">{text("eyebrow")}</p>
-              <h1>{title}</h1>
-              <p className="overview__lead">{text("lead")}</p>
+              <LandingHtml html={text("eyebrow")} className="overview__eyebrow" as="div" />
+              <h1>
+                <LandingInline html={title} />
+              </h1>
+              <LandingHtml html={text("lead")} className="overview__lead" as="div" />
               <div className="overview__actions">
                 <LiveDemoLink className="overview__cta" lang={lang} ctaId="hero_live_demo">
-                  {text("cta")}
+                  <LandingInline html={text("cta")} />
                 </LiveDemoLink>
                 <a
                   className="overview__ghost"
                   href="#how"
                   onClick={() => trackGtmSelectContent("hero_how_it_works")}
                 >
-                  {text("ctaSecondary")}
+                  <LandingInline html={text("ctaSecondary")} />
                 </a>
               </div>
             </div>
@@ -346,33 +357,42 @@ export function OverviewPage() {
                 </div>
                 <MarketingPicture
                   image={heroImage}
-                  alt={text("shotCaption")}
+                  alt={landingPlain(text("shotCaption"))}
                   priority
                 />
               </div>
-              <figcaption className="overview__caption">{text("shotLabel")}</figcaption>
+              <LandingHtml html={text("shotLabel")} className="overview__caption" as="div" />
             </figure>
           </header>
 
-          {(text("introP1") || text("introP2")) && (
-            <section className="overview__intro overview__rise" aria-label={text("menu")}>
-              {text("introP1") ? <p>{text("introP1")}</p> : null}
-              {text("introP2") ? <p>{text("introP2")}</p> : null}
+          {(landingHasText(text("introP1")) || landingHasText(text("introP2"))) && (
+            <section
+              className="overview__intro overview__rise"
+              aria-label={landingPlain(text("menu"))}
+            >
+              <LandingHtml html={text("introP1")} as="div" />
+              <LandingHtml html={text("introP2")} as="div" />
             </section>
           )}
 
           <ul className="overview__stats">
             <li>
-              <strong>{text("statsLanguagesValue")}</strong>
-              <span>{text("statsLanguages")}</span>
+              <strong>
+                <LandingInline html={text("statsLanguagesValue")} />
+              </strong>
+              <LandingHtml html={text("statsLanguages")} as="span" />
             </li>
             <li>
-              <strong>{text("statsMapValue")}</strong>
-              <span>{text("statsMap")}</span>
+              <strong>
+                <LandingInline html={text("statsMapValue")} />
+              </strong>
+              <LandingHtml html={text("statsMap")} as="span" />
             </li>
             <li>
-              <strong>{text("statsAppValue")}</strong>
-              <span>{text("statsApp")}</span>
+              <strong>
+                <LandingInline html={text("statsAppValue")} />
+              </strong>
+              <LandingHtml html={text("statsApp")} as="span" />
             </li>
           </ul>
 

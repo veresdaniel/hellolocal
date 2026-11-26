@@ -5,6 +5,7 @@ import { PlanPicker } from "../components/PlanPicker";
 import { LiveDemoLink } from "../components/LiveDemoLink";
 import type { Lang } from "../app/config";
 import { useLandingText } from "../hooks/useLandingText";
+import { LandingHtml, LandingInline, landingPlain } from "../components/LandingHtml";
 import { MarketingPicture } from "../marketing/MarketingPicture";
 import {
   resolveClosingImage,
@@ -62,22 +63,28 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
   return (
     <>
       <section className="overview__section overview__difference" id="why">
-        <p className="overview__kicker">{text("differenceKicker")}</p>
-        <h2>{text("differenceTitle")}</h2>
-        <p>{text("differenceLead")}</p>
+        <LandingHtml html={text("differenceKicker")} className="overview__kicker" as="div" />
+        <h2>
+          <LandingInline html={text("differenceTitle")} />
+        </h2>
+        <LandingHtml html={text("differenceLead")} as="div" />
         <ul>
           {DIFFERENCE_KEYS.map((key) => (
             <li key={key}>
-              <h3>{text(`difference.${key}.title`)}</h3>
-              <p>{text(`difference.${key}.text`)}</p>
+              <h3>
+                <LandingInline html={text(`difference.${key}.title`)} />
+              </h3>
+              <LandingHtml html={text(`difference.${key}.text`)} as="div" />
             </li>
           ))}
         </ul>
       </section>
 
       <section className="overview__section" id="who">
-        <h2>{text("storiesTitle")}</h2>
-        <p>{text("storiesLead")}</p>
+        <h2>
+          <LandingInline html={text("storiesTitle")} />
+        </h2>
+        <LandingHtml html={text("storiesLead")} as="div" />
         {STORY_KEYS.map((key, index) => (
           <article
             className={`overview__story${index % 2 === 1 ? " is-flip" : ""}`}
@@ -86,39 +93,49 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
             <div className="overview__frame">
               <MarketingPicture
                 image={storyImages[key]}
-                alt={text(`stories.${key}.alt`)}
+                alt={landingPlain(text(`stories.${key}.alt`))}
               />
             </div>
             <div className="overview__story-copy">
-              <p className="overview__kicker">{text(`stories.${key}.kicker`)}</p>
-              <h3>{text(`stories.${key}.title`)}</h3>
-              <p>{text(`stories.${key}.text`)}</p>
+              <LandingHtml html={text(`stories.${key}.kicker`)} className="overview__kicker" as="div" />
+              <h3>
+                <LandingInline html={text(`stories.${key}.title`)} />
+              </h3>
+              <LandingHtml html={text(`stories.${key}.text`)} as="div" />
             </div>
           </article>
         ))}
       </section>
 
       <section className="overview__section" id="how">
-        <h2>{text("stepsTitle")}</h2>
+        <h2>
+          <LandingInline html={text("stepsTitle")} />
+        </h2>
         <ol className="overview__steps">
           {STEP_KEYS.map((key, index) => (
             <li className="overview__step" key={key}>
               <span>0{index + 1}</span>
-              <h3>{text(`steps.${key}.title`)}</h3>
-              <p>{text(`steps.${key}.text`)}</p>
+              <h3>
+                <LandingInline html={text(`steps.${key}.title`)} />
+              </h3>
+              <LandingHtml html={text(`steps.${key}.text`)} as="div" />
             </li>
           ))}
         </ol>
       </section>
 
       <section className="overview__section">
-        <h2>{text("featuresTitle")}</h2>
-        <p>{text("featuresLead")}</p>
+        <h2>
+          <LandingInline html={text("featuresTitle")} />
+        </h2>
+        <LandingHtml html={text("featuresLead")} as="div" />
         <ul className="overview__grid">
           {FEATURE_KEYS.map((key) => (
             <li className="overview__card" key={key}>
-              <h3>{text(`features.${key}.title`)}</h3>
-              <p>{text(`features.${key}.text`)}</p>
+              <h3>
+                <LandingInline html={text(`features.${key}.title`)} />
+              </h3>
+              <LandingHtml html={text(`features.${key}.text`)} as="div" />
             </li>
           ))}
         </ul>
@@ -127,12 +144,16 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
       <PlanPicker lang={lang} />
 
       <section className="overview__section">
-        <h2>{text("faqTitle")}</h2>
+        <h2>
+          <LandingInline html={text("faqTitle")} />
+        </h2>
         <div className="overview__faq">
           {FAQ_KEYS.map((key) => (
             <article key={key}>
-              <h3>{text(`faq.${key}.q`)}</h3>
-              <p>{text(`faq.${key}.a`)}</p>
+              <h3>
+                <LandingInline html={text(`faq.${key}.q`)} />
+              </h3>
+              <LandingHtml html={text(`faq.${key}.a`)} as="div" />
             </article>
           ))}
         </div>
@@ -140,16 +161,18 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
 
       <section className="overview__close">
         <div className="overview__close-copy">
-          <h2>{text("closingTitle")}</h2>
-          <p>{text("closingText")}</p>
+          <h2>
+            <LandingInline html={text("closingTitle")} />
+          </h2>
+          <LandingHtml html={text("closingText")} as="div" />
           <LiveDemoLink className="overview__cta" lang={lang} ctaId="closing_live_demo">
-            {text("cta")}
+            <LandingInline html={text("cta")} />
           </LiveDemoLink>
         </div>
         <MarketingPicture
           className="overview__close-map"
           image={closingImage}
-          alt={text("closingImageAlt")}
+          alt={landingPlain(text("closingImageAlt"))}
         />
       </section>
 
