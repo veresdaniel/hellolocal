@@ -35,6 +35,7 @@ export interface PlatformSettings extends PlatformSettingsDto {
   siteDescription: string;
   seoTitle: string;
   seoDescription: string;
+  seoKeywords?: string[];
   defaultPlaceholderCardImage: string | null;
   defaultPlaceholderDetailHeroImage: string | null;
   defaultEventPlaceholderCardImage: string | null;
@@ -75,6 +76,7 @@ export function getPlatformSettings(
     siteDescription: dto.site.description || "",
     seoTitle: dto.seo.defaultTitle || "",
     seoDescription: dto.seo.defaultDescription || "",
+    seoKeywords: Array.isArray(dto.seo.defaultKeywords) ? dto.seo.defaultKeywords : [],
     defaultPlaceholderCardImage: dto.placeholders.placeCard || null,
     defaultPlaceholderDetailHeroImage: dto.placeholders.placeHero || null,
     defaultEventPlaceholderCardImage: dto.placeholders.eventCard || null,

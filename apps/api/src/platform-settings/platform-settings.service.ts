@@ -163,6 +163,7 @@ export class PlatformSettingsService {
           seoTitle: true,
           seoDescription: true,
           seoImage: true,
+          seoKeywords: true,
         },
       },
       siteInstances: {
@@ -385,6 +386,9 @@ export class PlatformSettingsService {
         defaultTitle: t?.seoTitle ?? null,
         defaultDescription: t?.seoDescription ?? null,
         defaultImage: t?.seoImage ?? null,
+        defaultKeywords: Array.isArray(t?.seoKeywords)
+          ? t.seoKeywords.filter((k): k is string => typeof k === "string" && k.trim().length > 0)
+          : [],
         indexable: !!indexable,
         globalIndexable: globalCrawlability,
         landingIndexable,

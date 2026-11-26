@@ -399,11 +399,19 @@ export function HomePage() {
   const homeDescription = homeResolved.description || t("public.home.description");
   const homeImage = homeResolved.image;
 
+  const homeKeywords =
+    (!townSlug && Array.isArray(platformSettings?.seoKeywords)
+      ? platformSettings.seoKeywords
+      : Array.isArray(platformSettings?.seo?.defaultKeywords)
+        ? platformSettings.seo.defaultKeywords
+        : []) || [];
+
   const homeSeo = useMemo(
     () => ({
       title: homeTitle,
       description: homeDescription,
       image: homeImage,
+      keywords: homeKeywords.length ? homeKeywords : undefined,
       canonical: pageCanonical,
       robots: robotsDirective(
         townSlug ? selectedTown?.isCrawlable : platformSettings?.isCrawlable
@@ -462,6 +470,7 @@ export function HomePage() {
       homeTitle,
       homeDescription,
       homeImage,
+      homeKeywords,
       pageCanonical,
       platformSettings?.isCrawlable,
       platformSettings?.faviconUrl,

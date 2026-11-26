@@ -26,6 +26,9 @@ in prose as used in the product.
 
 ### Changed
 
+- Region home SEO: expose `seo.defaultKeywords` from SiteTranslation and inject
+  them in SSR/CSR (so custom hosts like helloetyek.hu do not keep platform
+  landing keywords).
 - Platform SEO defaults (index.html + overview seoTitle/description/keywords
   hu/en/de): broader organic phrasing (sights/events tourism map; guests +
   councils/DMOs/businesses) instead of municipality-only or vague “helyi

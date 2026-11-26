@@ -36,6 +36,8 @@ export type PlatformSettingsDto = {
     defaultDescription?: string | null;
     /** Site-level share image override (from SiteTranslation.seoImage). */
     defaultImage?: string | null;
+    /** SiteTranslation.seoKeywords for region home. */
+    defaultKeywords?: string[];
     indexable: boolean;
     /** Master switch. Off forces every public page out of the index. */
     globalIndexable?: boolean;

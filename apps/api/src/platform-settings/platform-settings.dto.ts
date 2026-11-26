@@ -30,6 +30,8 @@ export type PlatformSettingsDto = {
     defaultTitle?: string | null;
     defaultDescription?: string | null;
     defaultImage?: string | null;
+    /** SiteTranslation.seoKeywords for region home meta keywords. */
+    defaultKeywords?: string[];
     indexable: boolean; // region home: global && site switch
     globalIndexable: boolean; // master switch for region/content pages (landing is independent)
     /** Platform marketing landing (hellolocal.hu /:lang): platform.landingCrawlable only (not gated by global). */

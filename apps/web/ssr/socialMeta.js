@@ -459,9 +459,13 @@ export function siteShare(data) {
     clip(data.site.shortDescription, 300) ||
     clip(data.site.description, 300);
   if (!title && !description) return null;
+  const keywords = Array.isArray(data.seo?.defaultKeywords)
+    ? data.seo.defaultKeywords.map((k) => String(k || "").trim()).filter(Boolean)
+    : [];
   return {
     title,
     description,
+    keywords,
     siteName: clip(data.site.name, 80) || clip(data.brand?.name, 80),
     hero:
       data.seo?.defaultImage ||
@@ -630,7 +634,12 @@ async function enrich(route, apiUrl, origin, forward = null, platformFallback = 
       );
     }
     if (!share) return null;
-    const patch = { title: share.title, description: share.description, siteName: share.siteName };
+    const patch = {
+      title: share.title,
+      description: share.description,
+      siteName: share.siteName,
+      keywords: share.keywords,
+    };
     Object.assign(patch, imagePatch(origin, share.hero) || {});
     return patch;
   }
@@ -770,6 +779,7 @@ export async function resolvePublicShare({ pathname, apiUrl, requestOrigin, requ
   if (patch.description) meta.description = patch.description;
   if (patch.siteName) meta.siteName = patch.siteName;
   if (patch.type) meta.type = patch.type;
+  if (Array.isArray(patch.keywords) && patch.keywords.length) meta.keywords = patch.keywords;
   if (patch.image) {
     meta.image = patch.image;
     meta.imageWidth = patch.imageWidth || "";
@@ -827,8 +837,12 @@ export function applySocialMeta(html, meta) {
   const width = meta.imageWidth || image.width || "";
   const height = meta.imageHeight || image.height || "";
 
+  const keywords = Array.isArray(meta.keywords)
+    ? meta.keywords.map((k) => String(k || "").trim()).filter(Boolean).join(", ")
+    : clip(meta.keywords, 300);
   const specs = [
     ["name", "description", description],
+    ["name", "keywords", keywords],
     ["property", "og:title", title],
     ["property", "og:description", description],
     ["property", "og:image", imageUrl],
