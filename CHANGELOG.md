@@ -14,6 +14,9 @@ in prose as used in the product.
 
 ### Added
 
+- Mobile place/event wizard: AI draft postfix on name/title and short
+  description (same `AiPostfixField` gate as admin forms; HTML stripped to
+  plain text in the wizard textarea).
 - Platform landing story block for mobile place/event upload (image + DB
   UiMessage copy hu/en/de; CMS slot `mobile`).
 - Profile password change (current + new) and admin user-edit password reset

@@ -17,6 +17,8 @@ import {
   type WizardPublishMode,
 } from "./WizardPublishChoice";
 import { useIsMobileAdmin } from "./useIsMobileAdmin";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
+import { stripHtml } from "../../utils/htmlUtils";
 import {
   plainToHtml,
   wizardCard,
@@ -240,15 +242,28 @@ export function EventWizard() {
           <label style={wizardLabel} htmlFor="wiz-event-title">
             {t("admin.wizard.eventName")}
           </label>
-          <input
-            id="wiz-event-title"
-            style={wizardInput}
+          <AiPostfixField
+            draft={{
+              kind: "event",
+              field: "title",
+              lang: contentLang,
+              siteId: selectedSiteId || undefined,
+              placeId: placeId || undefined,
+              name: title,
+            }}
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder={t("admin.wizard.eventNamePlaceholder")}
-            autoComplete="off"
-            autoFocus
-          />
+            onApply={setTitle}
+          >
+            <input
+              id="wiz-event-title"
+              style={wizardInput}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t("admin.wizard.eventNamePlaceholder")}
+              autoComplete="off"
+              autoFocus
+            />
+          </AiPostfixField>
         </div>
       )}
 
@@ -313,13 +328,27 @@ export function EventWizard() {
           <label style={wizardLabel} htmlFor="wiz-event-desc">
             {t("admin.wizard.shortDescription")}
           </label>
-          <textarea
-            id="wiz-event-desc"
-            style={wizardTextarea}
+          <AiPostfixField
+            draft={{
+              kind: "event",
+              field: "shortDescription",
+              lang: contentLang,
+              siteId: selectedSiteId || undefined,
+              placeId: placeId || undefined,
+              name: title,
+            }}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t("admin.wizard.shortDescriptionPlaceholder")}
-          />
+            onApply={(text) => setDescription(stripHtml(text))}
+            variant="textarea"
+          >
+            <textarea
+              id="wiz-event-desc"
+              style={wizardTextarea}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("admin.wizard.shortDescriptionPlaceholder")}
+            />
+          </AiPostfixField>
         </div>
       )}
 

@@ -22,6 +22,8 @@ import {
   type WizardPublishMode,
 } from "./WizardPublishChoice";
 import { useIsMobileAdmin } from "./useIsMobileAdmin";
+import { AiPostfixField } from "../../components/AiGeneratePostfixButton";
+import { stripHtml } from "../../utils/htmlUtils";
 import {
   plainToHtml,
   wizardCard,
@@ -286,15 +288,29 @@ export function PlaceWizard() {
           <label style={wizardLabel} htmlFor="wiz-place-name">
             {t("admin.wizard.name")}
           </label>
-          <input
-            id="wiz-place-name"
-            style={wizardInput}
+          <AiPostfixField
+            draft={{
+              kind: "place",
+              field: "name",
+              lang: contentLang,
+              siteId: selectedSiteId || undefined,
+              name,
+              categoryId: categoryId || undefined,
+              townId: townId || undefined,
+            }}
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("admin.wizard.namePlaceholder")}
-            autoComplete="off"
-            autoFocus
-          />
+            onApply={setName}
+          >
+            <input
+              id="wiz-place-name"
+              style={wizardInput}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("admin.wizard.namePlaceholder")}
+              autoComplete="off"
+              autoFocus
+            />
+          </AiPostfixField>
         </div>
       )}
 
@@ -346,13 +362,31 @@ export function PlaceWizard() {
           <label style={wizardLabel} htmlFor="wiz-desc">
             {t("admin.wizard.shortDescription")}
           </label>
-          <textarea
-            id="wiz-desc"
-            style={wizardTextarea}
+          <AiPostfixField
+            draft={{
+              kind: "place",
+              field: "shortDescription",
+              lang: contentLang,
+              siteId:
+                towns.find((row) => row.id === townId)?.siteId ||
+                selectedSiteId ||
+                undefined,
+              name,
+              categoryId: categoryId || undefined,
+              townId: townId || undefined,
+            }}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t("admin.wizard.shortDescriptionPlaceholder")}
-          />
+            onApply={(text) => setDescription(stripHtml(text))}
+            variant="textarea"
+          >
+            <textarea
+              id="wiz-desc"
+              style={wizardTextarea}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("admin.wizard.shortDescriptionPlaceholder")}
+            />
+          </AiPostfixField>
         </div>
       )}
 
