@@ -31,6 +31,9 @@ in prose as used in the product.
 
 ### Changed
 
+- Nyelvesítés field titles: path/leaf label dictionaries so overview/admin keys
+  show readable names (e.g. “Áttekintő · Demó űrlap — Hibaüzenet”) instead of
+  raw dotted keys.
 - Nyelvesítés rich-text fields use auto height (grow with content, cap ~280px)
   so short strings no longer leave large empty editor boxes.
 - Nyelvesítés: all UiCopy fields use rich text (TipTap); platform overview
