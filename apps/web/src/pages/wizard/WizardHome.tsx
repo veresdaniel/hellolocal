@@ -21,33 +21,42 @@ export function WizardHome() {
 
   return (
     <div style={wizardPage}>
-      <h1 style={{ margin: "0 0 8px", fontSize: 24 }}>{t("admin.wizard.homeTitle")}</h1>
-      <p style={{ margin: "0 0 20px", fontSize: 15, lineHeight: 1.45, opacity: 0.85 }}>
+      <h1 style={{ margin: "0 0 8px", fontSize: 24, color: "#fff" }}>
+        {t("admin.wizard.homeTitle")}
+      </h1>
+      <p
+        style={{
+          margin: "0 0 20px",
+          fontSize: 15,
+          lineHeight: 1.45,
+          color: "rgba(255,255,255,0.88)",
+        }}
+      >
         {t("admin.wizard.homeLead")}
       </p>
 
-      <div style={{ display: "grid", gap: 12 }}>
+      <div style={{ display: "grid", gap: 12, width: "100%", maxWidth: "100%" }}>
         <button
           type="button"
           onClick={() => navigate(`${base}/place`)}
-          style={{ ...wizardCard, textAlign: "left", cursor: "pointer", width: "100%" }}
+          style={{ ...wizardCard, textAlign: "left", cursor: "pointer" }}
         >
-          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6 }}>
+          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6, color: "var(--admin-primary, #1b1730)" }}>
             {t("admin.wizard.placeCard")}
           </div>
-          <div style={{ fontSize: 14, lineHeight: 1.45, opacity: 0.85 }}>
+          <div style={{ fontSize: 14, lineHeight: 1.45, color: "rgba(27,23,48,0.72)" }}>
             {t("admin.wizard.placeCardDesc")}
           </div>
         </button>
         <button
           type="button"
           onClick={() => navigate(`${base}/event`)}
-          style={{ ...wizardCard, textAlign: "left", cursor: "pointer", width: "100%" }}
+          style={{ ...wizardCard, textAlign: "left", cursor: "pointer" }}
         >
-          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6 }}>
+          <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6, color: "var(--admin-primary, #1b1730)" }}>
             {t("admin.wizard.eventCard")}
           </div>
-          <div style={{ fontSize: 14, lineHeight: 1.45, opacity: 0.85 }}>
+          <div style={{ fontSize: 14, lineHeight: 1.45, color: "rgba(27,23,48,0.72)" }}>
             {t("admin.wizard.eventCardDesc")}
           </div>
         </button>

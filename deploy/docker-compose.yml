@@ -56,6 +56,8 @@ services:
       dockerfile: apps/web/Dockerfile.prod
       args:
         VITE_API_URL: https://api.hello-local.io
+        VITE_CLOUDINARY_CLOUD_NAME: ${VITE_CLOUDINARY_CLOUD_NAME:-}
+        VITE_CLOUDINARY_UPLOAD_PRESET: ${VITE_CLOUDINARY_UPLOAD_PRESET:-}
     environment:
       NODE_ENV: production
       PORT: "3000"
@@ -91,6 +93,8 @@ services:
       dockerfile: apps/web/Dockerfile.prod
       args:
         VITE_API_URL: https://api.devel.hello-local.io
+        VITE_CLOUDINARY_CLOUD_NAME: ${VITE_CLOUDINARY_CLOUD_NAME:-}
+        VITE_CLOUDINARY_UPLOAD_PRESET: ${VITE_CLOUDINARY_UPLOAD_PRESET:-}
     environment:
       NODE_ENV: production
       PORT: "3000"

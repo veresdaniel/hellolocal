@@ -15,6 +15,7 @@ import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "../../constants/a
 import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
 import { googleAuthHref } from "../../auth/googleOAuth";
+import { canAccessAdminShell } from "../../utils/roleHelpers";
 
 
 export function LoginPage() {
@@ -183,8 +184,16 @@ export function LoginPage() {
   useEffect(() => {
     if (authIsLoading || !user) return;
 
-    // Visitor login pages: return to the public page (or lang home).
+    // Public login: staff / place owners → dashboard; true visitors stay public.
     if (visitor) {
+      if (canAccessAdminShell(user)) {
+        sessionStorage.removeItem("authReturnUrl");
+        const currentPath = window.location.pathname;
+        if (currentPath !== `/${lang}/admin` && currentPath !== `/${lang}/admin/`) {
+          navigate(`/${lang}/admin`, { replace: true });
+        }
+        return;
+      }
       const returnUrl = safeInternalPath(
         sessionStorage.getItem("authReturnUrl"),
         `/${lang}`

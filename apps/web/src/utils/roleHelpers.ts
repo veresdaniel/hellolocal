@@ -36,6 +36,23 @@ export function isSuperadmin(role: string | UserRole): boolean {
 }
 
 /**
+ * Staff / place owners who belong in the admin shell after login.
+ * True visitors (viewer + no site) stay on the public surface.
+ */
+export function canAccessAdminShell(user: {
+  role: string | UserRole;
+  activeSiteId?: string | null;
+  siteIds?: string[] | null;
+}): boolean {
+  if (isSuperadmin(user.role) || user.role === ROLE_ADMIN || user.role === ROLE_EDITOR) {
+    return true;
+  }
+  if (user.activeSiteId) return true;
+  if (Array.isArray(user.siteIds) && user.siteIds.length > 0) return true;
+  return false;
+}
+
+/**
  * Check if user is admin (global or site-level)
  */
 export function isAdmin(userRole: UserRole, siteRole?: SiteRole | null): boolean {

@@ -12,6 +12,17 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+### Fixed
+
+- Public login: free / subscriber / admin / superadmin users go to the admin
+  dashboard (only true visitors stay on the public return URL).
+- Admin mobile: drop `100vw` sizing that caused post-login horizontal scroll /
+  “zoomed” layout; form controls clamp to the content column.
+- Mobile wizard: readable step/lead/progress contrast on the gradient; cards and
+  inputs no longer overflow the screen.
+- Production web image: bake `VITE_CLOUDINARY_*` at build time so uploads work
+  again (“Cloudinary not configured”).
+
 ### Added
 
 - Mobile-only place/event upload wizard (`/admin/wizard`): step shell, camera

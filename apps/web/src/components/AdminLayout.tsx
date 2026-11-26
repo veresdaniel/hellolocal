@@ -267,10 +267,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         * {
           box-sizing: border-box !important;
         }
-        /* Prevent all direct children from overflowing */
+        /* 100vw includes scrollbar and causes horizontal scroll on mobile */
         body > * {
-          max-width: 100vw !important;
+          max-width: 100% !important;
           overflow-x: hidden !important;
+        }
+        .admin-layout input,
+        .admin-layout select,
+        .admin-layout textarea {
+          max-width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
         }
         @keyframes slideDown {
           from {

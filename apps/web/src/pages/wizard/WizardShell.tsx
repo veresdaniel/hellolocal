@@ -38,15 +38,32 @@ export function WizardShell({
   return (
     <div style={wizardPage}>
       <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 4 }}>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: "0.02em",
+            color: "rgba(255,255,255,0.88)",
+            marginBottom: 4,
+          }}
+        >
           {t("admin.wizard.stepOf", { current: stepIndex + 1, total: stepCount })}
         </div>
-        <h1 style={{ margin: "0 0 12px", fontSize: 22, lineHeight: 1.25 }}>{title}</h1>
+        <h1
+          style={{
+            margin: "0 0 12px",
+            fontSize: 22,
+            lineHeight: 1.25,
+            color: "#fff",
+          }}
+        >
+          {title}
+        </h1>
         <div
           style={{
             height: 6,
             borderRadius: 99,
-            background: "rgba(27,23,48,0.12)",
+            background: "rgba(255,255,255,0.28)",
             overflow: "hidden",
           }}
           role="progressbar"
@@ -58,7 +75,7 @@ export function WizardShell({
             style={{
               height: "100%",
               width: `${progress}%`,
-              background: "var(--admin-primary, #1b1730)",
+              background: "#fff",
               transition: "width 0.2s ease",
             }}
           />
