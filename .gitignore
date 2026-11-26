@@ -9,3 +9,5 @@ reports
 .vitest
 prisma.config.js
 .pnpm_store
+.api-logs.txt
+

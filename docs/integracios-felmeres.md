@@ -70,6 +70,9 @@ Egy településnek három kifelé néző dolog kellene. A felmérés szerint egy
 
 Befelé elég egy iCal-cím mező régiónként, plusz egy egyszeri OSM-import, emberi ellenőrzéssel.
 
+Az iframe/HTML-blokk, a kampány-QR és a CSV/JSON helyimport implementációs spece:
+[p0-feature-specs.md](./p0-feature-specs.md) (§2 embed/QR, §3 import).
+
 ## Amit a felmérés nem zárt le
 
 A felmérés lezárult. Ezek a pontok benne nyitva maradtak, mert a forrás nem adta ki őket:

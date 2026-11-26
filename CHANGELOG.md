@@ -14,6 +14,9 @@ in prose as used in the product.
 
 ### Added
 
+- P0 product specs for DMO-first roadmap: place claim + approval queue, embed
+  map + campaign QR pack, CSV/JSON import–export + bulk admin — see
+  [docs/p0-feature-specs.md](docs/p0-feature-specs.md).
 - Public GTM `dataLayer` events (consent-gated, admin skipped): `page_view`,
   `scroll`, `view_item`, `select_item`, `contact_click`, `share`, `cta_click`,
   `generate_lead`, auth clicks, `select_content`; docs in
@@ -664,8 +667,10 @@ for consistency.
 ### Planned
 
 - [ ] Redis cache layer
-- [ ] Export/Import (CSV, JSON)
-- [ ] Bulk admin operations
+- [ ] Export/Import (CSV, JSON) — scoped in [docs/p0-feature-specs.md](docs/p0-feature-specs.md) §3
+- [ ] Bulk admin operations — same P0 spec §3
+- [ ] Place self-claim + approval queue — P0 spec §1
+- [ ] Embed map widget + campaign QR pack — P0 spec §2
 - [ ] Broader accessibility (a11y) pass
 - [ ] Production email delivery
 
