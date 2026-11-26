@@ -12,6 +12,12 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+### Changed
+
+- Image uploads: client-side optimize before Cloudinary — long edge ≤1920px and
+  WebP (JPEG fallback). Floorplans keep a higher 4096px / q0.9 cap; pass
+  `skipOptimize` to bypass.
+
 ### Fixed
 
 - Public login: free / subscriber / admin / superadmin users go to the admin

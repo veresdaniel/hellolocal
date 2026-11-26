@@ -48,4 +48,19 @@ export interface UploadOptions {
    * Callback for upload progress (0-100)
    */
   onProgress?: (progress: number) => void;
+
+  /**
+   * Skip client-side WebP/resize (e.g. detailed floorplans).
+   */
+  skipOptimize?: boolean;
+
+  /**
+   * Override long-edge max px for client optimize (default 1920).
+   */
+  maxEdge?: number;
+
+  /**
+   * Override encode quality 0–1 (default 0.82).
+   */
+  quality?: number;
 }

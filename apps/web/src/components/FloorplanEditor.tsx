@@ -202,6 +202,9 @@ export function FloorplanEditor({ placeId, siteId }: FloorplanEditorProps) {
     try {
       const imageUrl = await uploadService.uploadImage(file, {
         folder: `floorplans/${placeId}`,
+        // Keep more detail than photo uploads; still cap extreme phone resolutions.
+        maxEdge: 4096,
+        quality: 0.9,
       });
 
       const dto: CreateFloorplanDto = {

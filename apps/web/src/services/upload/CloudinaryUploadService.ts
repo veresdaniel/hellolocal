@@ -14,6 +14,7 @@
  * This is a client-side implementation for demo purposes
  */
 import { IUploadService, UploadOptions } from "./IUploadService";
+import { optimizeImage } from "./optimizeImage";
 
 interface CloudinaryUploadResponse {
   secure_url: string;
@@ -44,8 +45,16 @@ export class CloudinaryUploadService implements IUploadService {
       throw new Error("Cloudinary not configured");
     }
 
+    const payload =
+      options?.skipOptimize
+        ? file
+        : await optimizeImage(file, {
+            maxEdge: options?.maxEdge,
+            quality: options?.quality,
+          });
+
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", payload);
     formData.append("upload_preset", this.uploadPreset || "unsigned");
 
     if (options?.folder) {

@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { uploadService } from "../../services/upload/uploadService";
-import { compressImage } from "./compressImage";
 import { wizardCard, wizardLabel, wizardPrimaryBtn, wizardSecondaryBtn } from "./wizardStyles";
 
 export type WizardPhoto = {
@@ -38,8 +37,8 @@ export function WizardPhotoStep({
     try {
       const next = [...photos];
       for (const file of Array.from(files)) {
-        const compressed = await compressImage(file);
-        const url = await uploadService.uploadImage(compressed, { folder });
+        // uploadService optimizes (WebP + resize) globally before CDN upload
+        const url = await uploadService.uploadImage(file, { folder });
         next.push({ id: newId(), url });
       }
       onChange(next);

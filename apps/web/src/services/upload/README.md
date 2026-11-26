@@ -11,6 +11,11 @@ Moduláris fájlfeltöltési szolgáltatás, amely könnyen cserélhető CDN szo
 - Képek és videók feltöltése
 - Automatikus optimalizálás és transformációk
 
+## Kliens oldali spórolás
+
+`uploadImage` feltöltés előtt WebP-re konvertál (JPEG fallback) és a hosszú
+élt max. 1920 px-re méretezi. Opciók: `skipOptimize`, `maxEdge`, `quality`.
+
 ## Beállítás
 
 1. Regisztrálj a [Cloudinary](https://cloudinary.com)-n
