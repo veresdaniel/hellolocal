@@ -869,8 +869,7 @@ export class AuthService {
   }
 
   /**
-   * Handles Google OAuth authentication/registration.
-   * Creates user as visitor (activeSiteId: null) if they don't exist.
+   * Google OAuth login for an existing account only (no auto-registration).
    */
   async googleLogin(googleUser: {
     email: string;
@@ -878,8 +877,7 @@ export class AuthService {
     lastName: string;
     picture?: string;
   }): Promise<AuthResponse> {
-    // Check if user already exists
-    let user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { email: googleUser.email },
       include: {
         sites: {
@@ -888,54 +886,8 @@ export class AuthService {
       },
     });
 
-    // If user doesn't exist, create as visitor
     if (!user) {
-      // Get default site ID
-      const defaultSite = await this.prisma.site.findUnique({
-        where: { slug: this.getDefaultSiteSlug() },
-      });
-
-      if (!defaultSite) {
-        throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_DEFAULT_SITE);
-      }
-
-      // Generate username from email (first part before @)
-      const emailPrefix = googleUser.email.split("@")[0];
-      const baseUsername = emailPrefix.toLowerCase().replace(/[^a-z0-9-]/g, "-");
-
-      // Ensure unique username
-      let username = baseUsername;
-      let counter = 1;
-      while (await this.prisma.user.findUnique({ where: { username } })) {
-        username = `${baseUsername}-${counter}`;
-        counter++;
-      }
-
-      // Create user as visitor (activeSiteId: null)
-      const emailNormalized = normalizeEmail(googleUser.email);
-      user = await this.prisma.user.create({
-        data: {
-          username,
-          email: googleUser.email,
-          emailNormalized: emailNormalized || undefined,
-          passwordHash: "", // No password for OAuth users
-          firstName: googleUser.firstName,
-          lastName: googleUser.lastName,
-          role: UserRole.viewer,
-          activeSiteId: null, // Visitor by default
-          sites: {
-            create: {
-              siteId: defaultSite.id,
-              isPrimary: true,
-            },
-          },
-        },
-        include: {
-          sites: {
-            select: { siteId: true },
-          },
-        },
-      });
+      throw new UnauthorizedException("google_account_not_registered");
     }
 
     const siteIds = user.sites?.map((s) => s.siteId) || [];

@@ -536,6 +536,7 @@
   "loginWithGoogle": "Bejelentkezés Google-lal",
   "register": "Regisztráció",
   "registerWithGoogle": "Regisztráció Google-lal",
+  "googleAccountNotRegistered": "Ehhez a Google-fiókhoz még nincs HelloLocal felhasználó. Előbb regisztrálj email+jelszóval, vagy kérj meghívót.",
   "or": "vagy",
   "registering": "Regisztrálás...",
   "registrationFailed": "Regisztráció sikertelen",

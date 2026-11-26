@@ -175,10 +175,15 @@ export function LoginPage() {
 
       void processGoogleAuth();
     } else if (errorParam) {
-      setError(decodeURIComponent(errorParam));
+      const raw = decodeURIComponent(errorParam);
+      setError(
+        raw === "google_account_not_registered"
+          ? t("admin.googleAccountNotRegistered")
+          : raw
+      );
       clearAuthFragment();
     }
-  }, [searchParams, setSearchParams, refreshUser]);
+  }, [searchParams, setSearchParams, refreshUser, t]);
 
   // Redirect if already logged in (after auth state is updated)
   useEffect(() => {

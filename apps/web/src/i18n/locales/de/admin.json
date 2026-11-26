@@ -459,6 +459,7 @@
   "loginWithGoogle": "Mit Google anmelden",
   "register": "Registrieren",
   "registerWithGoogle": "Mit Google registrieren",
+  "googleAccountNotRegistered": "Für diese Google-E-Mail gibt es noch kein HelloLocal-Konto. Bitte zuerst mit E-Mail und Passwort registrieren oder um eine Einladung bitten.",
   "or": "oder",
   "registering": "Registrierung läuft...",
   "registrationFailed": "Registrierung fehlgeschlagen",

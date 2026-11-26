@@ -464,6 +464,7 @@
   "loginDescription": "Sign in to the admin panel",
   "loginWithGoogle": "Sign in with Google",
   "registerWithGoogle": "Sign up with Google",
+  "googleAccountNotRegistered": "No HelloLocal account exists for this Google email yet. Register with email and password first, or ask for an invite.",
   "or": "or",
   "pleaseEnter2FACode": "Please enter your 2FA code",
   "twoFactorCode": "2FA Code",
