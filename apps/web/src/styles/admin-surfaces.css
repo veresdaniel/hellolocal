@@ -113,6 +113,38 @@
   font-family: var(--admin-font) !important;
 }
 
+/*
+ * Admin pages mount portals on document.body (filter menus, modals).
+ * Seal the whole document while admin chrome is present — no serifs anywhere.
+ */
+body:has(.admin-layout),
+body:has(.admin-layout) button,
+body:has(.admin-layout) input,
+body:has(.admin-layout) select,
+body:has(.admin-layout) textarea,
+body:has(.admin-layout) label,
+body:has(.admin-layout) p,
+body:has(.admin-layout) span,
+body:has(.admin-layout) strong,
+body:has(.admin-layout) td,
+body:has(.admin-layout) th,
+body:has(.admin-layout) li,
+body:has(.admin-layout) a,
+body:has(.admin-layout) h1,
+body:has(.admin-layout) h2,
+body:has(.admin-layout) h3,
+body:has(.admin-layout) h4 {
+  font-family: var(
+    --admin-font,
+    Inter,
+    "Source Sans 3",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif
+  ) !important;
+}
+
 .admin-layout {
   color: var(--admin-ink);
   background: var(--admin-bg);

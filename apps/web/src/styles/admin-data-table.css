@@ -119,6 +119,22 @@
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
   box-sizing: border-box;
+  /* Portaled to document.body — must not inherit public serif brand faces. */
+  font-family: var(
+    --admin-font,
+    Inter,
+    "Source Sans 3",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif
+  ) !important;
+}
+
+.admin-data-table__filter-menu,
+.admin-data-table__filter-menu button,
+.admin-data-table__filter-menu li {
+  font-family: inherit !important;
 }
 
 .admin-data-table__filter-option {
