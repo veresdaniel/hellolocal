@@ -70,7 +70,12 @@ export function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await forgotPassword({ email, lang, ...(await shield.payload()) });
+      const response = await forgotPassword({
+        email,
+        lang,
+        mode: visitor ? "visitor" : "admin",
+        ...(await shield.payload()),
+      });
       setSuccess(response.message);
       // In development, show the reset token if provided
       if (response.resetToken) {

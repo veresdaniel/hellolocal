@@ -339,6 +339,46 @@ export class AdminUsersService {
   }
 
   /**
+   * Superadmin sets a new password for a user (no current-password check).
+   * Emails the new credentials when SMTP is configured.
+   */
+  async setPassword(userId: string, newPassword: string, currentUserRole: UserRole) {
+    if (currentUserRole !== UserRole.superadmin) {
+      throw new ForbiddenException("Only superadmin can set another user's password");
+    }
+    assertPasswordStrength(newPassword);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, username: true, firstName: true },
+    });
+    if (!user) {
+      throw new NotFoundException(ERROR_MESSAGES.NOT_FOUND_USER);
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        resetToken: null,
+        resetTokenExpiresAt: null,
+      },
+    });
+    const loginUrl = `${this.emailService.frontendBaseUrl()}/hu/admin/login`;
+    this.emailService
+      .sendAccountCredentialsEmail({
+        to: user.email,
+        username: user.username,
+        email: user.email,
+        password: newPassword,
+        firstName: user.firstName,
+        loginUrl,
+        source: "admin",
+      })
+      .catch(() => undefined);
+    return { message: "Password updated" };
+  }
+
+  /**
    * Delete a non-superadmin user and cascade-delete places they own
    * (events / products under those places via {@link AdminPlaceService.remove}).
    */

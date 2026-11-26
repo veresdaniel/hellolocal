@@ -1459,6 +1459,18 @@ export class AdminController {
     return result;
   }
 
+  @Put("/users/:id/password")
+  async setUserPassword(
+    @Param("id") id: string,
+    @Body() body: { password: string },
+    @CurrentUser() user: { id: string; role: UserRole }
+  ) {
+    if (!body?.password || typeof body.password !== "string") {
+      throw new BadRequestException("Password is required");
+    }
+    return this.usersService.setPassword(id, body.password, user.role);
+  }
+
   @Put("/users/:id")
   async updateUser(
     @Param("id") id: string,

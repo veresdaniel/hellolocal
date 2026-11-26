@@ -20,6 +20,7 @@ import { assertPasswordStrength } from "./password-strength";
 import { LoginDto } from "./dto/login.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
 import { UserRole } from "@prisma/client";
 import { isSupportedLang } from "../common/lang";
@@ -727,17 +728,49 @@ export class AuthService {
       },
     });
 
-    // Send password reset email (non-blocking)
     const lang = dto.lang === "en" || dto.lang === "de" || dto.lang === "hu" ? dto.lang : "hu";
-    this.emailService.sendPasswordResetEmail(user.email, resetToken, user.username, lang).catch((err) => {
-      console.error("Failed to send password reset email:", err);
-      // Don't fail if email fails, but log error
-    });
+    const mode = dto.mode === "admin" ? "admin" : "visitor";
+    this.emailService
+      .sendPasswordResetEmail(user.email, resetToken, user.username, lang, mode)
+      .catch((err) => {
+        console.error("Failed to send password reset email:", err);
+      });
 
     // Don't return reset token in response for security
     return {
       message: "If the email exists, a password reset link has been sent.",
     };
+  }
+
+  /**
+   * Logged-in password change: verifies current password, then applies strong new password.
+   */
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, passwordHash: true },
+    });
+    if (!user?.passwordHash) {
+      throw new BadRequestException("password_change_unavailable");
+    }
+    const ok = await this.comparePassword(dto.currentPassword, user.passwordHash);
+    if (!ok) {
+      throw new UnauthorizedException("current_password_invalid");
+    }
+    assertPasswordStrength(dto.newPassword);
+    const passwordHash = await this.hashPassword(dto.newPassword);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        resetToken: null,
+        resetTokenExpiresAt: null,
+      },
+    });
+    return { message: "Password changed successfully" };
   }
 
   /**

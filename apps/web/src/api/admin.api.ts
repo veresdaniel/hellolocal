@@ -96,6 +96,10 @@ export function createUser(data: CreateUserDto) {
   return apiPost<User>("/admin/users", data);
 }
 
+export function setUserPassword(id: string, password: string) {
+  return apiPut<{ message: string }>(`/admin/users/${id}/password`, { password });
+}
+
 export function updateUser(id: string, data: UpdateUserDto) {
   return apiPut<User>(`/admin/users/${id}`, data);
 }

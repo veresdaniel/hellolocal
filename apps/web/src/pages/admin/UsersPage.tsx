@@ -10,6 +10,7 @@ import {
   getSites,
   createUser,
   updateUser,
+  setUserPassword,
   updateUserRole,
   deleteUser,
   disableTwoFactorForUser,
@@ -166,6 +167,18 @@ export function UsersPage() {
 
   const handleUpdate = async (id: string) => {
     if (!validateForm()) return;
+    if (formData.password.trim()) {
+      const problem = passwordProblem(formData.password);
+      if (problem) {
+        setFormErrors({
+          password:
+            problem === "short"
+              ? t("public.visitorAuth.passwordShort")
+              : t("public.visitorAuth.passwordWeak"),
+        });
+        return;
+      }
+    }
 
     try {
       await updateUser(id, {
@@ -175,6 +188,9 @@ export function UsersPage() {
         isActive: formData.isActive,
         siteIds: formData.siteIds.length > 0 ? formData.siteIds : undefined,
       });
+      if (formData.password.trim()) {
+        await setUserPassword(id, formData.password);
+      }
       setEditingId(null);
       resetForm();
       await loadData();
@@ -449,15 +465,25 @@ export function UsersPage() {
             </div>
           </div>
 
-          {isCreating && (
+          {(isCreating || editingId) && (
             <div style={{ marginBottom: 16 }}>
               <PasswordField
                 compact
-                label={`${t("admin.password")} *`}
+                label={
+                  isCreating
+                    ? `${t("admin.password")} *`
+                    : t("admin.profile.newPasswordOptional")
+                }
                 value={formData.password}
                 onChange={(password) => setFormData({ ...formData, password })}
                 error={formErrors.password || null}
+                required={isCreating}
               />
+              {editingId ? (
+                <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b7280" }}>
+                  {t("admin.profile.adminSetPasswordHint")}
+                </p>
+              ) : null}
             </div>
           )}
 

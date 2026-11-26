@@ -9,4 +9,10 @@ export class ForgotPasswordDto extends PublicFormShieldFields {
   @IsString()
   @MaxLength(8)
   lang?: string;
+
+  /** `admin` → /:lang/admin/reset-password; otherwise public /:lang/reset-password */
+  @IsOptional()
+  @IsString()
+  @MaxLength(16)
+  mode?: string;
 }

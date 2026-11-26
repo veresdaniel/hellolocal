@@ -17,6 +17,7 @@ import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { GoogleAuthGuard } from "./guards/google-auth.guard";
@@ -100,6 +101,20 @@ export class AuthController {
   async resetPassword(@Body() dto: ResetPasswordDto) {
     await assertPublicFormShield(dto, { captcha: "off" });
     return this.authService.resetPassword(dto);
+  }
+
+  /**
+   * Change password while logged in (requires current password).
+   */
+  @Post("/change-password")
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ strict: { limit: 5, ttl: 60000 } })
+  async changePassword(
+    @CurrentUser() user: { id: string },
+    @Body() dto: ChangePasswordDto
+  ) {
+    return this.authService.changePassword(user.id, dto);
   }
 
   /**

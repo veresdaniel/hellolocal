@@ -35,6 +35,13 @@ export interface LoginDto extends PublicFormShieldFields {
 export interface ForgotPasswordDto extends PublicFormShieldFields {
   email: string;
   lang?: string;
+  /** admin → /:lang/admin/reset-password; otherwise public /:lang/reset-password */
+  mode?: "admin" | "visitor";
+}
+
+export interface ChangePasswordDto {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface ResetPasswordDto extends PublicFormShieldFields {
@@ -94,6 +101,10 @@ export function forgotPassword(data: ForgotPasswordDto) {
 
 export function resetPassword(data: ResetPasswordDto) {
   return apiPostPublic<{ message: string }>("/auth/reset-password", data);
+}
+
+export function changePassword(data: ChangePasswordDto) {
+  return apiPost<{ message: string }>("/auth/change-password", data);
 }
 
 export function refreshToken(data: RefreshTokenDto) {

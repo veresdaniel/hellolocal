@@ -108,33 +108,53 @@ export class EmailService {
   }
 
   /**
-   * Sends a password reset email with reset link.
+   * Password-reset email with link to the set-new-password page.
+   * `mode=admin` → /:lang/admin/reset-password; otherwise public /:lang/reset-password.
    */
   async sendPasswordResetEmail(
     to: string,
     resetToken: string,
     username: string,
-    lang = "hu"
+    lang = "hu",
+    mode: "admin" | "visitor" = "visitor",
+    originBase?: string
   ): Promise<void> {
-    const subject = "Password Reset Request";
-    const resetUrl = `${this.frontendBaseUrl()}/${lang}/reset-password?token=${resetToken}`;
-    const text = `Hello ${username},\n\nReset your password: ${resetUrl}\n\nThis link expires in 1 hour.`;
+    const base = (originBase?.replace(/\/$/, "") || this.frontendBaseUrl()).replace(/\/$/, "");
+    const safeLang = lang === "en" || lang === "de" || lang === "hu" ? lang : "hu";
+    const path =
+      mode === "admin"
+        ? `/${safeLang}/admin/reset-password`
+        : `/${safeLang}/reset-password`;
+    const resetUrl = `${base}${path}?token=${encodeURIComponent(resetToken)}`;
+    const subject = "HelloLocal — új jelszó beállítása";
+    const text = [
+      `Szia ${username}!`,
+      "",
+      "Jelszó-visszaállítást kértél. Ezen a linken tudsz új jelszót beállítani (1 óráig érvényes):",
+      resetUrl,
+      "",
+      "Ha nem te kérted, hagyd figyelmen kívül ezt a levelet.",
+      "",
+      "HelloLocal",
+    ].join("\n");
     const html = `
       <!DOCTYPE html>
       <html>
         <head><meta charset="utf-8"><title>${subject}</title></head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #1b1730;">Password Reset Request</h1>
-            <p>Hello ${escapeHtml(username)},</p>
-            <p>We received a request to reset your password. Click the link below:</p>
+            <h1 style="color: #1b1730;">Új jelszó beállítása</h1>
+            <p>Szia ${escapeHtml(username)}!</p>
+            <p>Jelszó-visszaállítást kértél. A gombra kattintva új jelszót állíthatsz be:</p>
             <p style="margin: 20px 0;">
               <a href="${escapeHtml(resetUrl)}" style="background-color: #1b1730; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                Reset Password
+                Új jelszó beállítása
               </a>
             </p>
-            <p style="word-break: break-all; color: #666;">${escapeHtml(resetUrl)}</p>
-            <p><strong>This link will expire in 1 hour.</strong></p>
+            <p style="word-break: break-all; color: #666; font-size: 13px;">${escapeHtml(resetUrl)}</p>
+            <p><strong>A link 1 óráig érvényes.</strong></p>
+            <p style="color:#666;font-size:14px;">Ha nem te kérted, hagyd figyelmen kívül ezt a levelet.</p>
+            <p>HelloLocal</p>
           </div>
         </body>
       </html>

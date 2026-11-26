@@ -14,6 +14,9 @@ in prose as used in the product.
 
 ### Added
 
+- Profile password change (current + new) and admin user-edit password reset
+  (emails new credentials); forgot-password sends SMTP link to reset page
+  (public and admin paths).
 - Strong password UX on register, admin user create, and password reset:
   strength meter, show/hide toggle; confirm-password on register only.
 - Account credentials email (username, email, password, login link) after

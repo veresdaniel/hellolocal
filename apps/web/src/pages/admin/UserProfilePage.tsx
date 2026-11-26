@@ -11,7 +11,10 @@ import {
   getTwoFactorStatus,
 } from "../../api/admin.api";
 import type { User } from "../../api/admin.api";
+import { changePassword } from "../../api/auth.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { PasswordField } from "../../components/PasswordField";
+import { passwordProblem } from "../../auth/passwordStrength";
 import { ROLE_SUPERADMIN, ROLE_ADMIN, ROLE_EDITOR } from "../../types/enums";
 import { useAuthStore } from "../../stores/authStore";
 import { USER_KEY } from "../../constants/authStorage";
@@ -33,6 +36,13 @@ export function UserProfilePage() {
     lastName: "",
     bio: "",
   });
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   // 2FA state
   const [isTwoFactorEnabled, setIsTwoFactorEnabled] = useState(false);
@@ -536,6 +546,126 @@ export function UserProfilePage() {
                   {isSaving ? t("admin.profile.saving") : t("admin.profile.saveChanges")}
                 </button>
               </div>
+            </form>
+          </div>
+
+          <div>
+            <h2
+              className="admin-page-section-title"
+              style={{
+                marginBottom: 16,
+                fontSize: "clamp(18px, 4vw, 20px)",
+                fontWeight: 700,
+              }}
+            >
+              {t("admin.profile.changePassword")}
+            </h2>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setPasswordError(null);
+                setPasswordSuccess(false);
+                if (!currentPassword) {
+                  setPasswordError(t("admin.profile.currentPasswordRequired"));
+                  return;
+                }
+                const problem = passwordProblem(newPassword);
+                if (problem) {
+                  setPasswordError(
+                    problem === "short"
+                      ? t("public.visitorAuth.passwordShort")
+                      : t("public.visitorAuth.passwordWeak")
+                  );
+                  return;
+                }
+                if (newPassword !== confirmPassword) {
+                  setPasswordError(t("admin.passwordsDoNotMatch"));
+                  return;
+                }
+                setIsSavingPassword(true);
+                try {
+                  await changePassword({ currentPassword, newPassword });
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                  setPasswordSuccess(true);
+                } catch (err) {
+                  const msg = err instanceof Error ? err.message : "";
+                  setPasswordError(
+                    msg.includes("current_password_invalid")
+                      ? t("admin.profile.currentPasswordInvalid")
+                      : msg || t("admin.profile.changePasswordFailed")
+                  );
+                } finally {
+                  setIsSavingPassword(false);
+                }
+              }}
+              style={{
+                padding: "clamp(20px, 4vw, 24px)",
+                background: "white",
+                borderRadius: 12,
+                marginBottom: 24,
+                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.08)",
+                border: "1px solid rgba(37, 99, 235, 0.1)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+              }}
+            >
+              <p style={{ margin: 0, color: "#6b7280", fontSize: 14 }}>
+                {t("admin.profile.changePasswordHint")}
+              </p>
+              <PasswordField
+                compact
+                label={t("admin.profile.currentPassword")}
+                name="currentPassword"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={setCurrentPassword}
+                showStrength={false}
+              />
+              <PasswordField
+                compact
+                label={t("admin.profile.newPassword")}
+                name="newPassword"
+                value={newPassword}
+                onChange={setNewPassword}
+              />
+              <PasswordField
+                compact
+                label={t("admin.confirmPassword")}
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                showStrength={false}
+              />
+              {passwordError ? (
+                <div style={{ color: "#dc2626", fontSize: 14 }}>{passwordError}</div>
+              ) : null}
+              {passwordSuccess ? (
+                <div style={{ color: "#16a34a", fontSize: 14 }}>
+                  {t("admin.profile.passwordChanged")}
+                </div>
+              ) : null}
+              <button
+                type="submit"
+                disabled={isSavingPassword}
+                style={{
+                  alignSelf: "flex-start",
+                  padding: "10px 20px",
+                  fontSize: 15,
+                  fontWeight: 600,
+                  background: isSavingPassword ? "#ddd" : "var(--admin-primary, #1b1730)",
+                  color: isSavingPassword ? "#999" : "white",
+                  border: "none",
+                  borderRadius: 8,
+                  cursor: isSavingPassword ? "not-allowed" : "pointer",
+                }}
+              >
+                {isSavingPassword
+                  ? t("admin.profile.saving")
+                  : t("admin.profile.savePassword")}
+              </button>
             </form>
           </div>
 
