@@ -25,6 +25,32 @@ export const LEAD_FORM_MIN_MS = 3000;
 
 const siteKey = () => (import.meta.env.VITE_RECAPTCHA_SITE_KEY || "").trim();
 
+/**
+ * Hostnames where the reCAPTCHA site key is registered in Google Console.
+ * Loading the script on any other host shows Google’s “invalid domain for site key”
+ * owner badge (e.g. hellolocal.hu / custom domains before they are added).
+ * Override with VITE_RECAPTCHA_HOSTS=hello-local.io,hellolocal.hu
+ */
+function recaptchaAllowedHosts(): string[] {
+  const raw = (import.meta.env.VITE_RECAPTCHA_HOSTS || "").trim();
+  const list = (raw
+    ? raw.split(/[\s,;]+/)
+    : ["hello-local.io", "localhost", "127.0.0.1"]
+  )
+    .map((host) => host.trim().toLowerCase().replace(/^www\./, "").replace(/\.$/, ""))
+    .filter(Boolean);
+  return list;
+}
+
+function hostAllowsRecaptcha(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname.toLowerCase().replace(/^www\./, "").replace(/\.$/, "");
+  if (!host) return false;
+  return recaptchaAllowedHosts().some(
+    (allowed) => host === allowed || host.endsWith(`.${allowed}`)
+  );
+}
+
 let scriptPromise: Promise<void> | null = null;
 
 function loadRecaptcha(key: string): Promise<void> {
@@ -54,10 +80,10 @@ export function usePublicFormShield(
   const [companyWebsite, setCompanyWebsite] = useState("");
   const key = siteKey();
   const minMs = Math.max(opts?.minMs ?? FORM_MIN_MS, FORM_MIN_MS);
-  const useRecaptcha = opts?.recaptcha !== false;
+  const useRecaptcha = opts?.recaptcha !== false && Boolean(key) && hostAllowsRecaptcha();
 
   useEffect(() => {
-    if (!key || !useRecaptcha) return;
+    if (!useRecaptcha) return;
     loadRecaptcha(key).catch(() => undefined);
   }, [key, useRecaptcha]);
 
@@ -70,7 +96,7 @@ export function usePublicFormShield(
     }
 
     let recaptchaToken: string | undefined;
-    if (key && useRecaptcha) {
+    if (useRecaptcha) {
       try {
         await loadRecaptcha(key);
         recaptchaToken = await new Promise((resolve, reject) => {

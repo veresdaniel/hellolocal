@@ -57,7 +57,8 @@ export class AuthController {
   @Post("/register")
   @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async register(@Body() dto: RegisterDto, @Req() req: RequestWithSite) {
-    await assertPublicFormShield(dto);
+    // Optional captcha: web only sends a token on VITE_RECAPTCHA_HOSTS; honeypot + dwell remain.
+    await assertPublicFormShield(dto, { captcha: "optional" });
     const referer = req.headers.referer || req.headers.origin;
     const forwarded = req.headers["x-forwarded-for"];
     const ip =

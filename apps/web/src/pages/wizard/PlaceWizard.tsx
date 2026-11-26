@@ -122,6 +122,16 @@ export function PlaceWizard() {
 
   const townLabel = townOptions.find((o) => o.value === townId)?.label || "—";
   const categoryLabel = categoryOptions.find((o) => o.value === categoryId)?.label || "—";
+  const placeSiteId =
+    towns.find((row) => row.id === townId)?.siteId || selectedSiteId || undefined;
+  const placeDraftHints = [
+    "Mobile place upload wizard",
+    "Synthesize original guide copy from public knowledge; do not copy source wording",
+    townId && townLabel !== "—" ? `Town: ${townLabel}` : "",
+    categoryId && categoryLabel !== "—" ? `Category: ${categoryLabel}` : "",
+  ]
+    .filter(Boolean)
+    .join(". ");
 
   const canNext = (() => {
     if (step === 0) return name.trim().length > 0;
@@ -293,10 +303,11 @@ export function PlaceWizard() {
               kind: "place",
               field: "name",
               lang: contentLang,
-              siteId: selectedSiteId || undefined,
+              siteId: placeSiteId,
               name,
               categoryId: categoryId || undefined,
               townId: townId || undefined,
+              contextHints: placeDraftHints,
             }}
             value={name}
             onApply={setName}
@@ -367,13 +378,11 @@ export function PlaceWizard() {
               kind: "place",
               field: "shortDescription",
               lang: contentLang,
-              siteId:
-                towns.find((row) => row.id === townId)?.siteId ||
-                selectedSiteId ||
-                undefined,
+              siteId: placeSiteId,
               name,
               categoryId: categoryId || undefined,
               townId: townId || undefined,
+              contextHints: placeDraftHints,
             }}
             value={description}
             onApply={(text) => setDescription(stripHtml(text))}

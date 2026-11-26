@@ -1521,7 +1521,7 @@
     "guidelinesPlaceholder": "Írj erről… pl. hangsúlyozd a helyi pincéket és a hétvégi piacot",
     "openSettings": "Platform beállítások megnyitása",
     "generating": "Vázlat készül…",
-    "disabled": "A szöveggenerátor ki van kapcsolva — a platformbeállításokban nincs API kulcs.",
+    "disabled": "A szöveggenerátor ki van kapcsolva — nincs olvasható API kulcs. App beállításokban mentsd újra a kulcsot (vagy állítsd be a GEMINI_API_KEY / CONTENT_DRAFT_API_KEY env-et).",
     "notAllowed": "Ehhez a helyhez nincs jogosultságod vázlatot kérni.",
     "confirmReplaceTitle": "Meglévő szöveg cseréje",
     "confirmReplace": "A rövid vagy a hosszú leírás már ki van töltve. Lecseréljük a vázlatra? Mentés előtt még átnézheted.",

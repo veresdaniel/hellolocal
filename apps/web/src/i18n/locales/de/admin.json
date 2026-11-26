@@ -1482,7 +1482,7 @@
     "guidelinesPlaceholder": "Schreib über… z. B. lokale Weinkeller und den Wochenmarkt betonen",
     "openSettings": "Plattformeinstellungen öffnen",
     "generating": "Entwurf wird erstellt…",
-    "disabled": "Textentwurf ist aus — in den Plattformeinstellungen fehlt der API-Schlüssel.",
+    "disabled": "Textentwurf ist aus — kein lesbarer API-Schlüssel. Schlüssel in den App-Einstellungen erneut speichern (oder GEMINI_API_KEY / CONTENT_DRAFT_API_KEY setzen).",
     "notAllowed": "Für diesen Standort darfst du keinen Entwurf anfordern.",
     "confirmReplaceTitle": "Vorhandenen Text ersetzen?",
     "confirmReplace": "Kurz- oder Langbeschreibung ist bereits ausgefüllt. Mit dem Entwurf ersetzen? Vor dem Speichern kannst du noch prüfen.",

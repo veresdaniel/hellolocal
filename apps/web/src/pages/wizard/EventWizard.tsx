@@ -90,6 +90,15 @@ export function EventWizard() {
   );
   const placeLabel = placeOptions.find((o) => o.value === placeId)?.label || "—";
   const selectedPlace = places.find((row) => row.id === placeId);
+  const eventSiteId = selectedPlace?.siteId || selectedPlace?.tenantId || selectedSiteId || undefined;
+  const eventDraftHints = [
+    "Mobile event upload wizard",
+    "Synthesize original guide copy from public knowledge; do not copy source wording",
+    placeId && placeLabel !== "—" ? `Linked place: ${placeLabel}` : "",
+    startDate ? `Starts: ${startDate}` : "",
+  ]
+    .filter(Boolean)
+    .join(". ");
   const canPublish = canChooseWizardPublish(user?.role, selectedPlace?.plan);
 
   useEffect(() => {
@@ -247,9 +256,10 @@ export function EventWizard() {
               kind: "event",
               field: "title",
               lang: contentLang,
-              siteId: selectedSiteId || undefined,
+              siteId: eventSiteId,
               placeId: placeId || undefined,
               name: title,
+              contextHints: eventDraftHints,
             }}
             value={title}
             onApply={setTitle}
@@ -333,9 +343,10 @@ export function EventWizard() {
               kind: "event",
               field: "shortDescription",
               lang: contentLang,
-              siteId: selectedSiteId || undefined,
+              siteId: eventSiteId,
               placeId: placeId || undefined,
               name: title,
+              contextHints: eventDraftHints,
             }}
             value={description}
             onApply={(text) => setDescription(stripHtml(text))}

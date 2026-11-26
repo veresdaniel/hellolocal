@@ -17,7 +17,9 @@ export class QuoteController {
   @Post()
   @Throttle({ strict: { limit: 5, ttl: 60000 } })
   async create(@Body() body: QuoteRequestInput) {
-    await assertPublicFormShield(body, { minMs: LEAD_FORM_MIN_MS });
+    // Captcha optional: client only loads reCAPTCHA on hosts listed for the site key
+    // (hellolocal.hu / custom domains otherwise show Google’s invalid-domain badge).
+    await assertPublicFormShield(body, { minMs: LEAD_FORM_MIN_MS, captcha: "optional" });
     return this.quotes.create(body);
   }
 }

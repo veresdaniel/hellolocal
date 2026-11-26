@@ -1481,7 +1481,7 @@
     "guidelinesPlaceholder": "Write about… e.g. emphasize local cellars and the weekend market",
     "openSettings": "Open platform settings",
     "generating": "Drafting…",
-    "disabled": "Text drafting is off — no API key in platform settings.",
+    "disabled": "Text drafting is off — no readable API key. Re-save the key in App Settings (or set GEMINI_API_KEY / CONTENT_DRAFT_API_KEY).",
     "notAllowed": "You are not allowed to draft text for this place.",
     "confirmReplaceTitle": "Replace existing text?",
     "confirmReplace": "Short or long description already has text. Replace it with the draft? You can still review before saving.",

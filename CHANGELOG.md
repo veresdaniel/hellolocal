@@ -31,6 +31,15 @@ in prose as used in the product.
 
 ### Changed
 
+- Content-draft AI prompts: field-type instructions (name/title/teaser/…) and
+  stronger “synthesize from public knowledge, never copy source wording” rules;
+  mobile wizard passes town/category/place context hints.
+- Production API compose: pass `GEMINI_API_KEY` / `CONTENT_DRAFT_API_KEY` (and
+  Groq/OpenRouter) as env fallback when the App Settings boxed key is unreadable.
+- reCAPTCHA: load the script only on `VITE_RECAPTCHA_HOSTS` (default
+  hello-local.io + localhost) so unlisted hosts (e.g. hellolocal.hu) no longer
+  show Google’s “invalid domain for site key” badge; demo/quote/register captcha
+  is optional (honeypot + dwell remain).
 - Nyelvesítés field titles: path/leaf label dictionaries so overview/admin keys
   show readable names (e.g. “Áttekintő · Demó űrlap — Hibaüzenet”) instead of
   raw dotted keys.

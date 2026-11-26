@@ -41,6 +41,9 @@ services:
       PORT: "3002"
       DATABASE_URL: postgresql://hellolocal:${POSTGRES_PASSWORD}@postgres:5432/hellolocal
       JWT_SECRET: ${JWT_SECRET_PROD}
+      # Optional; defaults to JWT_SECRET in code. Keep stable — rotating JWT/APP_SECRET
+      # breaks the boxed content-draft key until re-saved in App Settings.
+      APP_SECRET: ${APP_SECRET:-}
       JWT_EXPIRES_IN: 7d
       FRONTEND_URL: https://hello-local.io
       CORS_ORIGIN: https://hello-local.io,https://www.hello-local.io,https://hellolocal.hu,https://www.hellolocal.hu
@@ -53,6 +56,11 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-https://api.hello-local.io/api/auth/google/callback}
+      # AI content-draft fallback when App Settings key is missing/unreadable after secret rotation
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      CONTENT_DRAFT_API_KEY: ${CONTENT_DRAFT_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     command: ["sh", "-c", "pnpm exec prisma migrate deploy && SEED_ENSURE=1 node prisma/load-snapshot.cjs && node dist/main.js"]
     depends_on:
       postgres:
