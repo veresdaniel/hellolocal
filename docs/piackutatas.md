@@ -1,6 +1,10 @@
 # HelloLocal piackutatás
 
-Állapot: 2026. november 1. Három felmérés lezárult: piacképesség, kitörési pont és értékesítés, valamint fizetés és szállásportálok. A díjak a termékben kiírt csomagok (basic kb. 3 990 Ft/hó, prémium kb. 8 990 Ft/hó). Az áfa-tartalmat a kutatás nem ellenőrizte. Ahol becslés szerepel, az származtatott szám, nem mért piaci eredmény.
+Állapot: 2026. november 1. (piaci számok és értékesítési javaslat). Termék-kiegészítés: 2026. november 26.
+
+Három felmérés lezárult: piacképesség, kitörési pont és értékesítés, valamint fizetés és szállásportálok. A díjak a termékben kiírt csomagok (basic kb. 3 990 Ft/hó, prémium kb. 8 990 Ft/hó). Az áfa-tartalmat a kutatás nem ellenőrizte. Ahol becslés szerepel, az származtatott szám, nem mért piaci eredmény.
+
+**Termék azóta (röviden):** mobilos hely/program feltöltő wizard (`/admin/wizard`); platform nyitó bővítve helyi intézményekkel és turisztikai irodás tematikus oldal üzenettel; SEO frissítve. Beágyazható térkép és claim-sor **még nincs** — specek: [p0-feature-specs.md](./p0-feature-specs.md), leltár: [termek-kepessegek.md](./termek-kepessegek.md).
 
 A HelloLocal kis, fizetős B2B-termékként piacképes. Országos tömegpiacként nem. Érdemes most fizető ügyfelet szerezni, közvetlen megkereséssel, hirdetés nélkül. Az első szezon célja nagyjából 8–12 fizető oldal, referenciának.
 
@@ -88,8 +92,8 @@ A kitörési pont a megérkezett vendég oldala: egy link, a vendég nyelvén, c
 Három dologért fizetne egy iroda vagy egy borút:
 
 1. Egy link a már megérkezett vendégnek, a vendég nyelvén. Térkép, helyek, és csak a még előttünk álló programok, alkalmazás nélkül. Etyeken a prémium kártya illik rá: a kódban 8 990 Ft/hó és 3 nyelv. A Visit és a Google a tervezőt nyeri meg otthon. A buszról leszálló vendég oldala ma senkié.
-2. A hely gazdája írja a saját lapját. A lejárt program a nyilvános listáról lekerül. A helygazda-jog a kódban megvan. A Borút saját oldala évekkel ezelőtti programokat tart a nyitólapon.
-3. A település neve van a címen, nem egy országos lista. Holnap a slug elég: `/hu/etyek-budai`. Saját domain a kódban van, slug-tartalékkal. A Programturizmus és a Visit nem tehető ki a látogatóközpont ajtajára úgy, hogy Etyek válogatása.
+2. A hely gazdája írja a saját lapját — asztali adminból vagy **telefonos wizardból** (kamera, GPS, pár lépés). A lejárt program a nyilvános listáról lekerül. A helygazda-jog a kódban megvan. A Borút saját oldala évekkel ezelőtti programokat tart a nyitólapon.
+3. A település neve van a címen, nem egy országos lista. Holnap a slug elég: `/hu/etyek-budai`. Saját domain a kódban van, slug-tartalékkal; tematikus oldalnak is lehet saját címe. A Programturizmus és a Visit nem tehető ki a látogatóközpont ajtajára úgy, hogy Etyek válogatása.
 
 A nyelv önmagában fordítás. A szerkesztés saját link nélkül egy újabb Facebook. A domain élő oldal nélkül egy átirányítás. A katalógus, a szolgáltatáslista és a kattintásszámlálás a második beszélgetés, amikor a tag megkérdezi, neki miért éri meg fent lenni.
 
@@ -125,10 +129,10 @@ Tíz perc, ebben a sorrendben:
 | 0–2 | Telefonméretben a `/hu/etyek-budai` cím. Nem a bemutatkozó oldal. | Ez minta. A nevek nem a tagok. Egy oldal, amin a vendég elindul. |
 | 2–4 | Ugyanaz a térkép németül: `/de/etyek-budai`. | A Kelenföldről jövő vendégnek külön cím. |
 | 4–6 | Egy hely lapja: nyitvatartás, és a térkép mellett a programok. | Ami véget ért, a nyilvános listán nincs ott. |
-| 6–8 | Admin: a hely gazdája átír egy sort a saját jogával. | Ezt nem a titkár gépeli be minden pénteken. |
+| 6–8 | Telefonon az admin wizard (`/admin/wizard`): hely + fotó + GPS. | A tag a pincében, a telefonján tölti fel — nem a titkár gépeli be minden pénteken. |
 | 8–10 | Az ajánlat, árral. | Prémium, a kártya alapértéke 8 990 Ft/hó, három nyelv. A link holnap kimehet az egyesület oldalára. Saját domain csak azután, hogy a jogosultság engedi. Kérdés: kirakjuk ide a borangolót, és a tag írja a saját pincéjét? |
 
-Ezzel ne nyiss: az ingyenes látogatói térképpel, a honlapcserével, a Programturizmus elérésével, üres statisztikával, beágyazással, tetszőleges nyelvkóddal, kétlépcsős belépéssel vagy katalógussal. A helynézet és a telefon, e-mail, web, térkép, alaprajz kattintás a kódban megvan. A demó forgalmát a kutatás nem ismeri. Termékkattintás a kódban nincs. Beágyazható oldal sincs: nincs ilyen útvonal, nincs keret nélküli nézet. A bejutás egy link.
+Ezzel ne nyiss: az ingyenes látogatói térképpel, a honlapcserével, a Programturizmus elérésével, üres statisztikával, **kész WordPress-beágyazással** (ez még P0, spećben van), tetszőleges nyelvkóddal, kétlépcsős belépéssel vagy katalógussal. A helynézet és a telefon, e-mail, web, térkép, alaprajz kattintás a kódban megvan. A demó forgalmát a kutatás nem ismeri. Termékkattintás a kódban nincs. Beágyazható iframe **még nincs** élesben — a bejutás ma egy link; a QR/embed csomag a következő fejlesztési kör.
 
 A nyilvános csomagkártya alapértéke a kódban 0 / 3 990 / 8 990 Ft havonta; az admin felülírhatja. Az éles ároldalt a kutatás nem ellenőrizte. A nyilvános prémium szöveg saját domaint ígér. A jogosultságkódban az egyedi domain a belső BUSINESS szinten kapcsol be, a PRO-n nem. Amíg a kettő nincs összhangban, a slugot ajánld. A domaint a 8 990 részeként ne ígérd.
 

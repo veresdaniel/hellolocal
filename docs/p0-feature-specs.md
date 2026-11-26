@@ -1,6 +1,8 @@
 # P0 feature specek — claim, embed/QR, import/bulk
 
-Állapot: 2026. november 25. A versenytárs–feature terv (claim → embed/QR → import/bulk) P0 tételeinek implementációs spece. A vevőfeltételezés a [piackutatás](./piackutatas.md) és az [integrációs felmérés](./integracios-felmeres.md) alapján zárt. Ez a dokumentum a következő három tickethez a szerződés; kódot nem tartalmaz.
+Állapot: 2026. november 26. A versenytárs–feature terv (claim → embed/QR → import/bulk) P0 tételeinek implementációs spece. A vevőfeltételezés a [piackutatás](./piackutatas.md) és az [integrációs felmérés](./integracios-felmeres.md) alapján zárt. Ez a dokumentum a következő három tickethez a szerződés; kódot nem tartalmaz.
+
+**Aktuális termék-leltár (leszállított + hiány):** [termek-kepessegek.md](./termek-kepessegek.md).
 
 ## 0. Vevőfeltételezés (zárolva)
 
@@ -15,6 +17,22 @@
 | TDM / hivatal | Approval queue, CSV feltöltés, embed a saját honlapra, QR/kampány-link |
 | Vállalkozó | Meglévő pin claim, vagy új hely jelentkezés jóváhagyásra |
 | Vendég | Ugyanaz a böngészős térkép; embed-ből és QR-ből ugyanoda érkezik |
+
+---
+
+## 0.1 Leszállítva a P0 mellett (2026. november) — nem helyettesíti a P0-t
+
+Ezek **nem** zárják a claim / embed / import ticketeket, de gyorsítják a tartalomfeltöltést és a DMO-pitch-et.
+
+| Képesség | Mit ad | Hol |
+| --- | --- | --- |
+| **Mobilos tartalom-wizard** | Hely és program lépéses feltöltés telefonon: kamera, galéria, GPS, rövid szöveg; free → mindig draft; fizetős / superadmin → draft vagy azonnali publikálás | `/:lang/admin/wizard`, `PlaceWizard` / `EventWizard` |
+| Kliensoldali képoptimalizálás | Feltöltés előtt WebP, max ~1920px él | `apps/web` upload pipeline |
+| Platform story: helyi intézmények | Önkormányzati pitch (óvoda, iskola, hivatal…) + kép slot `civic` | overview + `LANDING_IMAGE_SLOTS` |
+| Platform story: turisztikai iroda | Tematikus oldal + saját domain üzenet (kurátor-szó nélkül) | overview `stories.town` |
+| Landing SEO | Önkormányzat / Tourinform / intézmény / tematikus oldal kulcsszavak | `public.json` overview seo* |
+
+A mobilos wizard **csökkenti** a kézi admin-gépelést a helygazdáknál, de nem ad vállalkozói self-claimet, és nem ad WordPress embedet — az továbbra is P0-1 / P0-2.
 
 ---
 
@@ -36,6 +54,7 @@ A TDM ne gépelje be kézzel az összes helyet. A vállalkozó jelentkezik vagy 
 | Scope flag `pendingSignup` | `admin-access.service.ts` |
 | Place members UI | `PlaceMembersPanel.tsx`, `PlaceMembershipsPage.tsx` |
 | Inactive free place lista | `PlacesPage.tsx` „Awaiting approval” |
+| Mobilos hely/program wizard (draft / publish szabályokkal) | `/admin/wizard` — tartalom *létrehozás*, nem claim |
 
 ### Ami hiányzik
 

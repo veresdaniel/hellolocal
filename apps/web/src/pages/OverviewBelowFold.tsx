@@ -13,7 +13,7 @@ import {
 import { getPlatformSettings } from "../api/places.api";
 
 const FEATURE_KEYS = ["places", "events", "map", "languages", "sites", "editors"] as const;
-const STORY_KEYS = ["maker", "service", "quiet", "town"] as const;
+const STORY_KEYS = ["maker", "service", "quiet", "civic", "town"] as const;
 const STEP_KEYS = ["collect", "publish", "share"] as const;
 const DIFFERENCE_KEYS = ["hidden", "traffic", "region"] as const;
 const FAQ_KEYS = ["app", "languages", "editors", "towns", "maps"] as const;
@@ -78,9 +78,9 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
       <section className="overview__section" id="who">
         <h2>{text("storiesTitle")}</h2>
         <p>{text("storiesLead")}</p>
-        {STORY_KEYS.map((key) => (
+        {STORY_KEYS.map((key, index) => (
           <article
-            className={`overview__story${key === "service" || key === "town" ? " is-flip" : ""}`}
+            className={`overview__story${index % 2 === 1 ? " is-flip" : ""}`}
             key={key}
           >
             <div className="overview__frame">

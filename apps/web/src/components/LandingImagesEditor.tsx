@@ -23,7 +23,8 @@ const SLOT_LABEL: Record<LandingImageSlot, string> = {
   maker: "Story — kézműves",
   service: "Story — szolgáltatás",
   quiet: "Story — mellékutca",
-  town: "Story — település",
+  civic: "Story — helyi intézmény",
+  town: "Story — turisztikai iroda",
   closing: "Záró kép",
   share: "Share / OG",
 };

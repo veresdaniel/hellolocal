@@ -24,8 +24,9 @@ Multi-tenant local tourism platform for Hungarian regions and destinations (e.g.
 
 - Role-based access: superadmin, admin, editor, viewer (+ **2FA** TOTP)
 - CRUD for sites, domains, places, events, collections, towns, categories, tags, price bands, galleries, static/legal pages
+- **Mobile content wizard** (`/:lang/admin/wizard`) — step-by-step place/event create with camera + GPS (phone only; desktop keeps classic forms); free plans save as draft, paid/superadmin can publish immediately
 - Memberships, analytics dashboards, subscriptions / products, i18n & UI copy tools
-- App settings: SEO, map defaults, **GTM per platform host**, **platform landing crawl** toggle, **Facebook social-preview refresh**
+- App settings: SEO, map defaults, **GTM per platform host**, **platform landing crawl** toggle, **Facebook social-preview refresh**, landing images CMS
 - Plan entitlements for custom domains / aliases
 
 ### Platform / ops
@@ -172,6 +173,10 @@ Full event parameters and **what to set in GTM / GA4**: [docs/analytics-gtm.md](
 | Doc | Topic |
 | --- | --- |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes |
+| [docs/termek-kepessegek.md](docs/termek-kepessegek.md) | Shipped product capabilities (incl. mobile wizard) |
+| [docs/p0-feature-specs.md](docs/p0-feature-specs.md) | P0: claim, embed/QR, import/bulk |
+| [docs/piackutatas.md](docs/piackutatas.md) | Market research / go-to-market |
+| [docs/integracios-felmeres.md](docs/integracios-felmeres.md) | External integrations survey |
 | [docs/analytics-gtm.md](docs/analytics-gtm.md) | GTM/GA4 public events + Tag Manager setup |
 | [docs/frontend-seo-middleware.md](docs/frontend-seo-middleware.md) | SSR SEO, sitemaps, robots |
 | [docs/domain-based-tenant-resolution.md](docs/domain-based-tenant-resolution.md) | Host → site / entity |

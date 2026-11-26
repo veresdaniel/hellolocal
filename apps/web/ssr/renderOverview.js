@@ -239,7 +239,7 @@ function renderDifference(copy) {
 
 function renderStories(copy, landingImages, lang) {
   if (!copy.stories) return "";
-  return ["maker", "service", "quiet", "town"]
+  return ["maker", "service", "quiet", "civic", "town"]
     .map((key) => {
       const story = copy.stories[key];
       if (!story) return "";

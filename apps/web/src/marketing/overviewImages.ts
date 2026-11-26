@@ -84,6 +84,9 @@ export const OVERVIEW_STORY_IMAGES = {
     defaultWebpW: 720,
     mobileWidths: [480, 720],
   }),
+  civic: ladder("civic-institutions", [480, 720, 960, 1100], { w: 960, h: 720 }, STORY_SIZES, {
+    mobileWidths: [480, 720],
+  }),
   /**
    * Below-fold story shot of the same map mock. Mobile-capped like other stories
    * (1100-only overserved ~761 CSS px). Lazy + fetchpriority=low keeps it off LCP

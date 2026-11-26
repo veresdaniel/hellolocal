@@ -15,6 +15,7 @@ export const LANDING_IMAGE_SLOTS = [
   "maker",
   "service",
   "quiet",
+  "civic",
   "town",
   "closing",
   "share",

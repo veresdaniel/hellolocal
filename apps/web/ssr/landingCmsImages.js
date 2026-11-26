@@ -10,6 +10,7 @@ export const LANDING_IMAGE_SLOTS = [
   "maker",
   "service",
   "quiet",
+  "civic",
   "town",
   "closing",
   "share",
@@ -79,7 +80,7 @@ export function heroPictureHtml(images, lang, alt) {
 /**
  * @param {Record<string, Record<string, string>> | null | undefined} images
  * @param {string} lang
- * @param {"maker"|"service"|"quiet"|"town"} key
+ * @param {"maker"|"service"|"quiet"|"civic"|"town"} key
  * @param {string} alt
  */
 export function storyPictureHtml(images, lang, key, alt) {

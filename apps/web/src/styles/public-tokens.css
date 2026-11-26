@@ -213,7 +213,8 @@
   grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: flex-start;
+  align-items: baseline;
   gap: 6px 16px;
   margin-top: 4px;
   padding: 16px 0 8px;
@@ -239,6 +240,16 @@
     align-content: start;
     gap: 12px 64px;
     padding-top: 2px;
+  }
+
+  /* Platform marketing landing: keep the whole footer left-aligned. */
+  .hl-footer--overview .hl-footer__grid {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .hl-footer--overview .hl-footer__nav {
+    justify-content: start;
   }
 }
 

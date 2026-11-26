@@ -47,15 +47,15 @@
     "menu": "Overview",
     "eyebrow": "For councils, tourist offices and local businesses",
     "title": "Your region’s places and events on one map — no app.",
-    "lead": "Visitors open it on their phone, filter, and go. You share one link.",
-    "introP1": "HelloLocal is a browser-based local tourism map. It brings a region’s sights, services, hospitality, special places and events onto one screen. No app to install, no account to browse, no hopping between websites.",
-    "introP2": "A region is more than its famous landmarks. Family cellars, craft workshops, tucked-away restaurants and local producers deserve a shared, easy-to-share presence. Place owners write their own pages; the council or tourist office passes everything on with a single link.",
-    "differenceKicker": "Why it is not just another map",
+    "lead": "Visitors open it on their phone, filter, and go. You pass on a single link — on the website, in the newsletter, or at the tourist desk.",
+    "introP1": "HelloLocal is a browser-based local tourism map. It brings a region’s sights, services, hospitality, institutions, special places and events onto one screen. No app to install, no account to browse, no hopping between websites — guests start where they already are: on their phone.",
+    "introP2": "A region is more than its famous landmarks. Family cellars, craft workshops, tucked-away restaurants, local producers and everyday institutions deserve a shared, easy-to-share presence. Place owners write their own pages; the council or tourist office passes everything on with a single link.",
+    "differenceKicker": "Why is this not just another map?",
     "differenceTitle": "Not the world atlas — your neighbourhood",
-    "differenceLead": "Google Maps lists everything. HelloLocal puts what visitors actually look for in your area into their hands: local places, fresh events, written by the people who run them — on one link you can share.",
+    "differenceLead": "Google Maps lists everything in the world. HelloLocal gathers what visitors actually look for in your area: the local offer, fresh events, in the words of the people who run them — on one link you pass on.",
     "seoTitle": "HelloLocal | Interactive tourism map for municipalities",
-    "seoDescription": "Interactive tourism map for councils, tourist offices and local businesses. Sights, events, multiple languages — in the browser, no app required.",
-    "keywords": "interactive tourism map, digital tourism map, destination map, local events map, tourist office software, municipal tourism, DMO platform, multilingual tourism map, regional tourism map, local business listing, HelloLocal",
+    "seoDescription": "Interactive tourism map for councils: sights, events, local institutions and businesses on one map. Multiple languages — in the browser, no app required.",
+    "keywords": "interactive tourism map, digital tourism map, destination map, local events map, local institutions, municipal institutions, school map, kindergarten, library, tourist office software, themed tourism pages, custom domain, municipal tourism, DMO platform, multilingual tourism map, regional tourism map, local business listing, HelloLocal",
     "cta": "See it live",
     "ctaSecondary": "How it works",
     "shotCaption": "Szeged on the map: places, filters and upcoming events on one screen.",
@@ -67,113 +67,119 @@
     "statsAppValue": "No app",
     "statsApp": "guests open it in the browser",
     "featuresTitle": "What guests can use right away",
-    "featuresLead": "Opening hours, what’s on today — and the place that isn’t on the main square. One map, in the guest’s language.",
+    "featuresLead": "Opening hours, what’s on today, and the place that isn’t on the main square. One map, in the guest’s language — no registration needed.",
     "stepsTitle": "Three steps to the guest",
     "difference": {
       "hidden": {
         "title": "What only locals used to know",
-        "text": "Courtyards, workshops, market stalls, cellars — one turn off the high street. They go on the map so guests can find them, instead of vanishing in a world atlas."
+        "text": "Courtyards, workshops, market stalls, cellars — one turn off the high street. They go on the map so guests can find them, instead of vanishing among the big chains in a world atlas."
       },
       "traffic": {
         "title": "One link for official and tourism channels",
-        "text": "Website, newsletter, QR code, poster. A coherent presence from a modest budget — without building an ad machine."
+        "text": "Website, newsletter, QR code, poster — the same address everywhere. A coherent presence from a modest budget, without building an ad machine just so guests can find you in one place."
       },
       "region": {
         "title": "Country → region → town → place",
-        "text": "Several settlements can share one system, each with its own audience. Smaller towns do not have to build a full tourism site alone."
+        "text": "Several settlements can share one system, each with its own audience and programme. Smaller towns do not have to build a full tourism site alone — and can still show up with their own face."
       }
     },
-    "storiesTitle": "Three roles, one shared map",
-    "storiesLead": "Guests explore. Businesses look after their own pages. Councils and tourist offices present the whole offer with a single link.",
+    "storiesTitle": "One map, many roles",
+    "storiesLead": "Guests explore. Businesses and local institutions look after their own pages. Councils and tourist offices present the whole offer with a single link — and can launch a themed page for a campaign when they need one.",
     "faqTitle": "What people usually ask",
     "closingTitle": "Show your region on one map.",
-    "closingText": "Open the live example and picture your own places on those pins: the workshop, the cellar, the service, or the whole area.",
+    "closingText": "Open the live example and picture your own places on those pins: the workshop, the cellar, the service, the school, or the whole area. If you like it, request a demo — we’ll show it on your settlements.",
     "closingImageAlt": "A hiker with a yellow backpack on a mountain trail",
     "steps": {
       "collect": {
         "title": "People who were missing go on the map",
-        "text": "Workshop, shop, cellar, service — with their own page, photos and opening hours. A presence guests are happy to forward."
+        "text": "Workshop, shop, cellar, service, institution — with their own page, photos and opening hours. A presence guests are happy to forward, and that the council can link to with confidence."
       },
       "publish": {
         "title": "Events stay up to date",
-        "text": "What’s on this weekend stays in front. What’s finished drops off on its own — no manual tidy-up."
+        "text": "What’s on this week or weekend stays in front. What’s finished drops off on its own — no manual tidy-up, and guests don’t arrive for something that already ended."
       },
       "share": {
         "title": "One link for the guest",
-        "text": "Optionally on your own domain (for example helloetyek.hu), in their language. They open it on the phone, filter, and go — no new app."
+        "text": "Optionally on your own domain (for example helloetyek.hu), in their language. They open it on the phone, filter, and go — without installing another app."
       }
     },
     "faq": {
       "app": {
         "q": "Does a guest have to download an app?",
-        "a": "No. The map and events open in the browser — on phone and desktop. Sign-in is only needed if they want to leave a rating."
+        "a": "No. The map and events open in the browser — on phone and desktop. Sign-in is only needed if they want to leave a rating; browsing and heading out needs no registration."
       },
       "languages": {
         "q": "Is there a separate page for every language?",
-        "a": "Yes: Hungarian, English and German. Content is looked after per language — not one-click machine translation. Search finds each version on its own address."
+        "a": "Yes: Hungarian, English and German. Content is looked after per language — not one-click machine translation. Search finds each version on its own address, and guests read the same map in their own language."
       },
       "editors": {
         "q": "Who writes the text?",
-        "a": "Whoever runs the place: the maker, the service, or staff at the council or tourist office. Everyone looks after their own part. An AI helper can draft copy if you get stuck — and we never sell visitors’ personal data."
+        "a": "Whoever runs the place: the maker, the service, the institution, or staff at the council or tourist office. Everyone looks after their own part, so the content stays current. An AI helper can draft copy if you get stuck — and we never sell visitors’ personal data."
       },
       "towns": {
         "q": "Can several settlements share one system?",
-        "a": "Yes. One region can bring several towns together. Each keeps its own map and programme; the guest stays where they arrived."
+        "a": "Yes. One region can bring several towns together. Each keeps its own map and programme; the guest stays where they arrived and doesn’t slip into the next town by accident."
       },
       "maps": {
         "q": "Why isn’t Google Maps enough?",
-        "a": "Google Maps shows the world. HelloLocal shows your region: local places with their own introductions, fresh events, optional own domain — and one link you can put in tourism materials. Not an advertising marketplace, and you don’t push a new app onto guests."
+        "a": "Google Maps shows the world. HelloLocal shows your region: local places with their own introductions, fresh events, institutions, optional own domain — and one link you can put in tourism materials. Not an advertising marketplace, and you don’t push a new app onto guests."
       }
     },
     "features": {
       "places": {
         "title": "Workshops show up too",
-        "text": "With opening hours and their own page — easy to forward. Lesser-known spots are visible, not only the main square."
+        "text": "With opening hours and their own page — easy to forward. Lesser-known spots are visible, not only the main square and the big landmarks."
       },
       "events": {
-        "title": "The weekend programme stays in front",
-        "text": "What’s finished comes off. What’s on now is what guests see first — including a spontaneous weekend."
+        "title": "What’s on stays in front",
+        "text": "What’s finished comes off. What’s on now — weekday or weekend — is what guests see first. Good for a spontaneous trip and a planned weekend alike."
       },
       "map": {
         "title": "A map you can leave from",
-        "text": "They see what’s open, what’s good in the rain, what’s on today. Works on the phone — no registration to browse."
+        "text": "Guests see what’s open, what’s good in the rain, what’s on today. It works on the phone with no registration — open the link and go."
       },
       "languages": {
         "title": "Guests read in their own language",
-        "text": "Content is written for the guest’s language, on the address they search. Same map — three languages."
+        "text": "Content is written for the guest’s language, on the address they search. Same map in Hungarian, English and German — no app switching required."
       },
       "sites": {
         "title": "Several towns, separate programmes",
-        "text": "One region can cover more than one place. Each map and programme stays distinct — guests don’t slip into the next town by accident."
+        "text": "One region can cover more than one place. Each map and programme stays distinct, so guests don’t slip into the next town by accident and each settlement keeps its own offer."
       },
       "editors": {
-        "title": "Whoever runs the place writes it",
-        "text": "The maker, the service or the town team looks after their own copy. AI can help draft it, and they see traffic — guests see what’s true right now."
+        "title": "The place owner writes it — with AI help",
+        "text": "The business, service or institution looks after its own page. If the wording stalls, AI helps draft it; they see the traffic, and guests see what’s true right now."
       }
     },
     "stories": {
       "maker": {
         "kicker": "Craft maker",
         "title": "The workshop gets its own page",
-        "text": "Ceramics, textiles, jam, honey. Photos, opening hours — and a page guests can send on to friends.",
+        "text": "Ceramics, textiles, jam, honey — the small workshop goes on the map too. With photos, opening hours and a page guests can send on to friends when something catches their eye.",
         "alt": "Handmade ceramic bowls on a workshop table"
       },
       "service": {
         "kicker": "Local offer",
         "title": "Services, events and what’s on",
-        "text": "Hairdresser, bike shop, massage, tailor — with opening hours and how to reach them. Local events and current happenings sit on the same map, so guests don’t have to hunt elsewhere.",
+        "text": "Hairdresser, bike shop, massage, tailor — with opening hours and how to reach them, in one place. Local events and current happenings sit on the same map, so guests don’t have to dig through another site or Facebook event.",
         "alt": "A small bicycle workshop with tools and a wheel on the bench"
       },
       "quiet": {
         "kicker": "Out of sight",
         "title": "One corner further in",
-        "text": "Courtyard, workshop, market stall — off the main street. Places only locals knew go on the map too.",
+        "text": "Courtyard, workshop, market stall — off the main street. Places only locals knew go on the map too, so guests find more than the usual landmarks.",
         "alt": "An open courtyard gate on a quiet side street"
       },
+      "civic": {
+        "kicker": "Local institution",
+        "title": "Town hall and school go on the map too",
+        "text": "Kindergarten, nursery, school, library, community centre, clinic, municipal office — in one place, with the essentials: opening hours, how to reach them, a short introduction. For residents and returning guests alike.",
+        "alt": "Facade of a small-town civic building in sunlight, with a bicycle by the entrance"
+      },
       "town": {
-        "kicker": "Council and tourist office",
-        "title": "The one who can bring them together",
-        "text": "You gather local businesses and pass them to the visitor on a single link — in the guest’s language, ready for campaigns and the website.",
+        "kicker": "Tourist office",
+        "title": "One link for guests — and themed pages for your picks",
+        "text": "The map holds the full offer you can pass on to guests. You can also create any themed page you need — autumn hikes in the Börzsöny, hidden gems of the Danube Bend, or the 10 best food experiences around Lake Balaton. Those pages can have their own domains, so one address goes into the newsletter, QR code or campaign poster, and guests land straight on the right recommendation.",
         "alt": "A live map of local places and events"
       }
     },
@@ -219,17 +225,17 @@
         "languages": "Languages"
       },
       "free": {
-        "name": "Be seen",
+        "name": "Try it",
         "kicker": "For a private customer",
-        "pitch": "One workshop, cellar, or service. {{count}}-day trial; then suspended until you upgrade. Your own domain starts with the next plan.",
+        "pitch": "Put your place on the map. {{count}}-day trial; then pause until you pick a plan.",
         "domain": "Own domain from the next plan",
         "cta": "Register free"
       },
       "basic": {
-        "name": "Every location",
+        "name": "Your places",
         "kicker": "One company, a few locations",
         "badge": "The usual choice",
-        "pitch": "A few locations under one business. On your own domain.",
+        "pitch": "A few locations, one business — on your own domain, with your events.",
         "domain": "Own domain",
         "cta": "Get your own domain"
       },

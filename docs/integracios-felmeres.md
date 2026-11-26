@@ -1,6 +1,8 @@
 # HelloLocal integrációs felmérés
 
-Állapot: 2026. november 1. A felmérés lezárult.
+Állapot: 2026. november 1. (külső forrás-felmérés). Termék-kiegészítés: 2026. november 26.
+
+A felmérés lezárult a partnercsatornákra. Azóta a HelloLocalban megjelent a **mobilos tartalom-wizard** (hely/program feltöltés telefonról) — ez belső feltöltési út, nem külső integráció. A WordPress **embed / QR** és a **CSV import** továbbra is P0: [p0-feature-specs.md](./p0-feature-specs.md). Teljes leltár: [termek-kepessegek.md](./termek-kepessegek.md).
 
 A nemzeti turisztikai portálok nem adnak nyilvános tartalom-API-t. Ami forgalmat és előfizetést is hozhat, az a település saját honlapja és a borút: oda egy beágyazható térkép kell. A HelloLocal ma bejelentkezés nélküli JSON-ban kiadja a helyeket és az eseményeket. Widget, iCal, RSS, webhook és leírt partnerfeed a felmérés szerint még nincs.
 
@@ -62,13 +64,15 @@ A repóban a felmérés szerint már van nyilvános, bejelentkezés nélküli JS
 
 Lista, slug és stabil azonosító. Ezt a JSON-t a felmérés szerint ne adjuk oda partnernek szerződésként: az alkalmazás saját hívása, lapozással.
 
-Egy településnek három kifelé néző dolog kellene. A felmérés szerint egyik sincs még meg:
+Egy településnek három kifelé néző dolog kellene. A felmérés szerint egyik sincs még meg (2026. november 26-án sem):
 
-- egy régióra és nyelvre szűrt iframe vagy HTML-blokk, amit WordPressbe be lehet illeszteni,
+- egy régióra és nyelvre szűrt iframe vagy HTML-blokk, amit WordPressbe be lehet illeszteni (P0-2),
 - eseményenként és régiónként egy `.ics` cím,
 - ugyanez a két lista stabil, dokumentált JSON-ként, ha egy borút vagy TDM maga akarja betölteni.
 
-Befelé elég egy iCal-cím mező régiónként, plusz egy egyszeri OSM-import, emberi ellenőrzéssel.
+**Befelé, tartalomfeltöltés (már van):** a helygazda / iroda munkatársa telefonon feltölthet helyet és programot a wizardban — ez csökkenti a „kézzel kell mindent begépelni” fájdalmát, amíg a claim és a CSV import megérkezik.
+
+Befelé még kellene: egy iCal-cím mező régiónként, plusz egy egyszeri OSM-import, emberi ellenőrzéssel (P0-3 / később).
 
 Az iframe/HTML-blokk, a kampány-QR és a CSV/JSON helyimport implementációs spece:
 [p0-feature-specs.md](./p0-feature-specs.md) (§2 embed/QR, §3 import).

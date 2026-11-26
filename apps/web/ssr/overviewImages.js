@@ -60,6 +60,18 @@ export const OVERVIEW_STORY_IMAGES = {
     mobileMedia: MOBILE_MEDIA,
     sizes: STORY_SIZES,
   },
+  civic: {
+    jpg: "/marketing/civic-institutions.jpg",
+    webp: "/marketing/civic-institutions-960.webp",
+    width: 960,
+    height: 720,
+    webpSrcSet:
+      "/marketing/civic-institutions-480.webp 480w, /marketing/civic-institutions-720.webp 720w, /marketing/civic-institutions-960.webp 960w, /marketing/civic-institutions-1100.webp 1100w",
+    webpSrcSetMobile:
+      "/marketing/civic-institutions-480.webp 480w, /marketing/civic-institutions-720.webp 720w",
+    mobileMedia: MOBILE_MEDIA,
+    sizes: STORY_SIZES,
+  },
   town: {
     jpg: "/marketing/map-szeged.jpg",
     webp: "/marketing/map-szeged-720.webp",
