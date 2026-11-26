@@ -5,7 +5,6 @@ import { requestDemo } from "../api/public.api";
 import { trackGtmGenerateLead } from "../lib/gtmEvents";
 import { publicFormErrorMessage, usePublicFormShield } from "./PublicFormShield";
 import "react-phone-number-input/style.css";
-import "../styles/plan-picker.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -32,6 +31,7 @@ export function DemoRequestForm() {
   const [status, setStatus] = useState<"sent" | "stored" | "noRecipient" | "">("");
   const [sending, setSending] = useState(false);
   const country = useMemo(() => defaultCountry(i18n.language || "hu"), [i18n.language]);
+  const done = Boolean(status);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -65,86 +65,122 @@ export function DemoRequestForm() {
   };
 
   return (
-    <form className="plan-quote overview__demo" noValidate onSubmit={onSubmit}>
-      {shield.fields}
-      <h3>{t("public.overview.demo.title")}</h3>
-      <p className="overview__demo-lead">{t("public.overview.demo.lead")}</p>
-      <label>
-        {t("public.overview.demo.name")}
-        <input
-          name="name"
-          autoComplete="name"
-          placeholder={t("public.overview.demo.placeholderName")}
-          value={contactName}
-          onChange={(event) => setContactName(event.target.value)}
-          required
-          aria-invalid={fieldErrors.name ? true : undefined}
-        />
-        {fieldErrors.name ? <span className="plan-quote__field-error">{fieldErrors.name}</span> : null}
-      </label>
-      <label>
-        {t("public.overview.demo.email")}
-        <input
-          name="email"
-          type="email"
-          autoComplete="email"
-          placeholder={t("public.overview.demo.placeholderEmail")}
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-          aria-invalid={fieldErrors.email ? true : undefined}
-        />
-        {fieldErrors.email ? <span className="plan-quote__field-error">{fieldErrors.email}</span> : null}
-      </label>
-      <label>
-        {t("public.overview.demo.phone")}
-        <PhoneInput
-          international
-          defaultCountry={country}
-          countryCallingCodeEditable={false}
-          value={phone}
-          onChange={setPhone}
-          placeholder={t("public.overview.demo.placeholderPhone")}
-          numberInputProps={{
-            name: "phone",
-            autoComplete: "tel",
-            required: true,
-            "aria-invalid": fieldErrors.phone ? true : undefined,
-          }}
-        />
-        {fieldErrors.phone ? <span className="plan-quote__field-error">{fieldErrors.phone}</span> : null}
-      </label>
-      <label>
-        {t("public.overview.demo.organization")}
-        <span className="overview__demo-optional"> ({t("public.overview.demo.optional")})</span>
-        <input
-          name="organization"
-          autoComplete="organization"
-          placeholder={t("public.overview.demo.placeholderOrganization")}
-          value={organization}
-          onChange={(event) => setOrganization(event.target.value)}
-        />
-      </label>
-      <label>
-        {t("public.overview.demo.message")}
-        <span className="overview__demo-optional"> ({t("public.overview.demo.optional")})</span>
-        <textarea
-          name="message"
-          rows={4}
-          placeholder={t("public.overview.demo.placeholderMessage")}
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-        />
-      </label>
-      {error ? <p className="plan-quote__error">{error}</p> : null}
-      {status ? (
-        <p className="plan-quote__status" role="status">
-          {t(`public.overview.demo.${status}`)}
-        </p>
-      ) : null}
-      <button className="plan-picker__cta plan-quote__submit" type="submit" disabled={sending}>
-        {sending ? t("public.overview.demo.sending") : t("public.overview.demo.submit")}
-      </button>
-    </form>
+    <div className={`overview-demo${done ? " is-done" : ""}`}>
+      <div className="overview-demo__glow" aria-hidden="true" />
+      <form className="overview-demo__form" noValidate onSubmit={onSubmit}>
+        {shield.fields}
+
+        <header className="overview-demo__header">
+          <p className="overview-demo__kicker">{t("public.overview.demo.kicker")}</p>
+          <h3 className="overview-demo__title">{t("public.overview.demo.title")}</h3>
+          <p className="overview-demo__lead">{t("public.overview.demo.lead")}</p>
+        </header>
+
+        {done ? (
+          <div className="overview-demo__success" role="status">
+            <span className="overview-demo__success-mark" aria-hidden="true">
+              ✓
+            </span>
+            <p>{t(`public.overview.demo.${status}`)}</p>
+          </div>
+        ) : (
+          <>
+            <div className="overview-demo__grid">
+              <label className="overview-demo__field">
+                <span className="overview-demo__label">{t("public.overview.demo.name")}</span>
+                <input
+                  name="name"
+                  autoComplete="name"
+                  placeholder={t("public.overview.demo.placeholderName")}
+                  value={contactName}
+                  onChange={(event) => setContactName(event.target.value)}
+                  required
+                  aria-invalid={fieldErrors.name ? true : undefined}
+                />
+                {fieldErrors.name ? (
+                  <span className="overview-demo__error">{fieldErrors.name}</span>
+                ) : null}
+              </label>
+
+              <label className="overview-demo__field">
+                <span className="overview-demo__label">{t("public.overview.demo.email")}</span>
+                <input
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder={t("public.overview.demo.placeholderEmail")}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                  aria-invalid={fieldErrors.email ? true : undefined}
+                />
+                {fieldErrors.email ? (
+                  <span className="overview-demo__error">{fieldErrors.email}</span>
+                ) : null}
+              </label>
+
+              <label className="overview-demo__field">
+                <span className="overview-demo__label">{t("public.overview.demo.phone")}</span>
+                <PhoneInput
+                  className="overview-demo__phone"
+                  international
+                  defaultCountry={country}
+                  countryCallingCodeEditable={false}
+                  value={phone}
+                  onChange={setPhone}
+                  placeholder={t("public.overview.demo.placeholderPhone")}
+                  numberInputProps={{
+                    name: "phone",
+                    autoComplete: "tel",
+                    required: true,
+                    "aria-invalid": fieldErrors.phone ? true : undefined,
+                  }}
+                />
+                {fieldErrors.phone ? (
+                  <span className="overview-demo__error">{fieldErrors.phone}</span>
+                ) : null}
+              </label>
+
+              <label className="overview-demo__field">
+                <span className="overview-demo__label">
+                  {t("public.overview.demo.organization")}
+                  <span className="overview-demo__optional">{t("public.overview.demo.optional")}</span>
+                </span>
+                <input
+                  name="organization"
+                  autoComplete="organization"
+                  placeholder={t("public.overview.demo.placeholderOrganization")}
+                  value={organization}
+                  onChange={(event) => setOrganization(event.target.value)}
+                />
+              </label>
+
+              <label className="overview-demo__field overview-demo__field--full">
+                <span className="overview-demo__label">
+                  {t("public.overview.demo.message")}
+                  <span className="overview-demo__optional">{t("public.overview.demo.optional")}</span>
+                </span>
+                <textarea
+                  name="message"
+                  rows={3}
+                  placeholder={t("public.overview.demo.placeholderMessage")}
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                />
+              </label>
+            </div>
+
+            {error ? <p className="overview-demo__banner-error">{error}</p> : null}
+
+            <div className="overview-demo__footer">
+              <p className="overview-demo__trust">{t("public.overview.demo.trust")}</p>
+              <button className="overview-demo__submit" type="submit" disabled={sending}>
+                {sending ? t("public.overview.demo.sending") : t("public.overview.demo.submit")}
+              </button>
+            </div>
+          </>
+        )}
+      </form>
+    </div>
   );
 }
