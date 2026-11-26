@@ -35,6 +35,8 @@
   "saving": "Speichern",
   "backToPlace": "Zurück zum Ort",
   "confirmations": {
+    "title": "Bestätigung",
+    "deleteTitle": "Löschen",
     "deleteCategory": "Möchten Sie diese Kategorie wirklich löschen?",
     "deleteTag": "Möchten Sie dieses Tag wirklich löschen?",
     "deletePriceBand": "Möchten Sie diese Preisklasse wirklich löschen?",
@@ -1274,6 +1276,7 @@
     "contactedYes": "Erledigt",
     "contactedNo": "Offen",
     "contactedToggle": "Als kontaktiert markieren",
+    "deleteTitle": "Anfrage löschen",
     "deleteConfirm": "Anfrage von {{name}} löschen?",
     "deleted": "Anfrage gelöscht",
     "newDemoToast": "{{count}} neue Demo-Anfrage(n) warten auf Rückruf",

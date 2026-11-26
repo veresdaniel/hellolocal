@@ -99,6 +99,7 @@ export function QuoteRequestsPage() {
 
   const handleDelete = async (row: QuoteRequestRow) => {
     const ok = await confirm({
+      title: t("admin.quoteRequests.deleteTitle"),
       message: t("admin.quoteRequests.deleteConfirm", { name: row.contactName }),
       confirmLabel: t("common.delete"),
       cancelLabel: t("common.cancel"),
@@ -129,14 +130,20 @@ export function QuoteRequestsPage() {
           row.contactedAt
             ? t("admin.quoteRequests.contactedYes")
             : t("admin.quoteRequests.contactedNo"),
+        width: "7rem",
         render: (row: QuoteRequestRow) => {
           const done = Boolean(row.contactedAt);
           return (
             <label
+              title={
+                done && row.contactedAt
+                  ? formatWhen(row.contactedAt)
+                  : t("admin.quoteRequests.contactedToggle")
+              }
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 8,
+                gap: 6,
                 cursor: busyId === row.id ? "wait" : "pointer",
                 whiteSpace: "nowrap",
               }}
@@ -148,16 +155,11 @@ export function QuoteRequestsPage() {
                 onChange={() => void toggleContacted(row)}
                 aria-label={t("admin.quoteRequests.contactedToggle")}
               />
-              <span>
+              <span style={{ fontSize: 12 }}>
                 {done
                   ? t("admin.quoteRequests.contactedYes")
                   : t("admin.quoteRequests.contactedNo")}
               </span>
-              {done && row.contactedAt ? (
-                <span style={{ color: "var(--admin-muted)", fontSize: 12 }}>
-                  {formatWhen(row.contactedAt)}
-                </span>
-              ) : null}
             </label>
           );
         },
@@ -166,8 +168,11 @@ export function QuoteRequestsPage() {
         key: "when",
         label: t("admin.quoteRequests.cols.when"),
         sortable: true,
+        width: "8.5rem",
         getText: (row: QuoteRequestRow) => row.createdAt,
-        render: (row: QuoteRequestRow) => formatWhen(row.createdAt),
+        render: (row: QuoteRequestRow) => (
+          <span style={{ whiteSpace: "nowrap", fontSize: 12 }}>{formatWhen(row.createdAt)}</span>
+        ),
       },
       ...(plan === "all"
         ? [
@@ -227,7 +232,18 @@ export function QuoteRequestsPage() {
         filterable: true,
         getText: (row: QuoteRequestRow) => row.message || "",
         render: (row: QuoteRequestRow) => (
-          <span style={{ whiteSpace: "pre-wrap" }}>{row.message || "—"}</span>
+          <span
+            title={row.message || undefined}
+            style={{
+              display: "block",
+              maxWidth: 220,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {row.message || "—"}
+          </span>
         ),
       },
       {
@@ -235,6 +251,7 @@ export function QuoteRequestsPage() {
         label: t("admin.quoteRequests.cols.emailed"),
         sortable: true,
         filterable: true,
+        width: "6.5rem",
         getText: (row: QuoteRequestRow) =>
           row.emailed ? t("admin.quoteRequests.emailedYes") : t("admin.quoteRequests.emailedNo"),
         render: (row: QuoteRequestRow) =>

@@ -39,6 +39,8 @@
   "saving": "Saving",
   "backToPlace": "Back to Place",
   "confirmations": {
+    "title": "Confirm",
+    "deleteTitle": "Delete",
     "deleteCategory": "Are you sure you want to delete this category?",
     "deleteTag": "Are you sure you want to delete this tag?",
     "deletePriceBand": "Are you sure you want to delete this price band?",
@@ -1273,6 +1275,7 @@
     "contactedYes": "Reached",
     "contactedNo": "Open",
     "contactedToggle": "Mark as contacted",
+    "deleteTitle": "Delete request",
     "deleteConfirm": "Delete the request from {{name}}?",
     "deleted": "Request deleted",
     "newDemoToast": "{{count}} new demo request(s) waiting for follow-up",

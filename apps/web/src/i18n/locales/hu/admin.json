@@ -39,6 +39,8 @@
   "saving": "Mentés",
   "backToPlace": "Vissza a helyhez",
   "confirmations": {
+    "title": "Megerősítés",
+    "deleteTitle": "Törlés",
     "deleteCategory": "Biztosan törölni szeretnéd ezt a kategóriát?",
     "deleteTag": "Biztosan törölni szeretnéd ezt a címkét?",
     "deletePriceBand": "Biztosan törölni szeretnéd ezt az ár szintet?",
@@ -467,6 +469,7 @@
     "contactedYes": "Megkeresve",
     "contactedNo": "Vár",
     "contactedToggle": "Megkeresés jelölése",
+    "deleteTitle": "Kérés törlése",
     "deleteConfirm": "Töröljük {{name}} kérését?",
     "deleted": "Kérés törölve",
     "newDemoToast": "{{count}} új demó kérés vár megkeresésre",

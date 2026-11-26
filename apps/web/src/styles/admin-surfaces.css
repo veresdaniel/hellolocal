@@ -85,6 +85,11 @@
   color: var(--admin-ink);
   background: var(--admin-bg);
   -webkit-font-smoothing: antialiased;
+
+  /* Seal public brand faces (including serifs) so they never leak into admin. */
+  --font-body: var(--admin-font);
+  --font-heading: var(--admin-font-display);
+  --font-display: var(--admin-font-display);
 }
 
 /* Never inherit public brand display/serif faces into admin chrome. */
@@ -105,7 +110,7 @@
 .admin-layout h2,
 .admin-layout h3,
 .admin-layout h4 {
-  font-family: var(--admin-font);
+  font-family: var(--admin-font) !important;
 }
 
 .admin-layout {
