@@ -20,7 +20,7 @@
 - Tagságok, előfizetés / termék / entitlement
 - AI szövegsegéd a tartaloműrlapokon
 - Analitikai dashboardok (site / place / town / event / global)
-- Platform landing: Localization copy + landing képek CMS (hero, story slotok, closing, share)
+- Platform landing: szövegek **UiMessage (DB)** élő forrás + locale JSON seed/fallback ([ui-copy-sources.md](./ui-copy-sources.md)); landing képek CMS (hero, story slotok, closing, share)
 - GTM hostonként; landing crawl kapcsoló; Facebook OG refresh
 
 ## Admin — mobilos tartalom létrehozás (új)
@@ -83,3 +83,4 @@ Egy régió több települést foghat össze; a vendég a belépési helyszínn�
 - [integracios-felmeres.md](./integracios-felmeres.md) — külső adat / beágyazás
 - [piackutatas.md](./piackutatas.md) — vevő, ár, értékesítés
 - [analytics-gtm.md](./analytics-gtm.md) — publikus események
+- [ui-copy-sources.md](./ui-copy-sources.md) — overview: DB vs locale JSON

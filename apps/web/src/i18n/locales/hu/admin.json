@@ -392,6 +392,10 @@
   "uiCopyTranslateDoneWarn": "Az automatikus fordítás kész, de: {{error}}",
   "uiCopyTranslateFailed": "Az automatikus fordítás nem sikerült: {{error}}",
   "uiCopyAutoTranslate": "Auto-fordítás",
+  "uiCopyReplaceFromLocale": "Locale → DB (felülírás)",
+  "uiCopyReplaceHint": "A jelenlegi szűréshez tartozó kulcsokat a beépített locale JSON-ból felülírja az adatbázisban (upsert). Régi, elavult UiMessage értékek frissítésére.",
+  "uiCopyReplaceConfirm": "Felülírod az adatbázisban a (szűrt) szövegeket a locale JSON aktuális értékeivel? A kézzel szerkesztett eltérések elvesznek ezeknél a kulcsoknál.",
+  "uiCopyReplaceDone": "Locale → DB kész ({{n}} frissítve).",
   "i18n": {
     "nav": "Nyelvesítés",
     "title": "Nyelvesítés",

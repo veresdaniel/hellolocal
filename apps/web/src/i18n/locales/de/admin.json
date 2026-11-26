@@ -412,6 +412,10 @@
   "uiCopyTranslateDoneWarn": "Die automatische Übersetzung ist fertig, aber: {{error}}",
   "uiCopyTranslateFailed": "Die automatische Übersetzung ist fehlgeschlagen: {{error}}",
   "uiCopyAutoTranslate": "Auto-Übersetzung",
+  "uiCopyReplaceFromLocale": "Locale → DB (überschreiben)",
+  "uiCopyReplaceHint": "Schreibt die Schlüssel des aktuellen Filters aus dem Locale-JSON per Upsert in die Datenbank. Für veraltete UiMessage-Defaults.",
+  "uiCopyReplaceConfirm": "Datenbanktexte (gefiltert) mit den aktuellen Locale-JSON-Werten überschreiben? Manuelle Änderungen an diesen Schlüsseln gehen verloren.",
+  "uiCopyReplaceDone": "Locale → DB fertig ({{n}} aktualisiert).",
   "i18n": {
     "nav": "Lokalisierung",
     "title": "Lokalisierung",

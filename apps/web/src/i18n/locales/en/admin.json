@@ -412,6 +412,10 @@
   "uiCopyTranslateDoneWarn": "Auto-translate finished, but: {{error}}",
   "uiCopyTranslateFailed": "Auto-translate failed: {{error}}",
   "uiCopyAutoTranslate": "Auto-translate",
+  "uiCopyReplaceFromLocale": "Locale → DB (replace)",
+  "uiCopyReplaceHint": "Upserts the keys in the current filter from bundled locale JSON into the database. Use to refresh stale UiMessage defaults.",
+  "uiCopyReplaceConfirm": "Overwrite (filtered) database copy with the current locale JSON values? Manual edits for those keys will be lost.",
+  "uiCopyReplaceDone": "Locale → DB done ({{n}} updated).",
   "i18n": {
     "nav": "Localization",
     "title": "Localization",

@@ -240,7 +240,7 @@ export const PLAN_SECTION_FIELDS: PlanCopyField[] = [
 
 export const PLAN_SHARED_LINE_FIELDS: PlanCopyField[] = [
   field("plans.priceUnit", ["Ár mértékegysége", "Price unit", "Preiseinheit"]),
-  // plans.freeForever is not admin-editable: always locale JSON + platform.freeTrialDays.
+  // plans.freeForever: locale JSON / UiMessage ({{currency}} + {{count}}=freeTrialDays); not in this editor.
   field("plans.places", ["Helyek sora", "Places line", "Orte-Zeile"]),
   field("plans.eventsNone", ["Nincs program", "No events", "Keine Termine"]),
   field("plans.events", ["Programok sora", "Events line", "Termine-Zeile"]),

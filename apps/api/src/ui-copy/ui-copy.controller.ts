@@ -69,7 +69,11 @@ export class AdminUiCopyController {
   }
 
   @Post("sync")
-  sync(@Body() body: { catalogs?: UiCatalogs }, @CurrentUser() user: { role?: string }) {
-    return this.copy.syncMissing(body?.catalogs ?? {}, user?.role);
+  sync(
+    @Body() body: { catalogs?: UiCatalogs; mode?: "missing" | "replace" },
+    @CurrentUser() user: { role?: string }
+  ) {
+    const mode = body?.mode === "replace" ? "replace" : "missing";
+    return this.copy.syncMissing(body?.catalogs ?? {}, user?.role, mode);
   }
 }

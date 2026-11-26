@@ -61,13 +61,6 @@ const PLAN_DEFAULTS = {
 };
 const PLAN_ENABLED_DEFAULTS = { free: true, basic: true, premium: false, municipal: true };
 const DEFAULT_CURRENCY_BY_LANG = { hu: "HUF", en: "EUR", de: "EUR" };
-const PERIOD_UNIT = { hu: "/ hó", en: "/ month", de: "/ Monat" };
-const FREE_PRICE_NOTE = {
-  hu: "{{currency}} az első {{count}} napban",
-  en: "{{currency}} for the first {{count}} days",
-  de: "{{currency}} für die ersten {{count}} Tage",
-};
-
 const MATRIX_PLAN = { free: "FREE", basic: "BASIC", premium: "PRO" };
 
 function finiteNumber(value) {
@@ -185,7 +178,11 @@ function renderPlanCards(
       const amount = planPriceForCurrency(numbers, currencyCode);
       let price;
       if (amount <= 0) {
-        const freeNote = fillCount(FREE_PRICE_NOTE[lang] || FREE_PRICE_NOTE.hu, trialDays).replace(
+        const noteTemplate =
+          plans.freeForever ||
+          bundledPlans.freeForever ||
+          "{{currency}} / {{count}}";
+        const freeNote = fillCount(noteTemplate, trialDays).replace(
           /\{\{\s*currency\s*\}\}/g,
           currencyLabel
         );
@@ -201,7 +198,8 @@ function renderPlanCards(
         } catch {
           formatted = `${String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0")}\u00a0${currencyCode}`;
         }
-        price = `${formatted} ${PERIOD_UNIT[lang] || PERIOD_UNIT.en}`;
+        const unit = plans.priceUnit || bundledPlans.priceUnit || "";
+        price = `${formatted} ${unit}`.trim();
       }
       const pitch =
         id === "free"

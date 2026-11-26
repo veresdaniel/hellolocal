@@ -16,25 +16,11 @@ import {
   type PublicPlanNumbers,
 } from "./publicPlans";
 import { useLandingText } from "../hooks/useLandingText";
-import { fillCount } from "./landingCopy";
 import "../styles/plan-picker.css";
 
 const LOCALE: Record<Lang, string> = { hu: "hu-HU", en: "en-GB", de: "de-DE" };
 
 const DEFAULT_CURRENCY_BY_LANG: Record<Lang, string> = { hu: "HUF", en: "EUR", de: "EUR" };
-
-const PERIOD_UNIT: Record<Lang, string> = {
-  hu: "/ hó",
-  en: "/ month",
-  de: "/ Monat",
-};
-
-/** Free card note — `{{currency}}` = abbrev, `{{count}}` = trial days. */
-const FREE_PRICE_NOTE: Record<Lang, string> = {
-  hu: "{{currency}} az első {{count}} napban",
-  en: "{{currency}} for the first {{count}} days",
-  de: "{{currency}} für die ersten {{count}} Tage",
-};
 
 function resolveCurrencyCode(
   lang: Lang,
@@ -174,11 +160,11 @@ function PlanCard({
   const amount = planPriceForCurrency(numbers, currencyCode);
   const isFree = amount <= 0;
   const price = isFree ? "0" : formatMoney(amount, lang, currencyCode);
-  const freeNote = fillCount(FREE_PRICE_NOTE[lang] ?? FREE_PRICE_NOTE.hu, freeTrialDays).replace(
+  const freeNote = text("plans.freeForever", { count: freeTrialDays }).replace(
     /\{\{\s*currency\s*\}\}/g,
     currencyLabel
   );
-  const priceNote = isFree ? freeNote : PERIOD_UNIT[lang];
+  const priceNote = isFree ? freeNote : text("plans.priceUnit");
   const registerUrl = `${buildUrl({ lang, path: "admin/register" })}?plan=${id}`;
   const pitch =
     id === "free"

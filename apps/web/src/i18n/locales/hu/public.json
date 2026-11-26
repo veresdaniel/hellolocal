@@ -183,6 +183,8 @@
         "alt": "Élő térkép a helyi helyekkel és programokkal"
       }
     },
+    "plansTitle": "Csomagok",
+    "plansLead": "Válasszatok méretet a helyeitekhez — a települési csomag ára egyedi ajánlat.",
     "demo": {
       "title": "Demót kérek",
       "lead": "Érdekel, hogyan működik? Írj nekünk, és megmutatjuk a helyeiden. A neved és az emailed elég.",
@@ -206,7 +208,6 @@
     },
     "plans": {
       "priceUnit": "/ hó",
-      "freePrice": "Ingyenes",
       "freeForever": "{{currency}} az első {{count}} napban",
       "places": "{{count}} hely a térképen",
       "eventsNone": "Programok nélkül, amíg kipróbálod",

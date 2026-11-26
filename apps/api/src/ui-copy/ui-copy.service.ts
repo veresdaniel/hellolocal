@@ -164,8 +164,16 @@ export class UiCopyService {
     return { updated: rows.length };
   }
 
-  /** Insert catalog strings that are not in the database yet. Existing edits stay. */
-  async syncMissing(catalogs: UiCatalogs, role?: string | null) {
+  /**
+   * Seed / refresh UiMessage from locale catalogs.
+   * - `missing` (default): insert only — existing DB edits stay.
+   * - `replace`: upsert every row in the payload (locale → DB source of truth).
+   */
+  async syncMissing(
+    catalogs: UiCatalogs,
+    role?: string | null,
+    mode: "missing" | "replace" = "missing"
+  ) {
     assertPlatformCopyEditor(role);
     const incoming = Object.entries(catalogs).flatMap(([lang, messages]) => {
       const code = normalizeLanguageCode(lang);
@@ -175,21 +183,40 @@ export class UiCopyService {
         .map(([key, value]) => ({ lang: code, key, value: value.slice(0, 8000) }));
     });
     const codes = [...new Set(incoming.map((row) => row.lang))];
-    if (codes.length) {
-      const known = await this.prisma.uiLanguage.findMany({ where: { code: { in: codes } }, select: { code: true } });
-      const have = new Set(known.map((row) => row.code));
-      const missing = codes.filter((code) => !have.has(code));
-      if (missing.length) {
-        const max = await this.prisma.uiLanguage.aggregate({ _max: { sortOrder: true } });
-        let order = (max._max.sortOrder ?? 0) + 1;
-        await this.prisma.uiLanguage.createMany({
-          data: missing.map((code) => ({ code, sortOrder: order++ })),
-          skipDuplicates: true,
-        });
-      }
-      await this.prisma.uiMessage.createMany({ data: incoming, skipDuplicates: true });
-      this.clearCache();
+    if (!codes.length) return { inserted: 0, updated: 0, mode };
+    const known = await this.prisma.uiLanguage.findMany({
+      where: { code: { in: codes } },
+      select: { code: true },
+    });
+    const have = new Set(known.map((row) => row.code));
+    const missingLangs = codes.filter((code) => !have.has(code));
+    if (missingLangs.length) {
+      const max = await this.prisma.uiLanguage.aggregate({ _max: { sortOrder: true } });
+      let order = (max._max.sortOrder ?? 0) + 1;
+      await this.prisma.uiLanguage.createMany({
+        data: missingLangs.map((code) => ({ code, sortOrder: order++ })),
+        skipDuplicates: true,
+      });
     }
-    return { inserted: incoming.length };
+    if (mode === "replace") {
+      const chunkSize = 40;
+      for (let i = 0; i < incoming.length; i += chunkSize) {
+        const slice = incoming.slice(i, i + chunkSize);
+        await this.prisma.$transaction(
+          slice.map((row) =>
+            this.prisma.uiMessage.upsert({
+              where: { lang_key: { lang: row.lang, key: row.key } },
+              create: row,
+              update: { value: row.value },
+            })
+          )
+        );
+      }
+      this.clearCache();
+      return { inserted: 0, updated: incoming.length, mode };
+    }
+    await this.prisma.uiMessage.createMany({ data: incoming, skipDuplicates: true });
+    this.clearCache();
+    return { inserted: incoming.length, updated: 0, mode };
   }
 }

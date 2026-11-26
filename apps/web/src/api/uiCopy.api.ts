@@ -100,6 +100,12 @@ export function saveUiMessages(lang: string, entries: Record<string, string>) {
   return apiPut<{ updated: number }>("/admin/ui-copy/messages", { lang, entries });
 }
 
-export function syncUiCatalogs(catalogs: Record<string, Record<string, string>>) {
-  return apiPost<{ inserted: number }>("/admin/ui-copy/sync", { catalogs });
+export function syncUiCatalogs(
+  catalogs: Record<string, Record<string, string>>,
+  mode: "missing" | "replace" = "missing"
+) {
+  return apiPost<{ inserted: number; updated: number; mode: string }>("/admin/ui-copy/sync", {
+    catalogs,
+    mode,
+  });
 }

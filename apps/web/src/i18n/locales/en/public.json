@@ -183,6 +183,8 @@
         "alt": "A live map of local places and events"
       }
     },
+    "plansTitle": "Plans",
+    "plansLead": "Pick a size for your places — the town package is a custom quote.",
     "demo": {
       "title": "Request a demo",
       "lead": "Curious how it works? Write to us, and we'll show it on your places. Your name and email are enough.",
@@ -206,7 +208,6 @@
     },
     "plans": {
       "priceUnit": "/ month",
-      "freePrice": "Free",
       "freeForever": "{{currency}} for the first {{count}} days",
       "places": "{{count}} places on the map",
       "eventsNone": "No events while you try it",

@@ -229,6 +229,38 @@ export function UiCopyEditor({
     }
   };
 
+  /** Push locale JSON → UiMessage (upsert). Use when DB still has superseded defaults. */
+  const replaceFromLocale = async () => {
+    if (!window.confirm(t("admin.uiCopyReplaceConfirm"))) return;
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const catalogs = bundledCatalogs();
+      const scoped: Record<string, Record<string, string>> = {};
+      for (const [code, messages] of Object.entries(catalogs)) {
+        const next: Record<string, string> = {};
+        for (const [key, value] of Object.entries(messages)) {
+          if (keyFilter && !keyFilter(key)) continue;
+          next[key] = value;
+        }
+        if (Object.keys(next).length) scoped[code] = next;
+      }
+      let updated = 0;
+      for (const chunk of catalogChunks(scoped)) {
+        const result = await syncUiCatalogs(chunk, "replace");
+        updated += result.updated || 0;
+      }
+      synced.current = true;
+      await load(lang);
+      setNotice(t("admin.uiCopyReplaceDone", { n: updated }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("admin.uiCopyLoadFailed"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div>
       {error ? (
@@ -383,6 +415,22 @@ export function UiCopyEditor({
               {t("admin.uiCopyAutoTranslate")}
             </button>
           ) : null}
+          <button
+            type="button"
+            onClick={() => void replaceFromLocale()}
+            disabled={saving}
+            title={t("admin.uiCopyReplaceHint")}
+            style={{
+              border: "1px solid #1b1730",
+              borderRadius: 8,
+              background: "white",
+              color: "#1b1730",
+              padding: "10px 16px",
+              cursor: saving ? "default" : "pointer",
+            }}
+          >
+            {t("admin.uiCopyReplaceFromLocale")}
+          </button>
           <button
             type="button"
             onClick={() => void save()}

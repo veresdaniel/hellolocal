@@ -518,31 +518,30 @@ async function loadUiCopy(lang) {
 }
 
 /**
- * Platform overview inputs: landing copy, plan overrides, defaultShareImage,
+ * Platform overview inputs: plan overrides, defaultShareImage, landing images,
  * and landingIndexable (platform.landingCrawlable; independent of global crawl).
+ * Marketing copy comes from UiMessage (see /api/public/ui-copy), not planOverrides.
  */
 async function loadPlatformForOverview(lang) {
   const cached = platformCache.get(lang);
   if (cached && cached.until > Date.now()) return cached.value;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 800);
+  const empty = {
+    planOverrides: null,
+    defaultShareImage: null,
+    landingImages: null,
+    landingIndexable: false,
+    freeTrialDays: 30,
+    currencyByLang: { hu: "HUF", en: "EUR", de: "EUR" },
+    currencies: [],
+  };
   try {
     const response = await fetch(`${API_URL}/api/public/${lang}/default/platform`, {
       signal: controller.signal,
       headers: { accept: "application/json" },
     });
-    if (!response.ok) {
-      return {
-        landingCopy: null,
-        planOverrides: null,
-        defaultShareImage: null,
-        landingImages: null,
-        landingIndexable: false,
-        freeTrialDays: 30,
-        currencyByLang: { hu: "HUF", en: "EUR", de: "EUR" },
-        currencies: [],
-      };
-    }
+    if (!response.ok) return empty;
     const data = await response.json();
     const planOverrides = data?.featureMatrix?.planOverrides ?? null;
     const trialRaw = Number(data?.platform?.freeTrialDays);
@@ -553,7 +552,6 @@ async function loadPlatformForOverview(lang) {
       landingImages?.hu?.share ||
       null;
     const value = {
-      landingCopy: planOverrides?.landingCopy?.[lang] ?? null,
       planOverrides,
       defaultShareImage:
         shareFromCms || data?.platform?.defaultShareImage || data?.seo?.defaultImage || null,
@@ -567,16 +565,7 @@ async function loadPlatformForOverview(lang) {
     platformCache.set(lang, { until: Date.now() + 60_000, value });
     return value;
   } catch {
-    return {
-      landingCopy: null,
-      planOverrides: null,
-      defaultShareImage: null,
-      landingImages: null,
-      landingIndexable: false,
-      freeTrialDays: 30,
-      currencyByLang: { hu: "HUF", en: "EUR", de: "EUR" },
-      currencies: [],
-    };
+    return empty;
   } finally {
     clearTimeout(timer);
   }
@@ -699,8 +688,8 @@ app.get('*', async (req, res, next) => {
         loadUiCopy(overview),
         loadPlatformForOverview(overview),
       ]);
-      const hasDatabaseCopy = Boolean(uiCopy?.messages && Object.keys(uiCopy.messages).length);
-      const override = hasDatabaseCopy ? null : platform.landingCopy;
+      // UiMessage is the live source; locale JSON is seed/fallback inside renderOverview.
+      // planOverrides.landingCopy is retired — do not pass it as override.
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return res.send(
         renderOverviewDocument(html, {
@@ -708,7 +697,7 @@ app.get('*', async (req, res, next) => {
           origin,
           pathname: req.path,
           shareUrl: overviewShareUrl(origin, req.path, overview),
-          override,
+          override: null,
           messages: uiCopy?.messages,
           languages: uiCopy?.languages,
           planOverrides: platform.planOverrides,

@@ -183,6 +183,8 @@
         "alt": "Eine lebendige Karte mit lokalen Orten und Veranstaltungen"
       }
     },
+    "plansTitle": "Pakete",
+    "plansLead": "Wählt die Größe für eure Orte — das Gemeindepaket ist ein individuelles Angebot.",
     "demo": {
       "title": "Demo anfragen",
       "lead": "Möchtest du sehen, wie es funktioniert? Schreib uns, wir zeigen es an deinen Orten. Name und E-Mail reichen.",
@@ -206,7 +208,6 @@
     },
     "plans": {
       "priceUnit": "/ Monat",
-      "freePrice": "Kostenlos",
       "freeForever": "{{currency}} für die ersten {{count}} Tage",
       "places": "{{count}} Orte auf der Karte",
       "eventsNone": "Noch ohne Programm, solange Sie es ausprobieren",
