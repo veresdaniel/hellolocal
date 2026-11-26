@@ -181,6 +181,7 @@ Full event parameters and **what to set in GTM / GA4**: [docs/analytics-gtm.md](
 | [docs/frontend-seo-middleware.md](docs/frontend-seo-middleware.md) | SSR SEO, sitemaps, robots |
 | [docs/domain-based-tenant-resolution.md](docs/domain-based-tenant-resolution.md) | Host → site / entity |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deploy summary |
+| [docs/scalability.md](docs/scalability.md) | Scale limits and phased roadmap (single VPS → CDN/Redis → replicas) |
 | [docs/hellolocal-backend-api-first-brief.md](docs/hellolocal-backend-api-first-brief.md) | API brief |
 | [docs/hellolocal-frontend-brief.md](docs/hellolocal-frontend-brief.md) | Frontend brief |
 | [packages/shared/README.md](packages/shared/README.md) | Shared package conventions |
