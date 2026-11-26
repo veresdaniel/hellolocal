@@ -973,6 +973,8 @@
     "removePhoto": "Remove photo",
     "shortDescription": "Short description",
     "shortDescriptionPlaceholder": "1–2 sentences for visitors",
+    "longDescription": "Long description",
+    "longDescriptionPlaceholder": "2–4 paragraphs for the detail page (optional)",
     "location": "Location",
     "locationHint": "Optional. GPS is fastest in the field.",
     "useGps": "Use GPS",
@@ -1000,6 +1002,7 @@
     "placeStepTownCategory": "Town and category",
     "placeStepPhotos": "Photos",
     "placeStepDescription": "Short description",
+    "placeStepLongDescription": "Long description",
     "placeStepLocation": "Location",
     "placeStepReview": "Review",
     "eventStepName": "What is the event called?",
@@ -1007,6 +1010,7 @@
     "eventStepWhen": "When?",
     "eventStepPhotos": "Photos",
     "eventStepDescription": "Short description",
+    "eventStepLongDescription": "Long description",
     "eventStepReview": "Review"
   },
   "dashboardCards": {

@@ -27,13 +27,15 @@ import { stripHtml } from "../../utils/htmlUtils";
 import {
   plainToHtml,
   wizardCard,
+  wizardCardFill,
+  wizardFieldFill,
   wizardInput,
   wizardLabel,
   wizardSelect,
-  wizardTextarea,
+  wizardTextareaFill,
 } from "./wizardStyles";
 
-const STEP_COUNT = 6;
+const STEP_COUNT = 7;
 
 type TownRow = {
   id: string;
@@ -62,6 +64,7 @@ export function PlaceWizard() {
   const [categoryId, setCategoryId] = useState("");
   const [photos, setPhotos] = useState<WizardPhoto[]>([]);
   const [description, setDescription] = useState("");
+  const [longDescription, setLongDescription] = useState("");
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
   const [publishMode, setPublishMode] = useState<WizardPublishMode>("draft");
@@ -172,6 +175,7 @@ export function PlaceWizard() {
       const publish = canPublish && publishMode === "publish";
       const heroImage = photos[0]?.url || null;
       const shortDescription = plainToHtml(description) || null;
+      const fullDescription = plainToHtml(longDescription) || shortDescription;
       const place = await createPlace({
         siteId,
         townId,
@@ -181,7 +185,7 @@ export function PlaceWizard() {
             lang: contentLang,
             name: name.trim(),
             shortDescription,
-            description: shortDescription,
+            description: fullDescription,
           },
         ],
         heroImage,
@@ -270,6 +274,7 @@ export function PlaceWizard() {
     t("admin.wizard.placeStepTownCategory"),
     t("admin.wizard.placeStepPhotos"),
     t("admin.wizard.placeStepDescription"),
+    t("admin.wizard.placeStepLongDescription"),
     t("admin.wizard.placeStepLocation"),
     t("admin.wizard.placeStepReview"),
   ];
@@ -279,6 +284,7 @@ export function PlaceWizard() {
       title={titles[step] || t("admin.wizard.placeTitle")}
       stepIndex={step}
       stepCount={STEP_COUNT}
+      fillBody={step === 3 || step === 4}
       onBack={
         step === 0
           ? () => navigate(`/${uiLang}/admin/wizard`)
@@ -369,7 +375,7 @@ export function PlaceWizard() {
       {step === 2 && <WizardPhotoStep photos={photos} onChange={setPhotos} folder="wizard/places" />}
 
       {step === 3 && (
-        <div style={wizardCard}>
+        <div style={wizardCardFill}>
           <label style={wizardLabel} htmlFor="wiz-desc">
             {t("admin.wizard.shortDescription")}
           </label>
@@ -387,10 +393,11 @@ export function PlaceWizard() {
             value={description}
             onApply={(text) => setDescription(stripHtml(text))}
             variant="textarea"
+            style={wizardFieldFill}
           >
             <textarea
               id="wiz-desc"
-              style={wizardTextarea}
+              style={wizardTextareaFill}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t("admin.wizard.shortDescriptionPlaceholder")}
@@ -400,6 +407,43 @@ export function PlaceWizard() {
       )}
 
       {step === 4 && (
+        <div style={wizardCardFill}>
+          <label style={wizardLabel} htmlFor="wiz-long-desc">
+            {t("admin.wizard.longDescription")}
+          </label>
+          <AiPostfixField
+            draft={{
+              kind: "place",
+              field: "description",
+              lang: contentLang,
+              siteId: placeSiteId,
+              name,
+              categoryId: categoryId || undefined,
+              townId: townId || undefined,
+              contextHints: [
+                placeDraftHints,
+                description.trim() ? `Short teaser already drafted: ${description.trim()}` : "",
+              ]
+                .filter(Boolean)
+                .join(". "),
+            }}
+            value={longDescription}
+            onApply={(text) => setLongDescription(stripHtml(text))}
+            variant="textarea"
+            style={wizardFieldFill}
+          >
+            <textarea
+              id="wiz-long-desc"
+              style={wizardTextareaFill}
+              value={longDescription}
+              onChange={(e) => setLongDescription(e.target.value)}
+              placeholder={t("admin.wizard.longDescriptionPlaceholder")}
+            />
+          </AiPostfixField>
+        </div>
+      )}
+
+      {step === 5 && (
         <div style={wizardCard}>
           <p style={{ margin: "0 0 12px", fontSize: 14, lineHeight: 1.45, opacity: 0.85 }}>
             {t("admin.wizard.locationHint")}
@@ -448,7 +492,7 @@ export function PlaceWizard() {
         </div>
       )}
 
-      {step === 5 && (
+      {step === 6 && (
         <div style={wizardCard}>
           <dl style={{ margin: 0, display: "grid", gap: 10, fontSize: 15 }}>
             <div>

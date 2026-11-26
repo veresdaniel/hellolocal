@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  wizardBodyFill,
   wizardFooter,
   wizardPage,
+  wizardPageFill,
   wizardPrimaryBtn,
   wizardSecondaryBtn,
 } from "./wizardStyles";
@@ -18,6 +20,8 @@ type WizardShellProps = {
   nextDisabled?: boolean;
   busy?: boolean;
   hideFooter?: boolean;
+  /** Stretch the step body so text steps can fill the screen. */
+  fillBody?: boolean;
 };
 
 export function WizardShell({
@@ -31,13 +35,14 @@ export function WizardShell({
   nextDisabled,
   busy,
   hideFooter,
+  fillBody,
 }: WizardShellProps) {
   const { t } = useTranslation();
   const progress = stepCount > 0 ? ((stepIndex + 1) / stepCount) * 100 : 0;
 
   return (
-    <div style={wizardPage}>
-      <div style={{ marginBottom: 16 }}>
+    <div style={fillBody ? wizardPageFill : wizardPage}>
+      <div style={{ marginBottom: 16, flexShrink: 0 }}>
         <div
           style={{
             fontSize: 13,
@@ -82,7 +87,7 @@ export function WizardShell({
         </div>
       </div>
 
-      {children}
+      {fillBody ? <div style={wizardBodyFill}>{children}</div> : children}
 
       {!hideFooter && (
         <div style={wizardFooter}>

@@ -1133,6 +1133,8 @@
     "removePhoto": "Fotó törlése",
     "shortDescription": "Rövid leírás",
     "shortDescriptionPlaceholder": "1–2 mondat a vendégnek",
+    "longDescription": "Hosszú leírás",
+    "longDescriptionPlaceholder": "2–4 bekezdés a részletes oldalra (opcionális)",
     "location": "Helyszín",
     "locationHint": "Opcionális. A dűlőn a GPS a leggyorsabb.",
     "useGps": "Használd a GPS-t",
@@ -1160,6 +1162,7 @@
     "placeStepTownCategory": "Település és kategória",
     "placeStepPhotos": "Fotók",
     "placeStepDescription": "Rövid leírás",
+    "placeStepLongDescription": "Hosszú leírás",
     "placeStepLocation": "Helyszín",
     "placeStepReview": "Áttekintés",
     "eventStepName": "Mi az esemény neve?",
@@ -1167,6 +1170,7 @@
     "eventStepWhen": "Mikor?",
     "eventStepPhotos": "Fotók",
     "eventStepDescription": "Rövid leírás",
+    "eventStepLongDescription": "Hosszú leírás",
     "eventStepReview": "Áttekintés"
   },
   "dashboardCards": {

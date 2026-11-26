@@ -974,6 +974,8 @@
     "removePhoto": "Foto entfernen",
     "shortDescription": "Kurzbeschreibung",
     "shortDescriptionPlaceholder": "1–2 Sätze für Gäste",
+    "longDescription": "Lange Beschreibung",
+    "longDescriptionPlaceholder": "2–4 Absätze für die Detailseite (optional)",
     "location": "Standort",
     "locationHint": "Optional. GPS ist im Gelände am schnellsten.",
     "useGps": "GPS nutzen",
@@ -1001,6 +1003,7 @@
     "placeStepTownCategory": "Gemeinde und Kategorie",
     "placeStepPhotos": "Fotos",
     "placeStepDescription": "Kurzbeschreibung",
+    "placeStepLongDescription": "Lange Beschreibung",
     "placeStepLocation": "Standort",
     "placeStepReview": "Prüfen",
     "eventStepName": "Wie heißt die Veranstaltung?",
@@ -1008,6 +1011,7 @@
     "eventStepWhen": "Wann?",
     "eventStepPhotos": "Fotos",
     "eventStepDescription": "Kurzbeschreibung",
+    "eventStepLongDescription": "Lange Beschreibung",
     "eventStepReview": "Prüfen"
   },
   "dashboardCards": {

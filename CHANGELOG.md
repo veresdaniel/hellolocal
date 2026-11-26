@@ -14,6 +14,8 @@ in prose as used in the product.
 
 ### Added
 
+- Mobile place/event wizard: separate full-height **long description** step
+  with AI draft (saved to `description`; falls back to short if empty).
 - Nyelvesítés field labels: human-readable titles for shared UI keys
   (error/offline/common/…), technical key kept as subtitle.
 - Mobile place/event wizard: AI draft postfix on name/title and short
@@ -31,6 +33,8 @@ in prose as used in the product.
 
 ### Changed
 
+- Mobile place/event wizard text steps use full-height textareas that fill the
+  space above the fixed footer (short + long description).
 - Content-draft AI prompts: field-type instructions (name/title/teaser/…) and
   stronger “synthesize from public knowledge, never copy source wording” rules;
   mobile wizard passes town/category/place context hints.

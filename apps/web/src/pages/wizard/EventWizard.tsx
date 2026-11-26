@@ -22,13 +22,15 @@ import { stripHtml } from "../../utils/htmlUtils";
 import {
   plainToHtml,
   wizardCard,
+  wizardCardFill,
+  wizardFieldFill,
   wizardInput,
   wizardLabel,
   wizardSelect,
-  wizardTextarea,
+  wizardTextareaFill,
 } from "./wizardStyles";
 
-const STEP_COUNT = 6;
+const STEP_COUNT = 7;
 
 type PlaceRow = {
   id: string;
@@ -59,6 +61,7 @@ export function EventWizard() {
   const [endDate, setEndDate] = useState("");
   const [photos, setPhotos] = useState<WizardPhoto[]>([]);
   const [description, setDescription] = useState("");
+  const [longDescription, setLongDescription] = useState("");
   const [publishMode, setPublishMode] = useState<WizardPublishMode>("draft");
   const [places, setPlaces] = useState<PlaceRow[]>([]);
   const [busy, setBusy] = useState(false);
@@ -125,6 +128,7 @@ export function EventWizard() {
       const publish = canChooseWizardPublish(user?.role, place?.plan) && publishMode === "publish";
       const heroImage = photos[0]?.url || null;
       const shortDescription = plainToHtml(description) || null;
+      const fullDescription = plainToHtml(longDescription) || shortDescription;
       const event = await createEvent({
         siteId,
         placeId,
@@ -133,7 +137,7 @@ export function EventWizard() {
             lang: contentLang,
             title: title.trim(),
             shortDescription,
-            description: shortDescription,
+            description: fullDescription,
           },
         ],
         startDate,
@@ -224,6 +228,7 @@ export function EventWizard() {
     t("admin.wizard.eventStepWhen"),
     t("admin.wizard.eventStepPhotos"),
     t("admin.wizard.eventStepDescription"),
+    t("admin.wizard.eventStepLongDescription"),
     t("admin.wizard.eventStepReview"),
   ];
 
@@ -232,6 +237,7 @@ export function EventWizard() {
       title={titles[step] || t("admin.wizard.eventTitle")}
       stepIndex={step}
       stepCount={STEP_COUNT}
+      fillBody={step === 4 || step === 5}
       onBack={
         step === 0
           ? () => navigate(`/${uiLang}/admin/wizard`)
@@ -334,7 +340,7 @@ export function EventWizard() {
       {step === 3 && <WizardPhotoStep photos={photos} onChange={setPhotos} folder="wizard/events" />}
 
       {step === 4 && (
-        <div style={wizardCard}>
+        <div style={wizardCardFill}>
           <label style={wizardLabel} htmlFor="wiz-event-desc">
             {t("admin.wizard.shortDescription")}
           </label>
@@ -351,10 +357,11 @@ export function EventWizard() {
             value={description}
             onApply={(text) => setDescription(stripHtml(text))}
             variant="textarea"
+            style={wizardFieldFill}
           >
             <textarea
               id="wiz-event-desc"
-              style={wizardTextarea}
+              style={wizardTextareaFill}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t("admin.wizard.shortDescriptionPlaceholder")}
@@ -364,6 +371,42 @@ export function EventWizard() {
       )}
 
       {step === 5 && (
+        <div style={wizardCardFill}>
+          <label style={wizardLabel} htmlFor="wiz-event-long-desc">
+            {t("admin.wizard.longDescription")}
+          </label>
+          <AiPostfixField
+            draft={{
+              kind: "event",
+              field: "description",
+              lang: contentLang,
+              siteId: eventSiteId,
+              placeId: placeId || undefined,
+              name: title,
+              contextHints: [
+                eventDraftHints,
+                description.trim() ? `Short teaser already drafted: ${description.trim()}` : "",
+              ]
+                .filter(Boolean)
+                .join(". "),
+            }}
+            value={longDescription}
+            onApply={(text) => setLongDescription(stripHtml(text))}
+            variant="textarea"
+            style={wizardFieldFill}
+          >
+            <textarea
+              id="wiz-event-long-desc"
+              style={wizardTextareaFill}
+              value={longDescription}
+              onChange={(e) => setLongDescription(e.target.value)}
+              placeholder={t("admin.wizard.longDescriptionPlaceholder")}
+            />
+          </AiPostfixField>
+        </div>
+      )}
+
+      {step === 6 && (
         <div style={wizardCard}>
           <dl style={{ margin: 0, display: "grid", gap: 10, fontSize: 15 }}>
             <div>

@@ -12,6 +12,22 @@ export const wizardPage: CSSProperties = {
   overflowX: "hidden",
 };
 
+/** Flex column that fills the viewport under admin header + toolbar. */
+export const wizardPageFill: CSSProperties = {
+  ...wizardPage,
+  display: "flex",
+  flexDirection: "column",
+  // ~admin header + Vissza toolbar; footer uses fixed padding below.
+  minHeight: "calc(100dvh - 7.25rem)",
+};
+
+export const wizardBodyFill: CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  minHeight: 0,
+};
+
 export const wizardCard: CSSProperties = {
   background: "rgba(255,255,255,0.96)",
   borderRadius: 14,
@@ -23,6 +39,22 @@ export const wizardCard: CSSProperties = {
   width: "100%",
   maxWidth: "100%",
   overflow: "hidden",
+};
+
+/** Card that stretches to fill remaining wizard body height (text steps). */
+export const wizardCardFill: CSSProperties = {
+  ...wizardCard,
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  minHeight: 0,
+};
+
+export const wizardFieldFill: CSSProperties = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  minHeight: 0,
 };
 
 export const wizardLabel: CSSProperties = {
@@ -53,6 +85,16 @@ export const wizardTextarea: CSSProperties = {
   minHeight: 120,
   resize: "vertical" as const,
   lineHeight: 1.45,
+};
+
+/** Full-height textarea inside wizardCardFill (no manual resize). */
+export const wizardTextareaFill: CSSProperties = {
+  ...wizardTextarea,
+  flex: 1,
+  minHeight: 160,
+  height: "100%",
+  resize: "none" as const,
+  paddingRight: 48, // room for the absolute AI postfix button
 };
 
 export const wizardSelect: CSSProperties = {
