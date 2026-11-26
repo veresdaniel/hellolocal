@@ -1273,6 +1273,8 @@
     "contactedYes": "Reached",
     "contactedNo": "Open",
     "contactedToggle": "Mark as contacted",
+    "deleteConfirm": "Delete the request from {{name}}?",
+    "deleted": "Request deleted",
     "filter": {
       "demo": "Demo",
       "municipal": "Town",

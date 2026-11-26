@@ -1274,6 +1274,8 @@
     "contactedYes": "Erledigt",
     "contactedNo": "Offen",
     "contactedToggle": "Als kontaktiert markieren",
+    "deleteConfirm": "Anfrage von {{name}} löschen?",
+    "deleted": "Anfrage gelöscht",
     "filter": {
       "demo": "Demo",
       "municipal": "Gemeinde",

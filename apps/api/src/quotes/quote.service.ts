@@ -124,4 +124,11 @@ export class QuoteService {
       data: { contactedAt: contacted ? new Date() : null },
     });
   }
+
+  async remove(id: string) {
+    const existing = await this.prisma.quoteRequest.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException("Lead not found");
+    await this.prisma.quoteRequest.delete({ where: { id } });
+    return { ok: true };
+  }
 }

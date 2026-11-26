@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { UserRole } from "@prisma/client";
 import { assertPublicFormShield } from "../common/public-form-shield";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -39,5 +39,10 @@ export class AdminQuoteController {
   @Put(":id/contacted")
   async setContacted(@Param("id") id: string, @Body() body: { contacted?: unknown }) {
     return this.quotes.setContacted(id, Boolean(body?.contacted));
+  }
+
+  @Delete(":id")
+  async remove(@Param("id") id: string) {
+    return this.quotes.remove(id);
   }
 }

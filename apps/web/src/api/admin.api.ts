@@ -2713,3 +2713,7 @@ export function getQuoteRequests(params?: {
 export function setQuoteRequestContacted(id: string, contacted: boolean) {
   return apiPut<QuoteRequestRow>(`/admin/quote-requests/${id}/contacted`, { contacted });
 }
+
+export function deleteQuoteRequest(id: string) {
+  return apiDelete<{ ok: boolean }>(`/admin/quote-requests/${id}`);
+}

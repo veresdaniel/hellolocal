@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router-dom";
+import { AdminDataTable } from "../../components/AdminDataTable";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import {
+  deleteQuoteRequest,
   getQuoteRequests,
   setQuoteRequestContacted,
   type QuoteRequestRow,
 } from "../../api/admin.api";
 import { useToast } from "../../contexts/ToastContext";
+import { useConfirm } from "../../hooks/useConfirm";
 import { usePageTitle } from "../../hooks/usePageTitle";
 
 type PlanFilter = "all" | "demo" | "municipal";
@@ -17,16 +20,19 @@ export function QuoteRequestsPage() {
   const { lang: langParam } = useParams<{ lang?: string }>();
   const lang = langParam || "hu";
   const { showToast } = useToast();
+  const confirm = useConfirm();
   usePageTitle("admin.quoteRequests.title");
 
   const [plan, setPlan] = useState<PlanFilter>("demo");
   const [items, setItems] = useState<QuoteRequestRow[]>([]);
-  const [total, setTotal] = useState(0);
-  const [skip, setSkip] = useState(0);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState("");
-  const take = 50;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -34,32 +40,35 @@ export function QuoteRequestsPage() {
     try {
       const data = await getQuoteRequests({
         plan: plan === "all" ? undefined : plan,
-        take,
-        skip,
+        take: pagination.limit,
+        skip: (pagination.page - 1) * pagination.limit,
       });
       setItems(data.items);
-      setTotal(data.total);
+      setPagination((prev) => ({ ...prev, total: data.total }));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
-  }, [plan, skip]);
+  }, [plan, pagination.page, pagination.limit]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  const formatWhen = (iso: string) => {
-    try {
-      return new Intl.DateTimeFormat(i18n.language || "hu", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(new Date(iso));
-    } catch {
-      return iso;
-    }
-  };
+  const formatWhen = useCallback(
+    (iso: string) => {
+      try {
+        return new Intl.DateTimeFormat(i18n.language || "hu", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }).format(new Date(iso));
+      } catch {
+        return iso;
+      }
+    },
+    [i18n.language]
+  );
 
   const toggleContacted = async (row: QuoteRequestRow) => {
     const next = !row.contactedAt;
@@ -88,14 +97,155 @@ export function QuoteRequestsPage() {
     }
   };
 
+  const handleDelete = async (row: QuoteRequestRow) => {
+    const ok = await confirm({
+      message: t("admin.quoteRequests.deleteConfirm", { name: row.contactName }),
+      confirmVariant: "danger",
+    });
+    if (!ok) return;
+    try {
+      await deleteQuoteRequest(row.id);
+      showToast(t("admin.quoteRequests.deleted"), "success");
+      if (items.length <= 1 && pagination.page > 1) {
+        setPagination((prev) => ({ ...prev, page: prev.page - 1 }));
+      } else {
+        await load();
+      }
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : t("admin.errors.deleteFailed"), "error");
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        key: "contacted",
+        label: t("admin.quoteRequests.cols.contacted"),
+        sortable: true,
+        filterable: true,
+        getText: (row: QuoteRequestRow) =>
+          row.contactedAt
+            ? t("admin.quoteRequests.contactedYes")
+            : t("admin.quoteRequests.contactedNo"),
+        render: (row: QuoteRequestRow) => {
+          const done = Boolean(row.contactedAt);
+          return (
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: busyId === row.id ? "wait" : "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={done}
+                disabled={busyId === row.id}
+                onChange={() => void toggleContacted(row)}
+                aria-label={t("admin.quoteRequests.contactedToggle")}
+              />
+              <span>
+                {done
+                  ? t("admin.quoteRequests.contactedYes")
+                  : t("admin.quoteRequests.contactedNo")}
+              </span>
+              {done && row.contactedAt ? (
+                <span style={{ color: "var(--admin-muted)", fontSize: 12 }}>
+                  {formatWhen(row.contactedAt)}
+                </span>
+              ) : null}
+            </label>
+          );
+        },
+      },
+      {
+        key: "when",
+        label: t("admin.quoteRequests.cols.when"),
+        sortable: true,
+        getText: (row: QuoteRequestRow) => row.createdAt,
+        render: (row: QuoteRequestRow) => formatWhen(row.createdAt),
+      },
+      {
+        key: "plan",
+        label: t("admin.quoteRequests.cols.plan"),
+        sortable: true,
+        filterable: true,
+        getText: (row: QuoteRequestRow) =>
+          row.plan === "demo"
+            ? t("admin.quoteRequests.filter.demo")
+            : t("admin.quoteRequests.filter.municipal"),
+        render: (row: QuoteRequestRow) =>
+          row.plan === "demo"
+            ? t("admin.quoteRequests.filter.demo")
+            : t("admin.quoteRequests.filter.municipal"),
+      },
+      {
+        key: "contact",
+        label: t("admin.quoteRequests.cols.contact"),
+        sortable: true,
+        filterable: true,
+        getText: (row: QuoteRequestRow) => row.contactName,
+        render: (row: QuoteRequestRow) => row.contactName,
+      },
+      {
+        key: "email",
+        label: t("admin.quoteRequests.cols.email"),
+        sortable: true,
+        filterable: true,
+        getText: (row: QuoteRequestRow) => row.email,
+        render: (row: QuoteRequestRow) => <a href={`mailto:${row.email}`}>{row.email}</a>,
+      },
+      {
+        key: "phone",
+        label: t("admin.quoteRequests.cols.phone"),
+        sortable: true,
+        filterable: true,
+        getText: (row: QuoteRequestRow) => row.phone || "",
+        render: (row: QuoteRequestRow) =>
+          row.phone ? <a href={`tel:${row.phone}`}>{row.phone}</a> : "—",
+      },
+      {
+        key: "organization",
+        label: t("admin.quoteRequests.cols.organization"),
+        sortable: true,
+        filterable: true,
+        getText: (row: QuoteRequestRow) => row.organization || "",
+        render: (row: QuoteRequestRow) => row.organization || "—",
+      },
+      {
+        key: "message",
+        label: t("admin.quoteRequests.cols.message"),
+        sortable: false,
+        filterable: true,
+        getText: (row: QuoteRequestRow) => row.message || "",
+        render: (row: QuoteRequestRow) => (
+          <span style={{ whiteSpace: "pre-wrap" }}>{row.message || "—"}</span>
+        ),
+      },
+      {
+        key: "emailed",
+        label: t("admin.quoteRequests.cols.emailed"),
+        sortable: true,
+        filterable: true,
+        getText: (row: QuoteRequestRow) =>
+          row.emailed ? t("admin.quoteRequests.emailedYes") : t("admin.quoteRequests.emailedNo"),
+        render: (row: QuoteRequestRow) =>
+          row.emailed ? t("admin.quoteRequests.emailedYes") : t("admin.quoteRequests.emailedNo"),
+      },
+    ],
+    [busyId, formatWhen, t]
+  );
+
   return (
-    <div>
+    <div className="admin-page-content">
       <AdminPageHeader
         title={t("admin.quoteRequests.title")}
         subtitle={t("admin.quoteRequests.subtitle")}
       />
 
-      <section style={panel}>
+      <section className="admin-section-card">
         <p style={{ marginTop: 0, marginBottom: 16 }}>
           <Link to={`/${lang}/admin/platform-settings`}>
             {t("admin.quoteRequests.recipientLink")}
@@ -107,19 +257,12 @@ export function QuoteRequestsPage() {
             <button
               key={id}
               type="button"
+              className={plan === id ? "admin-btn admin-btn--primary" : "admin-btn admin-btn--secondary"}
               onClick={() => {
-                setSkip(0);
                 setPlan(id);
+                setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              style={{
-                padding: "8px 14px",
-                borderRadius: 8,
-                border: plan === id ? "none" : "1px solid var(--admin-border-subtle)",
-                background: plan === id ? "var(--admin-primary)" : "#fff",
-                color: plan === id ? "#fff" : "inherit",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
+              style={filterBtn}
             >
               {t(`admin.quoteRequests.filter.${id}`)}
             </button>
@@ -131,149 +274,32 @@ export function QuoteRequestsPage() {
             {error}
           </p>
         ) : null}
-        {loading ? <p>{t("admin.quoteRequests.loading")}</p> : null}
-        {!loading && items.length === 0 ? (
-          <p style={{ color: "var(--admin-muted)" }}>{t("admin.quoteRequests.empty")}</p>
-        ) : null}
 
-        {!loading && items.length > 0 ? (
-          <div style={{ overflowX: "auto" }}>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 14,
-              }}
-            >
-              <thead>
-                <tr>
-                  <th style={th}>{t("admin.quoteRequests.cols.contacted")}</th>
-                  <th style={th}>{t("admin.quoteRequests.cols.when")}</th>
-                  <th style={th}>{t("admin.quoteRequests.cols.plan")}</th>
-                  <th style={th}>{t("admin.quoteRequests.cols.contact")}</th>
-                  <th style={th}>{t("admin.quoteRequests.cols.email")}</th>
-                  <th style={th}>{t("admin.quoteRequests.cols.phone")}</th>
-                  <th style={th}>{t("admin.quoteRequests.cols.organization")}</th>
-                  <th style={th}>{t("admin.quoteRequests.cols.message")}</th>
-                  <th style={th}>{t("admin.quoteRequests.cols.emailed")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((row) => {
-                  const done = Boolean(row.contactedAt);
-                  return (
-                    <tr
-                      key={row.id}
-                      style={{
-                        opacity: done ? 0.72 : 1,
-                        background: done ? "var(--admin-surface-subtle, #f8fafc)" : undefined,
-                      }}
-                    >
-                      <td style={td}>
-                        <label
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 8,
-                            cursor: busyId === row.id ? "wait" : "pointer",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={done}
-                            disabled={busyId === row.id}
-                            onChange={() => void toggleContacted(row)}
-                            aria-label={t("admin.quoteRequests.contactedToggle")}
-                          />
-                          <span style={{ fontSize: 13 }}>
-                            {done
-                              ? t("admin.quoteRequests.contactedYes")
-                              : t("admin.quoteRequests.contactedNo")}
-                          </span>
-                        </label>
-                        {done && row.contactedAt ? (
-                          <div style={{ fontSize: 12, color: "var(--admin-muted)", marginTop: 4 }}>
-                            {formatWhen(row.contactedAt)}
-                          </div>
-                        ) : null}
-                      </td>
-                      <td style={td}>{formatWhen(row.createdAt)}</td>
-                      <td style={td}>
-                        {row.plan === "demo"
-                          ? t("admin.quoteRequests.filter.demo")
-                          : t("admin.quoteRequests.filter.municipal")}
-                      </td>
-                      <td style={td}>{row.contactName}</td>
-                      <td style={td}>
-                        <a href={`mailto:${row.email}`}>{row.email}</a>
-                      </td>
-                      <td style={td}>
-                        {row.phone ? <a href={`tel:${row.phone}`}>{row.phone}</a> : "—"}
-                      </td>
-                      <td style={td}>{row.organization || "—"}</td>
-                      <td style={{ ...td, maxWidth: 280, whiteSpace: "pre-wrap" }}>
-                        {row.message || "—"}
-                      </td>
-                      <td style={td}>
-                        {row.emailed
-                          ? t("admin.quoteRequests.emailedYes")
-                          : t("admin.quoteRequests.emailedNo")}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : null}
-
-        {total > take ? (
-          <div style={{ display: "flex", gap: 12, alignItems: "center", marginTop: 16 }}>
-            <button
-              type="button"
-              disabled={skip <= 0 || loading}
-              onClick={() => setSkip(Math.max(0, skip - take))}
-            >
-              {t("admin.quoteRequests.prev")}
-            </button>
-            <span>
-              {skip + 1}–{Math.min(skip + take, total)} / {total}
-            </span>
-            <button
-              type="button"
-              disabled={skip + take >= total || loading}
-              onClick={() => setSkip(skip + take)}
-            >
-              {t("admin.quoteRequests.next")}
-            </button>
-          </div>
-        ) : null}
+        <AdminDataTable
+          items={items}
+          getItemId={(row) => row.id}
+          stateKey="quote-requests"
+          isLoading={loading}
+          emptyMessage={t("admin.quoteRequests.empty")}
+          columns={columns}
+          onDelete={(row) => void handleDelete(row)}
+          pagination={{
+            page: pagination.page,
+            pageSize: pagination.limit,
+            total: pagination.total,
+            onPageChange: (page) => setPagination((prev) => ({ ...prev, page })),
+            onPageSizeChange: (pageSize) =>
+              setPagination((prev) => ({ ...prev, limit: pageSize, page: 1 })),
+          }}
+        />
       </section>
     </div>
   );
 }
 
-const panel: CSSProperties = {
-  marginBottom: 24,
-  padding: 20,
-  borderRadius: 12,
-  border: "1px solid var(--admin-border-subtle)",
-  background: "var(--admin-surface, #fff)",
-  color: "var(--admin-ink, #1b1730)",
-};
-
-const th: CSSProperties = {
-  textAlign: "left",
-  padding: "10px 8px",
-  borderBottom: "1px solid var(--admin-border-subtle)",
-  whiteSpace: "nowrap",
-  color: "var(--admin-muted, #5c4638)",
+const filterBtn: CSSProperties = {
+  padding: "8px 14px",
+  borderRadius: 8,
   fontWeight: 600,
-};
-
-const td: CSSProperties = {
-  padding: "10px 8px",
-  borderBottom: "1px solid var(--admin-border-subtle)",
-  verticalAlign: "top",
+  cursor: "pointer",
 };

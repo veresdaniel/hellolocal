@@ -467,6 +467,8 @@
     "contactedYes": "Megkeresve",
     "contactedNo": "Vár",
     "contactedToggle": "Megkeresés jelölése",
+    "deleteConfirm": "Töröljük {{name}} kérését?",
+    "deleted": "Kérés törölve",
     "filter": {
       "demo": "Demó",
       "municipal": "Település",
