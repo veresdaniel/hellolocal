@@ -273,6 +273,7 @@ export class PlatformSettingsService {
       seoTitle?: string | null;
       seoDescription?: string | null;
       seoImage?: string | null;
+      seoKeywords?: string[] | null;
     }>;
     const t =
       translations.find((item) => item.lang === lang) ||
