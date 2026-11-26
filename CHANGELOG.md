@@ -31,6 +31,8 @@ in prose as used in the product.
 
 ### Changed
 
+- Nyelvesítés rich-text fields use auto height (grow with content, cap ~280px)
+  so short strings no longer leave large empty editor boxes.
 - Nyelvesítés: all UiCopy fields use rich text (TipTap); platform overview
   (CSR + SSR) renders copy as sanitized HTML so bold/links from admin show on
   the landing. Placeholders/SEO/alt stay plain text. List + pager kept (not
@@ -38,13 +40,6 @@ in prose as used in the product.
 - Google OAuth consent branding: same-origin callback via Caddy (`/api/auth/google*`)
   so Google shows the public host in use (e.g. hellolocal.hu) instead of always
   api.hello-local.io — add matching Authorized redirect URIs in Google Cloud.
-
-### Fixed
-
-- Google OAuth return: platform public hosts (`platform.publicHost`, e.g.
-  hellolocal.hu) and the same-origin callback host are allowed, so login no
-  longer falls back to hello-local.io admin when starting from another
-  platform domain.
 - Password policy: min 10 characters with upper/lower, digit, and special
   character (API + UI).
 - Admin user form region picker uses shared `BaseAutocomplete` combobox
@@ -58,6 +53,10 @@ in prose as used in the product.
 
 ### Fixed
 
+- Google OAuth return: platform public hosts (`platform.publicHost`, e.g.
+  hellolocal.hu) and the same-origin callback host are allowed, so login no
+  longer falls back to hello-local.io admin when starting from another
+  platform domain.
 - Admin mobile: billing/features and other 2-column panels stack via CSS
   `auto-fit` (no JS-width dependency); stronger viewport containment so cards
   no longer stick out past the screen edge.

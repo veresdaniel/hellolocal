@@ -20,7 +20,16 @@ interface TipTapEditorWithUploadProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  /** Fixed editor body height (ignored when `autoHeight` is true). */
   height?: number;
+  /**
+   * Grow/shrink with content. Uses `minHeight` / `maxHeight` (scrolls past max).
+   */
+  autoHeight?: boolean;
+  /** Minimum body height when `autoHeight` (default 56). */
+  minHeight?: number;
+  /** Maximum body height when `autoHeight` (default 320); overflow scrolls. */
+  maxHeight?: number;
   /**
    * Folder path for uploaded files (e.g., "editor/places", "editor/events")
    */
@@ -38,6 +47,9 @@ export function TipTapEditorWithUpload({
   onChange,
   placeholder,
   height = 300,
+  autoHeight = false,
+  minHeight = 56,
+  maxHeight = 320,
   uploadFolder = "editor",
   enableVideo = false,
   aiDraft,
@@ -51,6 +63,11 @@ export function TipTapEditorWithUpload({
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+
+  const bodyMin = autoHeight ? minHeight : height;
+  const editorBodyStyle = autoHeight
+    ? `min-height: ${minHeight}px; max-height: ${maxHeight}px; overflow-y: auto; padding: 10px 12px;`
+    : `min-height: ${height}px; padding: 12px;`;
 
   const editor = useEditor({
     extensions: [
@@ -82,8 +99,8 @@ export function TipTapEditorWithUpload({
     },
     editorProps: {
       attributes: {
-        class: "tiptap-editor",
-        style: `min-height: ${height}px; padding: 12px;`,
+        class: autoHeight ? "tiptap-editor tiptap-editor--auto" : "tiptap-editor",
+        style: editorBodyStyle,
       },
     },
   });
@@ -249,13 +266,15 @@ export function TipTapEditorWithUpload({
           aria-label="HTML source code"
           style={{
             width: "100%",
-            minHeight: `${height}px`,
+            minHeight: `${bodyMin}px`,
+            maxHeight: autoHeight ? `${maxHeight}px` : undefined,
             padding: 12,
             border: "none",
             fontFamily:
               "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
             fontSize: "clamp(14px, 3.5vw, 16px)",
             resize: "vertical",
+            overflowY: autoHeight ? "auto" : undefined,
           }}
           placeholder="HTML source code..."
         />
@@ -572,6 +591,18 @@ export function TipTapEditorWithUpload({
           font-size: clamp(15px, 3.5vw, 16px) !important;
           color: #333;
           line-height: 1.6;
+        }
+        .tiptap-editor--auto {
+          line-height: 1.45;
+        }
+        .tiptap-editor--auto p {
+          margin: 0.15em 0;
+        }
+        .tiptap-editor--auto p:first-child {
+          margin-top: 0;
+        }
+        .tiptap-editor--auto p:last-child {
+          margin-bottom: 0;
         }
         .tiptap-editor p {
           margin: 0.5em 0;

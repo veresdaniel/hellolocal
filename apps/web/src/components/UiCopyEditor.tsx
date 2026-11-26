@@ -15,7 +15,6 @@ import {
 } from "../api/uiCopy.api";
 import { uiCopyFieldLabel } from "../pages/admin/uiCopyKeyLabels";
 import { TipTapEditorWithUpload } from "./TipTapEditorWithUpload";
-import { hasVisibleHtml } from "../utils/hasVisibleHtml";
 
 /** Rich editors are heavy — keep pages small (AdminDataTable cells are a poor fit). */
 const PAGE_SIZE = 8;
@@ -455,10 +454,9 @@ export function UiCopyEditor({
         {loading ? <p>{t("admin.uiCopyLoading")}</p> : null}
         {!loading && !visible.length ? <p>{t("admin.uiCopyEmpty")}</p> : null}
 
-        <div style={{ display: "grid", gap: 20 }}>
+        <div style={{ display: "grid", gap: 16 }}>
           {visible.map((entry) => {
             const value = drafts[entry.key] ?? "";
-            const tall = hasVisibleHtml(value) || value.length > 160;
             return (
               <div key={entry.key} style={{ display: "grid", gap: 6 }}>
                 <span style={{ fontWeight: 600, fontSize: 14, color: "#1b1730" }}>
@@ -475,7 +473,9 @@ export function UiCopyEditor({
                   onChange={(next) =>
                     setDrafts((current) => ({ ...current, [entry.key]: next }))
                   }
-                  height={tall ? 200 : 140}
+                  autoHeight
+                  minHeight={52}
+                  maxHeight={280}
                   uploadFolder="editor/ui-copy"
                 />
               </div>
