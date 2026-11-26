@@ -118,8 +118,8 @@ export function QuoteRequestsPage() {
     }
   };
 
-  const columns = useMemo(
-    () => [
+  const columns = useMemo(() => {
+    const cols = [
       {
         key: "contacted",
         label: t("admin.quoteRequests.cols.contacted"),
@@ -169,20 +169,24 @@ export function QuoteRequestsPage() {
         getText: (row: QuoteRequestRow) => row.createdAt,
         render: (row: QuoteRequestRow) => formatWhen(row.createdAt),
       },
-      {
-        key: "plan",
-        label: t("admin.quoteRequests.cols.plan"),
-        sortable: true,
-        filterable: true,
-        getText: (row: QuoteRequestRow) =>
-          row.plan === "demo"
-            ? t("admin.quoteRequests.filter.demo")
-            : t("admin.quoteRequests.filter.municipal"),
-        render: (row: QuoteRequestRow) =>
-          row.plan === "demo"
-            ? t("admin.quoteRequests.filter.demo")
-            : t("admin.quoteRequests.filter.municipal"),
-      },
+      ...(plan === "all"
+        ? [
+            {
+              key: "plan",
+              label: t("admin.quoteRequests.cols.plan"),
+              sortable: true,
+              filterable: true,
+              getText: (row: QuoteRequestRow) =>
+                row.plan === "demo"
+                  ? t("admin.quoteRequests.filter.demo")
+                  : t("admin.quoteRequests.filter.municipal"),
+              render: (row: QuoteRequestRow) =>
+                row.plan === "demo"
+                  ? t("admin.quoteRequests.filter.demo")
+                  : t("admin.quoteRequests.filter.municipal"),
+            },
+          ]
+        : []),
       {
         key: "contact",
         label: t("admin.quoteRequests.cols.contact"),
@@ -236,9 +240,9 @@ export function QuoteRequestsPage() {
         render: (row: QuoteRequestRow) =>
           row.emailed ? t("admin.quoteRequests.emailedYes") : t("admin.quoteRequests.emailedNo"),
       },
-    ],
-    [busyId, formatWhen, t]
-  );
+    ];
+    return cols;
+  }, [busyId, formatWhen, plan, t]);
 
   return (
     <div className="admin-page-content">
