@@ -17,6 +17,12 @@ export type PublicFormShieldInput = {
 export type PublicFormShieldOptions = {
   /** Override minimum dwell time (ms). Lead forms use a longer window than login. */
   minMs?: number;
+  /**
+   * - `required` (default): when RECAPTCHA_SECRET_KEY is set, a valid token is mandatory
+   * - `optional`: verify when a token is present; do not fail closed if missing (login / password flows)
+   * - `off`: never check captcha
+   */
+  captcha?: "required" | "optional" | "off";
 };
 
 /**
@@ -42,11 +48,18 @@ export async function assertPublicFormShield(
     throw new BadRequestException("public_form_too_fast");
   }
 
+  const captchaMode = opts?.captcha ?? "required";
+  if (captchaMode === "off") return;
+
   const secret = process.env.RECAPTCHA_SECRET_KEY?.trim() ?? "";
   if (!secret) return;
 
   const token = typeof input.recaptchaToken === "string" ? input.recaptchaToken.trim() : "";
-  if (!token || !(await verifyRecaptcha(secret, token))) {
+  if (!token) {
+    if (captchaMode === "optional") return;
+    throw new BadRequestException("public_form_captcha");
+  }
+  if (!(await verifyRecaptcha(secret, token))) {
     throw new BadRequestException("public_form_captcha");
   }
 }

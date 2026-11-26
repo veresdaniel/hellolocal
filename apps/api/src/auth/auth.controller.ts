@@ -74,7 +74,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ strict: { limit: 5, ttl: 60000 } }) // 5 kérés percenként (brute-force védelem, strict throttler)
   async login(@Body() dto: LoginDto) {
-    await assertPublicFormShield(dto);
+    // Captcha optional: a misconfigured site-key domain must not lock admins out.
+    await assertPublicFormShield(dto, { captcha: "optional" });
     return this.authService.login(dto);
   }
 
@@ -86,7 +87,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
-    await assertPublicFormShield(dto);
+    await assertPublicFormShield(dto, { captcha: "optional" });
     return this.authService.forgotPassword(dto);
   }
 
@@ -97,7 +98,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ strict: { limit: 3, ttl: 60000 } }) // 3 kérés percenként (strict throttler)
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    await assertPublicFormShield(dto);
+    await assertPublicFormShield(dto, { captcha: "optional" });
     return this.authService.resetPassword(dto);
   }
 
