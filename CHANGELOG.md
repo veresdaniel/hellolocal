@@ -26,6 +26,9 @@ in prose as used in the product.
 
 ### Changed
 
+- Platform SEO defaults (index.html + overview seoTitle/description/keywords
+  hu/en/de): clearer tourism-map positioning for Google SERP (drop vague
+  “helyi helyek / környékek” phrasing).
 - Platform landing copy (hu/en/de): clearer marketing voice from the product
   concept — intro paragraphs, Google Maps FAQ, stronger region/domain framing;
   admin Landing copy editor fields for `introP1` / `introP2`.
