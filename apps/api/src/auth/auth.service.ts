@@ -27,6 +27,10 @@ import { isSupportedLang } from "../common/lang";
 import { randomBytes } from "crypto";
 import { CountryService } from "../country/country.service";
 import { isConfiguredFrontendOrigin, normalizeReturnHost } from "./oauth-return.util";
+import {
+  matchingPlatformHost,
+  readPlatformPublicHosts,
+} from "../common/platform-public-host";
 import { SignupAbuseService } from "../signup-abuse/signup-abuse.service";
 import { normalizeEmail } from "../common/email-normalize";
 import type { SignupGateResult } from "../signup-abuse/signup-abuse.service";
@@ -973,13 +977,18 @@ export class AuthService {
   }
 
   /**
-   * Allow Google OAuth to return only to the platform frontend or a known custom domain
+   * Allow Google OAuth to return only to the platform frontend, configured platform
+   * public hosts (e.g. hellolocal.hu), or a known custom domain
    * (SiteDomain / primaryDomain / town|place|collection customDomain) — blocks open redirects.
    */
   async isAllowedOAuthReturnOrigin(origin: string): Promise<boolean> {
     if (isConfiguredFrontendOrigin(origin)) return true;
     const host = normalizeReturnHost(origin);
     if (!host) return false;
+
+    const platformHosts = await readPlatformPublicHosts(this.prisma);
+    if (matchingPlatformHost(host, platformHosts)) return true;
+
     const hosts = [host, `www.${host}`];
 
     const siteDomain = await this.prisma.siteDomain.findFirst({

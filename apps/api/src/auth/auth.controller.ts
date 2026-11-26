@@ -32,6 +32,7 @@ import {
   oauthLoginPath,
   type OAuthReturnMode,
 } from "./oauth-return.util";
+import { publicOriginFromHeaders } from "../seo/public-path.util";
 
 /**
  * Authentication controller.
@@ -194,7 +195,8 @@ export class AuthController {
   }
 
   /**
-   * Prefer OAuth `state` (return origin from the login page). Fall back to FRONTEND_URL.
+   * Prefer OAuth `state` (return origin from the login page), then the callback
+   * request host (same-origin Caddy proxy), then FRONTEND_URL.
    */
   private async resolveOAuthReturn(req: Request): Promise<{
     origin: string;
@@ -209,8 +211,19 @@ export class AuthController {
       langOrDefault(undefined);
     const mode: OAuthReturnMode = fromState?.mode === "visitor" ? "visitor" : "admin";
 
-    if (fromState?.origin && (await this.authService.isAllowedOAuthReturnOrigin(fromState.origin))) {
-      return { origin: fromState.origin.replace(/\/$/, ""), lang, mode };
+    const requestOrigin = publicOriginFromHeaders({
+      host: req.headers.host,
+      "x-forwarded-host": req.headers["x-forwarded-host"],
+      "x-forwarded-proto": req.headers["x-forwarded-proto"],
+    });
+
+    const candidates = [fromState?.origin, requestOrigin].filter(
+      (value): value is string => Boolean(value)
+    );
+    for (const candidate of candidates) {
+      if (await this.authService.isAllowedOAuthReturnOrigin(candidate)) {
+        return { origin: candidate.replace(/\/$/, ""), lang, mode };
+      }
     }
     return { origin: fallbackOrigin.replace(/\/$/, ""), lang, mode };
   }
