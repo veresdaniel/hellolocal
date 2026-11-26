@@ -457,7 +457,7 @@
   "quoteRequests": {
     "title": "Demó- és ajánlatkérések",
     "subtitle": "A platform demó űrlapjáról és az önkormányzati ajánlatkérésből beérkezett lead-ek.",
-    "recipientLink": "Címzett email beállítása (platform settings)",
+    "recipientLink": "Címzett email beállítása",
     "loading": "Betöltés…",
     "empty": "Nincs ilyen kérés.",
     "prev": "Előző",

@@ -1264,7 +1264,7 @@
   "quoteRequests": {
     "title": "Demo- und Angebotsanfragen",
     "subtitle": "Leads vom Plattform-Demoformular und der Gemeinde-Angebot-Anfrage.",
-    "recipientLink": "Empfänger-E-Mail setzen (Plattformeinstellungen)",
+    "recipientLink": "Empfänger-E-Mail setzen",
     "loading": "Laden…",
     "empty": "Keine passenden Anfragen.",
     "prev": "Zurück",

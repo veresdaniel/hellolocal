@@ -1263,7 +1263,7 @@
   "quoteRequests": {
     "title": "Demo & quote requests",
     "subtitle": "Leads from the platform demo form and municipal quote form.",
-    "recipientLink": "Set recipient email (platform settings)",
+    "recipientLink": "Set recipient email",
     "loading": "Loading…",
     "empty": "No matching requests.",
     "prev": "Previous",
