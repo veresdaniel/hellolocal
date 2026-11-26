@@ -44,6 +44,13 @@ if [ -n "$stale_names" ]; then
   # shellcheck disable=SC2086
   echo "$stale_names" | xargs -r docker rm -f
 fi
+# Also drop anonymous recreate leftovers that keep the old container id in the name.
+orphan_ids="$(docker ps -a --filter 'name=_hellolocal-' --format '{{.ID}} {{.Names}}' | awk '$2 ~ /^[0-9a-f]+_hellolocal-/ { print $1 }' || true)"
+if [ -n "$orphan_ids" ]; then
+  echo "Removing orphan recreate containers:"
+  # shellcheck disable=SC2086
+  echo "$orphan_ids" | xargs -r docker rm -f
+fi
 
 docker compose \
   --env-file /opt/hellolocal/stack.env \
