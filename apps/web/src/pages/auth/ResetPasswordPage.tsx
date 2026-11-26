@@ -25,7 +25,7 @@ export function ResetPasswordPage() {
   const visitor = isVisitorAuthPath(location.pathname);
   const { lang: langParam } = useParams<{ lang?: string }>();
   const { t, i18n } = useTranslation();
-  const shield = usePublicFormShield("reset_password");
+  const shield = usePublicFormShield("reset_password", { recaptcha: false });
 
   // Get language from URL or use current i18n language or default
   const lang: Lang = isLang(langParam)

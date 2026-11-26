@@ -59,7 +59,10 @@ export async function assertPublicFormShield(
     if (captchaMode === "optional") return;
     throw new BadRequestException("public_form_captcha");
   }
-  if (!(await verifyRecaptcha(secret, token))) {
+  const ok = await verifyRecaptcha(secret, token);
+  if (!ok) {
+    // Optional mode: ignore a bad/expired token (e.g. wrong reCAPTCHA domain) instead of locking the form.
+    if (captchaMode === "optional") return;
     throw new BadRequestException("public_form_captcha");
   }
 }

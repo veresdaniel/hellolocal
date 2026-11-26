@@ -28,7 +28,7 @@ export function LoginPage() {
   const [wasManualLogout, setWasManualLogout] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const { login, user, isLoading: authIsLoading, refreshUser } = useAuth();
-  const shield = usePublicFormShield("login");
+  const shield = usePublicFormShield("login", { recaptcha: false });
   const navigate = useNavigate();
   const location = useLocation();
   const visitor = isVisitorAuthPath(location.pathname);

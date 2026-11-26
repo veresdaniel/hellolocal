@@ -46,16 +46,20 @@ function loadRecaptcha(key: string): Promise<void> {
 }
 
 /** Loads invisible reCAPTCHA only while a public form is mounted, and only if a site key exists. */
-export function usePublicFormShield(action: string, opts?: { minMs?: number }) {
+export function usePublicFormShield(
+  action: string,
+  opts?: { minMs?: number; recaptcha?: boolean }
+) {
   const startedAt = useRef(Date.now());
   const [companyWebsite, setCompanyWebsite] = useState("");
   const key = siteKey();
   const minMs = Math.max(opts?.minMs ?? FORM_MIN_MS, FORM_MIN_MS);
+  const useRecaptcha = opts?.recaptcha !== false;
 
   useEffect(() => {
-    if (!key) return;
+    if (!key || !useRecaptcha) return;
     loadRecaptcha(key).catch(() => undefined);
-  }, [key]);
+  }, [key, useRecaptcha]);
 
   const payload = async (): Promise<PublicFormShieldPayload> => {
     // Wait out the min dwell so the first click never trips public_form_too_fast
@@ -66,7 +70,7 @@ export function usePublicFormShield(action: string, opts?: { minMs?: number }) {
     }
 
     let recaptchaToken: string | undefined;
-    if (key) {
+    if (key && useRecaptcha) {
       try {
         await loadRecaptcha(key);
         recaptchaToken = await new Promise((resolve, reject) => {

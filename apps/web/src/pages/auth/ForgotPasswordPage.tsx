@@ -45,7 +45,7 @@ export function ForgotPasswordPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
-  const shield = usePublicFormShield("forgot_password");
+  const shield = usePublicFormShield("forgot_password", { recaptcha: false });
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
