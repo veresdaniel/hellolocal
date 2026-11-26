@@ -98,12 +98,20 @@ export class QuoteService {
     return { id: lead.id, stored: true, emailed, reason };
   }
 
-  async listForAdmin(opts: { plan?: string; take?: number; skip?: number }) {
+  async listForAdmin(opts: {
+    plan?: string;
+    take?: number;
+    skip?: number;
+    contacted?: boolean;
+  }) {
     const plan =
       opts.plan === "demo" || opts.plan === "municipal" ? opts.plan : undefined;
     const take = Math.min(Math.max(opts.take ?? 50, 1), 200);
     const skip = Math.max(opts.skip ?? 0, 0);
-    const where = plan ? { plan } : {};
+    const where: { plan?: string; contactedAt?: null | { not: null } } = {};
+    if (plan) where.plan = plan;
+    if (opts.contacted === false) where.contactedAt = null;
+    else if (opts.contacted === true) where.contactedAt = { not: null };
     const [items, total] = await Promise.all([
       this.prisma.quoteRequest.findMany({
         where,

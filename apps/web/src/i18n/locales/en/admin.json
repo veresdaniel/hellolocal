@@ -1275,6 +1275,7 @@
     "contactedToggle": "Mark as contacted",
     "deleteConfirm": "Delete the request from {{name}}?",
     "deleted": "Request deleted",
+    "newDemoToast": "{{count}} new demo request(s) waiting for follow-up",
     "filter": {
       "demo": "Demo",
       "municipal": "Town",

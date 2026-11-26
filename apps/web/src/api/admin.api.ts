@@ -2699,11 +2699,14 @@ export function getQuoteRequests(params?: {
   plan?: "demo" | "municipal";
   take?: number;
   skip?: number;
+  contacted?: boolean;
 }) {
   const q = new URLSearchParams();
   if (params?.plan) q.set("plan", params.plan);
   if (params?.take != null) q.set("take", String(params.take));
   if (params?.skip != null) q.set("skip", String(params.skip));
+  if (params?.contacted === true) q.set("contacted", "1");
+  if (params?.contacted === false) q.set("contacted", "0");
   const qs = q.toString();
   return apiGet<{ items: QuoteRequestRow[]; total: number; take: number; skip: number }>(
     `/admin/quote-requests${qs ? `?${qs}` : ""}`

@@ -469,6 +469,7 @@
     "contactedToggle": "Megkeresés jelölése",
     "deleteConfirm": "Töröljük {{name}} kérését?",
     "deleted": "Kérés törölve",
+    "newDemoToast": "{{count}} új demó kérés vár megkeresésre",
     "filter": {
       "demo": "Demó",
       "municipal": "Település",

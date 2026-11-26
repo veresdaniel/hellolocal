@@ -8,6 +8,7 @@ import { AdminPageChromeProvider } from "../contexts/AdminPageChromeContext";
 import { useSessionWarning } from "../hooks/useSessionWarning";
 import { useAdminCache } from "../hooks/useAdminCache";
 import { useVersionCheck } from "../hooks/useVersionCheck";
+import { useDemoLeadLoginToast } from "../hooks/useDemoLeadLoginToast";
 import { SiteSelector } from "./SiteSelector";
 import { UserInfoDropdown } from "./UserInfoDropdown";
 import { AdminBackButton } from "./AdminBackButton";
@@ -242,6 +243,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   // Primary header chrome only (language, Régió, user/logout). Destinations live on dashboard cards.
   const userRole = (user?.role ?? null) as UserRole | null;
   const userIsSuperadmin = userRole ? isSuperadmin(userRole) : false;
+  useDemoLeadLoginToast(userIsSuperadmin);
 
   return (
     <div

@@ -1276,6 +1276,7 @@
     "contactedToggle": "Als kontaktiert markieren",
     "deleteConfirm": "Anfrage von {{name}} löschen?",
     "deleted": "Anfrage gelöscht",
+    "newDemoToast": "{{count}} neue Demo-Anfrage(n) warten auf Rückruf",
     "filter": {
       "demo": "Demo",
       "municipal": "Gemeinde",

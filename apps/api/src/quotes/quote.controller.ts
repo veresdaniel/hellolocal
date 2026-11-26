@@ -27,12 +27,20 @@ export class AdminQuoteController {
   async list(
     @Query("plan") plan?: string,
     @Query("take") take?: string,
-    @Query("skip") skip?: string
+    @Query("skip") skip?: string,
+    @Query("contacted") contacted?: string
   ) {
+    const contactedFilter =
+      contacted === "0" || contacted === "false"
+        ? false
+        : contacted === "1" || contacted === "true"
+          ? true
+          : undefined;
     return this.quotes.listForAdmin({
       plan,
       take: take ? Number(take) : undefined,
       skip: skip ? Number(skip) : undefined,
+      contacted: contactedFilter,
     });
   }
 
