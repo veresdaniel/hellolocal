@@ -14,6 +14,9 @@ in prose as used in the product.
 
 ### Changed
 
+- Mobile wizard: superadmin and paid-plan places can choose draft vs publish-now
+  on review; free plan stays draft-only (API already requires superadmin to
+  activate free places).
 - Image uploads: client-side optimize before Cloudinary — long edge ≤1920px and
   WebP (JPEG fallback). Floorplans keep a higher 4096px / q0.9 cap; pass
   `skipOptimize` to bypass.

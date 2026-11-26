@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
+import { useAuth } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import { useToast } from "../../contexts/ToastContext";
 import { DEFAULT_LANG, type Lang, isLang } from "../../app/config";
@@ -15,6 +16,11 @@ import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { optionsFromTranslations } from "../../utils/adminSelectOptions";
 import { WizardShell } from "./WizardShell";
 import { WizardPhotoStep, type WizardPhoto } from "./WizardPhotoStep";
+import {
+  WizardPublishChoice,
+  canChooseWizardPublish,
+  type WizardPublishMode,
+} from "./WizardPublishChoice";
 import { useIsMobileAdmin } from "./useIsMobileAdmin";
 import {
   plainToHtml,
@@ -37,6 +43,7 @@ export function PlaceWizard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useAuth();
   const { selectedSiteId } = useAdminSite();
   const { lang: langParam } = useParams<{ lang?: string }>();
   const isMobile = useIsMobileAdmin();
@@ -44,6 +51,8 @@ export function PlaceWizard() {
 
   const uiLang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
   const contentLang = (i18n.language || uiLang).split("-")[0] || uiLang;
+  // New places default to free — only superadmin may publish immediately.
+  const canPublish = canChooseWizardPublish(user?.role, null);
 
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -53,6 +62,7 @@ export function PlaceWizard() {
   const [description, setDescription] = useState("");
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");
+  const [publishMode, setPublishMode] = useState<WizardPublishMode>("draft");
   const [towns, setTowns] = useState<TownRow[]>([]);
   const [categories, setCategories] = useState<
     Array<{ id: string; translations?: Array<{ lang?: string; name?: string | null }> }>
@@ -60,6 +70,7 @@ export function PlaceWizard() {
   const [busy, setBusy] = useState(false);
   const [gpsBusy, setGpsBusy] = useState(false);
   const [donePlaceId, setDonePlaceId] = useState<string | null>(null);
+  const [donePublished, setDonePublished] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -146,6 +157,7 @@ export function PlaceWizard() {
 
     setBusy(true);
     try {
+      const publish = canPublish && publishMode === "publish";
       const heroImage = photos[0]?.url || null;
       const shortDescription = plainToHtml(description) || null;
       const place = await createPlace({
@@ -164,8 +176,8 @@ export function PlaceWizard() {
         cardImage: heroImage,
         lat: lat ? parseFloat(lat) : null,
         lng: lng ? parseFloat(lng) : null,
-        isActive: false,
-        isCrawlable: false,
+        isActive: publish,
+        isCrawlable: publish,
       });
 
       const placeId = place?.id as string | undefined;
@@ -180,6 +192,7 @@ export function PlaceWizard() {
       }
 
       notifyEntityChanged("places");
+      setDonePublished(publish);
       setDonePlaceId(placeId || "ok");
       setStep(STEP_COUNT);
     } catch (err) {
@@ -199,7 +212,7 @@ export function PlaceWizard() {
         <div style={wizardCard}>
           <h1 style={{ margin: "0 0 10px", fontSize: 22 }}>{t("admin.wizard.savedTitle")}</h1>
           <p style={{ margin: "0 0 18px", fontSize: 15, lineHeight: 1.45 }}>
-            {t("admin.wizard.savedDraftBody")}
+            {donePublished ? t("admin.wizard.savedPublishedBody") : t("admin.wizard.savedDraftBody")}
           </p>
           <div style={{ display: "grid", gap: 10 }}>
             {donePlaceId !== "ok" && (
@@ -418,9 +431,11 @@ export function PlaceWizard() {
               </dd>
             </div>
           </dl>
-          <p style={{ margin: "16px 0 0", fontSize: 13, lineHeight: 1.45, opacity: 0.8 }}>
-            {t("admin.wizard.draftNotice")}
-          </p>
+          <WizardPublishChoice
+            canPublish={canPublish}
+            value={publishMode}
+            onChange={setPublishMode}
+          />
         </div>
       )}
     </WizardShell>

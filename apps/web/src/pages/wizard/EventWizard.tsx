@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
+import { useAuth } from "../../contexts/AuthContext";
 import { useAdminSite } from "../../contexts/useAdminSite";
 import { useToast } from "../../contexts/ToastContext";
 import { DEFAULT_LANG, type Lang, isLang } from "../../app/config";
@@ -10,6 +11,11 @@ import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { optionsFromTranslations } from "../../utils/adminSelectOptions";
 import { WizardShell } from "./WizardShell";
 import { WizardPhotoStep, type WizardPhoto } from "./WizardPhotoStep";
+import {
+  WizardPublishChoice,
+  canChooseWizardPublish,
+  type WizardPublishMode,
+} from "./WizardPublishChoice";
 import { useIsMobileAdmin } from "./useIsMobileAdmin";
 import {
   plainToHtml,
@@ -26,6 +32,7 @@ type PlaceRow = {
   id: string;
   siteId?: string;
   tenantId?: string;
+  plan?: string | null;
   translations?: Array<{ lang?: string; name?: string | null; title?: string | null }>;
   name?: string | null;
 };
@@ -34,6 +41,7 @@ export function EventWizard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { user } = useAuth();
   const { selectedSiteId } = useAdminSite();
   const { lang: langParam } = useParams<{ lang?: string }>();
   const isMobile = useIsMobileAdmin();
@@ -49,9 +57,11 @@ export function EventWizard() {
   const [endDate, setEndDate] = useState("");
   const [photos, setPhotos] = useState<WizardPhoto[]>([]);
   const [description, setDescription] = useState("");
+  const [publishMode, setPublishMode] = useState<WizardPublishMode>("draft");
   const [places, setPlaces] = useState<PlaceRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [doneEventId, setDoneEventId] = useState<string | null>(null);
+  const [donePublished, setDonePublished] = useState(false);
 
   useEffect(() => {
     if (!selectedSiteId) {
@@ -77,6 +87,12 @@ export function EventWizard() {
     [places, contentLang]
   );
   const placeLabel = placeOptions.find((o) => o.value === placeId)?.label || "—";
+  const selectedPlace = places.find((row) => row.id === placeId);
+  const canPublish = canChooseWizardPublish(user?.role, selectedPlace?.plan);
+
+  useEffect(() => {
+    if (!canPublish && publishMode !== "draft") setPublishMode("draft");
+  }, [canPublish, publishMode]);
 
   const canNext = (() => {
     if (step === 0) return title.trim().length > 0;
@@ -95,6 +111,7 @@ export function EventWizard() {
 
     setBusy(true);
     try {
+      const publish = canChooseWizardPublish(user?.role, place?.plan) && publishMode === "publish";
       const heroImage = photos[0]?.url || null;
       const shortDescription = plainToHtml(description) || null;
       const event = await createEvent({
@@ -111,9 +128,9 @@ export function EventWizard() {
         startDate,
         endDate: endDate || null,
         heroImage,
-        isActive: false,
-        isCrawlable: false,
-        isPublished: false,
+        isActive: publish,
+        isCrawlable: publish,
+        isPublished: publish,
       });
 
       const eventId = event?.id as string | undefined;
@@ -129,6 +146,7 @@ export function EventWizard() {
       }
 
       notifyEntityChanged("events");
+      setDonePublished(publish);
       setDoneEventId(eventId || "ok");
       setStep(STEP_COUNT);
     } catch (err) {
@@ -148,7 +166,7 @@ export function EventWizard() {
         <div style={wizardCard}>
           <h1 style={{ margin: "0 0 10px", fontSize: 22 }}>{t("admin.wizard.savedTitle")}</h1>
           <p style={{ margin: "0 0 18px", fontSize: 15, lineHeight: 1.45 }}>
-            {t("admin.wizard.savedDraftBody")}
+            {donePublished ? t("admin.wizard.savedPublishedBody") : t("admin.wizard.savedDraftBody")}
           </p>
           <div style={{ display: "grid", gap: 10 }}>
             {doneEventId !== "ok" && (
@@ -325,9 +343,11 @@ export function EventWizard() {
               <dd style={{ margin: 0 }}>{photos.length}</dd>
             </div>
           </dl>
-          <p style={{ margin: "16px 0 0", fontSize: 13, lineHeight: 1.45, opacity: 0.8 }}>
-            {t("admin.wizard.draftNotice")}
-          </p>
+          <WizardPublishChoice
+            canPublish={canPublish}
+            value={publishMode}
+            onChange={setPublishMode}
+          />
         </div>
       )}
     </WizardShell>
