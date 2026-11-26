@@ -159,9 +159,9 @@
         "alt": "Handgemachte Keramikschalen auf einem Werkstatttisch"
       },
       "service": {
-        "kicker": "Lokaler Dienst",
-        "title": "Euer Name steht vorn",
-        "text": "Friseur, Schneider, Fahrradladen, Massage. Gäste schauen die Gegend an — und finden euren Namen und eure Adresse, keine ferne Generikliste.",
+        "kicker": "Lokales Angebot",
+        "title": "Dienste, Termine und Aktuelles",
+        "text": "Friseur, Fahrradladen, Massage, Schneider — mit Öffnungszeiten und Erreichbarkeit. Termine und Aktuelles der Gegend stehen auf derselben Karte, ohne Extra-Suche.",
         "alt": "Eine kleine Fahrradwerkstatt mit Werkzeug und einem Rad auf der Bank"
       },
       "quiet": {

@@ -159,9 +159,9 @@
         "alt": "Kézzel készült kerámiatálak egy műhelyasztalon"
       },
       "service": {
-        "kicker": "Helyi szolgáltatás",
-        "title": "A saját nevetek van elöl",
-        "text": "Fodrász, szabó, biciklis, masszőr. A vendég a környéket nézi — és a ti címeteket, a ti neveteket találja, nem egy távoli listát.",
+        "kicker": "Helyi kínálat",
+        "title": "Szolgáltatások, programok és aktualitások",
+        "text": "Fodrász, biciklis, masszőr, szabó — nyitvatartással és elérhetőséggel. A környék programjai és aktualitásai is ott vannak a térképen, nem kell külön keresni őket.",
         "alt": "Kis biciklis műhely, szerszámokkal és egy kerékkel a padon"
       },
       "quiet": {
