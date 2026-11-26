@@ -14,6 +14,9 @@ in prose as used in the product.
 
 ### Added
 
+- Mobile-only place/event upload wizard (`/admin/wizard`): step shell, camera
+  compress upload, draft create (`isActive: false`); desktop keeps classic
+  Places/Events forms (wizard entry hidden ≥768px, deep links redirect).
 - P0 product specs for DMO-first roadmap: place claim + approval queue, embed
   map + campaign QR pack, CSV/JSON import–export + bulk admin — see
   [docs/p0-feature-specs.md](docs/p0-feature-specs.md).

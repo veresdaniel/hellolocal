@@ -7,8 +7,9 @@ import { AuthContext } from "../../contexts/AuthContext";
 import { DEFAULT_LANG, type Lang, isLang } from "../../app/config";
 import { isSuperadmin } from "../../utils/roleHelpers";
 import type { UserRole } from "../../types/enums";
+import { useIsMobileAdmin } from "../wizard/useIsMobileAdmin";
 
-type ContentKind = "place" | "event" | "collection";
+type ContentKind = "wizard" | "place" | "event" | "collection";
 
 type TypeCard = {
   kind: ContentKind;
@@ -19,6 +20,7 @@ type TypeCard = {
 
 /**
  * One-step content-type picker. Navigates to the existing create screen for that type.
+ * Mobile wizard card only on narrow viewports; desktop keeps classic place/event forms.
  */
 export function NewContentPage() {
   const { t } = useTranslation();
@@ -27,13 +29,23 @@ export function NewContentPage() {
   const auth = useContext(AuthContext);
   const userRole = (auth?.user?.role ?? null) as UserRole | null;
   const userIsSuperadmin = userRole ? isSuperadmin(userRole) : false;
+  const isMobile = useIsMobileAdmin();
   usePageTitle("admin.newContent.title");
 
   const currentLang: Lang = isLang(langParam) ? langParam : DEFAULT_LANG;
   const adminPath = (sub: string) => `/${currentLang}/admin${sub}`;
 
   const cards = useMemo((): TypeCard[] => {
-    const list: TypeCard[] = [
+    const list: TypeCard[] = [];
+    if (isMobile) {
+      list.push({
+        kind: "wizard",
+        title: t("admin.newContent.mobileWizard"),
+        description: t("admin.newContent.mobileWizardDesc"),
+        path: adminPath("/wizard"),
+      });
+    }
+    list.push(
       {
         kind: "place",
         title: t("admin.newContent.place"),
@@ -45,8 +57,8 @@ export function NewContentPage() {
         title: t("admin.newContent.event"),
         description: t("admin.newContent.eventDesc"),
         path: `${adminPath("/events")}?new=true&from=new-content`,
-      },
-    ];
+      }
+    );
     if (userIsSuperadmin) {
       list.push({
         kind: "collection",
@@ -56,7 +68,7 @@ export function NewContentPage() {
       });
     }
     return list;
-  }, [currentLang, t, userIsSuperadmin]);
+  }, [currentLang, t, userIsSuperadmin, isMobile]);
 
   return (
     <div>

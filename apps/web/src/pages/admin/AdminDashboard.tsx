@@ -109,6 +109,14 @@ export function AdminDashboard() {
   // Régió card: superadmin label includes region settings; siteadmin/régióadmin sees memberships-only label.
   const contentCards = useMemo((): DashboardCardItem[] => {
     const tileCopy: Record<ContentTileId, DashboardCardItem> = {
+      mobileWizard: {
+        key: "mobileWizard",
+        title: t("admin.dashboardCards.mobileWizard"),
+        description: t("admin.dashboardCards.mobileWizardDesc"),
+        link: adminPath("/wizard"),
+        icon: "📱",
+        variant: "content",
+      },
       newContent: {
         key: "newContent",
         title: t("admin.dashboardCards.newContent"),
@@ -174,8 +182,8 @@ export function AdminDashboard() {
         variant: "content",
       },
     };
-    return visibleContentTiles(userRole, contentScope).map((id) => tileCopy[id]);
-  }, [userRole, contentScope, currentLang, t]);
+    return visibleContentTiles(userRole, contentScope, { isMobile }).map((id) => tileCopy[id]);
+  }, [userRole, contentScope, currentLang, t, isMobile]);
 
   const _legacyContentCards = useMemo((): DashboardCardItem[] => {
     const cards: DashboardCardItem[] = [];

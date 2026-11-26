@@ -9,6 +9,7 @@ export type TileScope = {
 
 /** Content-section dashboard tiles (daily editorial work). */
 export type ContentTileId =
+  | "mobileWizard"
   | "newContent"
   | "towns"
   | "places"
@@ -44,11 +45,23 @@ export function scopeAllows(
 
 /**
  * Content hub tiles. Categories live under Platform (superadmin only), not here.
- * Order: newContent → places → events → collections (superadmin) → towns/eventLog extras.
+ * Order: mobileWizard (narrow only) → newContent → places → events → collections → …
+ * Desktop keeps classic Places/Events create; wizard is mobile entry only.
  */
-export function visibleContentTiles(role: string | null, scope: TileScope | null): ContentTileId[] {
+export function visibleContentTiles(
+  role: string | null,
+  scope: TileScope | null,
+  opts?: { isMobile?: boolean }
+): ContentTileId[] {
+  const showWizard = opts?.isMobile === true;
   if (role === "superadmin" || scope?.unrestricted) {
-    return ["newContent", "places", "events", "collections"];
+    return [
+      ...(showWizard ? (["mobileWizard"] as const) : []),
+      "newContent",
+      "places",
+      "events",
+      "collections",
+    ];
   }
   if (!scope) return [];
   const regionEditor = scope.regionEditorSiteIds.length > 0;
@@ -58,6 +71,7 @@ export function visibleContentTiles(role: string | null, scope: TileScope | null
   const tiles: ContentTileId[] = [];
   if (townAdmin) tiles.push("towns");
   if (canEditorial) {
+    if (showWizard) tiles.push("mobileWizard");
     tiles.push("newContent", "places", "events");
   }
   if (regionEditor || townAdmin || placeAdmin) tiles.push("eventLog");

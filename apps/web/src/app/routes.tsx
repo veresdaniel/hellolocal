@@ -188,6 +188,15 @@ const CollectionsPage = lazy(() =>
 const NewContentPage = lazy(() =>
   import("../pages/admin/NewContentPage").then((m) => ({ default: m.NewContentPage }))
 );
+const WizardHome = lazy(() =>
+  import("../pages/wizard/WizardHome").then((m) => ({ default: m.WizardHome }))
+);
+const PlaceWizard = lazy(() =>
+  import("../pages/wizard/PlaceWizard").then((m) => ({ default: m.PlaceWizard }))
+);
+const EventWizard = lazy(() =>
+  import("../pages/wizard/EventWizard").then((m) => ({ default: m.EventWizard }))
+);
 const CollectionEditPage = lazy(() =>
   import("../pages/admin/CollectionEditPage").then((m) => ({ default: m.CollectionEditPage }))
 );
@@ -585,6 +594,42 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <NewContentPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "wizard",
+        element: (
+          <ProtectedRoute requiredRole="viewer" scopeGate="places">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <WizardHome />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "wizard/place",
+        element: (
+          <ProtectedRoute requiredRole="viewer" scopeGate="places">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <PlaceWizard />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "wizard/event",
+        element: (
+          <ProtectedRoute requiredRole="viewer" scopeGate="places">
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <EventWizard />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>
