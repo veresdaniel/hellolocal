@@ -120,13 +120,20 @@
  */
 .admin-main {
   width: 100%;
-  max-width: var(--admin-content-max-width);
+  max-width: min(100%, var(--admin-content-max-width));
   margin-left: auto;
   margin-right: auto;
   padding: var(--admin-content-pad-x);
   box-sizing: border-box;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+/* Avoid iOS auto-zoom on focus inside admin forms */
+.admin-layout input,
+.admin-layout select,
+.admin-layout textarea {
+  font-size: 16px;
 }
 
 /*

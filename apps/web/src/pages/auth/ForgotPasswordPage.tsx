@@ -191,7 +191,7 @@ export function ForgotPasswordPage() {
               style={{
                 width: "100%",
                 padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
-                fontSize: "clamp(14px, 3.5vw, 15px)",
+                fontSize: 16,
                 border: `2px solid ${emailError ? "#fca5a5" : "#e0e7ff"}`,
                 borderRadius: 8,
                 outline: "none",

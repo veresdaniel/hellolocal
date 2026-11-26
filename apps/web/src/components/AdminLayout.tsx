@@ -24,6 +24,7 @@ import {
 import { AdminPageSkeleton } from "./AdminPageSkeleton";
 import { isAdminDashboardPath } from "../utils/adminBackPath";
 import { isSuperadmin } from "../utils/roleHelpers";
+import { resetMobileViewportZoom } from "../utils/resetMobileViewportZoom";
 import type { UserRole } from "../types/enums";
 import "../styles/sessionWarning.css";
 import "../styles/admin-inputs.css";
@@ -67,6 +68,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       isUnmountingRef.current = true;
     };
   }, []);
+
+  // Undo iOS focus-zoom left over from login inputs after SPA navigation.
+  useEffect(() => {
+    resetMobileViewportZoom();
+  }, [location.pathname]);
 
   // Get language from URL or use current i18n language or default
   const lang: Lang = isLang(langParam)

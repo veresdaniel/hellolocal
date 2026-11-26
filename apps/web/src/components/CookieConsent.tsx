@@ -1,5 +1,6 @@
 // src/components/CookieConsent.tsx
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   acceptCookieConsent,
@@ -8,8 +9,14 @@ import {
   COOKIE_CONSENT_OPEN_EVENT,
 } from "../lib/cookieConsent";
 
+function isAdminPath(pathname: string) {
+  return /(?:^|\/)admin(?:\/|$)/.test(pathname);
+}
+
 export function CookieConsent() {
   const { t } = useTranslation();
+  const location = useLocation();
+  const onAdmin = isAdminPath(location.pathname);
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimatingIn, setIsAnimatingIn] = useState(false);
   const [isMobile, setIsMobile] = useState(
@@ -38,6 +45,12 @@ export function CookieConsent() {
   }, []);
 
   useEffect(() => {
+    // Admin never shows cookie consent (staff session, not public tracking UI).
+    if (onAdmin) {
+      setIsVisible(false);
+      setIsAnimatingIn(false);
+      return;
+    }
     // Already accepted → stay hidden until user opens settings.
     if (hasCookieConsent()) return;
 
@@ -45,10 +58,11 @@ export function CookieConsent() {
     return () => {
       if (showTimer) window.clearTimeout(showTimer);
     };
-  }, []);
+  }, [onAdmin]);
 
   useEffect(() => {
     const onOpen = () => {
+      if (isAdminPath(window.location.pathname)) return;
       setIsVisible(true);
       window.setTimeout(() => setIsAnimatingIn(true), 20);
     };
@@ -71,7 +85,7 @@ export function CookieConsent() {
     hide();
   };
 
-  if (!isVisible) return null;
+  if (onAdmin || !isVisible) return null;
 
   const alreadyAccepted = hasCookieConsent();
 
