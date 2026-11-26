@@ -1,7 +1,7 @@
 {
   "name": "hellolocal-web",
   "private": true,
-  "version": "1.0.104-beta",
+  "version": "1.0.105-beta",
   "type": "module",
   "license": "SEE LICENSE IN LICENSE.md",
   "scripts": {

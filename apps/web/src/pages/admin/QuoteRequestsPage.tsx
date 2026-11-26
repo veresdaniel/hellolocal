@@ -100,6 +100,8 @@ export function QuoteRequestsPage() {
   const handleDelete = async (row: QuoteRequestRow) => {
     const ok = await confirm({
       message: t("admin.quoteRequests.deleteConfirm", { name: row.contactName }),
+      confirmLabel: t("common.delete"),
+      cancelLabel: t("common.cancel"),
       confirmVariant: "danger",
     });
     if (!ok) return;
