@@ -11,7 +11,7 @@ export class RegisterDto extends PublicFormShieldFields {
   email!: string;
 
   @IsString()
-  @MinLength(6, { message: "Password must be at least 6 characters" })
+  @MinLength(10, { message: "Password must be at least 10 characters" })
   password!: string;
 
   @IsString()

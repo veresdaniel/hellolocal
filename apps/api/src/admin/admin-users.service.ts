@@ -13,6 +13,8 @@ import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { ensureRegionLink, replaceRegionLinks } from "./region-link";
 import { AdminPlaceService } from "./admin-place.service";
 import { SitemapService } from "../seo/sitemap.service";
+import { EmailService } from "../email/email.service";
+import { assertPasswordStrength } from "../auth/password-strength";
 
 export interface UpdateUserRoleDto {
   role: UserRole;
@@ -46,7 +48,8 @@ export class AdminUsersService {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => AdminPlaceService))
     private readonly placeService: AdminPlaceService,
-    private readonly sitemapService: SitemapService
+    private readonly sitemapService: SitemapService,
+    private readonly emailService: EmailService
   ) {}
 
   async findAll(siteId?: string) {
@@ -265,7 +268,7 @@ export class AdminUsersService {
       throw new BadRequestException("User with this email or username already exists");
     }
 
-    // Hash password
+    assertPasswordStrength(dto.password);
     const passwordHash = await bcrypt.hash(dto.password, 10);
 
     // Create user (as visitor - activeSiteId is null by default)
@@ -318,6 +321,20 @@ export class AdminUsersService {
         await ensureRegionLink(this.prisma, user.id, siteId);
       }
     }
+
+    const loginUrl = `${this.emailService.frontendBaseUrl()}/hu/admin/login`;
+    this.emailService
+      .sendAccountCredentialsEmail({
+        to: user.email,
+        username: user.username,
+        email: user.email,
+        password: dto.password,
+        firstName: user.firstName,
+        loginUrl,
+        source: "admin",
+      })
+      .catch(() => undefined);
+
     return user;
   }
 

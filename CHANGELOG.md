@@ -12,8 +12,19 @@ in prose as used in the product.
 
 ## [Unreleased]
 
+### Added
+
+- Strong password UX on register, admin user create, and password reset:
+  strength meter, show/hide toggle; confirm-password on register only.
+- Account credentials email (username, email, password, login link) after
+  self-registration and admin user create (SMTP when configured).
+
 ### Changed
 
+- Password policy: min 10 characters with upper/lower, digit, and special
+  character (API + UI).
+- Admin user form region picker uses shared `BaseAutocomplete` combobox
+  (same pattern as tags/categories).
 - Mobile wizard: superadmin and paid-plan places can choose draft vs publish-now
   on review; free plan stays draft-only (API already requires superadmin to
   activate free places).

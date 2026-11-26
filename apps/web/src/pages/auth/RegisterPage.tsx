@@ -8,7 +8,8 @@ import { useSeo } from "../../seo/useSeo";
 import { publicFormErrorMessage, usePublicFormShield } from "../../components/PublicFormShield";
 import { usernameAvailable } from "../../api/auth.api";
 import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
-import { passwordProblem, passwordStrength } from "../../auth/passwordStrength";
+import { passwordProblem } from "../../auth/passwordStrength";
+import { PasswordField } from "../../components/PasswordField";
 import { safeInternalPath } from "../../utils/safeInternalPath";
 import { getSignupDeviceHash } from "../../utils/signupDeviceHash";
 import { FreeTrialCardVerify } from "../../components/FreeTrialCardVerify";
@@ -19,6 +20,7 @@ export function RegisterPage() {
     username: "",
     email: "",
     password: "",
+    confirmPassword: "",
     firstName: "",
     lastName: "",
     bio: "",
@@ -27,6 +29,7 @@ export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [registered, setRegistered] = useState(false);
   const [needCard, setNeedCard] = useState(false);
@@ -72,20 +75,27 @@ export function RegisterPage() {
     }
   };
 
+  const passwordErrorFor = (value: string) => {
+    const problem = passwordProblem(value);
+    if (!value || !problem) return null;
+    return problem === "short"
+      ? t("public.visitorAuth.passwordShort")
+      : t("public.visitorAuth.passwordWeak");
+  };
+
   const handlePasswordChange = (value: string) => {
     setFormData({ ...formData, password: value });
-    if (!visitor) {
-      setPasswordError(value && value.length < 6 ? t("admin.passwordTooShort") : null);
-      return;
+    setPasswordError(passwordErrorFor(value));
+    if (formData.confirmPassword) {
+      setConfirmError(
+        value !== formData.confirmPassword ? t("admin.passwordsDoNotMatch") : null
+      );
     }
-    const problem = passwordProblem(value);
-    setPasswordError(
-      !value || !problem
-        ? null
-        : problem === "short"
-          ? t("public.visitorAuth.passwordShort")
-          : t("public.visitorAuth.passwordWeak")
-    );
+  };
+
+  const handleConfirmChange = (value: string) => {
+    setFormData({ ...formData, confirmPassword: value });
+    setConfirmError(value && value !== formData.password ? t("admin.passwordsDoNotMatch") : null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -107,18 +117,17 @@ export function RegisterPage() {
       return;
     }
 
-    if (visitor) {
-      const problem = passwordProblem(formData.password);
-      if (problem) {
-        setPasswordError(
-          problem === "short"
-            ? t("public.visitorAuth.passwordShort")
-            : t("public.visitorAuth.passwordWeak")
-        );
-        return;
-      }
-    } else if (formData.password.length < 6) {
-      setPasswordError(t("admin.passwordTooShort"));
+    const problem = passwordProblem(formData.password);
+    if (problem) {
+      setPasswordError(
+        problem === "short"
+          ? t("public.visitorAuth.passwordShort")
+          : t("public.visitorAuth.passwordWeak")
+      );
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmError(t("admin.passwordsDoNotMatch"));
       return;
     }
 
@@ -435,77 +444,22 @@ export function RegisterPage() {
             )}
           </div>
 
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 8,
-                color: passwordError ? "#dc2626" : "#1b1730",
-                fontWeight: 600,
-                fontSize: "clamp(13px, 3vw, 14px)",
-              }}
-            >
-              {t("admin.password")}
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={(e) => handlePasswordChange(e.target.value)}
-              required
-              minLength={visitor ? 8 : 6}
-              autoComplete="new-password"
-              style={{
-                width: "100%",
-                padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
-                fontSize: 16,
-                border: `2px solid ${passwordError ? "#fca5a5" : "#e0e7ff"}`,
-                borderRadius: 8,
-                outline: "none",
-                transition: "all 0.3s ease",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                boxSizing: "border-box",
-                backgroundColor: passwordError ? "#fef2f2" : "white",
-              }}
-              onFocus={(e) => {
-                if (!passwordError) {
-                  e.currentTarget.style.borderColor = "#1b1730";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                }
-              }}
-              onBlur={(e) => {
-                if (!passwordError) {
-                  e.currentTarget.style.borderColor = "#e0e7ff";
-                  e.currentTarget.style.boxShadow = "none";
-                }
-              }}
-            />
-            {passwordError && (
-              <p
-                style={{
-                  marginTop: 6,
-                  fontSize: "clamp(11px, 2.5vw, 12px)",
-                  color: "#dc2626",
-                  fontWeight: 500,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {passwordError}
-              </p>
-            )}
-            {visitor && formData.password && (
-              <p style={{ marginTop: 6, fontSize: 12, color: "#665d78" }}>
-                {t("public.visitorAuth.strength")}:{" "}
-                {passwordStrength(formData.password) === "strong"
-                  ? t("public.visitorAuth.strengthStrong")
-                  : passwordStrength(formData.password) === "ok"
-                    ? t("public.visitorAuth.strengthOk")
-                    : t("public.visitorAuth.strengthWeak")}
-              </p>
-            )}
-          </div>
+          <PasswordField
+            label={t("admin.password")}
+            value={formData.password}
+            onChange={handlePasswordChange}
+            error={passwordError}
+          />
+
+          <PasswordField
+            label={t("admin.confirmPassword")}
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleConfirmChange}
+            error={confirmError}
+            showStrength={false}
+            autoComplete="new-password"
+          />
 
           <div>
             <label

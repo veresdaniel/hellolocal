@@ -104,6 +104,26 @@ export class AuthService {
     return bcrypt.hash(password, saltRounds);
   }
 
+  private async sendCredentialsMail(
+    user: { email: string; username: string; firstName?: string | null },
+    password: string,
+    source: "register" | "admin",
+    loginKind: "admin" | "visitor" = "admin"
+  ) {
+    const base = this.emailService.frontendBaseUrl();
+    const loginUrl =
+      loginKind === "visitor" ? `${base}/hu/login` : `${base}/hu/admin/login`;
+    await this.emailService.sendAccountCredentialsEmail({
+      to: user.email,
+      username: user.username,
+      email: user.email,
+      password,
+      firstName: user.firstName ?? undefined,
+      loginUrl,
+      source,
+    });
+  }
+
   private async comparePassword(password: string, hash: string): Promise<boolean> {
     return bcrypt.compare(password, hash);
   }
@@ -324,7 +344,7 @@ export class AuthService {
       );
     }
 
-    // Hash password
+    assertPasswordStrength(dto.password);
     const passwordHash = await this.hashPassword(dto.password);
 
     // Create user (as visitor - activeSiteId is null by default)
@@ -368,10 +388,8 @@ export class AuthService {
 
     const { accessToken, refreshToken } = await this.generateTokens(payload);
 
-    // Send welcome email (non-blocking)
-    this.emailService.sendWelcomeEmail(user.email, user.username, user.firstName).catch((err) => {
+    this.sendCredentialsMail(user, dto.password, "register", "admin").catch((err) => {
       console.error("Failed to send welcome email:", err);
-      // Don't fail registration if email fails
     });
 
     return {
@@ -420,7 +438,7 @@ export class AuthService {
       activeSiteId: null,
     };
     const { accessToken, refreshToken } = await this.generateTokens(payload);
-    this.emailService.sendWelcomeEmail(user.email, user.username, user.firstName).catch(() => undefined);
+    this.sendCredentialsMail(user, dto.password, "register", "visitor").catch(() => undefined);
     return {
       accessToken,
       refreshToken,
@@ -449,6 +467,7 @@ export class AuthService {
     if (!dto.countryId || !dto.townName?.trim()) {
       throw new BadRequestException("Country and town are required");
     }
+    assertPasswordStrength(dto.password);
     const passwordHash = await this.hashPassword(dto.password);
     const user = await this.prisma.user.create({
       data: {
@@ -488,7 +507,7 @@ export class AuthService {
       activeSiteId: null,
     };
     const { accessToken, refreshToken } = await this.generateTokens(payload);
-    this.emailService.sendWelcomeEmail(user.email, user.username, user.firstName).catch(() => undefined);
+    this.sendCredentialsMail(user, dto.password, "register", "admin").catch(() => undefined);
     return {
       accessToken,
       refreshToken,

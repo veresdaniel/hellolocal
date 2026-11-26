@@ -8,6 +8,7 @@ import {  DEFAULT_LANG, type Lang, isLang} from "../../app/config";
 import { useSeo } from "../../seo/useSeo";
 import { isVisitorAuthPath, visitorAuthPath } from "../../auth/visitorAuth";
 import { passwordProblem } from "../../auth/passwordStrength";
+import { PasswordField } from "../../components/PasswordField";
 
 
 export function ResetPasswordPage() {
@@ -287,131 +288,20 @@ export function ResetPasswordPage() {
           style={{ display: "flex", flexDirection: "column", gap: "clamp(16px, 4vw, 20px)", position: "relative" }}
         >
           {shield.fields}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 8,
-                color: passwordError ? "#dc2626" : "var(--admin-primary)",
-                fontWeight: 600,
-                fontSize: "clamp(13px, 3vw, 14px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              {t("admin.newPassword")}
-            </label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => handlePasswordChange(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-              style={{
-                width: "100%",
-                padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
-                fontSize: 16,
-                border: `2px solid ${passwordError ? "#fca5a5" : "#e0e7ff"}`,
-                borderRadius: 8,
-                outline: "none",
-                transition: "all 0.3s ease",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                boxSizing: "border-box",
-                backgroundColor: passwordError ? "#fef2f2" : "white",
-              }}
-              onFocus={(e) => {
-                if (!passwordError) {
-                  e.currentTarget.style.borderColor = "var(--admin-primary)";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                }
-              }}
-              onBlur={(e) => {
-                if (!passwordError) {
-                  e.currentTarget.style.borderColor = "#e0e7ff";
-                  e.currentTarget.style.boxShadow = "none";
-                }
-              }}
-            />
-            {passwordError && (
-              <p
-                style={{
-                  marginTop: 6,
-                  fontSize: "clamp(11px, 2.5vw, 12px)",
-                  color: "#dc2626",
-                  fontWeight: 500,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {passwordError}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 8,
-                color: confirmError ? "#dc2626" : "var(--admin-primary)",
-                fontWeight: 600,
-                fontSize: "clamp(13px, 3vw, 14px)",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-              }}
-            >
-              {t("admin.confirmPassword")}
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => handleConfirmChange(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-              style={{
-                width: "100%",
-                padding: "clamp(10px, 2.5vw, 12px) clamp(12px, 3vw, 16px)",
-                fontSize: 16,
-                border: `2px solid ${confirmError ? "#fca5a5" : "#e0e7ff"}`,
-                borderRadius: 8,
-                outline: "none",
-                transition: "all 0.3s ease",
-                fontFamily:
-                  "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                boxSizing: "border-box",
-                backgroundColor: confirmError ? "#fef2f2" : "white",
-              }}
-              onFocus={(e) => {
-                if (!confirmError) {
-                  e.currentTarget.style.borderColor = "var(--admin-primary)";
-                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
-                }
-              }}
-              onBlur={(e) => {
-                if (!confirmError) {
-                  e.currentTarget.style.borderColor = "#e0e7ff";
-                  e.currentTarget.style.boxShadow = "none";
-                }
-              }}
-            />
-            {confirmError && (
-              <p
-                style={{
-                  marginTop: 6,
-                  fontSize: "clamp(11px, 2.5vw, 12px)",
-                  color: "#dc2626",
-                  fontWeight: 500,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {confirmError}
-              </p>
-            )}
-          </div>
+          <PasswordField
+            label={t("admin.newPassword")}
+            value={newPassword}
+            onChange={handlePasswordChange}
+            error={passwordError}
+          />
+          <PasswordField
+            label={t("admin.confirmPassword")}
+            name="confirmPassword"
+            value={confirmPassword}
+            onChange={handleConfirmChange}
+            error={confirmError}
+            showStrength={false}
+          />
 
           <button
             type="submit"

@@ -6,6 +6,6 @@ export class ResetPasswordDto extends PublicFormShieldFields {
   token!: string;
 
   @IsString()
-  @MinLength(6, { message: "Password must be at least 6 characters" })
+  @MinLength(10, { message: "Password must be at least 10 characters" })
   newPassword!: string;
 }

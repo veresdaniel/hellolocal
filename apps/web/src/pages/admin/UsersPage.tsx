@@ -31,6 +31,8 @@ import { AdminRoleSelect } from "../../components/AdminRoleSelect";
 import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 import { UserScopeAssign } from "../../components/UserScopeAssign";
 import { useIsMobileAdmin, ADMIN_RESPONSIVE_2COL } from "../wizard/useIsMobileAdmin";
+import { PasswordField } from "../../components/PasswordField";
+import { passwordProblem } from "../../auth/passwordStrength";
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -128,10 +130,13 @@ export function UsersPage() {
     if (!formData.email.trim()) errors.email = t("admin.validation.emailRequired");
     if (!formData.firstName.trim()) errors.firstName = t("admin.validation.firstNameRequired");
     if (!formData.lastName.trim()) errors.lastName = t("admin.validation.lastNameRequired");
-    if (isCreating && !formData.password.trim())
+    if (isCreating && !formData.password.trim()) {
       errors.password = t("admin.validation.passwordRequired");
-    if (isCreating && formData.password.length < 6)
-      errors.password = t("admin.validation.passwordMinLength");
+    } else if (isCreating) {
+      const problem = passwordProblem(formData.password);
+      if (problem === "short") errors.password = t("public.visitorAuth.passwordShort");
+      else if (problem === "weak") errors.password = t("public.visitorAuth.passwordWeak");
+    }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -446,42 +451,13 @@ export function UsersPage() {
 
           {isCreating && (
             <div style={{ marginBottom: 16 }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 4,
-                  fontFamily:
-                    "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                }}
-              >
-                {t("admin.password")} *
-              </label>
-              <input
-                type="password"
+              <PasswordField
+                compact
+                label={`${t("admin.password")} *`}
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                autoComplete="new-password"
-                style={{
-                  width: "100%",
-                  padding: 8,
-                  fontSize: 16,
-                  border: formErrors.password ? "1px solid #dc3545" : "1px solid #ddd",
-                  borderRadius: 4,
-                }}
+                onChange={(password) => setFormData({ ...formData, password })}
+                error={formErrors.password || null}
               />
-              {formErrors.password && (
-                <div
-                  style={{
-                    color: "#dc3545",
-                    fontSize: "clamp(13px, 3vw, 15px)",
-                    marginTop: 4,
-                    fontFamily:
-                      "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-                  }}
-                >
-                  {formErrors.password}
-                </div>
-              )}
             </div>
           )}
 
@@ -640,11 +616,13 @@ export function UsersPage() {
           </div>
 
           {HAS_MULTIPLE_SITES && (
-            <SiteAutocomplete
-              selectedSiteIds={formData.siteIds}
-              onSiteIdsChange={(siteIds) => setFormData({ ...formData, siteIds })}
-              allSites={sites}
-            />
+            <div style={{ marginBottom: 16 }}>
+              <SiteAutocomplete
+                selectedSiteIds={formData.siteIds}
+                onSiteIdsChange={(siteIds) => setFormData({ ...formData, siteIds })}
+                allSites={sites}
+              />
+            </div>
           )}
 
           {editingId ? <UserScopeAssign userId={editingId} sites={sites} /> : null}
