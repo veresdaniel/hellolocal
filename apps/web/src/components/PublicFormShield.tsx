@@ -20,6 +20,8 @@ declare global {
 
 /** Must stay ≥ API `PUBLIC_FORM_MIN_MS` (apps/api/src/common/public-form-shield.ts). */
 const FORM_MIN_MS = 800;
+/** Lead forms (demo / quote) — matches API LEAD_FORM_MIN_MS. */
+export const LEAD_FORM_MIN_MS = 3000;
 
 const siteKey = () => (import.meta.env.VITE_RECAPTCHA_SITE_KEY || "").trim();
 
@@ -44,10 +46,11 @@ function loadRecaptcha(key: string): Promise<void> {
 }
 
 /** Loads invisible reCAPTCHA only while a public form is mounted, and only if a site key exists. */
-export function usePublicFormShield(action: string) {
+export function usePublicFormShield(action: string, opts?: { minMs?: number }) {
   const startedAt = useRef(Date.now());
   const [companyWebsite, setCompanyWebsite] = useState("");
   const key = siteKey();
+  const minMs = Math.max(opts?.minMs ?? FORM_MIN_MS, FORM_MIN_MS);
 
   useEffect(() => {
     if (!key) return;
@@ -57,7 +60,7 @@ export function usePublicFormShield(action: string) {
   const payload = async (): Promise<PublicFormShieldPayload> => {
     // Wait out the min dwell so the first click never trips public_form_too_fast
     // (common with password-manager autofill on admin login).
-    const wait = FORM_MIN_MS - (Date.now() - startedAt.current);
+    const wait = minMs - (Date.now() - startedAt.current);
     if (wait > 0) {
       await new Promise((resolve) => setTimeout(resolve, wait));
     }

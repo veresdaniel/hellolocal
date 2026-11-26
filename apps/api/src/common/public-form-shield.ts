@@ -14,22 +14,31 @@ export type PublicFormShieldInput = {
   recaptchaToken?: unknown;
 };
 
+export type PublicFormShieldOptions = {
+  /** Override minimum dwell time (ms). Lead forms use a longer window than login. */
+  minMs?: number;
+};
+
 /**
  * Honeypot + minimum time on every anonymous public form.
  * reCAPTCHA v3 is checked only when RECAPTCHA_SECRET_KEY is set.
  * A missing key does not count as a passed captcha.
  */
-export async function assertPublicFormShield(input: PublicFormShieldInput): Promise<void> {
+export async function assertPublicFormShield(
+  input: PublicFormShieldInput,
+  opts?: PublicFormShieldOptions
+): Promise<void> {
   const honeypot = typeof input.companyWebsite === "string" ? input.companyWebsite.trim() : "";
   if (honeypot) {
     throw new BadRequestException("public_form_rejected");
   }
 
+  const minMs = Math.max(opts?.minMs ?? PUBLIC_FORM_MIN_MS, PUBLIC_FORM_MIN_MS);
   const started =
     typeof input.formStartedAt === "number" ? input.formStartedAt : Number(input.formStartedAt);
   const now = Date.now();
   const elapsed = now - started;
-  if (!Number.isFinite(started) || started > now + CLOCK_SKEW_MS || elapsed < PUBLIC_FORM_MIN_MS || elapsed > MAX_AGE_MS) {
+  if (!Number.isFinite(started) || started > now + CLOCK_SKEW_MS || elapsed < minMs || elapsed > MAX_AGE_MS) {
     throw new BadRequestException("public_form_too_fast");
   }
 

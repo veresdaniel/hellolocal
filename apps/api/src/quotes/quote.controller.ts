@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { UserRole } from "@prisma/client";
 import { assertPublicFormShield } from "../common/public-form-shield";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
@@ -6,13 +7,17 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { QuoteService, type QuoteRequestInput } from "./quote.service";
 
+/** Lead forms: longer dwell than login (password managers need the short default). */
+const LEAD_FORM_MIN_MS = 3000;
+
 @Controller("/api/public/quote-requests")
 export class QuoteController {
   constructor(private readonly quotes: QuoteService) {}
 
   @Post()
+  @Throttle({ strict: { limit: 5, ttl: 60000 } })
   async create(@Body() body: QuoteRequestInput) {
-    await assertPublicFormShield(body);
+    await assertPublicFormShield(body, { minMs: LEAD_FORM_MIN_MS });
     return this.quotes.create(body);
   }
 }

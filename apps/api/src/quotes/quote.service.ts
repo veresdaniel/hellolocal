@@ -3,6 +3,7 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
 import { AdminAppSettingsService } from "../admin/admin-app-settings.service";
+import { isDisposableEmail } from "../common/email-normalize";
 
 export type QuoteRequestInput = {
   organization?: unknown;
@@ -17,9 +18,38 @@ export type QuoteRequestInput = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_RE = /https?:\/\/|www\./gi;
 
 function text(value: unknown, max: number): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function linkHits(...parts: string[]): number {
+  let n = 0;
+  for (const part of parts) {
+    const matches = part.match(URL_RE);
+    if (matches) n += matches.length;
+  }
+  return n;
+}
+
+/** Cheap bot/spam heuristics after honeypot + timing. */
+function assertLeadLooksHuman(fields: {
+  organization: string;
+  contactName: string;
+  email: string;
+  message: string;
+}) {
+  if (isDisposableEmail(fields.email)) {
+    throw new BadRequestException("public_form_rejected");
+  }
+  if (linkHits(fields.organization, fields.contactName, fields.email, fields.message) > 2) {
+    throw new BadRequestException("public_form_rejected");
+  }
+  // Names that are mostly URL/markup are almost never real contacts.
+  if (/https?:\/\/|www\.|<|>/.test(fields.contactName)) {
+    throw new BadRequestException("public_form_rejected");
+  }
 }
 
 @Injectable()
@@ -54,6 +84,7 @@ export class QuoteService {
     if (!EMAIL_RE.test(email)) {
       throw new BadRequestException("Ez nem tűnik email címnek.");
     }
+    assertLeadLooksHuman({ organization, contactName, email, message });
 
     const recipient = await this.settings.ensureQuoteRecipient();
     const lead = await this.prisma.quoteRequest.create({

@@ -4,7 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getPlatformSettings } from "../api/places.api";
 import { requestMunicipalQuote } from "../api/public.api";
-import { publicFormErrorMessage, usePublicFormShield } from "./PublicFormShield";
+import {
+  LEAD_FORM_MIN_MS,
+  publicFormErrorMessage,
+  usePublicFormShield,
+} from "./PublicFormShield";
 import { buildUrl } from "../app/urls";
 import type { Lang } from "../app/config";
 import {
@@ -241,7 +245,7 @@ function MunicipalQuote({ onClose }: { onClose: () => void }) {
   }>({});
   const [error, setError] = useState("");
   const [status, setStatus] = useState<"sent" | "stored" | "noRecipient" | "">("");
-  const shield = usePublicFormShield("quote");
+  const shield = usePublicFormShield("quote", { minMs: LEAD_FORM_MIN_MS });
   const [sending, setSending] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);

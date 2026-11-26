@@ -3,7 +3,11 @@ import { useTranslation } from "react-i18next";
 import PhoneInput, { isValidPhoneNumber, type Country } from "react-phone-number-input";
 import { requestDemo } from "../api/public.api";
 import { trackGtmGenerateLead } from "../lib/gtmEvents";
-import { publicFormErrorMessage, usePublicFormShield } from "./PublicFormShield";
+import {
+  LEAD_FORM_MIN_MS,
+  publicFormErrorMessage,
+  usePublicFormShield,
+} from "./PublicFormShield";
 import "react-phone-number-input/style.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -42,7 +46,7 @@ function ThanksIcon({ tone }: { tone: "ok" | "warn" }) {
 
 export function DemoRequestForm() {
   const { t, i18n } = useTranslation();
-  const shield = usePublicFormShield("demo");
+  const shield = usePublicFormShield("demo", { minMs: LEAD_FORM_MIN_MS });
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState<string | undefined>();
