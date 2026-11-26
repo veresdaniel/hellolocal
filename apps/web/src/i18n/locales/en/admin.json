@@ -1251,6 +1251,15 @@
   "freeTrialDaysUnit": "days",
   "freeTrialDaysUpdated": "Free trial length updated",
   "freeTrialDaysInvalid": "Enter at least 1 day.",
+  "leadStatusCopy": {
+    "title": "Demo / quote status messages",
+    "help": "These strings live in UiMessage per language. The public demo form and municipal quote success / no-mail states use them.",
+    "loading": "Loading copy…",
+    "save": "Save status messages",
+    "saved": "Status messages saved.",
+    "demoGroup": "Demo form",
+    "quoteGroup": "Municipal quote"
+  },
   "quoteRequests": {
     "title": "Demo & quote requests",
     "subtitle": "Leads from the platform demo form and municipal quote form.",

@@ -248,6 +248,20 @@ function MunicipalQuote({ onClose }: { onClose: () => void }) {
   onCloseRef.current = onClose;
 
   useEffect(() => {
+    if (!status) return;
+    const timer = window.setTimeout(() => {
+      setStatus("");
+      setOrganization("");
+      setContactName("");
+      setEmail("");
+      setMessage("");
+      setFieldErrors({});
+      setError("");
+    }, 30_000);
+    return () => window.clearTimeout(timer);
+  }, [status]);
+
+  useEffect(() => {
     const root = dialogRef.current;
     const previous = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
@@ -332,6 +346,13 @@ function MunicipalQuote({ onClose }: { onClose: () => void }) {
         </button>
         <form className="plan-quote" noValidate onSubmit={onSubmit}>
       {shield.fields}
+      {status ? (
+        <div className="plan-quote__thanks" role="status" aria-live="polite">
+          <h3 id="municipal-quote-title">{t(`public.overview.plans.quote.${status}Title`)}</h3>
+          <p className="plan-quote__intro">{t(`public.overview.plans.quote.${status}Lead`)}</p>
+        </div>
+      ) : (
+        <>
       <h3 id="municipal-quote-title">{t("public.overview.plans.municipal.cta")}</h3>
       <p className="plan-quote__intro">{t("public.overview.plans.quote.intro")}</p>
       <label>
@@ -389,16 +410,13 @@ function MunicipalQuote({ onClose }: { onClose: () => void }) {
         {fieldErrors.message ? <span className="plan-quote__field-error">{fieldErrors.message}</span> : null}
       </label>
       {error ? <p className="plan-quote__error">{error}</p> : null}
-      {status ? (
-        <p className="plan-quote__status" role="status">
-          {t(`public.overview.plans.quote.${status}`)}
-        </p>
-      ) : null}
       <button className="plan-picker__cta plan-quote__submit" type="submit" disabled={sending}>
         {sending
           ? t("public.overview.plans.quote.sending")
           : t("public.overview.plans.quote.submit")}
         </button>
+        </>
+      )}
         </form>
       </div>
     </div>

@@ -445,6 +445,15 @@
   "freeTrialDaysUnit": "nap",
   "freeTrialDaysUpdated": "Free próbaidő frissítve",
   "freeTrialDaysInvalid": "Adj meg legalább 1 napot.",
+  "leadStatusCopy": {
+    "title": "Demó / ajánlat státuszüzenetek",
+    "help": "Ezek a szövegek a UiMessage táblában élnek (nyelvenként). A nyilvános demó űrlap és az önkormányzati ajánlatkérés siker / email-nélküli állapota innen jön.",
+    "loading": "Szövegek betöltése…",
+    "save": "Státuszüzenetek mentése",
+    "saved": "Státuszüzenetek elmentve.",
+    "demoGroup": "Demó űrlap",
+    "quoteGroup": "Önkormányzati ajánlatkérés"
+  },
   "quoteRequests": {
     "title": "Demó- és ajánlatkérések",
     "subtitle": "A platform demó űrlapjáról és az önkormányzati ajánlatkérésből beérkezett lead-ek.",

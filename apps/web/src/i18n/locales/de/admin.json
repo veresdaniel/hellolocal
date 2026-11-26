@@ -1252,6 +1252,15 @@
   "freeTrialDaysUnit": "Tage",
   "freeTrialDaysUpdated": "Free-Testphase aktualisiert",
   "freeTrialDaysInvalid": "Mindestens 1 Tag angeben.",
+  "leadStatusCopy": {
+    "title": "Demo- / Angebots-Statusmeldungen",
+    "help": "Diese Texte liegen sprachweise in UiMessage. Das öffentliche Demo-Formular und die Gemeinde-Anfrage nutzen sie für Erfolg / ohne E-Mail.",
+    "loading": "Texte werden geladen…",
+    "save": "Statusmeldungen speichern",
+    "saved": "Statusmeldungen gespeichert.",
+    "demoGroup": "Demo-Formular",
+    "quoteGroup": "Gemeinde-Angebot"
+  },
   "quoteRequests": {
     "title": "Demo- und Angebotsanfragen",
     "subtitle": "Leads vom Plattform-Demoformular und der Gemeinde-Angebot-Anfrage.",

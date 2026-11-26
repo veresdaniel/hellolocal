@@ -27,6 +27,7 @@ import {
 } from "../../api/admin.api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { PublicPlansEditor } from "../../components/PublicPlansEditor";
+import { LeadStatusCopyEditor } from "../../components/LeadStatusCopyEditor";
 import { LanguageSelectOptions } from "../../components/LanguageSelectOptions";
 import { UnderConstructionSettings } from "../../components/UnderConstructionSettings";
 import { GlobalCrawlabilityCard } from "../../components/GlobalCrawlabilityCard";
@@ -1538,6 +1539,12 @@ export function AppSettingsPage() {
                 : t("public.overview.plans.recipient.save")}
             </button>
           </div>
+        </AdminSettingsCollapsible>
+      )}
+
+      {userIsSuperadmin && (
+        <AdminSettingsCollapsible title={t("admin.leadStatusCopy.title")}>
+          <LeadStatusCopyEditor />
         </AdminSettingsCollapsible>
       )}
 
