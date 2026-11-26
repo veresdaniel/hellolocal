@@ -1270,6 +1270,9 @@
     "next": "Next",
     "emailedYes": "Sent",
     "emailedNo": "Not emailed",
+    "contactedYes": "Reached",
+    "contactedNo": "Open",
+    "contactedToggle": "Mark as contacted",
     "filter": {
       "demo": "Demo",
       "municipal": "Town",
@@ -1283,7 +1286,8 @@
       "phone": "Phone",
       "organization": "Organization",
       "message": "Message",
-      "emailed": "Email"
+      "emailed": "Email",
+      "contacted": "Follow-up"
     }
   },
   "signupAbuse": {

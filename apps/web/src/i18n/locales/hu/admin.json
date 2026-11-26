@@ -464,6 +464,9 @@
     "next": "Következő",
     "emailedYes": "Elküldve",
     "emailedNo": "Nincs email",
+    "contactedYes": "Megkeresve",
+    "contactedNo": "Vár",
+    "contactedToggle": "Megkeresés jelölése",
     "filter": {
       "demo": "Demó",
       "municipal": "Település",
@@ -477,7 +480,8 @@
       "phone": "Telefon",
       "organization": "Szervezet",
       "message": "Üzenet",
-      "emailed": "Email"
+      "emailed": "Email",
+      "contacted": "Visszahívás"
     }
   },
   "signupAbuse": {

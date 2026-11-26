@@ -2691,6 +2691,7 @@ export type QuoteRequestRow = {
   message: string;
   plan: string;
   emailed: boolean;
+  contactedAt: string | null;
   createdAt: string;
 };
 
@@ -2707,4 +2708,8 @@ export function getQuoteRequests(params?: {
   return apiGet<{ items: QuoteRequestRow[]; total: number; take: number; skip: number }>(
     `/admin/quote-requests${qs ? `?${qs}` : ""}`
   );
+}
+
+export function setQuoteRequestContacted(id: string, contacted: boolean) {
+  return apiPut<QuoteRequestRow>(`/admin/quote-requests/${id}/contacted`, { contacted });
 }

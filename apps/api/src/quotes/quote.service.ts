@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { PrismaService } from "../prisma/prisma.service";
 import { EmailService } from "../email/email.service";
@@ -114,5 +114,14 @@ export class QuoteService {
       this.prisma.quoteRequest.count({ where }),
     ]);
     return { items, total, take, skip };
+  }
+
+  async setContacted(id: string, contacted: boolean) {
+    const existing = await this.prisma.quoteRequest.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException("Lead not found");
+    return this.prisma.quoteRequest.update({
+      where: { id },
+      data: { contactedAt: contacted ? new Date() : null },
+    });
   }
 }
