@@ -9,6 +9,7 @@ import {
 } from "../api/admin.api";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { useToast } from "../contexts/ToastContext";
+import { useIsMobileAdmin } from "../pages/wizard/useIsMobileAdmin";
 
 const ACTIONS: LadderAction[] = ["notify", "apply-plan", "suspend"];
 const PLANS: LadderPlan[] = ["FREE", "BASIC", "PRO", "BUSINESS", "MUNICIPAL"];
@@ -27,6 +28,7 @@ const empty: VisitorLadderConfig = {
 export function VisitorLadderSettings() {
   const { t } = useTranslation();
   const { showToast } = useToast();
+  const isMobile = useIsMobileAdmin();
   const [config, setConfig] = useState<VisitorLadderConfig>(empty);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -99,7 +101,7 @@ export function VisitorLadderSettings() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))",
           gap: 12,
         }}
       >
@@ -138,12 +140,16 @@ export function VisitorLadderSettings() {
             key={index}
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(140px, 1.2fr) 1fr 1fr",
+              gridTemplateColumns: isMobile
+                ? "1fr"
+                : "minmax(min(100%, 140px), 1.2fr) 1fr 1fr",
               gap: 10,
               alignItems: "end",
               padding: 12,
               background: "#f8f9fa",
               borderRadius: 8,
+              width: "100%",
+              minWidth: 0,
             }}
           >
             <div style={{ fontWeight: 600, fontSize: 14, paddingBottom: 8 }}>{labels[index]}</div>

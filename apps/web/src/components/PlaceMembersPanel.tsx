@@ -52,7 +52,16 @@ export function PlaceMembersPanel({
             value={email}
             placeholder={t("admin.placeMembers.emailPlaceholder")}
             onChange={(event) => setEmail(event.target.value)}
-            style={{ minHeight: 40, minWidth: 240, padding: "8px 12px" }}
+            style={{
+              minHeight: 40,
+              flex: "1 1 200px",
+              minWidth: 0,
+              width: "100%",
+              maxWidth: "100%",
+              padding: "8px 12px",
+              boxSizing: "border-box",
+              fontSize: 16,
+            }}
           />
           <AdminRoleSelect
             value={role}

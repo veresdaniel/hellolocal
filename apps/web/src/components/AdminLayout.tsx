@@ -253,7 +253,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         padding: 0,
         width: "100%",
         boxSizing: "border-box",
-        overflowX: "hidden",
+        overflowX: "clip",
         overflowY: "auto",
         display: "flex",
         flexDirection: "column",
@@ -263,20 +263,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         body {
           margin: 0 !important;
           padding: 0 !important;
-          overflow-x: hidden !important;
+          overflow-x: clip !important;
           width: 100% !important;
+          max-width: 100% !important;
         }
         html {
-          overflow-x: hidden !important;
+          overflow-x: clip !important;
           width: 100% !important;
+          max-width: 100% !important;
         }
         * {
           box-sizing: border-box !important;
         }
-        /* 100vw includes scrollbar and causes horizontal scroll on mobile */
+        /* Prefer % over 100vw — vw includes scrollbar and widens the page */
         body > * {
           max-width: 100% !important;
-          overflow-x: hidden !important;
+          overflow-x: clip !important;
         }
         .admin-layout input,
         .admin-layout select,

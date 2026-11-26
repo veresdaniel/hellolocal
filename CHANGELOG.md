@@ -20,6 +20,9 @@ in prose as used in the product.
 
 ### Fixed
 
+- Admin mobile: billing/features and other 2-column panels stack via CSS
+  `auto-fit` (no JS-width dependency); stronger viewport containment so cards
+  no longer stick out past the screen edge.
 - Cookie consent banner is hidden on admin routes.
 - Admin mobile zoom after login: auth inputs use 16px (stops iOS focus-zoom) and
   admin layout resets residual viewport scale on navigation.

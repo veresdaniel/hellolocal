@@ -20,6 +20,7 @@ import {
 import { useToast } from "../contexts/ToastContext";
 import { FloorplanSubscriptionModal } from "./FloorplanSubscriptionModal";
 import { useConfirm } from "../hooks/useConfirm";
+import { useIsMobileAdmin, ADMIN_RESPONSIVE_2COL } from "../pages/wizard/useIsMobileAdmin";
 
 interface PlaceBillingSectionProps {
   placeId: string;
@@ -47,6 +48,7 @@ export function PlaceBillingSection({
   const { t } = useTranslation();
   const { showToast } = useToast();
   const showConfirm = useConfirm();
+  const isMobile = useIsMobileAdmin();
   const [upsellState, setUpsellState] = useState<PlaceUpsellState | null>(null);
   const [subscription, setSubscription] = useState<PlaceSubscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -440,6 +442,7 @@ export function PlaceBillingSection({
           style={{
             display: "flex",
             alignItems: "center",
+            flexWrap: "wrap",
             gap: 8,
             padding: 12,
             background: "#f0fdf4",
@@ -447,6 +450,9 @@ export function PlaceBillingSection({
             border: "2px solid #22c55e",
             cursor: onClick ? "pointer" : "default",
             transition: onClick ? "all 0.2s" : "none",
+            minWidth: 0,
+            maxWidth: "100%",
+            boxSizing: "border-box",
           }}
           onClick={onClick}
           onMouseEnter={
@@ -466,7 +472,7 @@ export function PlaceBillingSection({
               : undefined
           }
         >
-          <span style={{ fontSize: 18, color: "#22c55e" }}>✅</span>
+          <span style={{ fontSize: 18, color: "#22c55e", flexShrink: 0 }}>✅</span>
           <span
             style={{
               fontSize: "clamp(14px, 3.5vw, 16px)",
@@ -474,6 +480,8 @@ export function PlaceBillingSection({
               fontWeight: 500,
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              minWidth: 0,
+              flex: "1 1 auto",
             }}
           >
             {label}
@@ -485,6 +493,7 @@ export function PlaceBillingSection({
               marginLeft: "auto",
               fontFamily:
                 "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              flexShrink: 0,
             }}
           >
             {t("admin.available") || "Elérhető"}
@@ -514,6 +523,9 @@ export function PlaceBillingSection({
             border: isAvailable ? "1px solid #fed7aa" : "1px solid #fecaca",
             cursor: onClick ? "pointer" : "default",
             transition: onClick ? "all 0.2s" : "none",
+            minWidth: 0,
+            maxWidth: "100%",
+            boxSizing: "border-box",
           }}
           onClick={onClick}
           onMouseEnter={
@@ -531,8 +543,8 @@ export function PlaceBillingSection({
               : undefined
           }
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 18, color: isAvailable ? "#f59e0b" : "#dc2626" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+            <span style={{ fontSize: 18, color: isAvailable ? "#f59e0b" : "#dc2626", flexShrink: 0 }}>
               {isAvailable ? "⚠️" : "🔒"}
             </span>
             <span
@@ -542,6 +554,7 @@ export function PlaceBillingSection({
                 fontWeight: 500,
                 fontFamily:
                   "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+                minWidth: 0,
               }}
             >
               {label}
@@ -648,7 +661,17 @@ export function PlaceBillingSection({
   const canModifyBilling = isSuperadmin || userRole === "admin";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
+        boxSizing: "border-box",
+      }}
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <h3
           style={{
@@ -676,15 +699,28 @@ export function PlaceBillingSection({
         </h4>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+      <div
+        className="admin-grid-2"
+        style={{
+          display: "grid",
+          gridTemplateColumns: ADMIN_RESPONSIVE_2COL,
+          gap: 16,
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+        }}
+      >
         {/* Left: Plan Summary + Usage */}
         <div
           style={{
-            padding: 20,
+            padding: isMobile ? 16 : 20,
             background: "white",
             borderRadius: 12,
             border: `2px solid ${planColors[currentPlan]}`,
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            minWidth: 0,
+            maxWidth: "100%",
+            boxSizing: "border-box",
           }}
         >
           <div
@@ -694,6 +730,7 @@ export function PlaceBillingSection({
               alignItems: "center",
               justifyContent: "space-between",
               gap: 12,
+              flexWrap: "wrap",
             }}
           >
             <div
@@ -716,7 +753,7 @@ export function PlaceBillingSection({
               subscription.id &&
               subscription.status === "ACTIVE" &&
               canModifyBilling && (
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button
                     onClick={async () => {
                       const confirmed = await showConfirm({
@@ -1141,11 +1178,14 @@ export function PlaceBillingSection({
         {/* Right: Feature Gates */}
         <div
           style={{
-            padding: 20,
+            padding: isMobile ? 16 : 20,
             background: "white",
             borderRadius: 12,
             border: "1px solid #e0e7ff",
             boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            minWidth: 0,
+            maxWidth: "100%",
+            boxSizing: "border-box",
           }}
         >
           <div

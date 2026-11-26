@@ -225,7 +225,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
           gap: "20px",
           marginBottom: "32px",
         }}
@@ -271,7 +271,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
           gap: "16px",
           marginBottom: "32px",
         }}
@@ -326,7 +326,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 150px), 1fr))",
             gap: "16px",
           }}
         >
@@ -373,7 +373,7 @@ function OverviewTab({ data }: { data: SiteStatusResponse }) {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))",
               gap: "12px",
             }}
           >

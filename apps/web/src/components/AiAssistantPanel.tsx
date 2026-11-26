@@ -385,7 +385,7 @@ export function AiAssistantPanel({
         right: "max(12px, env(safe-area-inset-right))",
         bottom: "max(16px, env(safe-area-inset-bottom))",
         zIndex: 1200,
-        width: "min(360px, calc(100vw - 24px))",
+        width: "min(360px, calc(100% - 24px))",
         maxHeight: "min(70vh, 560px)",
         display: "flex",
         flexDirection: "column",
@@ -583,9 +583,9 @@ export function AiAssistantPanel({
         .ai-seo-card {
           position: fixed;
           z-index: 1200;
-          right: calc(24px + min(360px, calc(100vw - 24px)));
+          right: calc(24px + min(360px, calc(100% - 24px)));
           bottom: max(16px, env(safe-area-inset-bottom));
-          width: min(320px, calc(100vw - 36px - min(360px, calc(100vw - 24px))));
+          width: min(320px, calc(100% - 36px - min(360px, calc(100% - 24px))));
           max-height: min(70vh, 420px);
           display: flex;
           flex-direction: column;

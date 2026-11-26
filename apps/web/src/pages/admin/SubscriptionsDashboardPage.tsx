@@ -41,6 +41,7 @@ import {
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { useToast } from "../../contexts/ToastContext";
+import { ADMIN_RESPONSIVE_2COL } from "../wizard/useIsMobileAdmin";
 
 type Scope = "site" | "place" | "all";
 type StatusFilter = "all" | "ACTIVE" | "EXPIRING" | "EXPIRED" | "SUSPENDED";
@@ -555,7 +556,7 @@ export function SubscriptionsDashboardPage() {
             display: "grid",
             gridTemplateColumns: isMobile
               ? "repeat(2, 1fr)"
-              : "repeat(auto-fit, minmax(150px, 1fr))",
+              : "repeat(auto-fit, minmax(min(100%, 150px), 1fr))",
             gap: isMobile ? 12 : 16,
             marginBottom: 24,
           }}
@@ -754,7 +755,7 @@ export function SubscriptionsDashboardPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          gridTemplateColumns: ADMIN_RESPONSIVE_2COL,
           gap: isMobile ? 16 : 24,
           marginBottom: 24,
         }}

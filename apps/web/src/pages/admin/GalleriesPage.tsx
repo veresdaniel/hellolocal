@@ -601,7 +601,7 @@ export function GalleriesPage() {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 150px), 1fr))",
                   gap: "12px",
                   marginTop: "12px",
                 }}

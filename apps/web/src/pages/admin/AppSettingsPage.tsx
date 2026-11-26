@@ -645,11 +645,22 @@ export function AppSettingsPage() {
               </p>
 
               {!isLoading && (
-                <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 16,
+                    alignItems: "center",
+                    marginBottom: 16,
+                    flexWrap: "wrap",
+                    width: "100%",
+                    minWidth: 0,
+                  }}
+                >
                   <label
                     style={{
                       display: "block",
-                      minWidth: 150,
+                      minWidth: 0,
+                      flex: "0 1 auto",
                       fontWeight: 500,
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -663,14 +674,16 @@ export function AppSettingsPage() {
                     disabled={!userIsAdmin || isSaving}
                     style={{
                       padding: "10px 16px",
-                      fontSize: "clamp(14px, 3.5vw, 16px)",
+                      fontSize: 16,
                       fontFamily:
                         "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
                       borderRadius: 6,
                       border: "1px solid #ddd",
                       background: "var(--admin-surface)",
                       cursor: userIsAdmin && !isSaving ? "pointer" : "not-allowed",
-                      minWidth: 200,
+                      flex: "1 1 180px",
+                      minWidth: 0,
+                      maxWidth: "100%",
                     }}
                   >
                     <LanguageSelectOptions variant="translated" />

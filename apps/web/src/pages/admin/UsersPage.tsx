@@ -30,6 +30,7 @@ import { ROLE_SUPERADMIN } from "../../types/enums";
 import { AdminRoleSelect } from "../../components/AdminRoleSelect";
 import { AdminAutocomplete } from "../../components/AdminAutocomplete";
 import { UserScopeAssign } from "../../components/UserScopeAssign";
+import { useIsMobileAdmin, ADMIN_RESPONSIVE_2COL } from "../wizard/useIsMobileAdmin";
 
 export function UsersPage() {
   const { t } = useTranslation();
@@ -38,6 +39,7 @@ export function UsersPage() {
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
   const { selectedSiteId } = useAdminSite();
+  const isMobile = useIsMobileAdmin();
   usePageTitle("admin.users");
   const [users, setUsers] = useState<User[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
@@ -360,7 +362,7 @@ export function UsersPage() {
           </h2>
 
           <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}
+            style={{ display: "grid", gridTemplateColumns: ADMIN_RESPONSIVE_2COL, gap: 16, marginBottom: 16, width: "100%", minWidth: 0 }}
           >
             <div>
               <label
@@ -484,7 +486,7 @@ export function UsersPage() {
           )}
 
           <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}
+            style={{ display: "grid", gridTemplateColumns: ADMIN_RESPONSIVE_2COL, gap: 16, marginBottom: 16, width: "100%", minWidth: 0 }}
           >
             <div>
               <label
@@ -579,7 +581,7 @@ export function UsersPage() {
           </div>
 
           <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}
+            style={{ display: "grid", gridTemplateColumns: ADMIN_RESPONSIVE_2COL, gap: 16, marginBottom: 16, width: "100%", minWidth: 0 }}
           >
             {isCreating && (
               <div>

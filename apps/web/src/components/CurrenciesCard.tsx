@@ -11,6 +11,7 @@ import {
 } from "../api/admin.api";
 import { useToast } from "../contexts/ToastContext";
 import { AdminSettingsCollapsible } from "./AdminSettingsCollapsible";
+import { useIsMobileAdmin } from "../pages/wizard/useIsMobileAdmin";
 
 const BUILTIN = new Set(["HUF", "EUR"]);
 
@@ -37,6 +38,7 @@ function suggestFromCode(code: string): Pick<PlatformCurrency, "name" | "plural"
 
 export function CurrenciesCard() {
   const { t } = useTranslation();
+  const isMobile = useIsMobileAdmin();
   const { showToast } = useToast();
   const [rows, setRows] = useState<PlatformCurrency[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,9 +154,13 @@ export function CurrenciesCard() {
               key={row.code}
               style={{
                 display: "grid",
-                gridTemplateColumns: "72px 1fr 1fr 72px auto auto",
+                gridTemplateColumns: isMobile
+                  ? "1fr"
+                  : "72px 1fr 1fr 72px auto auto",
                 gap: 8,
                 alignItems: "center",
+                width: "100%",
+                minWidth: 0,
               }}
             >
               <strong>{row.code}</strong>
@@ -217,12 +223,14 @@ export function CurrenciesCard() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "72px 1fr 1fr 72px auto",
+              gridTemplateColumns: isMobile ? "1fr" : "72px 1fr 1fr 72px auto",
               gap: 8,
               alignItems: "center",
               marginTop: 8,
               paddingTop: 12,
               borderTop: "1px solid var(--admin-border-subtle)",
+              width: "100%",
+              minWidth: 0,
             }}
           >
             <input

@@ -136,6 +136,75 @@
   font-size: 16px;
 }
 
+/* Prefer this class for 2-up admin panels (stacks when column < 280px). */
+.admin-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Mobile: keep every admin surface inside the viewport */
+@media (max-width: 767px) {
+  .admin-layout {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  .admin-main,
+  .admin-page-content,
+  .admin-section-card,
+  .admin-surface,
+  .admin-collapsible,
+  .admin-collapsible__body,
+  .admin-page-content > *,
+  .admin-main > * {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .admin-main {
+    width: 100%;
+    overflow-x: clip;
+  }
+
+  .admin-page-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .admin-main img,
+  .admin-main video,
+  .admin-main canvas,
+  .admin-main svg,
+  .admin-main iframe {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Tables scroll inside the page, not the whole viewport */
+  .admin-main .admin-table-wrapper,
+  .admin-main .admin-flist__table-wrap,
+  .admin-main [class*="table-wrap"],
+  .admin-main [style*="overflowX"],
+  .admin-main [style*="overflow-x"] {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Dense flex toolbars / filter rows */
+  .admin-main form,
+  .admin-main section {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
 /*
  * Shared page toolbar ABOVE the title:
  * [Vissza] … [Létrehozás] [Mégse]  — single row, no title, no duplicates.

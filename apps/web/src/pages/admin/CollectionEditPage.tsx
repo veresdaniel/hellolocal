@@ -31,6 +31,7 @@ import {
 import { findTranslation } from "../../utils/langHelpers";
 import { notifyEntityChanged } from "../../hooks/useAdminCache";
 import { useConfirm } from "../../hooks/useConfirm";
+import { useIsMobileAdmin, ADMIN_RESPONSIVE_2COL } from "../wizard/useIsMobileAdmin";
 import type { Lang } from "../../types/enums";
 
 type TabId = "content" | "items";
@@ -41,6 +42,7 @@ export function CollectionEditPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const confirm = useConfirm();
+  const isMobile = useIsMobileAdmin();
   const authContext = useContext(AuthContext);
   const currentUser = authContext?.user ?? null;
 
@@ -1666,9 +1668,12 @@ function ItemsTab({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: 24,
-        minHeight: 600,
+        gridTemplateColumns: ADMIN_RESPONSIVE_2COL,
+        gap: isMobile ? 16 : 24,
+        minHeight: isMobile ? undefined : 600,
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
       }}
     >
       {/* Left Panel: Available Sites */}
@@ -1680,6 +1685,8 @@ function ItemsTab({
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
+          minWidth: 0,
+          maxWidth: "100%",
         }}
       >
         <div

@@ -70,6 +70,7 @@ import { isSuperadmin, isAdmin } from "../../utils/roleHelpers";
 import { isValidGtmContainerIdInput } from "../../lib/gtmContainerId";
 import type { UserRole, SiteRole, Lang} from "../../types/enums";
 import { buildPublicUrl, entityPublicAddress } from "../../app/urls";
+import { ADMIN_RESPONSIVE_2COL } from "../wizard/useIsMobileAdmin";
 
 interface Place {
   id: string;
@@ -952,7 +953,7 @@ export function PlacesPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))",
                 gap: 16,
               }}
             >
@@ -1449,7 +1450,15 @@ export function PlacesPage() {
                     hideLocationButton={true}
                   />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: ADMIN_RESPONSIVE_2COL,
+                    gap: 16,
+                    width: "100%",
+                    minWidth: 0,
+                  }}
+                >
                   <div>
                     <label style={{ ...labelStyle, fontSize: "clamp(14px, 3.5vw, 16px)" }}>
                       {t("admin.latitude")}
@@ -1694,7 +1703,7 @@ export function PlacesPage() {
 
             {/* Billing/Plan fields - visible to everyone, but modification disabled for editors */}
             {editingId && (
-              <div style={{ marginBottom: 16 }}>
+              <div style={{ marginBottom: 16, width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box" }}>
                 <PlaceBillingSection
                   placeId={editingId}
                   currentPlan={formData.plan}

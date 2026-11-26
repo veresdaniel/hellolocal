@@ -699,6 +699,10 @@ export function FloorplanEditor({ placeId, siteId }: FloorplanEditorProps) {
           gap: isMobile ? 16 : 24,
           alignItems: "stretch",
           overflow: "hidden", // Prevent outer scrollbar
+          width: "100%",
+          maxWidth: "100%",
+          minWidth: 0,
+          boxSizing: "border-box",
         }}
       >
         {/* Floorplan image or placeholder - 2/3 width on desktop, full width on mobile */}
@@ -1096,7 +1100,8 @@ export function FloorplanEditor({ placeId, siteId }: FloorplanEditorProps) {
           style={{
             flex: isMobile ? "none" : "1",
             width: isMobile ? "100%" : "auto",
-            minWidth: isMobile ? "auto" : 300,
+            minWidth: isMobile ? 0 : 300,
+            maxWidth: "100%",
             display: "flex",
             flexDirection: "column",
             // Fix height when instructions is open (desktop only)

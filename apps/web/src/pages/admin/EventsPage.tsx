@@ -56,6 +56,7 @@ import { AdminImageField } from "../../components/AdminImageField";
 import type { Lang } from "../../types/enums";
 import { buildPublicUrl } from "../../app/urls";
 import { useToast } from "../../contexts/ToastContext";
+import { ADMIN_RESPONSIVE_2COL } from "../wizard/useIsMobileAdmin";
 
 const EVENT_SHARED_FIELDS = (form: {
   phone: string;
@@ -725,7 +726,7 @@ export function EventsPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 250px), 1fr))",
                 gap: 16,
               }}
             >
@@ -1333,7 +1334,15 @@ export function EventsPage() {
                     hideLocationButton={true}
                   />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: ADMIN_RESPONSIVE_2COL,
+                    gap: 16,
+                    width: "100%",
+                    minWidth: 0,
+                  }}
+                >
                   <div>
                     <label
                       style={{
