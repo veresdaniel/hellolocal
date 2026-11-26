@@ -1045,6 +1045,7 @@
     "collections": "Curated Collections",
     "collectionsDesc": "Manage curated collections (lists of places)",
     "appSettingsDesc": "Manage system-wide settings",
+    "quoteRequestsDesc": "Demo and quote leads from platform forms",
     "uiCopyDesc": "Public-place sentences, in any language",
     "i18nDesc": "Global platform strings, grouped by page",
     "usersDesc": "Manage users and permissions",
@@ -1250,6 +1251,32 @@
   "freeTrialDaysUnit": "days",
   "freeTrialDaysUpdated": "Free trial length updated",
   "freeTrialDaysInvalid": "Enter at least 1 day.",
+  "quoteRequests": {
+    "title": "Demo & quote requests",
+    "subtitle": "Leads from the platform demo form and municipal quote form.",
+    "recipientLink": "Set recipient email (platform settings)",
+    "loading": "Loading…",
+    "empty": "No matching requests.",
+    "prev": "Previous",
+    "next": "Next",
+    "emailedYes": "Sent",
+    "emailedNo": "Not emailed",
+    "filter": {
+      "demo": "Demo",
+      "municipal": "Town",
+      "all": "All"
+    },
+    "cols": {
+      "when": "When",
+      "plan": "Type",
+      "contact": "Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "organization": "Organization",
+      "message": "Message",
+      "emailed": "Email"
+    }
+  },
   "signupAbuse": {
     "title": "Suspicious signups",
     "subtitle": "Free-trial abuse signals: email alias, IP/device score, card fingerprint",

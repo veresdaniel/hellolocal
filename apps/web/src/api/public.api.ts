@@ -111,6 +111,7 @@ export async function requestMunicipalQuote(
 export type DemoRequestPayload = PublicFormShieldPayload & {
   contactName: string;
   email: string;
+  phone: string;
   organization?: string;
   message?: string;
 };
@@ -120,6 +121,7 @@ export async function requestDemo(body: DemoRequestPayload): Promise<MunicipalQu
   return postQuoteRequest({
     contactName: body.contactName,
     email: body.email,
+    phone: body.phone,
     organization: body.organization?.trim() ?? "",
     message: body.message?.trim() ?? "",
     plan: "demo",

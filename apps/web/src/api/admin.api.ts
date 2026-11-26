@@ -2681,3 +2681,30 @@ export function updateFloorplanPin(id: string, data: UpdateFloorplanPinDto) {
 export function deleteFloorplanPin(id: string) {
   return apiDelete(`/admin/floorplan-pins/${id}`);
 }
+
+export type QuoteRequestRow = {
+  id: string;
+  organization: string;
+  contactName: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  plan: string;
+  emailed: boolean;
+  createdAt: string;
+};
+
+export function getQuoteRequests(params?: {
+  plan?: "demo" | "municipal";
+  take?: number;
+  skip?: number;
+}) {
+  const q = new URLSearchParams();
+  if (params?.plan) q.set("plan", params.plan);
+  if (params?.take != null) q.set("take", String(params.take));
+  if (params?.skip != null) q.set("skip", String(params.skip));
+  const qs = q.toString();
+  return apiGet<{ items: QuoteRequestRow[]; total: number; take: number; skip: number }>(
+    `/admin/quote-requests${qs ? `?${qs}` : ""}`
+  );
+}

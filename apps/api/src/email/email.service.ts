@@ -98,13 +98,7 @@ export class EmailService {
     if (!host || !from || !recipient) return false;
 
     try {
-      // Optional. The repo has no mail package; if SMTP_HOST is set and this import fails, we store the lead and do not claim it was sent.
-      // @ts-expect-error nodemailer is not a dependency until a real SMTP transport is installed
-      const nodemailer = (await import("nodemailer")) as {
-        createTransport: (options: Record<string, unknown>) => {
-          sendMail: (message: Record<string, string>) => Promise<unknown>;
-        };
-      };
+      const nodemailer = await import("nodemailer");
       const port = Number(this.configService.get<string>("SMTP_PORT") || 587);
       const user = this.configService.get<string>("SMTP_USER")?.trim();
       const pass = this.configService.get<string>("SMTP_PASS");
@@ -116,7 +110,10 @@ export class EmailService {
       });
       await transport.sendMail({ from, to: recipient, subject, text });
       return true;
-    } catch {
+    } catch (err) {
+      this.logger.warn(
+        `SMTP send failed: ${err instanceof Error ? err.message : String(err)}`
+      );
       return false;
     }
   }

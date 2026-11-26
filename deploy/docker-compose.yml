@@ -43,7 +43,12 @@ services:
       JWT_SECRET: ${JWT_SECRET_PROD}
       JWT_EXPIRES_IN: 7d
       FRONTEND_URL: https://hello-local.io
-      CORS_ORIGIN: https://hello-local.io,https://www.hello-local.io
+      CORS_ORIGIN: https://hello-local.io,https://www.hello-local.io,https://hellolocal.hu,https://www.hellolocal.hu
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
     command: ["sh", "-c", "pnpm exec prisma migrate deploy && SEED_ENSURE=1 node prisma/load-snapshot.cjs && node dist/main.js"]
     depends_on:
       postgres:

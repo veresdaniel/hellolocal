@@ -164,6 +164,9 @@ const EventLogPage = lazy(() =>
 const SignupSignalsPage = lazy(() =>
   import("../pages/admin/SignupSignalsPage").then((m) => ({ default: m.SignupSignalsPage }))
 );
+const QuoteRequestsPage = lazy(() =>
+  import("../pages/admin/QuoteRequestsPage").then((m) => ({ default: m.QuoteRequestsPage }))
+);
 const SiteAnalyticsPage = lazy(() =>
   import("../pages/admin/SiteAnalyticsPage").then((m) => ({ default: m.SiteAnalyticsPage }))
 );
@@ -916,6 +919,18 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <SignupSignalsPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "quote-requests",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <QuoteRequestsPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>

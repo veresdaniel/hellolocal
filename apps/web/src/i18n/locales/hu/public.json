@@ -187,13 +187,15 @@
     "plansLead": "Válasszatok méretet a helyeitekhez — a települési csomag ára egyedi ajánlat.",
     "demo": {
       "title": "Demót kérek",
-      "lead": "Érdekel, hogyan működik? Írj nekünk, és megmutatjuk a helyeiden. A neved és az emailed elég.",
+      "lead": "Érdekel, hogyan működik? Írj nekünk, és megmutatjuk a helyeiden. Név, email és telefon elég.",
       "name": "Név",
       "email": "Email",
+      "phone": "Telefonszám",
       "organization": "Szervezet",
       "message": "Üzenet",
       "placeholderName": "pl. Kovács Anna",
       "placeholderEmail": "anna@example.com",
+      "placeholderPhone": "30 123 4567",
       "placeholderOrganization": "pl. Kovács Műhely",
       "placeholderMessage": "Mire lenne szükségetek a térképen?",
       "optional": "nem kötelező",
@@ -204,7 +206,8 @@
       "noRecipient": "Rögzítettük a kérést. Nincs beállítva címzett, ezért email nem ment ki.",
       "failed": "A kérést nem sikerült elküldeni. Próbáld újra.",
       "required": "Add meg a nevet és az emailt.",
-      "invalidEmail": "Ez nem tűnik email címnek."
+      "invalidEmail": "Ez nem tűnik email címnek.",
+      "invalidPhone": "Adj meg egy érvényes telefonszámot az országkóddal."
     },
     "plans": {
       "priceUnit": "/ hó",

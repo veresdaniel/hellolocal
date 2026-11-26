@@ -1046,6 +1046,7 @@
     "collections": "Kuratierte Sammlungen",
     "collectionsDesc": "Kuratierte Sammlungen verwalten (kuratierte Listen von Standorte)",
     "appSettingsDesc": "Systemweite Einstellungen verwalten",
+    "quoteRequestsDesc": "Demo- und Angebotsanfragen von den Plattformformularen",
     "uiCopyDesc": "Sätze der öffentlichen Seite, in beliebiger Sprache",
     "i18nDesc": "Globale Plattformtexte, nach Seiten gruppiert",
     "usersDesc": "Benutzer und Berechtigungen verwalten",
@@ -1251,6 +1252,32 @@
   "freeTrialDaysUnit": "Tage",
   "freeTrialDaysUpdated": "Free-Testphase aktualisiert",
   "freeTrialDaysInvalid": "Mindestens 1 Tag angeben.",
+  "quoteRequests": {
+    "title": "Demo- und Angebotsanfragen",
+    "subtitle": "Leads vom Plattform-Demoformular und der Gemeinde-Angebot-Anfrage.",
+    "recipientLink": "Empfänger-E-Mail setzen (Plattformeinstellungen)",
+    "loading": "Laden…",
+    "empty": "Keine passenden Anfragen.",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "emailedYes": "Gesendet",
+    "emailedNo": "Keine E-Mail",
+    "filter": {
+      "demo": "Demo",
+      "municipal": "Gemeinde",
+      "all": "Alle"
+    },
+    "cols": {
+      "when": "Zeit",
+      "plan": "Typ",
+      "contact": "Kontakt",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "organization": "Organisation",
+      "message": "Nachricht",
+      "emailed": "E-Mail"
+    }
+  },
   "signupAbuse": {
     "title": "Verdächtige Anmeldungen",
     "subtitle": "Free-Trial-Missbrauchssignale: E-Mail-Alias, IP/Gerät-Score, Karten-Fingerprint",

@@ -346,6 +346,38 @@
   line-height: 1.55;
 }
 
+.plan-quote .PhoneInput {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.plan-quote .PhoneInputCountry {
+  margin: 0;
+  padding: 0 8px;
+  border: 1px solid rgba(27, 23, 48, 0.18);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.plan-quote .PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(27, 23, 48, 0.18);
+  border-radius: 12px;
+  font: inherit;
+  background: #fff;
+  color: #1b1730;
+}
+
+.plan-quote .PhoneInputInput:focus {
+  outline: 2px solid #b08948;
+  outline-offset: 1px;
+}
+
 .plan-quote__field-error {
   color: #8a2d2d;
   font-size: 13px;

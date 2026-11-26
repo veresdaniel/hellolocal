@@ -445,6 +445,32 @@
   "freeTrialDaysUnit": "nap",
   "freeTrialDaysUpdated": "Free próbaidő frissítve",
   "freeTrialDaysInvalid": "Adj meg legalább 1 napot.",
+  "quoteRequests": {
+    "title": "Demó- és ajánlatkérések",
+    "subtitle": "A platform demó űrlapjáról és az önkormányzati ajánlatkérésből beérkezett lead-ek.",
+    "recipientLink": "Címzett email beállítása (platform settings)",
+    "loading": "Betöltés…",
+    "empty": "Nincs ilyen kérés.",
+    "prev": "Előző",
+    "next": "Következő",
+    "emailedYes": "Elküldve",
+    "emailedNo": "Nincs email",
+    "filter": {
+      "demo": "Demó",
+      "municipal": "Település",
+      "all": "Mind"
+    },
+    "cols": {
+      "when": "Időpont",
+      "plan": "Típus",
+      "contact": "Kapcsolattartó",
+      "email": "Email",
+      "phone": "Telefon",
+      "organization": "Szervezet",
+      "message": "Üzenet",
+      "emailed": "Email"
+    }
+  },
   "signupAbuse": {
     "title": "Gyanús regisztrációk",
     "subtitle": "Free-trial abuse jelek: email alias, IP/eszköz score, kártya ujjlenyomat",
@@ -1163,6 +1189,7 @@
     "collections": "Kurátori listák",
     "collectionsDesc": "Kurátori listák kezelése (helyek összeválogatása)",
     "appSettingsDesc": "Rendszer szintű beállítások kezelése",
+    "quoteRequestsDesc": "Demó- és ajánlatkérések a platform űrlapokról",
     "uiCopyDesc": "A publikus oldal mondatai, tetszőleges nyelven",
     "i18nDesc": "Globális platform szövegek, oldalanként lebontva",
     "usersDesc": "Felhasználók és jogosultságok kezelése",

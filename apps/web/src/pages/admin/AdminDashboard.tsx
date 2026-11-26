@@ -373,6 +373,14 @@ export function AdminDashboard() {
         variant: "admin",
       },
       {
+        key: "quoteRequests",
+        title: t("admin.quoteRequests.title"),
+        description: t("admin.dashboardCards.quoteRequestsDesc"),
+        link: adminPath("/quote-requests"),
+        icon: "📩",
+        variant: "admin",
+      },
+      {
         key: "appSettings",
         title: t("admin.appSettings"),
         description: t("admin.dashboardCards.appSettingsDesc"),

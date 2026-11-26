@@ -1,5 +1,9 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { UserRole } from "@prisma/client";
 import { assertPublicFormShield } from "../common/public-form-shield";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { Roles } from "../auth/decorators/roles.decorator";
 import { QuoteService, type QuoteRequestInput } from "./quote.service";
 
 @Controller("/api/public/quote-requests")
@@ -10,5 +14,25 @@ export class QuoteController {
   async create(@Body() body: QuoteRequestInput) {
     await assertPublicFormShield(body);
     return this.quotes.create(body);
+  }
+}
+
+@Controller("/api/admin/quote-requests")
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.superadmin)
+export class AdminQuoteController {
+  constructor(private readonly quotes: QuoteService) {}
+
+  @Get()
+  async list(
+    @Query("plan") plan?: string,
+    @Query("take") take?: string,
+    @Query("skip") skip?: string
+  ) {
+    return this.quotes.listForAdmin({
+      plan,
+      take: take ? Number(take) : undefined,
+      skip: skip ? Number(skip) : undefined,
+    });
   }
 }

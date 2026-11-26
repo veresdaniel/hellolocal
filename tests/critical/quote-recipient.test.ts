@@ -106,16 +106,20 @@ describe("municipal quote recipient", () => {
     const result = await service.create({
       contactName: "Anna",
       email: "anna@example.com",
+      phone: "+36301234567",
       plan: "demo",
     });
     expect(sent).toEqual([
       {
         to: "offers@example.com",
         subject: "Demó kérés",
-        text: "Név: Anna\nEmail: anna@example.com",
+        text: "Név: Anna\nEmail: anna@example.com\nTelefon: +36301234567",
       },
     ]);
     expect(result).toMatchObject({ stored: true, emailed: true, reason: "sent" });
     await expect(service.create({ email: "anna@example.com", plan: "demo" })).rejects.toThrow(/nevet/);
+    await expect(
+      service.create({ contactName: "Anna", email: "anna@example.com", phone: "123", plan: "demo" })
+    ).rejects.toThrow(/telefon/);
   });
 });

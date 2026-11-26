@@ -1055,12 +1055,14 @@ model QuoteRequest {
   organization String
   contactName  String
   email        String
+  phone        String? // E.164; required for plan=demo
   message      String   @db.Text
   plan         String
   emailed      Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   @@index([createdAt])
+  @@index([plan, createdAt])
 }
 
 model Event {

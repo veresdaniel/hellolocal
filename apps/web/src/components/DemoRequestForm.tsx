@@ -1,38 +1,54 @@
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import PhoneInput, { isValidPhoneNumber, type Country } from "react-phone-number-input";
 import { requestDemo } from "../api/public.api";
 import { trackGtmGenerateLead } from "../lib/gtmEvents";
 import { publicFormErrorMessage, usePublicFormShield } from "./PublicFormShield";
+import "react-phone-number-input/style.css";
 import "../styles/plan-picker.css";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function defaultCountry(lang: string): Country {
+  if (lang.startsWith("de")) return "DE";
+  if (lang.startsWith("en")) return "GB";
+  return "HU";
+}
+
 export function DemoRequestForm() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const shield = usePublicFormShield("demo");
   const [contactName, setContactName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState<string | undefined>();
   const [organization, setOrganization] = useState("");
   const [message, setMessage] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<{ name?: string; email?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    name?: string;
+    email?: string;
+    phone?: string;
+  }>({});
   const [error, setError] = useState("");
   const [status, setStatus] = useState<"sent" | "stored" | "noRecipient" | "">("");
   const [sending, setSending] = useState(false);
+  const country = useMemo(() => defaultCountry(i18n.language || "hu"), [i18n.language]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setError("");
     setStatus("");
-    const next: { name?: string; email?: string } = {};
+    const next: { name?: string; email?: string; phone?: string } = {};
     if (!contactName.trim()) next.name = t("public.overview.demo.required");
     if (!email.trim() || !EMAIL_RE.test(email.trim())) next.email = t("public.overview.demo.invalidEmail");
+    if (!phone || !isValidPhoneNumber(phone)) next.phone = t("public.overview.demo.invalidPhone");
     setFieldErrors(next);
-    if (next.name || next.email) return;
+    if (next.name || next.email || next.phone) return;
     setSending(true);
     try {
       const result = await requestDemo({
         contactName: contactName.trim(),
         email: email.trim(),
+        phone: phone!,
         organization: organization.trim(),
         message: message.trim(),
         ...(await shield.payload()),
@@ -79,6 +95,24 @@ export function DemoRequestForm() {
           aria-invalid={fieldErrors.email ? true : undefined}
         />
         {fieldErrors.email ? <span className="plan-quote__field-error">{fieldErrors.email}</span> : null}
+      </label>
+      <label>
+        {t("public.overview.demo.phone")}
+        <PhoneInput
+          international
+          defaultCountry={country}
+          countryCallingCodeEditable={false}
+          value={phone}
+          onChange={setPhone}
+          placeholder={t("public.overview.demo.placeholderPhone")}
+          numberInputProps={{
+            name: "phone",
+            autoComplete: "tel",
+            required: true,
+            "aria-invalid": fieldErrors.phone ? true : undefined,
+          }}
+        />
+        {fieldErrors.phone ? <span className="plan-quote__field-error">{fieldErrors.phone}</span> : null}
       </label>
       <label>
         {t("public.overview.demo.organization")}

@@ -187,13 +187,15 @@
     "plansLead": "Wählt die Größe für eure Orte — das Gemeindepaket ist ein individuelles Angebot.",
     "demo": {
       "title": "Demo anfragen",
-      "lead": "Möchtest du sehen, wie es funktioniert? Schreib uns, wir zeigen es an deinen Orten. Name und E-Mail reichen.",
+      "lead": "Möchtest du sehen, wie es funktioniert? Schreib uns, wir zeigen es an deinen Orten. Name, E-Mail und Telefon reichen.",
       "name": "Name",
       "email": "E-Mail",
+      "phone": "Telefonnummer",
       "organization": "Organisation",
       "message": "Nachricht",
       "placeholderName": "z. B. Anna Kovacs",
       "placeholderEmail": "anna@example.com",
+      "placeholderPhone": "1512 3456789",
       "placeholderOrganization": "z. B. Kovács Werkstatt",
       "placeholderMessage": "Was soll die Karte zeigen?",
       "optional": "optional",
@@ -204,7 +206,8 @@
       "noRecipient": "Wir haben die Anfrage gespeichert. Es ist kein Empfänger hinterlegt, deshalb ging keine E-Mail raus.",
       "failed": "Die Anfrage konnte nicht gesendet werden. Bitte noch einmal versuchen.",
       "required": "Bitte Name und E-Mail angeben.",
-      "invalidEmail": "Das sieht nicht nach einer E-Mail-Adresse aus."
+      "invalidEmail": "Das sieht nicht nach einer E-Mail-Adresse aus.",
+      "invalidPhone": "Bitte eine gültige Telefonnummer mit Ländervorwahl angeben."
     },
     "plans": {
       "priceUnit": "/ Monat",
