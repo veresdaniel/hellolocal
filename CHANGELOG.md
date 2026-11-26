@@ -21,6 +21,9 @@ in prose as used in the product.
 
 ### Changed
 
+- Google OAuth consent branding: same-origin callback via Caddy (`/api/auth/google*`)
+  so Google shows the public host in use (e.g. hellolocal.hu) instead of always
+  api.hello-local.io — add matching Authorized redirect URIs in Google Cloud.
 - Password policy: min 10 characters with upper/lower, digit, and special
   character (API + UI).
 - Admin user form region picker uses shared `BaseAutocomplete` combobox

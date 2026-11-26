@@ -7,6 +7,15 @@
 	}
 }
 
+# Google OAuth must hit the API on the *public* host so consent branding matches
+# (hellolocal.hu, hello-local.io, …) instead of always api.hello-local.io.
+(google_oauth_api) {
+	@googleOAuth path /api/auth/google /api/auth/google/*
+	handle @googleOAuth {
+		reverse_proxy api-prod:3002
+	}
+}
+
 # Platform host: force HTTPS + apex (non-www). Trailing-slash is normalized in web server.js.
 www.hello-local.io {
 	redir https://hello-local.io{uri} permanent
@@ -14,7 +23,10 @@ www.hello-local.io {
 
 hello-local.io {
 	encode gzip
-	reverse_proxy web-prod:3000
+	import google_oauth_api
+	handle {
+		reverse_proxy web-prod:3000
+	}
 }
 
 api.hello-local.io {
@@ -24,7 +36,13 @@ api.hello-local.io {
 
 devel.hello-local.io {
 	encode gzip
-	reverse_proxy web-devel:3000
+	@googleOAuthDevel path /api/auth/google /api/auth/google/*
+	handle @googleOAuthDevel {
+		reverse_proxy api-devel:3002
+	}
+	handle {
+		reverse_proxy web-devel:3000
+	}
 }
 
 api.devel.hello-local.io {
@@ -36,12 +54,15 @@ api.devel.hello-local.io {
 # Zero matches is not an error, and these names are not wired until that file exists.
 import /etc/caddy/imports/*.caddy
 
-# Admin-configured custom domains (helloetyek.hu, …). Named blocks above win first;
+# Admin-configured custom domains (helloetyek.hu, hellolocal.hu, …). Named blocks above win first;
 # unknown Hosts only get a cert when /api/caddy/ask returns 200.
 https:// {
 	tls {
 		on_demand
 	}
 	encode gzip
-	reverse_proxy web-prod:3000
+	import google_oauth_api
+	handle {
+		reverse_proxy web-prod:3000
+	}
 }

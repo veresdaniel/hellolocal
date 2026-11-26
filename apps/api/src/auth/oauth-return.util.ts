@@ -50,6 +50,30 @@ export function oauthLoginPath(lang: Lang, mode: OAuthReturnMode): string {
 }
 
 /**
+ * Default API-host callback (GOOGLE_CALLBACK_URL). Used when the return origin
+ * is unknown or not allowed — Google then brands the consent screen with this host.
+ */
+export function defaultGoogleCallbackUrl(): string {
+  const fromEnv = process.env.GOOGLE_CALLBACK_URL?.trim();
+  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  return "https://api.hello-local.io/api/auth/google/callback";
+}
+
+/**
+ * Same-origin callback so Google’s “shared with …” line shows the public host
+ * the user is on (hellolocal.hu, hello-local.io, …) instead of always api.*.
+ * Caller must only pass an allowed OAuth return origin.
+ */
+export function googleCallbackUrlForOrigin(origin: string): string {
+  try {
+    const base = new URL(origin).origin.replace(/\/$/, "");
+    return `${base}/api/auth/google/callback`;
+  } catch {
+    return defaultGoogleCallbackUrl();
+  }
+}
+
+/**
  * True when `origin` is the configured frontend or a known platform host name.
  * Custom domains are validated separately against SiteDomain / entity hosts.
  */
