@@ -3,12 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from "react-i18next";
-import { 
-  DEFAULT_LANG,
-  HAS_MULTIPLE_SITES,
-  DEFAULT_SITE_SLUG,
-  type Lang, isLang} from "../../app/config";
-import { buildUrl } from "../../app/urls";
+import { DEFAULT_LANG, type Lang, isLang } from "../../app/config";
+import { platformLandingPath } from "../../app/entityPaths";
 import { useSeo } from "../../seo/useSeo";
 import { safeInternalPath } from "../../utils/safeInternalPath";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY } from "../../constants/authStorage";
@@ -295,16 +291,28 @@ export function LoginPage() {
     }
   }, [requiresTwoFactor]);
 
-  // Build public page path
-  const publicPagePath = buildUrl({
-    siteKey: DEFAULT_SITE_SLUG,
-    lang,
-    path: "",
-  });
+  // Platform landing (Áttekintés) — not a region explore URL.
+  const publicPagePath = platformLandingPath(lang);
 
   return (
     <div className="admin-login">
       <div className="admin-auth-card">
+        <div style={{ textAlign: "center", marginBottom: "clamp(8px, 2vw, 12px)" }}>
+          <Link
+            to={publicPagePath}
+            style={{
+              color: "var(--admin-primary)",
+              fontWeight: 700,
+              fontSize: "clamp(18px, 4vw, 22px)",
+              textDecoration: "none",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            HelloLocal
+          </Link>
+        </div>
         <h1 className="admin-auth-card__title" style={{ textAlign: "center" }}>
           {visitor ? t("public.visitorAuth.login") : t("admin.login")}
         </h1>
@@ -777,6 +785,21 @@ export function LoginPage() {
             style={{ color: "#665d78", fontSize: 13, textDecoration: "none" }}
           >
             {visitor ? t("public.visitorAuth.staffLogin") : t("public.visitorAuth.visitorLogin")}
+          </Link>
+        </div>
+        <div style={{ marginTop: 16, textAlign: "center" }}>
+          <Link
+            to={publicPagePath}
+            style={{
+              color: "var(--admin-primary)",
+              fontSize: "clamp(13px, 3vw, 14px)",
+              fontWeight: 600,
+              textDecoration: "none",
+              fontFamily:
+                "'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+            }}
+          >
+            {t("admin.openPublicPage")}
           </Link>
         </div>
       </div>

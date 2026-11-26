@@ -448,7 +448,7 @@ export function FloatingHeader({
           {/* Desktop Navigation */}
           <nav
             style={{
-              display: isMobile && !isOverview ? "none" : "flex",
+              display: isMobile ? "none" : "flex",
               gap: "clamp(8px, 1.5vw, 16px)",
               alignItems: "center",
               flexShrink: 0,
@@ -856,8 +856,8 @@ export function FloatingHeader({
             )}
           </nav>
 
-          {/* Mobile Menu Button */}
-          {isMobile && !isOverview && (
+          {/* Mobile Menu Button (including platform overview — demo / how / lang) */}
+          {isMobile && (
             <button
               data-mobile-menu-button
               onClick={(e) => {
@@ -1004,7 +1004,52 @@ export function FloatingHeader({
                 }}
               />
             </button>
-            {!isOverview && (
+            {isOverview ? (
+              <>
+                <button type="button" onClick={scrollToDemo} style={menuButton(true, true)}>
+                  {t("public.overview.demo.submit")}
+                </button>
+                <a
+                  href="#how"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  style={{
+                    ...menuButton(false, true),
+                    textDecoration: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {t("public.overview.ctaSecondary")}
+                </a>
+                {user && showAuthButtons && hasActiveSite ? (
+                  <Link
+                    to={buildUrl({ lang, path: "admin" })}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{
+                      ...menuButton(true, true),
+                      textDecoration: "none",
+                      marginTop: 4,
+                    }}
+                  >
+                    {t("admin.dashboard")}
+                  </Link>
+                ) : null}
+                {!user ? (
+                  <Link
+                    to={`/${lang}/admin/login`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{
+                      ...menuButton(false, true),
+                      textDecoration: "none",
+                      marginTop: 4,
+                    }}
+                  >
+                    {t("admin.login")}
+                  </Link>
+                ) : null}
+              </>
+            ) : (
             <>
             {/* Not logged in: Sign in and Sign up buttons - Mobile */}
             {showVisitorLinks && (
@@ -1114,7 +1159,7 @@ export function FloatingHeader({
                 )}
               </>
             )}
-            {!location.pathname.includes("/admin") && !isOverview && (
+            {!location.pathname.includes("/admin") && (
               <a
                 href={platformLandingHref(lang)}
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -1141,7 +1186,7 @@ export function FloatingHeader({
             {/* Map view button - Mobile */}
             {(() => {
               // Don't show if explicitly hidden
-              if (hideMapViewButton || isOverview) return null;
+              if (hideMapViewButton) return null;
               // Don't show on admin pages
               if (location.pathname.includes("/admin")) return null;
 

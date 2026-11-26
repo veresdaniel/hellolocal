@@ -33,6 +33,9 @@ in prose as used in the product.
 
 ### Changed
 
+- Platform overview on mobile: stacked full-width CTAs, one-column stats rows,
+  and a hamburger menu (demo / how it works / login); login always links back
+  to the platform landing (Áttekintés) after logout — not a region explore URL.
 - Mobile place/event wizard text steps use full-height textareas that fill the
   space above the fixed footer (short + long description).
 - Content-draft AI prompts: field-type instructions (name/title/teaser/…) and

@@ -1087,23 +1087,53 @@
     will-change: auto;
   }
 
+  /* Stack stats earlier — 3 cramped columns look broken with text values like “Nincs app”. */
   .overview__stats {
-    gap: 12px 10px;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: clamp(28px, 5vw, 48px);
+    padding-top: 18px;
+  }
+
+  .overview__stats li {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(242, 244, 251, 0.06);
+    border: 1px solid rgba(242, 244, 251, 0.1);
   }
 
   .overview__stats strong {
-    font-size: 28px;
+    flex: 0 0 auto;
+    font-size: clamp(22px, 5.5vw, 28px);
+    line-height: 1.15;
+    max-width: 8.5rem;
+  }
+
+  .overview__stats span {
+    margin-top: 0;
+    max-width: none;
+    flex: 1 1 auto;
+    font-size: 14px;
+    line-height: 1.4;
   }
 
   .overview__actions {
+    flex-direction: column;
+    align-items: stretch;
     gap: 10px;
   }
 
   .overview__cta,
   .overview__ghost {
     justify-content: center;
-    flex: 1 1 auto;
-    min-width: min(100%, 152px);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    flex: 0 0 auto;
+    box-sizing: border-box;
   }
 
   .overview__close {
@@ -1117,23 +1147,14 @@
 }
 
 @media (max-width: 480px) {
-  .overview__stats {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  .overview__stats li {
+    padding: 12px 14px;
+    gap: 12px;
   }
 
-  .overview__actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .overview__cta,
-  .overview__ghost {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    flex: 0 0 auto;
-    box-sizing: border-box;
+  .overview__stats strong {
+    font-size: 22px;
+    max-width: 7.5rem;
   }
 }
 
