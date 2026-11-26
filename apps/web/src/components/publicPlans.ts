@@ -280,7 +280,11 @@ export const PLAN_MUNICIPAL_FIELDS: PlanCopyField[] = [
   field("plans.municipal.cta", ["Gomb", "Button", "Schaltfläche"]),
   field("plans.municipal.places", ["Helyek sora", "Places line", "Orte-Zeile"]),
   field("plans.municipal.events", ["Programok sora", "Events line", "Termine-Zeile"]),
-  field("plans.municipal.languages", ["Nyelvek sora", "Languages line", "Sprachen-Zeile"]),
+  field("plans.municipal.languages", [
+    "Extra előny (pl. egy link)",
+    "Extra benefit (e.g. one link)",
+    "Extra-Vorteil (z. B. ein Link)",
+  ]),
   field("plans.municipal.domain", ["Saját domain sora", "Own domain line", "Eigene-Domain-Zeile"]),
 ];
 
