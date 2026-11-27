@@ -78,9 +78,12 @@ in prose as used in the product.
 
 ### Fixed
 
-- Landing-only `robots.txt`: put Allow rules before `Disallow: /`, use plain
-  guide path prefixes, and add an explicit Googlebot / Google-InspectionTool
-  group so GSC URL Inspection no longer reports guide URLs as blocked.
+- Landing-only `robots.txt` no longer uses `Disallow: /`. GSC URL Inspection
+  treats that rule as a full block and ignores longer Allow exceptions, so
+  every URL (including guides) stayed “blocked by robots.txt”. Public crawl
+  is `Allow: /` with admin/api/offline still disallowed. Pages that should
+  stay out of the index when global crawl is off keep doing so via noindex
+  and sitemap omission.
 - Google OAuth return: platform public hosts (`platform.publicHost`, e.g.
   hellolocal.hu) and the same-origin callback host are allowed, so login no
   longer falls back to hello-local.io admin when starting from another
