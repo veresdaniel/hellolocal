@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { AdminImageField } from "../../components/AdminImageField";
 import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { useToast } from "../../contexts/ToastContext";
@@ -173,7 +174,7 @@ export function PlatformGuidesPage() {
                 <button type="button" onClick={() => navigate(`/${lang}/admin/platform-guides/${guide.id}`)}>
                   <strong>{title}</strong>
                   <span>/{guide.slug}</span>
-                  {!guide.isPublished ? <em>rejtett</em> : null}
+                  {!guide.isPublished ? <em>{t("admin.hidden", { defaultValue: "Rejtett" })}</em> : null}
                 </button>
               </li>
             );
@@ -194,26 +195,41 @@ export function PlatformGuidesPage() {
         saveLabel={save.isPending ? "…" : t("admin.save", { defaultValue: "Mentés" })}
         onCancel={() => navigate(`/${lang}/admin/platform-guides`)}
       />
-      <div className="guide-admin__form">
-        <label>
-          Slug
-          <input value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="google-terkep" />
-        </label>
-        <label>
-          {t("admin.sortOrder", { defaultValue: "Sorrend" })}
-          <input
-            type="number"
-            value={sortOrder}
-            onChange={(event) => setSortOrder(Number(event.target.value))}
-          />
-        </label>
+      <div className="admin-section-card guide-admin__form">
+        <div className="guide-admin__meta">
+          <div className="admin-field">
+            <label className="admin-field__label" htmlFor="guide-slug">
+              Slug
+            </label>
+            <input
+              id="guide-slug"
+              className="admin-field__control"
+              type="text"
+              value={slug}
+              onChange={(event) => setSlug(event.target.value)}
+              placeholder="google-terkep"
+            />
+          </div>
+          <div className="admin-field">
+            <label className="admin-field__label" htmlFor="guide-sort">
+              {t("admin.sortOrder", { defaultValue: "Sorrend" })}
+            </label>
+            <input
+              id="guide-sort"
+              className="admin-field__control"
+              type="number"
+              value={sortOrder}
+              onChange={(event) => setSortOrder(Number(event.target.value))}
+            />
+          </div>
+        </div>
         <label className="guide-admin__check">
           <input
             type="checkbox"
             checked={isPublished}
             onChange={(event) => setIsPublished(event.target.checked)}
           />
-          {t("admin.published", { defaultValue: "Publikus" })}
+          {t("admin.published", { defaultValue: "Közzétéve" })}
         </label>
         <div className="guide-admin__langs" role="tablist">
           {tabLangs.map((code) => (
@@ -229,47 +245,76 @@ export function PlatformGuidesPage() {
             </button>
           ))}
         </div>
-        <label>
-          {t("admin.slug", { defaultValue: "URL slug (nyelv)" })}
+        <div className="admin-field">
+          <label className="admin-field__label" htmlFor="guide-lang-slug">
+            {t("admin.slug", { defaultValue: "Slug" })}
+          </label>
           <input
+            id="guide-lang-slug"
+            className="admin-field__control"
+            type="text"
             value={current.slug || ""}
             onChange={(event) => patch({ slug: event.target.value })}
             placeholder={slug || "google-maps"}
           />
-        </label>
-        <label>
-          {t("admin.title", { defaultValue: "Cím" })}
-          <input value={current.title} onChange={(event) => patch({ title: event.target.value })} />
-        </label>
-        <label>
-          {t("admin.seoTitle", { defaultValue: "SEO cím" })}
-          <input value={current.seoTitle || ""} onChange={(event) => patch({ seoTitle: event.target.value })} />
-        </label>
-        <label>
-          {t("admin.seoDescription", { defaultValue: "SEO leírás" })}
+        </div>
+        <div className="admin-field">
+          <label className="admin-field__label" htmlFor="guide-title">
+            {t("admin.title", { defaultValue: "Cím" })}
+          </label>
+          <input
+            id="guide-title"
+            className="admin-field__control"
+            type="text"
+            value={current.title}
+            onChange={(event) => patch({ title: event.target.value })}
+          />
+        </div>
+        <div className="admin-field">
+          <label className="admin-field__label" htmlFor="guide-seo-title">
+            {t("admin.seoTitle", { defaultValue: "SEO cím" })}
+          </label>
+          <input
+            id="guide-seo-title"
+            className="admin-field__control"
+            type="text"
+            value={current.seoTitle || ""}
+            onChange={(event) => patch({ seoTitle: event.target.value })}
+          />
+        </div>
+        <div className="admin-field">
+          <label className="admin-field__label" htmlFor="guide-seo-description">
+            {t("admin.seoDescription", { defaultValue: "SEO leírás" })}
+          </label>
           <textarea
+            id="guide-seo-description"
+            className="admin-field__control admin-field__control--textarea"
             rows={3}
             value={current.seoDescription || ""}
             onChange={(event) => patch({ seoDescription: event.target.value })}
           />
-        </label>
-        <label>
-          {t("admin.image", { defaultValue: "Kép a szövegben" })}
+        </div>
+        <AdminImageField
+          label={t("admin.image", { defaultValue: "Kép a szövegben" })}
+          value={current.imageUrl || ""}
+          onChange={(url) => patch({ imageUrl: url })}
+          folder="platform-guides"
+          placeholder="https://"
+        />
+        <div className="admin-field">
+          <label className="admin-field__label" htmlFor="guide-caption">
+            {t("admin.caption", { defaultValue: "Képaláírás" })}
+          </label>
           <input
-            value={current.imageUrl || ""}
-            onChange={(event) => patch({ imageUrl: event.target.value })}
-            placeholder="/marketing/map-szeged.jpg"
-          />
-        </label>
-        <label>
-          {t("admin.caption", { defaultValue: "Képaláírás" })}
-          <input
+            id="guide-caption"
+            className="admin-field__control"
+            type="text"
             value={current.imageCaption || ""}
             onChange={(event) => patch({ imageCaption: event.target.value })}
           />
-        </label>
-        <div>
-          <p>{t("admin.content", { defaultValue: "Szöveg" })}</p>
+        </div>
+        <div className="admin-field">
+          <span className="admin-field__label">{t("admin.content", { defaultValue: "Tartalom" })}</span>
           <TipTapEditorWithUpload
             value={current.body}
             onChange={(body) => patch({ body })}
@@ -280,7 +325,12 @@ export function PlatformGuidesPage() {
           />
         </div>
         {editing ? (
-          <button type="button" className="guide-admin__delete" onClick={() => remove.mutate()}>
+          <button
+            type="button"
+            className="admin-btn admin-btn--danger"
+            disabled={remove.isPending}
+            onClick={() => remove.mutate()}
+          >
             {t("admin.delete", { defaultValue: "Törlés" })}
           </button>
         ) : null}

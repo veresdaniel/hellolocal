@@ -763,6 +763,31 @@ body:has(.admin-layout) h4 {
   resize: vertical;
 }
 
+.admin-field__control--full {
+  max-width: none;
+}
+
+.admin-image-field__upload {
+  margin-top: 8px;
+  align-self: flex-start;
+}
+
+.admin-image-field__preview {
+  margin-top: 8px;
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  display: block;
+  object-fit: cover;
+  border: 1px solid var(--admin-border-subtle);
+}
+
+.admin-image-field__hint {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--admin-muted);
+}
+
 .admin-stack {
   display: flex;
   flex-direction: column;

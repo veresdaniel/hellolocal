@@ -161,6 +161,7 @@ table tbody tr {
   padding: 0;
   display: grid;
   gap: 8px;
+  max-width: 820px;
 }
 
 .guide-admin__list button {
@@ -169,35 +170,109 @@ table tbody tr {
   align-items: baseline;
   width: 100%;
   text-align: left;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(27, 23, 48, 0.12);
-  background: #fff;
+  padding: 14px 16px;
+  border-radius: var(--admin-radius, 12px);
+  border: 1px solid var(--admin-border-subtle, #e2e8f0);
+  background: var(--admin-surface, #fff);
+  box-shadow: var(--admin-shadow, 0 8px 24px rgba(15, 23, 42, 0.12));
+  color: var(--admin-ink, #0f172a);
+  font: inherit;
   cursor: pointer;
 }
 
-.guide-admin__form {
-  display: grid;
-  gap: 14px;
+.guide-admin__list button:hover {
+  border-color: var(--admin-primary-border, #c7d2fe);
+}
+
+.guide-admin__list span {
+  color: var(--admin-muted, #475569);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.guide-admin__list em {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--admin-muted-strong, #334155);
+}
+
+.admin-section-card.guide-admin__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   max-width: 820px;
 }
 
-.guide-admin__form label {
+.guide-admin__form > .admin-btn {
+  align-self: flex-start;
+}
+
+.guide-admin__form .admin-field {
+  margin-bottom: 0;
+}
+
+.guide-admin__form .admin-field__control {
+  max-width: none;
+}
+
+.guide-admin__meta {
   display: grid;
-  gap: 6px;
+  gap: 16px;
 }
 
 .guide-admin__check {
-  grid-auto-flow: column;
-  justify-content: start;
+  display: inline-flex;
   align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  margin: 0;
+  color: var(--admin-ink, #0f172a);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.guide-admin__check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--admin-primary, #4338ca);
+  cursor: pointer;
 }
 
 .guide-admin__langs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.guide-admin__delete {
-  justify-self: start;
+.guide-admin__langs button {
+  min-width: 48px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--admin-primary-border, #c7d2fe);
+  border-radius: 999px;
+  background: var(--admin-primary-soft, #eef2ff);
+  color: var(--admin-primary, #4338ca);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.guide-admin__langs button.is-on {
+  border-color: var(--admin-primary, #4338ca);
+  background: var(--admin-primary, #4338ca);
+  color: var(--admin-on-primary, #fff);
+}
+
+@media (min-width: 720px) {
+  .guide-admin__meta {
+    grid-template-columns: minmax(0, 1fr) 160px;
+    align-items: end;
+  }
 }
