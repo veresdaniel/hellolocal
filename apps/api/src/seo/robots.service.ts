@@ -3,7 +3,8 @@
  */
 import { Injectable } from "@nestjs/common";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
-import { isProductionSeoEnvironment, PUBLIC_LANGS } from "./public-path.util";
+import { PathSegmentsService } from "../ui-copy/path-segments.service";
+import { guideLangsForSitemapHost, isProductionSeoEnvironment } from "./public-path.util";
 import type { SitemapScope } from "./sitemap-scope";
 
 /**
@@ -35,28 +36,35 @@ function socialPreviewAllowBlock(): string[] {
   return lines;
 }
 
-/**
- * Landing-only rules for User-agent: * without end-of-URL `$` anchors.
- * Meta's crawler ignores `$` (Google extension) and then only sees `Disallow: /`,
- * which the Sharing Debugger surfaces as HTTP 403 even for facebookexternalhit
- * when its UA group is mis-applied. Nested-path Disallow (`/` + `*` + `/`)
- * blocks deeper URLs while still allowing `/`, `/hu`, `/en`, `/de`.
- */
-function landingOnlyStarBlock(): string[] {
-  return [
-    "User-agent: *",
-    "Allow: /",
-    "Allow: /hu/tema",
-    "Allow: /en/tema",
-    "Allow: /de/tema",
-    "Disallow: /*/",
-    ...PUBLIC_LANGS.flatMap((lang) => [`Disallow: /${lang}/`]),
-  ];
-}
-
 @Injectable()
 export class RobotsService {
-  constructor(private readonly platformSettings: PlatformSettingsService) {}
+  constructor(
+    private readonly platformSettings: PlatformSettingsService,
+    private readonly pathSegments: PathSegmentsService
+  ) {}
+
+  /**
+   * Landing-only rules for User-agent: * without end-of-URL `$` anchors.
+   * Longer Allow wins over Disallow /{lang}/ so guides stay crawlable.
+   */
+  private async landingOnlyStarBlock(origin: string): Promise<string[]> {
+    const payload = await this.pathSegments.getPayload();
+    const guideLangs = guideLangsForSitemapHost(origin, payload.languages);
+    const allowGuides: string[] = [];
+    for (const lang of guideLangs) {
+      const seg = await this.pathSegments.guideSegment(lang);
+      allowGuides.push(`Allow: /${lang}/${seg}`);
+    }
+    // Also allow every known UI language home + disallow nested paths.
+    const allLangs = payload.languages.length ? payload.languages : ["hu", "en", "de"];
+    return [
+      "User-agent: *",
+      "Allow: /",
+      ...allowGuides,
+      "Disallow: /*/",
+      ...allLangs.flatMap((lang) => [`Disallow: /${lang}/`]),
+    ];
+  }
 
   /**
    * Non-prod (local/staging/beta/devel): always Disallow all, no Sitemap line.
@@ -103,7 +111,7 @@ export class RobotsService {
         return [
           "# HelloLocal robots.txt — platform landing only (global indexing off)",
           ...socialPreviewAllowBlock(),
-          ...landingOnlyStarBlock(),
+          ...(await this.landingOnlyStarBlock(scope.origin)),
           "",
           sitemapLine,
           "",

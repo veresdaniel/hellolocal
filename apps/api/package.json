@@ -14,6 +14,7 @@
     "db:seed": "prisma db seed",
     "db:seed-sample-images": "node prisma/seed-sample-images.cjs",
     "generate": "prisma generate && bash scripts/copy-prisma-client.sh",
+    "generate:ui-seed": "node scripts/generate-ui-seed-catalogs.cjs",
     "postinstall": "prisma generate && bash scripts/copy-prisma-client.sh",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

@@ -1,24 +1,31 @@
 // Language-specific public path segments for the Site/Town/Place hierarchy.
-// Model names stay Site/Town/Place in code; URL labels match UI terminology per locale.
+// Runtime values come from /api/public/ui/path-segments (UiPathSegment); boot uses fallbacks.
 import type { Lang } from "./config";
+import {
+  aliasesForKey,
+  isPathSegmentForKey,
+  isReservedPathWord,
+  pathSegment,
+  pathSegmentKey,
+} from "./pathSegmentsStore";
 
-/** Site (tenant) list — Régió / Region / Region */
-export const REGION_LIST_PATH: Record<Lang, string> = {
+/** @deprecated Prefer regionListSegment(lang) — kept for typed call sites. */
+export const REGION_LIST_PATH: Record<"hu" | "en" | "de", string> = {
   hu: "regiok",
   en: "regions",
   de: "regionen",
 };
 
-/** Legacy + current region-list segments → language */
+/** Legacy + current region-list segments → language (static boot; runtime via store). */
 export const REGION_LIST_ALIASES: Record<string, Lang> = {
   regiok: "hu",
-  teruletek: "hu", // legacy Hungarian label
+  teruletek: "hu",
   regions: "en",
   regionen: "de",
 };
 
-/** Place detail — Hely / Place / Ort */
-export const PLACE_PATH: Record<Lang, string> = {
+/** @deprecated Prefer placeSegment(lang). */
+export const PLACE_PATH: Record<"hu" | "en" | "de", string> = {
   hu: "hely",
   en: "place",
   de: "ort",
@@ -26,8 +33,8 @@ export const PLACE_PATH: Record<Lang, string> = {
 
 export const PLACE_PATH_ALIASES = ["hely", "place", "ort"] as const;
 
-/** Town filter / index — Település / Town / Gemeinde */
-export const TOWN_PATH: Record<Lang, string> = {
+/** @deprecated Prefer townSegment(lang). */
+export const TOWN_PATH: Record<"hu" | "en" | "de", string> = {
   hu: "telepules",
   en: "town",
   de: "gemeinde",
@@ -35,8 +42,8 @@ export const TOWN_PATH: Record<Lang, string> = {
 
 export const TOWN_PATH_ALIASES = ["telepules", "town", "gemeinde"] as const;
 
-/** List view of a town. The map is the bare town path; the list keeps a word. */
-export const LIST_VIEW_PATH: Record<Lang, string> = {
+/** @deprecated Prefer listViewSegment(lang). */
+export const LIST_VIEW_PATH: Record<"hu" | "en" | "de", string> = {
   hu: "lista",
   en: "list",
   de: "liste",
@@ -44,8 +51,8 @@ export const LIST_VIEW_PATH: Record<Lang, string> = {
 
 export const LIST_VIEW_ALIASES = ["lista", "list", "liste"] as const;
 
-/** Explicit map word. The canonical map URL has no suffix; these redirect to it. */
-export const MAP_VIEW_PATH: Record<Lang, string> = {
+/** @deprecated Prefer mapViewSegment(lang). */
+export const MAP_VIEW_PATH: Record<"hu" | "en" | "de", string> = {
   hu: "terkep",
   en: "map",
   de: "karte",
@@ -53,13 +60,8 @@ export const MAP_VIEW_PATH: Record<Lang, string> = {
 
 export const MAP_VIEW_ALIASES = ["terkep", "map", "karte"] as const;
 
-function asLang(lang: string): Lang {
-  const code = lang.split("-")[0];
-  return (code === "en" || code === "de" ? code : "hu") as Lang;
-}
-
-/** Sales overview. The word follows the page language, like the menu label. */
-export const OVERVIEW_PATH: Record<Lang, string> = {
+/** @deprecated Prefer overviewSegment(lang). */
+export const OVERVIEW_PATH: Record<"hu" | "en" | "de", string> = {
   hu: "attekintes",
   en: "overview",
   de: "ueberblick",
@@ -69,8 +71,8 @@ export const OVERVIEW_PATH_ALIASES = ["attekintes", "overview", "ueberblick"] as
 
 export type LegalPageKey = "imprint" | "terms" | "privacy";
 
-/** Impresszum / ÁSZF / adatvédelem, in the language of the page. */
-export const LEGAL_PATH: Record<Lang, Record<LegalPageKey, string>> = {
+/** @deprecated Prefer legalSegment(lang, key). */
+export const LEGAL_PATH: Record<"hu" | "en" | "de", Record<LegalPageKey, string>> = {
   hu: { imprint: "impresszum", terms: "aszf", privacy: "adatvedelem" },
   en: { imprint: "imprint", terms: "terms", privacy: "privacy" },
   de: { imprint: "impressum", terms: "agb", privacy: "datenschutz" },
@@ -88,122 +90,116 @@ export const LEGAL_PATH_ALIASES = [
   "datenschutz",
 ] as const;
 
-const RESERVED_PUBLIC_SEGMENTS = new Set<string>([
-  ...PLACE_PATH_ALIASES,
-  ...TOWN_PATH_ALIASES,
-  ...OVERVIEW_PATH_ALIASES,
-  ...LEGAL_PATH_ALIASES,
-  ...LIST_VIEW_ALIASES,
-  ...MAP_VIEW_ALIASES,
-  "event",
-  "collections",
-  "login",
-  "register",
-  "forgot-password",
-  "reset-password",
-  "pricing",
-  "tarife",
-  "preise",
-  "static-pages",
-  "static-page",
-  "products",
-  "offline",
-  "admin",
-  "regiok",
-  "regions",
-  "regionen",
-  "teruletek",
-]);
+export function placePathAliases(): string[] {
+  return aliasesForKey("place");
+}
 
-const LEGAL_KEY_BY_SEGMENT: Record<string, LegalPageKey> = {
-  impresszum: "imprint",
-  imprint: "imprint",
-  impressum: "imprint",
-  aszf: "terms",
-  terms: "terms",
-  agb: "terms",
-  adatvedelem: "privacy",
-  privacy: "privacy",
-  datenschutz: "privacy",
-};
+export function guidePathAliases(): string[] {
+  return aliasesForKey("guide");
+}
+
+export function pricingPathAliases(): string[] {
+  return aliasesForKey("pricing");
+}
+
+export function regionListPathAliases(): string[] {
+  const list = aliasesForKey("regionList");
+  if (!list.includes("teruletek")) list.push("teruletek");
+  return list;
+}
+
+export function legalPathAliases(): string[] {
+  return [
+    ...aliasesForKey("legal.imprint"),
+    ...aliasesForKey("legal.terms"),
+    ...aliasesForKey("legal.privacy"),
+  ];
+}
+
+export function overviewPathAliases(): string[] {
+  return aliasesForKey("overview");
+}
 
 /** Localized legal path word for imprint / terms / privacy. */
 export function legalSegment(lang: string, key: LegalPageKey): string {
-  return LEGAL_PATH[asLang(lang)][key];
+  return pathSegment(lang, `legal.${key}`);
 }
 
 /** Map any legal alias segment back to the canonical page key. */
 export function legalKeyFromSegment(segment: string | undefined): LegalPageKey | null {
-  if (!segment) return null;
-  return LEGAL_KEY_BY_SEGMENT[segment] ?? null;
+  const key = pathSegmentKey(segment);
+  if (key === "legal.imprint") return "imprint";
+  if (key === "legal.terms") return "terms";
+  if (key === "legal.privacy") return "privacy";
+  return null;
 }
 
 /** Whether `pathname` contains a segment for the given legal page. */
 export function pathnameHasLegal(pathname: string, key: LegalPageKey): boolean {
-  return pathname.split("/").some((part) => LEGAL_KEY_BY_SEGMENT[part] === key);
+  return pathname.split("/").some((part) => legalKeyFromSegment(part) === key);
 }
 
-/** Localized region-list index segment (`regiok` / `regions` / `regionen`). */
+/** Localized region-list index segment. */
 export function regionListSegment(lang: string): string {
-  return REGION_LIST_PATH[asLang(lang)];
+  return pathSegment(lang, "regionList");
 }
 
 /** Localized sales-overview segment. */
 export function overviewSegment(lang: string): string {
-  return OVERVIEW_PATH[asLang(lang)];
+  return pathSegment(lang, "overview");
 }
 
 /**
  * Platform marketing landing path: language root only (`/hu`), no `/attekintes`.
- * Bare `/` redirects here (SSR + RootRedirect). Legacy overview segments redirect here too.
  */
 export function platformLandingPath(lang: string): string {
-  return `/${asLang(lang)}`;
+  const code = String(lang || "hu").split("-")[0];
+  return `/${code}`;
 }
 
 /** True when the segment is any overview path alias. */
 export function isOverviewPathSegment(segment: string | undefined): boolean {
-  return !!segment && (OVERVIEW_PATH_ALIASES as readonly string[]).includes(segment);
+  return isPathSegmentForKey(segment, "overview");
 }
 
-/** Localized place-detail path prefix (`hely` / `place` / `ort`). */
+/** Localized place-detail path prefix. */
 export function placeSegment(lang: string): string {
-  return PLACE_PATH[asLang(lang)];
+  return pathSegment(lang, "place");
 }
 
-/** Localized town path prefix (`telepules` / `town` / `gemeinde`). */
+/** Localized town path prefix. */
 export function townSegment(lang: string): string {
-  return TOWN_PATH[asLang(lang)];
+  return pathSegment(lang, "town");
 }
 
 /** True when the segment is any place-detail path alias. */
 export function isPlacePathSegment(segment: string | undefined): boolean {
-  return !!segment && (PLACE_PATH_ALIASES as readonly string[]).includes(segment);
+  return isPathSegmentForKey(segment, "place");
 }
 
 /** True when the segment is any town path alias. */
 export function isTownPathSegment(segment: string | undefined): boolean {
-  return !!segment && (TOWN_PATH_ALIASES as readonly string[]).includes(segment);
+  return isPathSegmentForKey(segment, "town");
 }
 
 /** Localized list-view suffix under a town. */
 export function listViewSegment(lang: string): string {
-  return LIST_VIEW_PATH[asLang(lang)];
+  return pathSegment(lang, "list");
 }
 
-/** Localized map-view word (canonical map URL has no suffix; these redirect to it). */
+/** Localized map-view word. */
 export function mapViewSegment(lang: string): string {
-  return MAP_VIEW_PATH[asLang(lang)];
+  return pathSegment(lang, "map");
 }
 
 /** True when the segment is any list-view alias. */
 export function isListViewSegment(segment: string | undefined): boolean {
-  return !!segment && (LIST_VIEW_ALIASES as readonly string[]).includes(segment);
+  return isPathSegmentForKey(segment, "list");
 }
 
 /** True when the segment is any map-view alias. */
 export function isMapViewSegment(segment: string | undefined): boolean {
-  return !!segment && (MAP_VIEW_ALIASES as readonly string[]).includes(segment);
+  return isPathSegmentForKey(segment, "map");
 }
 
 /** True when the segment is a list or map view word. */
@@ -213,7 +209,7 @@ export function isExploreViewSegment(segment: string | undefined): boolean {
 
 /** A path word that is never a town slug (place, event, list, legal, …). */
 export function isReservedPublicSegment(segment: string | undefined): boolean {
-  return !!segment && RESERVED_PUBLIC_SEGMENTS.has(segment);
+  return isReservedPathWord(segment);
 }
 
 /** Curator list slug from `/collections/:slug`, if the path has one. */
@@ -224,7 +220,7 @@ export function collectionSlugFromPath(pathname: string): string | null {
   return null;
 }
 
-/** Place slug from `/hely|:place|:ort/:slug`, if the path has one. */
+/** Place slug from place-segment/:slug, if the path has one. */
 export function placeSlugFromPath(pathname: string): string | null {
   const parts = pathname.split("/").filter(Boolean);
   for (let i = 0; i < parts.length - 1; i += 1) {
@@ -243,17 +239,24 @@ export function eventSlugFromPath(pathname: string): string | null {
 
 /**
  * Town slug from `/etyek-budai/etyek` or `/etyek-budai/etyek/terkep`.
- * A region host's `/etyek` is a town only when `scope.kind` is `site`.
  */
 export function townSlugFromPath(
   pathname: string,
   scope?: { kind?: string; siteSlug?: string; entitySlug?: string }
 ): string | null {
   const parts = pathname.split("/").filter(Boolean);
-  const body = parts[0] === "hu" || parts[0] === "en" || parts[0] === "de" ? parts.slice(1) : [...parts];
+  const body =
+    parts[0] && /^[a-z]{2,3}$/.test(parts[0]) && !isReservedPublicSegment(parts[0])
+      ? parts.slice(1)
+      : [...parts];
   const hadView = isExploreViewSegment(body[body.length - 1]);
   if (hadView) body.pop();
-  if (body.some((part) => isPlacePathSegment(part) || part === "event" || part === "collections" || part === "static-page")) {
+  if (
+    body.some(
+      (part) =>
+        isPlacePathSegment(part) || part === "event" || part === "collections" || part === "static-page"
+    )
+  ) {
     return null;
   }
   const town = body[body.length - 1];
@@ -281,12 +284,12 @@ export function exploreViewFromPath(pathname: string): "map" | "list" | null {
 }
 
 export function isRegionListPathSegment(segment: string | undefined): boolean {
-  return !!segment && segment in REGION_LIST_ALIASES;
+  return isPathSegmentForKey(segment, "regionList") || segment === "teruletek";
 }
 
 /** Relative path under `/:lang/:siteKey/` for a place detail URL. */
 export function placeEntityPath(lang: string, slug: string): string {
-  return `${PLACE_PATH[asLang(lang)]}/${slug}`;
+  return `${placeSegment(lang)}/${slug}`;
 }
 
 /**

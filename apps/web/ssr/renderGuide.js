@@ -1,10 +1,11 @@
 /**
- * Platform guide SSR (`/:lang/tema/:slug`) for crawlers and the first HTML paint.
+ * Platform guide SSR (`/:lang/{guide}/:slug`) for crawlers and the first HTML paint.
  */
 import { applySocialMeta, publicOrigin } from "./socialMeta.js";
 import { sanitizeRichHtml } from "./sanitizeRichHtml.js";
+import { guidePathSync, isGuideSegmentSync, loadPathSegments } from "./pathSegments.js";
 
-const LANGS = new Set(["hu", "en", "de"]);
+const LANG_RE = /^[a-z]{2,8}$/;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -14,18 +15,37 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
-/** @returns {{ lang: string, slug: string } | null} */
-export function guideRequest(pathname) {
+function asLang(lang) {
+  const code = String(lang || "")
+    .trim()
+    .toLowerCase()
+    .split("-")[0];
+  return LANG_RE.test(code) ? code : "hu";
+}
+
+/**
+ * @param {string} pathname
+ * @param {object} [payload] path-segments payload (optional; sync fallback)
+ * @returns {{ lang: string, slug: string } | null}
+ */
+export function guideRequest(pathname, payload) {
   const parts = String(pathname || "/")
     .split("?")[0]
     .split("/")
     .filter(Boolean);
-  if (parts.length !== 3 || !LANGS.has(parts[0]) || parts[1] !== "tema" || !parts[2]) return null;
+  if (parts.length !== 3 || !LANG_RE.test(parts[0]) || !parts[2]) return null;
+  if (!isGuideSegmentSync(parts[1], payload)) return null;
   return { lang: parts[0], slug: decodeURIComponent(parts[2]) };
 }
 
-/** Hungarian guides are canonical on hellolocal.hu; English and German on hellolocal.eu. */
-export function guideCanonical(origin, lang, slug) {
+/** Resolve guide request using a fresh (or cached) path-segments payload. */
+export async function resolveGuideRequest(pathname, apiUrl) {
+  const payload = await loadPathSegments(apiUrl);
+  return guideRequest(pathname, payload);
+}
+
+/** Hungarian guides are canonical on hellolocal.hu; other langs on hellolocal.eu. */
+export function guideCanonical(origin, lang, slug, payload) {
   let host = "";
   try {
     host = new URL(origin).hostname.replace(/^www\./, "");
@@ -38,7 +58,7 @@ export function guideCanonical(origin, lang, slug) {
     : lang === "hu"
       ? "https://hellolocal.hu"
       : "https://hellolocal.eu";
-  return `${base}/${lang}/tema/${slug}`;
+  return `${base}${guidePathSync(lang, slug, payload)}`;
 }
 
 function absoluteAsset(origin, url) {
@@ -49,24 +69,26 @@ function absoluteAsset(origin, url) {
   return `${base}${raw.startsWith("/") ? raw : `/${raw}`}`;
 }
 
-export function renderGuideDocument(indexHtml, guide, origin) {
+export function renderGuideDocument(indexHtml, guide, origin, payload) {
   origin = publicOrigin(origin);
   const slug = String(guide.slug || "");
-  const lang = LANGS.has(guide.lang) ? guide.lang : "hu";
-  const languages = Array.isArray(guide.languages) && guide.languages.length ? guide.languages : [lang];
-  const url = guideCanonical(origin, lang, slug);
+  const lang = asLang(guide.lang);
+  const languages =
+    Array.isArray(guide.languages) && guide.languages.length
+      ? guide.languages.map(asLang)
+      : [lang];
+  const url = guideCanonical(origin, lang, slug, payload);
   const title = String(guide.seoTitle || guide.title || "HelloLocal");
   const description = String(guide.seoDescription || "");
   const image = absoluteAsset(origin, guide.imageUrl) || `${origin}/marketing/hellolocal-share.jpg`;
   const robots = guide.indexable === true ? "index,follow" : "noindex,nofollow";
   const alternates = languages
-    .filter((code) => LANGS.has(code))
     .map(
       (code) =>
-        `<link rel="alternate" hreflang="${code}" href="${escapeHtml(guideCanonical(origin, code, slug))}" />`
+        `<link rel="alternate" hreflang="${code}" href="${escapeHtml(guideCanonical(origin, code, slug, payload))}" />`
     )
     .join("");
-  const xDefault = guideCanonical(origin, languages.includes("hu") ? "hu" : lang, slug);
+  const xDefault = guideCanonical(origin, languages.includes("hu") ? "hu" : lang, slug, payload);
   const caption = String(guide.imageCaption || "").trim();
   const figure = guide.imageUrl
     ? `<figure class="guide__figure"><img src="${escapeHtml(absoluteAsset(origin, guide.imageUrl))}" alt="${escapeHtml(caption || guide.title || "")}" />${

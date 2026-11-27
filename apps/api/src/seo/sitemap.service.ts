@@ -9,7 +9,6 @@ import {
   eventDetailPath,
   legalPagePath,
   overviewPath,
-  platformGuidePath,
   guideLangsForSitemapHost,
   placeDetailPath,
   platformPricingPath,
@@ -28,6 +27,7 @@ import {
   PLATFORM_LANDING_CRAWLABLE_KEY,
 } from "../common/platform-landing-crawlable";
 import { placeOwnerPubliclyVisible } from "../common/owner-visibility";
+import { PathSegmentsService } from "../ui-copy/path-segments.service";
 
 export type SitemapUrl = {
   loc: string;
@@ -62,7 +62,8 @@ export class SitemapService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly scopeResolver: SitemapScopeResolver
+    private readonly scopeResolver: SitemapScopeResolver,
+    private readonly pathSegments: PathSegmentsService
   ) {}
 
   chunks(): readonly SitemapChunk[] {
@@ -168,15 +169,21 @@ ${entries}
       select: { slug: true, updatedAt: true },
       orderBy: { sortOrder: "asc" },
     });
-    const langs = guideLangsForSitemapHost(origin);
-    return guides.flatMap((guide) =>
-      langs.map((lang) => ({
-        loc: absoluteUrlOnOrigin(origin, platformGuidePath(lang, guide.slug)),
-        lastmod: guide.updatedAt.toISOString(),
-        changefreq: "weekly" as const,
-        priority: 0.8,
-      }))
-    );
+    const payload = await this.pathSegments.getPayload();
+    const langs = guideLangsForSitemapHost(origin, payload.languages);
+    const urls: SitemapUrl[] = [];
+    for (const guide of guides) {
+      for (const lang of langs) {
+        const guideSeg = await this.pathSegments.guideSegment(lang);
+        urls.push({
+          loc: absoluteUrlOnOrigin(origin, `/${lang}/${guideSeg}/${guide.slug}`),
+          lastmod: guide.updatedAt.toISOString(),
+          changefreq: "weekly",
+          priority: 0.8,
+        });
+      }
+    }
+    return urls;
   }
 
   private async urlsForChunk(scope: SitemapScope, chunk: SitemapChunk): Promise<SitemapUrl[]> {

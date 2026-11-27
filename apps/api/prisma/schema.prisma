@@ -1552,7 +1552,7 @@ model PlaceFloorplan {
 }
 
 // FloorplanPin: Pins/markers on floorplans
-// Platform marketing guides (hellolocal.hu / hellolocal.eu /tema/:slug).
+// Platform marketing guides (hellolocal.hu / hellolocal.eu /utmutato|guide|ratgeber/:slug).
 model PlatformGuide {
   id          String   @id @default(cuid())
   slug        String   @unique
@@ -1590,7 +1590,22 @@ model UiLanguage {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 
-  messages UiMessage[]
+  messages     UiMessage[]
+  pathSegments UiPathSegment[]
+}
+
+// Localized public URL path words (place/map/guide/…). Seeded from a dictionary
+// (English fallback) when a UiLanguage is added; admin can override.
+model UiPathSegment {
+  lang    String @db.VarChar(8)
+  key     String @db.VarChar(40)
+  segment String @db.VarChar(32)
+
+  language UiLanguage @relation(fields: [lang], references: [code], onDelete: Cascade)
+
+  @@id([lang, key])
+  @@index([key])
+  @@index([segment])
 }
 
 // UiMessage: one public interface string. key is a dotted path such as public.overview.lead.

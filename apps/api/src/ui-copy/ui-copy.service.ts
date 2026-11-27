@@ -1,9 +1,18 @@
-import { BadRequestException, ForbiddenException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeLanguageCode } from "../common/language-code";
 import { canEditCopy } from "../auth/copy-access";
 import { ERROR_MESSAGES } from "../common/constants/error-messages";
 import { UiTranslateService } from "./ui-translate.service";
+import { PathSegmentsService } from "./path-segments.service";
+import type { PathSegmentKey } from "./path-segment.dict";
+import { SHIPPED_UI_LANGS, shippedUiSeedCatalogs } from "./seed-catalogs";
 
 function assertPlatformCopyEditor(role?: string | null) {
   if (!canEditCopy({ role }, "platform")) {
@@ -11,7 +20,16 @@ function assertPlatformCopyEditor(role?: string | null) {
   }
 }
 
-const PREFIXES = ["admin", "public", "common", "cookieConsent", "error", "offline", "validation"] as const;
+const PREFIXES = [
+  "admin",
+  "public",
+  "common",
+  "cookieConsent",
+  "error",
+  "offline",
+  "validation",
+  "underConstruction",
+] as const;
 const FALLBACK = "hu";
 
 export type UiCatalogs = Record<string, Record<string, string>>;
@@ -22,13 +40,42 @@ function isMessageKey(key: string): boolean {
 }
 
 @Injectable()
-export class UiCopyService {
+export class UiCopyService implements OnModuleInit {
+  private readonly logger = new Logger(UiCopyService.name);
   private cache = new Map<string, { until: number; body: { languages: string[]; messages: Record<string, string> } }>();
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly translator: UiTranslateService
+    private readonly translator: UiTranslateService,
+    private readonly pathSegments: PathSegmentsService
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    try {
+      await this.ensureShippedLanguagesSeeded();
+    } catch (err) {
+      this.logger.warn(
+        `UiMessage boot seed skipped: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+  }
+
+  /**
+   * Ensure hu/en/de exist and insert missing UiMessage rows from the shipped
+   * locale catalog (admin namespace excluded). Never overwrites existing edits.
+   */
+  async ensureShippedLanguagesSeeded(): Promise<{ inserted: number }> {
+    await this.prisma.uiLanguage.createMany({
+      data: SHIPPED_UI_LANGS.map((code, index) => ({ code, sortOrder: index })),
+      skipDuplicates: true,
+    });
+    const result = await this.applyCatalogSync(shippedUiSeedCatalogs(), "missing");
+    this.logger.log(
+      `UiMessage seed: languages=${SHIPPED_UI_LANGS.join(",")} inserted≈${result.inserted}`
+    );
+    await this.pathSegments.ensureAllLanguagesSeeded();
+    return { inserted: result.inserted };
+  }
 
   private clearCache() {
     this.cache.clear();
@@ -108,6 +155,7 @@ export class UiCopyService {
           ]
         : []),
     ]);
+    await this.pathSegments.seedLanguage(normalized);
     this.clearCache();
     const languages = await this.languages();
     // Fire-and-forget: the editor polls the job id. Failure (e.g. no API key) keeps the hu copies.
@@ -136,8 +184,27 @@ export class UiCopyService {
       throw new BadRequestException("A magyar a tartalék nyelv, nem törölhető.");
     }
     await this.prisma.uiLanguage.deleteMany({ where: { code: normalized } });
+    this.pathSegments.invalidate();
     this.clearCache();
     return this.languages();
+  }
+
+  pathSegmentsPublic() {
+    return this.pathSegments.getPayload();
+  }
+
+  pathSegmentsAdmin(role?: string | null) {
+    assertPlatformCopyEditor(role);
+    return this.pathSegments.listAdmin();
+  }
+
+  savePathSegments(
+    lang: string,
+    entries: Partial<Record<PathSegmentKey, string>>,
+    role?: string | null
+  ) {
+    assertPlatformCopyEditor(role);
+    return this.pathSegments.saveAdmin(lang, entries);
   }
 
   async saveMessages(lang: string, entries: Record<string, string>, role?: string | null) {
@@ -175,6 +242,14 @@ export class UiCopyService {
     mode: "missing" | "replace" = "missing"
   ) {
     assertPlatformCopyEditor(role);
+    return this.applyCatalogSync(catalogs, mode);
+  }
+
+  /** Internal catalog sync (boot seed + admin). Does not check role. */
+  private async applyCatalogSync(
+    catalogs: UiCatalogs,
+    mode: "missing" | "replace" = "missing"
+  ): Promise<{ inserted: number; updated: number; mode: "missing" | "replace" }> {
     const incoming = Object.entries(catalogs).flatMap(([lang, messages]) => {
       const code = normalizeLanguageCode(lang);
       if (!code || !messages || typeof messages !== "object") return [];
@@ -215,8 +290,14 @@ export class UiCopyService {
       this.clearCache();
       return { inserted: 0, updated: incoming.length, mode };
     }
+    const before = await this.prisma.uiMessage.count({
+      where: { lang: { in: codes } },
+    });
     await this.prisma.uiMessage.createMany({ data: incoming, skipDuplicates: true });
+    const after = await this.prisma.uiMessage.count({
+      where: { lang: { in: codes } },
+    });
     this.clearCache();
-    return { inserted: incoming.length, updated: 0, mode };
+    return { inserted: Math.max(0, after - before), updated: 0, mode };
   }
 }

@@ -1,6 +1,12 @@
 // src/app/site/SiteLayout.tsx
 import { Outlet, useParams, Navigate, useLocation } from "react-router-dom";
-import { isOverviewPathSegment, LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, mapViewSegment, OVERVIEW_PATH_ALIASES } from "../entityPaths";
+import {
+  isOverviewPathSegment,
+  isReservedPublicSegment,
+  legalKeyFromSegment,
+  legalSegment,
+  mapViewSegment,
+} from "../entityPaths";
 import { canonicalHostPath, useHostScope } from "../hostScope";
 import { isPlatformHost } from "../urls";
 import { lazy, Suspense } from "react";
@@ -48,27 +54,8 @@ export function SiteLayout() {
   // Check if we're on a collections route (which doesn't require siteKey)
   const isCollectionsRoute = location.pathname.includes("/collections/");
 
-  // Reserved paths that should not be treated as siteKey
-  const RESERVED_PATHS = [
-    "sites",
-    "regiok",
-    "teruletek",
-    "regions",
-    "regionen",
-    "admin",
-    "static-pages",
-    "static-page",
-    ...LEGAL_PATH_ALIASES,
-    "pricing",
-    "tarife",
-    "preise",
-    ...OVERVIEW_PATH_ALIASES,
-    "collections",
-    "hely",
-    "place",
-    "ort",
-    "event",
-  ];
+  const isReservedSiteKey = (value: string | undefined) =>
+    !!value && (value === "sites" || value === "admin" || isReservedPublicSegment(value));
 
   const mapWord = mapViewSegment(lang);
   // A town domain keeps the map at /:lang/terkep. The directory is /:lang.
@@ -85,7 +72,7 @@ export function SiteLayout() {
     !!siteKeyParam &&
     siteKeyParam !== scope.siteSlug &&
     siteKeyParam !== mapWord &&
-    !RESERVED_PATHS.includes(siteKeyParam);
+    !isReservedSiteKey(siteKeyParam);
 
   // Determine siteKey - use DEFAULT_SITE_SLUG if siteKeyParam is a reserved path
   // For collections route, always use DEFAULT_SITE_SLUG (no siteKey in URL)
@@ -94,7 +81,7 @@ export function SiteLayout() {
       ? DEFAULT_SITE_SLUG
       : viewOnTownHost || townOnRegionHost || regionMap
         ? scope.siteSlug
-        : RESERVED_PATHS.includes(siteKeyParam || "")
+        : isReservedSiteKey(siteKeyParam)
           ? hostSlug ?? DEFAULT_SITE_SLUG
           : (siteKeyParam ?? hostSlug ?? DEFAULT_SITE_SLUG)
     : DEFAULT_SITE_SLUG;

@@ -6,6 +6,7 @@ import { AdminPageHeader } from "../../components/AdminPageHeader";
 import { TipTapEditorWithUpload } from "../../components/TipTapEditorWithUpload";
 import { useToast } from "../../contexts/ToastContext";
 import { isLang, type Lang } from "../../app/config";
+import { getUiLanguages } from "../../api/uiCopy.api";
 import {
   createPlatformGuide,
   deletePlatformGuide,
@@ -15,9 +16,7 @@ import {
   type PlatformGuideTranslation,
 } from "../../api/platformGuides";
 
-const LANGS: Lang[] = ["hu", "en", "de"];
-
-const EMPTY_TRANSLATION = (lang: Lang): PlatformGuideTranslation => ({
+const EMPTY_TRANSLATION = (lang: string): PlatformGuideTranslation => ({
   lang,
   title: "",
   body: "",
@@ -37,6 +36,15 @@ export function PlatformGuidesPage() {
   const creating = id === "new";
   const editing = Boolean(id && id !== "new");
 
+  const languagesQuery = useQuery({
+    queryKey: ["admin-ui-languages"],
+    queryFn: getUiLanguages,
+  });
+  const langs = useMemo(() => {
+    const fromDb = languagesQuery.data?.languages ?? [];
+    return fromDb.length ? fromDb : ["hu", "en", "de"];
+  }, [languagesQuery.data?.languages]);
+
   const list = useQuery({
     queryKey: ["admin-platform-guides"],
     queryFn: listAdminPlatformGuides,
@@ -47,15 +55,25 @@ export function PlatformGuidesPage() {
     enabled: editing,
   });
 
-  const [editLang, setEditLang] = useState<Lang>("hu");
+  const [editLang, setEditLang] = useState("hu");
   const [slug, setSlug] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [isPublished, setIsPublished] = useState(true);
-  const [translations, setTranslations] = useState<Record<Lang, PlatformGuideTranslation>>({
+  const [translations, setTranslations] = useState<Record<string, PlatformGuideTranslation>>({
     hu: EMPTY_TRANSLATION("hu"),
-    en: EMPTY_TRANSLATION("en"),
-    de: EMPTY_TRANSLATION("de"),
   });
+
+  useEffect(() => {
+    if (!langs.length) return;
+    setEditLang((prev) => (langs.includes(prev) ? prev : langs[0]));
+    setTranslations((prev) => {
+      const next = { ...prev };
+      for (const code of langs) {
+        if (!next[code]) next[code] = EMPTY_TRANSLATION(code);
+      }
+      return next;
+    });
+  }, [langs]);
 
   useEffect(() => {
     if (!detail.data) return;
@@ -64,7 +82,7 @@ export function PlatformGuidesPage() {
     setIsPublished(detail.data.isPublished);
     setTranslations((prev) => {
       const next = { ...prev };
-      for (const code of LANGS) {
+      for (const code of langs) {
         const row = detail.data?.translations.find((item) => item.lang === code);
         next[code] = row
           ? {
@@ -76,16 +94,27 @@ export function PlatformGuidesPage() {
             }
           : EMPTY_TRANSLATION(code);
       }
+      for (const row of detail.data.translations) {
+        if (!next[row.lang]) {
+          next[row.lang] = {
+            ...row,
+            imageUrl: row.imageUrl || "",
+            imageCaption: row.imageCaption || "",
+            seoTitle: row.seoTitle || "",
+            seoDescription: row.seoDescription || "",
+          };
+        }
+      }
       return next;
     });
-  }, [detail.data]);
+  }, [detail.data, langs]);
 
   const payload = useMemo(
     () => ({
       slug,
       sortOrder,
       isPublished,
-      translations: LANGS.map((code) => translations[code]).filter((row) => row.title.trim() && row.body.trim()),
+      translations: Object.values(translations).filter((row) => row.title.trim() && row.body.trim()),
     }),
     [slug, sortOrder, isPublished, translations]
   );
@@ -112,10 +141,18 @@ export function PlatformGuidesPage() {
     onError: (err: Error) => showToast(err.message, "error"),
   });
 
-  const current = translations[editLang];
+  const current = translations[editLang] || EMPTY_TRANSLATION(editLang);
   const patch = (partial: Partial<PlatformGuideTranslation>) => {
-    setTranslations((prev) => ({ ...prev, [editLang]: { ...prev[editLang], ...partial } }));
+    setTranslations((prev) => ({
+      ...prev,
+      [editLang]: { ...(prev[editLang] || EMPTY_TRANSLATION(editLang)), ...partial, lang: editLang },
+    }));
   };
+
+  const tabLangs = useMemo(() => {
+    const extra = Object.keys(translations).filter((code) => !langs.includes(code));
+    return [...langs, ...extra];
+  }, [langs, translations]);
 
   if (!creating && !editing) {
     return (
@@ -178,7 +215,7 @@ export function PlatformGuidesPage() {
           {t("admin.published", { defaultValue: "Publikus" })}
         </label>
         <div className="guide-admin__langs" role="tablist">
-          {LANGS.map((code) => (
+          {tabLangs.map((code) => (
             <button
               key={code}
               type="button"

@@ -17,7 +17,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
 import { overviewLang, overviewShareUrl, renderOverviewDocument } from './ssr/renderOverview.js';
-import { guideRequest, renderGuideDocument } from './ssr/renderGuide.js';
+import { resolveGuideRequest, renderGuideDocument } from './ssr/renderGuide.js';
+import { loadPathSegments } from './ssr/pathSegments.js';
 import {
   applyAdminRobots,
   buildPublicContentHtml,
@@ -720,8 +721,9 @@ app.get('*', async (req, res, next) => {
   const requestOrigin = `${forwardProto}://${forwardHost || req.get('host') || 'localhost'}`;
   const customDomain = await resolveCustomDomain(forwardHost);
 
-  // Platform guides (`/:lang/tema/:slug`) before the language-root overview.
-  const guide = !customDomain ? guideRequest(req.path) : null;
+  // Platform guides (`/:lang/{guide}/:slug`) before the language-root overview.
+  const pathSegments = !customDomain ? await loadPathSegments(API_URL) : null;
+  const guide = pathSegments ? await resolveGuideRequest(req.path, API_URL) : null;
   if (guide) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 800);
@@ -734,7 +736,7 @@ app.get('*', async (req, res, next) => {
         const data = await response.json();
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(
-          renderGuideDocument(readShell(), data, publicOrigin(requestOrigin))
+          renderGuideDocument(readShell(), data, publicOrigin(requestOrigin), pathSegments)
         );
       }
     } catch (error) {
@@ -751,11 +753,12 @@ app.get('*', async (req, res, next) => {
     try {
       const html = readShell();
       const origin = publicOrigin(requestOrigin);
-      const [uiCopy, platform, guides, platformEntries] = await Promise.all([
+      const [uiCopy, platform, guides, platformEntries, pathSegments] = await Promise.all([
         loadUiCopy(overview),
         loadPlatformForOverview(overview),
         loadPlatformGuides(overview),
         loadPlatformHostEntries(),
+        loadPathSegments(API_URL),
       ]);
       const hostEntry = matchPlatformHostEntry(forwardHost, platformEntries);
       // UiMessage is the live source; locale JSON is seed/fallback inside renderOverview.
@@ -778,6 +781,7 @@ app.get('*', async (req, res, next) => {
           currencyByLang: platform.currencyByLang,
           currencies: platform.currencies,
           guides,
+          pathSegments,
           xDefaultLang: hostEntry?.lang || overview,
         })
       );

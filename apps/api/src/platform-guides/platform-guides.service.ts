@@ -10,10 +10,8 @@ import { SitemapService } from "../seo/sitemap.service";
 import { PlatformSettingsService } from "../platform-settings/platform-settings.service";
 import { PLATFORM_GUIDE_SEED } from "./platform-guides.seed";
 
-const LANGS = ["hu", "en", "de"] as const;
-type GuideLang = (typeof LANGS)[number];
-
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const LANG_CODE_RE = /^[a-z]{2,8}$/;
 
 export type GuideTranslationInput = {
   lang: string;
@@ -32,8 +30,13 @@ export type GuideWriteInput = {
   translations?: GuideTranslationInput[];
 };
 
-function asLang(raw: string | undefined): GuideLang {
-  return raw === "en" || raw === "de" ? raw : "hu";
+/** Primary subtag; empty → hu. Any UiLanguage code is accepted at runtime. */
+function asLang(raw: string | undefined): string {
+  const code = String(raw || "")
+    .trim()
+    .toLowerCase()
+    .split("-")[0];
+  return LANG_CODE_RE.test(code) ? code : "hu";
 }
 
 function cleanText(value: unknown, max: number): string {
@@ -212,15 +215,16 @@ function numberOr(value: unknown, fallback: number): number {
   return Math.max(0, Math.round(n));
 }
 
-function pickTranslation<T extends { lang: string }>(rows: T[], lang: GuideLang): T | null {
+function pickTranslation<T extends { lang: string }>(rows: T[], lang: string): T | null {
   return rows.find((row) => row.lang === lang) || rows.find((row) => row.lang === "hu") || rows[0] || null;
 }
 
 function normalizeTranslations(rows: GuideTranslationInput[] | undefined) {
   const byLang = new Map<string, GuideTranslationInput>();
   for (const row of rows ?? []) {
-    if (!LANGS.includes(row.lang as GuideLang)) continue;
-    byLang.set(row.lang, row);
+    const lang = asLang(row.lang);
+    if (!LANG_CODE_RE.test(lang)) continue;
+    byLang.set(lang, { ...row, lang });
   }
   if (!byLang.size) {
     throw new BadRequestException("Legalább egy nyelv kell.");

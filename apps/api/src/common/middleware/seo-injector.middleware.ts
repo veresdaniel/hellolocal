@@ -20,6 +20,31 @@ import {
   requestHostname,
   requestProto,
 } from "../../seo/public-path.util";
+import { PATH_SEGMENT_DICT } from "../../ui-copy/path-segment.dict";
+
+const STATIC_KNOWN_ROUTES = new Set([
+  "event",
+  "blog",
+  "tudastar",
+  "infok",
+  "admin",
+  "teruletek",
+  "products",
+  "collections",
+  "static-pages",
+  "static-page",
+  "offline",
+]);
+
+function knownPublicRoutes(): Set<string> {
+  const set = new Set<string>(STATIC_KNOWN_ROUTES);
+  for (const map of Object.values(PATH_SEGMENT_DICT)) {
+    for (const segment of Object.values(map)) set.add(segment);
+  }
+  return set;
+}
+
+const KNOWN_PUBLIC_ROUTES = knownPublicRoutes();
 
 @Injectable()
 export class SeoInjectorMiddleware implements NestMiddleware {
@@ -138,59 +163,16 @@ export class SeoInjectorMiddleware implements NestMiddleware {
       const lang = pathParts[0]?.match(/^[a-z]{2,3}$/) ? pathParts[0] : "hu";
 
       // Extract tenant key (second part, if exists and not a known route)
-      const knownRoutes = [
-        "place",
-        "hely",
-        "ort",
-        "town",
-        "telepules",
-        "gemeinde",
-        "lista",
-        "list",
-        "liste",
-        "terkep",
-        "map",
-        "karte",
-        "event",
-        "blog",
-        "tudastar",
-        "infok",
-        "imprint",
-        "terms",
-        "privacy",
-        "impresszum",
-        "aszf",
-        "adatvedelem",
-        "impressum",
-        "agb",
-        "datenschutz",
-        "attekintes",
-        "overview",
-        "ueberblick",
-        "tema",
-        "pricing",
-        "tarife",
-        "preise",
-        "admin",
-        "teruletek",
-        "regiok",
-        "regions",
-        "regionen",
-        "products",
-        "collections",
-        "static-pages",
-        "static-page",
-        "offline",
-      ];
       const tenantKey =
-        pathParts[1] && !knownRoutes.includes(pathParts[1]) ? pathParts[1] : undefined;
+        pathParts[1] && !KNOWN_PUBLIC_ROUTES.has(pathParts[1]) ? pathParts[1] : undefined;
 
       // Extract route type and slug
       const routeIndex = tenantKey ? 2 : 1;
       const routeType = pathParts[routeIndex];
       const slug = pathParts[routeIndex + 1];
       const isPlaceRoute =
-        routeType === "place" || routeType === "hely" || routeType === "ort";
+        !!routeType &&
+        Object.values(PATH_SEGMENT_DICT).some((map) => map.place === routeType);
 
       // Fetch SEO metadata
       type SeoData = {

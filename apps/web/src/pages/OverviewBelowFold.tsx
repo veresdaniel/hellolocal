@@ -14,6 +14,7 @@ import {
 } from "../marketing/landingCmsImages";
 import { getPlatformSettings } from "../api/places.api";
 import { listPlatformGuides } from "../api/platformGuides";
+import { platformGuidePath } from "../app/guidePaths";
 
 const GUIDE_BY_STORY: Partial<Record<(typeof STORY_KEYS)[number], string>> = {
   maker: "helyi-vallalkozas",
@@ -95,7 +96,7 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
         </ul>
         {guideSlugs.has("google-terkep") ? (
           <p className="overview__more">
-            <Link to={`/${lang}/tema/google-terkep`}>{readMore}</Link>
+            <Link to={platformGuidePath(lang, "google-terkep")}>{readMore}</Link>
           </p>
         ) : null}
       </section>
@@ -129,7 +130,7 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
               <LandingHtml html={text(`stories.${key}.text`)} as="div" />
               {GUIDE_BY_STORY[key] && guideSlugs.has(GUIDE_BY_STORY[key]) ? (
                 <p className="overview__more">
-                  <Link to={`/${lang}/tema/${GUIDE_BY_STORY[key]}`}>{readMore}</Link>
+                  <Link to={platformGuidePath(lang, GUIDE_BY_STORY[key]!)}>{readMore}</Link>
                 </p>
               ) : null}
             </div>
@@ -154,7 +155,7 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
         </ol>
         {guideSlugs.has("hogyan-kerul-fel") ? (
           <p className="overview__more">
-            <Link to={`/${lang}/tema/hogyan-kerul-fel`}>{readMore}</Link>
+            <Link to={platformGuidePath(lang, "hogyan-kerul-fel")}>{readMore}</Link>
           </p>
         ) : null}
       </section>
@@ -173,7 +174,7 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
               <LandingHtml html={text(`features.${key}.text`)} as="div" />
               {key === "sites" && guideSlugs.has("sajat-domain") ? (
                 <p className="overview__more">
-                  <Link to={`/${lang}/tema/sajat-domain`}>{readMore}</Link>
+                  <Link to={platformGuidePath(lang, "sajat-domain")}>{readMore}</Link>
                 </p>
               ) : null}
             </li>
@@ -189,9 +190,14 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
             <LandingInline html={text("guidesTitle")} />
           </h2>
           <ul className="overview__guides">
-            {guides.map((guide) => (
+            {guides.map((guide, index) => (
               <li key={guide.slug}>
-                <Link to={`/${lang}/tema/${guide.slug}`}>{guide.title}</Link>
+                <Link to={platformGuidePath(lang, guide.slug)}>
+                  <span className="overview__guides-no" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="overview__guides-title">{guide.title}</span>
+                </Link>
               </li>
             ))}
           </ul>

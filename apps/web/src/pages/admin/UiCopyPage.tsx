@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { usePageTitle } from "../../hooks/usePageTitle";
 import { UiCopyEditor } from "../../components/UiCopyEditor";
+import { PathSegmentsEditor } from "../../components/PathSegmentsEditor";
 
 export function UiCopyPage() {
   const { t } = useTranslation();
@@ -17,6 +18,7 @@ export function UiCopyPage() {
         </p>
       </div>
       <UiCopyEditor showLanguageManager showNamespaceFilter />
+      <PathSegmentsEditor />
     </div>
   );
 }

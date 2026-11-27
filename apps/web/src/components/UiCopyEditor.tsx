@@ -103,6 +103,7 @@ export function UiCopyEditor({
     setLoading(true);
     setError("");
     try {
+      // Idempotent missing sync (API also seeds hu/en/de on boot). Keeps admin.json keys in DB when edited here.
       if (!synced.current) {
         for (const chunk of catalogChunks(bundledCatalogs())) await syncUiCatalogs(chunk);
         synced.current = true;

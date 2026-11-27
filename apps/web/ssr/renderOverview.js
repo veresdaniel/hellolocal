@@ -354,18 +354,27 @@ export function overviewShareUrl(origin, pathname, lang) {
  * Render the platform overview into the SPA shell (body + head SEO/JSON-LD).
  * `shareImage` is admin/platform defaultShareImage; `indexable` gates robots (default off).
  */
-function renderGuideIndex(lang, copy, guides) {
+const GUIDE_SEGMENT_FALLBACK = { hu: "utmutato", en: "guide", de: "ratgeber" };
+
+function guideHref(lang, slug, pathSegments) {
+  const code = LANGS.includes(lang) ? lang : FALLBACK_LANG;
+  const fromDb = pathSegments?.byLang?.[code]?.guide;
+  const segment = fromDb || GUIDE_SEGMENT_FALLBACK[code] || GUIDE_SEGMENT_FALLBACK.hu;
+  return `/${code}/${segment}/${slug}`;
+}
+
+function renderGuideIndex(lang, copy, guides, pathSegments) {
   if (!Array.isArray(guides) || !guides.length) return "";
   const items = guides
     .filter((guide) => guide && guide.slug && guide.title)
     .map(
-      (guide) =>
-        `<li><a href="/${lang}/tema/${escapeHtml(guide.slug)}">${sanitizeInlineHtml(guide.title)}</a></li>`
+      (guide, index) =>
+        `<li><a href="${escapeHtml(guideHref(lang, guide.slug, pathSegments))}"><span class="overview__guides-no" aria-hidden="true">${String(index + 1).padStart(2, "0")}</span><span class="overview__guides-title">${sanitizeInlineHtml(guide.title)}</span></a></li>`
     )
     .join("");
   if (!items) return "";
   const heading = sanitizeInlineHtml(copy.guidesTitle || copy.readMore || "");
-  return `<section><h2>${heading}</h2><ul>${items}</ul></section>`;
+  return `<section class="overview__section"><h2>${heading}</h2><ul class="overview__guides">${items}</ul></section>`;
 }
 
 export function renderOverviewDocument(
@@ -386,6 +395,7 @@ export function renderOverviewDocument(
     currencyByLang,
     currencies,
     guides,
+    pathSegments,
     /** Host opener language for hreflang x-default (`/hu` on hellolocal.hu). */
     xDefaultLang,
   }
@@ -511,7 +521,7 @@ export function renderOverviewDocument(
         <div>${sanitizeRichHtml(copy.plansLead || "")}</div>
         ${planItems}
       </section>
-      ${renderGuideIndex(lang, copy, guides)}
+      ${renderGuideIndex(lang, copy, guides, pathSegments)}
       <section>
         <h2>${sanitizeInlineHtml(copy.faqTitle)}</h2>
         ${faqItems}

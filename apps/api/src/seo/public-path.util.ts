@@ -1,80 +1,57 @@
 /**
- * Language-specific public URL path segments (mirrors apps/web/src/app/entityPaths.ts).
- * Keep in sync when frontend path labels change.
+ * Language-specific public URL path segments.
+ * Sync helpers use the built-in dictionary (EN fallback). Live DB values are
+ * preferred via PathSegmentsService in sitemap/robots.
  */
 
-export type PublicLang = "hu" | "en" | "de";
+import { PATH_SEGMENT_DICT, pathSegmentsForLang } from "../ui-copy/path-segment.dict";
 
-export const PUBLIC_LANGS: PublicLang[] = ["hu", "en", "de"];
+export type PublicLang = string;
+
+/** Shipped UI languages — still the default SEO language set. */
+export const PUBLIC_LANGS = ["hu", "en", "de"] as const;
 
 /** In-memory sitemap/robots cache TTL (seconds). Explicit invalidate clears earlier. */
 export const SEO_CACHE_TTL_SECONDS = 60;
 
-const PLACE_PATH: Record<PublicLang, string> = {
-  hu: "hely",
-  en: "place",
-  de: "ort",
-};
-
-const TOWN_PATH: Record<PublicLang, string> = {
-  hu: "telepules",
-  en: "town",
-  de: "gemeinde",
-};
-
-const MAP_VIEW_PATH: Record<PublicLang, string> = {
-  hu: "terkep",
-  en: "map",
-  de: "karte",
-};
-
-const REGION_LIST_PATH: Record<PublicLang, string> = {
-  hu: "regiok",
-  en: "regions",
-  de: "regionen",
-};
-
-const PRICING_PATH: Record<PublicLang, string> = {
-  hu: "pricing",
-  en: "tarife",
-  de: "preise",
-};
-
-/** Legal pages follow the page language, same as place and town segments. */
-const LEGAL_PATH: Record<PublicLang, Record<string, string>> = {
-  hu: { imprint: "impresszum", terms: "aszf", privacy: "adatvedelem" },
-  en: { imprint: "imprint", terms: "terms", privacy: "privacy" },
-  de: { imprint: "impressum", terms: "agb", privacy: "datenschutz" },
-};
-
-/** Coerce arbitrary lang strings to a supported public UI lang (`hu` fallback). */
-export function asPublicLang(lang: string): PublicLang {
-  return lang === "en" || lang === "de" ? lang : "hu";
+/** Primary subtag; empty → hu. */
+export function asPublicLang(lang: string): string {
+  const code = String(lang || "")
+    .trim()
+    .toLowerCase()
+    .split("-")[0];
+  return code || "hu";
 }
 
-/** Localized place detail segment (`hely` / `place` / `ort`). */
+/** Localized place detail segment (dictionary / EN fallback). */
 export function placePathSegment(lang: string): string {
-  return PLACE_PATH[asPublicLang(lang)];
+  return pathSegmentsForLang(asPublicLang(lang)).place;
 }
 
 /** Localized town path segment used in legacy / redirect helpers. */
 export function townPathSegment(lang: string): string {
-  return TOWN_PATH[asPublicLang(lang)];
+  return pathSegmentsForLang(asPublicLang(lang)).town;
 }
 
-/** Localized region-list segment (`regiok` / `regions` / `regionen`). */
+/** Localized region-list segment. */
 export function regionListPathSegment(lang: string): string {
-  return REGION_LIST_PATH[asPublicLang(lang)];
+  return pathSegmentsForLang(asPublicLang(lang)).regionList;
 }
 
 /** Localized platform pricing segment. */
 export function pricingPathSegment(lang: string): string {
-  return PRICING_PATH[asPublicLang(lang)];
+  return pathSegmentsForLang(asPublicLang(lang)).pricing;
 }
 
-/** True when `segment` is a place detail path label in any UI language. */
+/** Localized map-view segment. */
+export function mapPathSegment(lang: string): string {
+  return pathSegmentsForLang(asPublicLang(lang)).map;
+}
+
+/** True when `segment` is a place detail path label in the built-in dictionary. */
 export function isPlacePathSegment(segment: string | undefined): boolean {
-  return segment === "hely" || segment === "place" || segment === "ort";
+  if (!segment) return false;
+  return Object.values(PATH_SEGMENT_DICT).some((map) => map.place === segment);
 }
 
 /**
@@ -244,7 +221,7 @@ export function townDetailPath(lang: string, siteKey: string, slug: string): str
 
 /** Town map view segment under the town directory. */
 export function townMapPath(lang: string, siteKey: string, slug: string): string {
-  return `/${lang}/${siteKey}/${slug}/${MAP_VIEW_PATH[asPublicLang(lang)]}`;
+  return `/${lang}/${siteKey}/${slug}/${mapPathSegment(lang)}`;
 }
 
 /** Event detail path under a region. */
@@ -272,9 +249,17 @@ export function productsPath(lang: string, siteKey: string): string {
  * @returns null when `key` is not a known legal page id
  */
 export function legalPagePath(lang: string, siteKey: string, key: string): string | null {
-  const segment = LEGAL_PATH[asPublicLang(lang)][key];
-  if (!segment) return null;
-  return `/${lang}/${siteKey}/${segment}`;
+  const map = pathSegmentsForLang(asPublicLang(lang));
+  const segmentKey =
+    key === "imprint"
+      ? "legal.imprint"
+      : key === "terms"
+        ? "legal.terms"
+        : key === "privacy"
+          ? "legal.privacy"
+          : null;
+  if (!segmentKey) return null;
+  return `/${lang}/${siteKey}/${map[segmentKey]}`;
 }
 
 /** Platform collection detail (not region-prefixed). */
@@ -290,22 +275,28 @@ export function overviewPath(lang: string): string {
   return `/${asPublicLang(lang)}`;
 }
 
-/** Platform guide article (`/:lang/tema/:slug`). */
+/** Localized guide folder from the built-in dictionary (EN fallback). */
+export function guidePathSegment(lang: string): string {
+  return pathSegmentsForLang(asPublicLang(lang)).guide;
+}
+
+/** Platform guide article (`/:lang/{guide}/:slug`). */
 export function platformGuidePath(lang: string, slug: string): string {
-  return `/${asPublicLang(lang)}/tema/${slug}`;
+  const code = asPublicLang(lang);
+  return `/${code}/${guidePathSegment(code)}/${slug}`;
 }
 
 /**
- * Which guide languages belong on this public host.
- * Hungarian articles are canonical on hellolocal.hu; English and German on hellolocal.eu.
- * Any other host (local, hello-local.io) lists every language.
+ * Which guide languages belong on this public host (sync default).
+ * Prefer the async PathSegmentsService + UiLanguage list in sitemap.
+ * hellolocal.hu → hu only; hellolocal.eu → every non-hu language; hello-local.io → none.
  */
-export function guideLangsForSitemapHost(origin: string): readonly string[] {
+export function guideLangsForSitemapHost(origin: string, allLangs: readonly string[] = PUBLIC_LANGS): readonly string[] {
   const host = hostnameFromUrl(origin).replace(/^www\./, "");
   if (host === "hellolocal.hu") return ["hu"];
-  if (host === "hellolocal.eu") return ["en", "de"];
+  if (host === "hellolocal.eu") return allLangs.filter((code) => code !== "hu");
   if (host === "hello-local.io") return [];
-  return PUBLIC_LANGS;
+  return allLangs;
 }
 
 /** Platform region list path. */

@@ -24,7 +24,22 @@ import { PublicAnalytics } from "../components/PublicAnalytics";
 import { UnderConstructionGate } from "../components/UnderConstructionGate";
 import { CookieConsent } from "../components/CookieConsent";
 import { ROLE_VIEWER, ROLE_EDITOR, ROLE_ADMIN, ROLE_SUPERADMIN } from "../types/enums";
-import { LEGAL_PATH_ALIASES, legalKeyFromSegment, legalSegment, mapViewSegment, OVERVIEW_PATH_ALIASES, PLACE_PATH_ALIASES, placeSegment, REGION_LIST_PATH, type LegalPageKey } from "./entityPaths";
+import {
+  legalKeyFromSegment,
+  legalPathAliases,
+  legalSegment,
+  isPlacePathSegment,
+  mapViewSegment,
+  legalKeyFromSegment,
+  overviewPathAliases,
+  placePathAliases,
+  placeSegment,
+  pricingPathAliases,
+  regionListPathAliases,
+  type LegalPageKey,
+} from "./entityPaths";
+import { guidePathAliases, isGuidePathSegment } from "./guidePaths";
+import { PathSegmentsBoot } from "../components/PathSegmentsBoot";
 import { canonicalHostPath, useHostScope } from "./hostScope";
 import { isPlatformHost } from "./urls";
 import { useRouteCtx } from "./useRouteCtx";
@@ -356,7 +371,7 @@ function RedirectRegionAnalytics() {
   return <Navigate to={`/${lang}/admin/analytics/site`} replace />;
 }
 
-const placeDetailRoutes = PLACE_PATH_ALIASES.map((segment) => ({
+const placeDetailRoutes = placePathAliases().map((segment) => ({
   path: `${segment}/:slug`,
   element: <PlaceDetailPage />,
 }));
@@ -386,10 +401,24 @@ function LegalPath({ pageKey }: { pageKey: LegalPageKey }) {
 }
 
 function legalPageRoutes() {
-  return LEGAL_PATH_ALIASES.map((segment) => ({
+  return legalPathAliases().map((segment) => ({
     path: segment,
     element: <LegalPath pageKey={legalKeyFromSegment(segment)!} />,
   }));
+}
+
+/** Guide or place under `/:lang/:segment/:slug` for any UiLanguage path word. */
+function PlatformSegmentDispatcher() {
+  const { segment = "" } = useParams<{ segment: string }>();
+  if (isGuidePathSegment(segment)) {
+    return (
+      <Suspense fallback={<PublicBootShell />}>
+        <PlatformGuidePage />
+      </Suspense>
+    );
+  }
+  if (isPlacePathSegment(segment)) return <HostPlaceRoute />;
+  return <Navigate to=".." replace />;
 }
 
 /** Legacy `/attekintes|overview|ueberblick` → language root landing. */
@@ -401,18 +430,17 @@ function OverviewPath() {
 }
 
 function overviewRoutes() {
-  return OVERVIEW_PATH_ALIASES.map((segment) => ({
+  return overviewPathAliases().map((segment) => ({
     path: segment,
     element: <OverviewPath />,
   }));
 }
 
 const regionListRoutes = [
-  { path: REGION_LIST_PATH.hu, element: <SitesListPage /> },
-  { path: REGION_LIST_PATH.en, element: <SitesListPage /> },
-  { path: REGION_LIST_PATH.de, element: <SitesListPage /> },
-  // Legacy Hungarian path — SitesListPage redirects to regiok
-  { path: "teruletek", element: <SitesListPage /> },
+  ...regionListPathAliases().map((segment) => ({
+    path: segment,
+    element: <SitesListPage />,
+  })),
 ];
 
 // One with site slug (region key) and one without
@@ -450,24 +478,27 @@ const createPublicRoutes = () => {
             element: <PlatformGaShell />,
             children: [
               { index: true, element: <LangIndex /> },
-              {
-                path: "tema/:slug",
+              ...guidePathAliases().map((segment) => ({
+                path: `${segment}/:slug`,
                 element: (
                   <Suspense fallback={<PublicBootShell />}>
                     <PlatformGuidePage />
                   </Suspense>
                 ),
-              },
+              })),
               ...regionListRoutes,
               ...overviewRoutes(),
-              { path: "pricing", element: <PublicPricingPage /> },
-              { path: "tarife", element: <PublicPricingPage /> },
-              { path: "preise", element: <PublicPricingPage /> },
+              ...pricingPathAliases().map((segment) => ({
+                path: segment,
+                element: <PublicPricingPage />,
+              })),
               ...legalPageRoutes(),
-              ...PLACE_PATH_ALIASES.map((segment) => ({
+              ...placePathAliases().map((segment) => ({
                 path: `${segment}/:slug`,
                 element: <HostPlaceRoute />,
               })),
+              // Catch-all for admin-customized path words not in the boot dictionary.
+              { path: ":segment/:slug", element: <PlatformSegmentDispatcher /> },
               { path: "event/:slug", element: <HostEventRoute /> },
               {
                 path: "products",
@@ -524,6 +555,7 @@ const createPublicRoutes = () => {
 function RootScrollLayout() {
   return (
     <>
+      <PathSegmentsBoot />
       <ScrollRestoration />
       {/* Public dataLayer events (page_view, scroll). Admin paths skipped. */}
       <PublicAnalytics />

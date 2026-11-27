@@ -1,3 +1,5 @@
+import { platformGuidePath } from "./guidePaths";
+
 /** Canonical host for a platform guide. Hungarian on .hu, English and German on .eu. */
 export function guideCanonical(origin: string, lang: string, slug: string): string {
   let host = "";
@@ -12,5 +14,5 @@ export function guideCanonical(origin: string, lang: string, slug: string): stri
     : lang === "hu"
       ? "https://hellolocal.hu"
       : "https://hellolocal.eu";
-  return `${base}/${lang}/tema/${slug}`;
+  return `${base}${platformGuidePath(lang, slug)}`;
 }

@@ -46,6 +46,29 @@ export function getPublicUiLanguages() {
   );
 }
 
+export type PathSegmentsPayload = {
+  languages: string[];
+  byLang: Record<string, Record<string, string>>;
+  aliases: Record<string, { key: string; langs: string[] }>;
+};
+
+export function getPublicPathSegments() {
+  return fetch(`${apiBase()}/api/public/ui/path-segments`, { headers: { accept: "application/json" } }).then(
+    async (response) => {
+      if (!response.ok) return null;
+      return (await response.json()) as PathSegmentsPayload;
+    }
+  );
+}
+
+export function getAdminPathSegments() {
+  return apiGet<PathSegmentsPayload>("/admin/ui-copy/path-segments");
+}
+
+export function saveAdminPathSegments(lang: string, entries: Record<string, string>) {
+  return apiPut<PathSegmentsPayload>("/admin/ui-copy/path-segments", { lang, entries });
+}
+
 export type UiTranslateStatus = "queued" | "running" | "done" | "failed";
 
 export type UiTranslateJob = {

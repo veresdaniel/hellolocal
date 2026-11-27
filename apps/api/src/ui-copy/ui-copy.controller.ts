@@ -17,6 +17,11 @@ export class PublicUiCopyController {
     return this.copy.languages();
   }
 
+  @Get("path-segments")
+  pathSegments() {
+    return this.copy.pathSegmentsPublic();
+  }
+
   @Get(":lang")
   messages(@Param("lang") lang: string) {
     return this.copy.publicMessages(lang);
@@ -75,5 +80,18 @@ export class AdminUiCopyController {
   ) {
     const mode = body?.mode === "replace" ? "replace" : "missing";
     return this.copy.syncMissing(body?.catalogs ?? {}, user?.role, mode);
+  }
+
+  @Get("path-segments")
+  pathSegments(@CurrentUser() user: { role?: string }) {
+    return this.copy.pathSegmentsAdmin(user?.role);
+  }
+
+  @Put("path-segments")
+  savePathSegments(
+    @Body() body: { lang?: string; entries?: Record<string, string> },
+    @CurrentUser() user: { role?: string }
+  ) {
+    return this.copy.savePathSegments(body?.lang ?? "", body?.entries ?? {}, user?.role);
   }
 }
