@@ -762,6 +762,14 @@ export function FloatingHeader({
               <LanguageSelector />
               <style>{`
                 .hl-floating-header__lang .hl-lang-switch__trigger {
+                  box-sizing: border-box !important;
+                  min-height: 44px !important;
+                  height: 44px !important;
+                  padding: 0 14px 0 16px !important;
+                  border-radius: var(--hl-radius-control, 999px) !important;
+                  font-size: 15px !important;
+                  font-weight: 700 !important;
+                  letter-spacing: -0.01em !important;
                   color: var(--hl-nav-fg, #f2f4fb) !important;
                   border-color: var(--hl-nav-ghost-border, rgba(242, 244, 251, 0.28)) !important;
                   background: var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08)) !important;
@@ -770,6 +778,9 @@ export function FloatingHeader({
                   color: var(--hl-nav-fg, #f2f4fb) !important;
                   border-color: var(--hl-nav-ghost-border, rgba(242, 244, 251, 0.28)) !important;
                   background: var(--hl-nav-ghost-bg, rgba(242, 244, 251, 0.08)) !important;
+                }
+                .hl-floating-header__lang .hl-lang-switch__trigger svg {
+                  margin-right: 0 !important;
                 }
               `}</style>
             </div>

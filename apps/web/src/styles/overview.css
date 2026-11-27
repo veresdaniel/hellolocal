@@ -935,17 +935,20 @@
   margin-top: 20px;
 }
 
-.overview__more a {
+.overview__more a,
+.overview__more a:link,
+.overview__more a:visited {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-height: 44px;
-  padding: 0 18px;
+  padding: 0 18px 0 20px;
   border-radius: 999px;
   border: 1px solid #c45c26;
   background: #c45c26;
   box-shadow: 0 10px 24px rgba(196, 92, 38, 0.28);
-  color: #fff;
+  /* Warm navy on terracotta — not cool on-dark blue-white */
+  color: #1b1730;
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1;
@@ -954,12 +957,20 @@
     transform 0.2s ease,
     background-color 0.2s ease,
     border-color 0.2s ease,
-    box-shadow 0.2s ease;
+    box-shadow 0.2s ease,
+    color 0.2s ease;
 }
 
 .overview__more a::after {
-  content: "→";
-  font-size: 1.05em;
+  content: "";
+  display: block;
+  flex: none;
+  width: 0.55em;
+  height: 0.55em;
+  margin-top: 1px;
+  border-right: 2px solid currentColor;
+  border-top: 2px solid currentColor;
+  transform: rotate(45deg);
 }
 
 .overview__more a:hover {
@@ -967,7 +978,7 @@
   background: #d4652c;
   border-color: #d4652c;
   box-shadow: 0 14px 28px rgba(196, 92, 38, 0.36);
-  color: #fff;
+  color: #1b1730;
 }
 
 .overview__more a:focus-visible {
@@ -975,7 +986,9 @@
   outline-offset: 3px;
 }
 
-.overview__card .overview__more a {
+.overview__card .overview__more a,
+.overview__card .overview__more a:link,
+.overview__card .overview__more a:visited {
   background: transparent;
   border-color: rgba(196, 92, 38, 0.55);
   box-shadow: none;
@@ -986,7 +999,7 @@
   background: #c45c26;
   border-color: #c45c26;
   box-shadow: 0 10px 22px rgba(196, 92, 38, 0.22);
-  color: #fff;
+  color: #1b1730;
 }
 
 .overview__guides {
@@ -1034,12 +1047,16 @@
 }
 
 .overview__guides a::after {
-  content: "→";
+  content: "";
+  display: block;
   flex: none;
   align-self: center;
-  color: var(--accent, #c45c26);
-  font-size: 1.15em;
-  line-height: 1;
+  width: 0.5em;
+  height: 0.5em;
+  margin-top: 1px;
+  border-right: 2px solid var(--accent, #c45c26);
+  border-top: 2px solid var(--accent, #c45c26);
+  transform: rotate(45deg);
 }
 
 .overview__guides a:hover {
