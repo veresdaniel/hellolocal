@@ -30,7 +30,6 @@ import {
   legalSegment,
   isPlacePathSegment,
   mapViewSegment,
-  legalKeyFromSegment,
   overviewPathAliases,
   placePathAliases,
   placeSegment,

@@ -1971,7 +1971,7 @@
   },
   "liveDemo": {
     "title": "Élő demó",
-    "help": "A „Nézd meg élőben” gomb ide visz. Teljes cím, például https://helloetyek.hu/hu, vagy útvonal, például /hu/regiok. Üresen a régiólista marad.",
+    "help": "A „Nézd meg élőben” gomb ide visz. A „Térkép nézet kipróbálása” ugyanezt nyitja a térkép útvonallal (például /hu/terkep). Teljes cím, például https://helloetyek.hu/hu, vagy útvonal, például /hu/regiok. Üresen a régiólista marad.",
     "save": "Demócím mentése",
     "saved": "Demócím elmentve"
   },

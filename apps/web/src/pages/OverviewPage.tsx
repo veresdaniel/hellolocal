@@ -329,6 +329,14 @@ export function OverviewPage() {
                 <LiveDemoLink className="overview__cta" lang={lang} ctaId="hero_live_demo">
                   <LandingInline html={text("cta")} />
                 </LiveDemoLink>
+                <LiveDemoLink
+                  className="overview__ghost"
+                  lang={lang}
+                  map
+                  ctaId="hero_live_map"
+                >
+                  <LandingInline html={text("ctaMap")} />
+                </LiveDemoLink>
                 <a
                   className="overview__ghost"
                   href="#how"

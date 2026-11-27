@@ -14,6 +14,9 @@ in prose as used in the product.
 
 ### Added
 
+- Platform overview: **Térkép nézet kipróbálása** next to **Nézd meg élőben**
+  (hero and closing). It opens the configured live demo on the map path
+  (`/hu` → `/hu/terkep`, and `map` / `karte` for the other languages).
 - Mobile place/event wizard: separate full-height **long description** step
   with AI draft (saved to `description`; falls back to short if empty).
 - Nyelvesítés field labels: human-readable titles for shared UI keys
@@ -78,6 +81,9 @@ in prose as used in the product.
 
 ### Fixed
 
+- Region domains: the map view stays on `/:lang/terkep` (`map`, `karte`).
+  The layout no longer treats that word as an unknown slug and sends the
+  visitor back to the directory. Every region host, not one site.
 - Platform `robots.txt` lists every active region, including ones that also
   have a custom domain, so a region with indexing off is disallowed on
   hellolocal.hu / .eu as well.

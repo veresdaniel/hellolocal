@@ -107,7 +107,15 @@ export function SiteLayout() {
 
   // Reserved segments are public pages, not site slugs. Render them after hooks
   // so navigating onto one of these paths does not change the hook count.
-  if (HAS_MULTIPLE_SITES && siteKeyParam && isReservedSiteKey(siteKeyParam) && !viewOnTownHost) {
+  // Town and region maps both live at /:lang/terkep (map, karte). Those are views,
+  // not unknown slugs — sending them back to /:lang drops the map.
+  if (
+    HAS_MULTIPLE_SITES &&
+    siteKeyParam &&
+    isReservedSiteKey(siteKeyParam) &&
+    !viewOnTownHost &&
+    !regionMap
+  ) {
     if (isOverviewPathSegment(siteKeyParam)) {
       // Legacy overview segment → platform landing at /:lang
       return <Navigate to={`/${lang}${location.search}${location.hash}`} replace />;

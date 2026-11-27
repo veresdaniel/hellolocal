@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicLiveDemo } from "../api/public.api";
 import { REGION_LIST_PATH } from "../app/entityPaths";
-import { resolveLiveDemoHref } from "../app/liveDemoUrl";
+import { liveDemoMapHref, resolveLiveDemoHref } from "../app/liveDemoUrl";
 import { buildUrl } from "../app/urls";
 import type { Lang } from "../app/config";
 import { trackGtmCtaClick } from "../lib/gtmEvents";
@@ -13,11 +13,14 @@ export function LiveDemoLink({
   className,
   children,
   ctaId = "live_demo",
+  map = false,
 }: {
   lang: Lang;
   className?: string;
   children: ReactNode;
   ctaId?: string;
+  /** Open the demo’s map (`/hu/terkep`) instead of the configured directory URL. */
+  map?: boolean;
 }) {
   const onTrack = () => {
     const label =
@@ -52,7 +55,10 @@ export function LiveDemoLink({
     staleTime: 60_000,
     enabled: allowFetch,
   });
-  const target = resolveLiveDemoHref(data?.url, fallback);
+  const resolved = resolveLiveDemoHref(data?.url, fallback);
+  const target = map
+    ? { ...resolved, href: liveDemoMapHref(resolved.href, lang) }
+    : resolved;
   if (target.external) {
     return (
       <a className={className} href={target.href} onClick={onTrack}>

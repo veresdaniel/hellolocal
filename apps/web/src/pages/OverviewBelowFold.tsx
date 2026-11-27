@@ -226,9 +226,19 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
             <LandingInline html={text("closingTitle")} />
           </h2>
           <LandingHtml html={text("closingText")} as="div" />
-          <LiveDemoLink className="overview__cta" lang={lang} ctaId="closing_live_demo">
-            <LandingInline html={text("cta")} />
-          </LiveDemoLink>
+          <div className="overview__actions overview__close-actions">
+            <LiveDemoLink className="overview__cta" lang={lang} ctaId="closing_live_demo">
+              <LandingInline html={text("cta")} />
+            </LiveDemoLink>
+            <LiveDemoLink
+              className="overview__ghost"
+              lang={lang}
+              map
+              ctaId="closing_live_map"
+            >
+              <LandingInline html={text("ctaMap")} />
+            </LiveDemoLink>
+          </div>
         </div>
         <figure className="overview__close-figure">
           <MarketingPicture

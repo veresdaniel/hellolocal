@@ -1258,8 +1258,12 @@
   line-height: 1.65;
 }
 
-.overview__close .overview__cta {
+.overview__close-actions {
   margin-top: 22px;
+}
+
+.overview__close-actions .overview__cta {
+  margin-top: 0;
 }
 
 .overview__close .overview__caption {

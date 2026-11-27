@@ -207,6 +207,7 @@ const LEAF_LABELS: Record<string, LabelSet> = {
   kicker: { hu: "Kicker", en: "Kicker", de: "Kicker" },
   eyebrow: { hu: "Eyebrow", en: "Eyebrow", de: "Eyebrow" },
   cta: { hu: "Fő gomb", en: "Primary CTA", de: "Haupt-CTA" },
+  ctaMap: { hu: "Térkép demó gomb", en: "Map demo CTA", de: "Karten-Demo-CTA" },
   ctaSecondary: { hu: "Másodlagos gomb", en: "Secondary CTA", de: "Zweiter CTA" },
   alt: { hu: "Kép alt szöveg", en: "Image alt", de: "Bild-Alt" },
   q: { hu: "Kérdés", en: "Question", de: "Frage" },

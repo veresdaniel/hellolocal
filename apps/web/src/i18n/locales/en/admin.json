@@ -1917,7 +1917,7 @@
   },
   "liveDemo": {
     "title": "Live demo",
-    "help": "See it live opens this address. A full address, such as https://helloetyek.hu/hu, or a path, such as /en/regions. Empty keeps the region list.",
+    "help": "See it live opens this address. Try the map opens the same address with the map path appended (https://helloetyek.hu/hu becomes …/hu/terkep). A full address, such as https://helloetyek.hu/hu, or a path, such as /en/regions. Empty keeps the region list.",
     "save": "Save demo address",
     "saved": "Demo address saved"
   },
