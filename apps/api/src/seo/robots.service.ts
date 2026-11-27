@@ -45,8 +45,8 @@ export class RobotsService {
 
   /**
    * Landing-only rules for User-agent: *.
-   * Catch-all Disallow: / plus explicit Allows — avoids `Disallow: /*/` + `Disallow: /de/`
-   * races that GSC treats as blocking `/de/ratgeber/…` even when an Allow exists.
+   * Catch-all Disallow "/" plus explicit Allows — avoids competing wildcard /
+   * language Disallow rules that GSC treats as blocking guide article URLs.
    */
   private async landingOnlyStarBlock(origin: string): Promise<string[]> {
     const payload = await this.pathSegments.getPayload();
