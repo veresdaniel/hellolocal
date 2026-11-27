@@ -78,6 +78,9 @@ in prose as used in the product.
 
 ### Fixed
 
+- Landing-only `robots.txt`: put Allow rules before `Disallow: /`, use plain
+  guide path prefixes, and add an explicit Googlebot / Google-InspectionTool
+  group so GSC URL Inspection no longer reports guide URLs as blocked.
 - Google OAuth return: platform public hosts (`platform.publicHost`, e.g.
   hellolocal.hu) and the same-origin callback host are allowed, so login no
   longer falls back to hello-local.io admin when starting from another

@@ -44,27 +44,33 @@ export class RobotsService {
   ) {}
 
   /**
-   * Landing-only rules for User-agent: *.
-   * Catch-all Disallow "/" plus explicit Allows — avoids competing wildcard /
-   * language Disallow rules that GSC treats as blocking guide article URLs.
+   * Landing-only rules for User-agent: * (and Google inspection/search tokens).
+   * Allow lines come *before* `Disallow: /` — GSC URL Inspection / some parsers
+   * still behave like first-match, so a leading Disallow blocks every URL.
+   * Guide Allows are plain prefixes (no `$`) so `/de/ratgeber/slug` is covered.
    */
   private async landingOnlyStarBlock(origin: string): Promise<string[]> {
     const payload = await this.pathSegments.getPayload();
     const allLangs = payload.languages.length ? payload.languages : ["hu", "en", "de"];
     const guideLangs = guideLangsForSitemapHost(origin, payload.languages);
+    // Exact homes only (`$`); guides are prefix Allows without end-anchor.
     const allowHomes = allLangs.map((lang) => `Allow: /${lang}$`);
     const allowGuides: string[] = [];
     for (const lang of guideLangs) {
       const seg = await this.pathSegments.guideSegment(lang);
-      // Trailing slash so `/de/ratgeber/google-maps` is clearly under the Allow prefix.
-      allowGuides.push(`Allow: /${lang}/${seg}/`, `Allow: /${lang}/${seg}$`);
+      allowGuides.push(`Allow: /${lang}/${seg}`);
     }
+    const allowLines = ["Allow: /$", ...allowHomes, ...allowGuides];
+    // Explicit Google tokens so URL Inspection does not fall through a bad `*` parse.
     return [
-      "User-agent: *",
+      "User-agent: Googlebot",
+      "User-agent: Google-InspectionTool",
+      ...allowLines,
       "Disallow: /",
-      "Allow: /$",
-      ...allowHomes,
-      ...allowGuides,
+      "",
+      "User-agent: *",
+      ...allowLines,
+      "Disallow: /",
     ];
   }
 
