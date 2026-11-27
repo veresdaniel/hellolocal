@@ -44,25 +44,27 @@ export class RobotsService {
   ) {}
 
   /**
-   * Landing-only rules for User-agent: * without end-of-URL `$` anchors.
-   * Longer Allow wins over Disallow /{lang}/ so guides stay crawlable.
+   * Landing-only rules for User-agent: *.
+   * Catch-all Disallow: / plus explicit Allows — avoids `Disallow: /*/` + `Disallow: /de/`
+   * races that GSC treats as blocking `/de/ratgeber/…` even when an Allow exists.
    */
   private async landingOnlyStarBlock(origin: string): Promise<string[]> {
     const payload = await this.pathSegments.getPayload();
+    const allLangs = payload.languages.length ? payload.languages : ["hu", "en", "de"];
     const guideLangs = guideLangsForSitemapHost(origin, payload.languages);
+    const allowHomes = allLangs.map((lang) => `Allow: /${lang}$`);
     const allowGuides: string[] = [];
     for (const lang of guideLangs) {
       const seg = await this.pathSegments.guideSegment(lang);
-      allowGuides.push(`Allow: /${lang}/${seg}`);
+      // Trailing slash so `/de/ratgeber/google-maps` is clearly under the Allow prefix.
+      allowGuides.push(`Allow: /${lang}/${seg}/`, `Allow: /${lang}/${seg}$`);
     }
-    // Also allow every known UI language home + disallow nested paths.
-    const allLangs = payload.languages.length ? payload.languages : ["hu", "en", "de"];
     return [
       "User-agent: *",
-      "Allow: /",
+      "Disallow: /",
+      "Allow: /$",
+      ...allowHomes,
       ...allowGuides,
-      "Disallow: /*/",
-      ...allLangs.flatMap((lang) => [`Disallow: /${lang}/`]),
     ];
   }
 
