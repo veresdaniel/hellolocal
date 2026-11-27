@@ -944,10 +944,9 @@
   min-height: 44px;
   padding: 0 18px 0 20px;
   border-radius: 999px;
-  border: 1px solid #c45c26;
-  background: #c45c26;
-  box-shadow: 0 10px 24px rgba(196, 92, 38, 0.28);
-  /* Warm navy on terracotta — not cool on-dark blue-white */
+  border: 1px solid #fff;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
   color: #1b1730;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -975,94 +974,122 @@
 
 .overview__more a:hover {
   transform: translateY(-2px);
-  background: #d4652c;
-  border-color: #d4652c;
-  box-shadow: 0 14px 28px rgba(196, 92, 38, 0.36);
-  color: #1b1730;
+  background: #1b1730;
+  border-color: #1b1730;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.36);
+  color: #fff;
 }
 
 .overview__more a:focus-visible {
-  outline: 3px solid rgba(196, 92, 38, 0.55);
+  outline: 3px solid rgba(242, 244, 251, 0.55);
   outline-offset: 3px;
 }
 
 .overview__card .overview__more a,
 .overview__card .overview__more a:link,
 .overview__card .overview__more a:visited {
-  background: transparent;
-  border-color: rgba(196, 92, 38, 0.55);
-  box-shadow: none;
-  color: #8a3d16;
+  background: #fff;
+  border-color: #fff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  color: #1b1730;
 }
 
 .overview__card .overview__more a:hover {
-  background: #c45c26;
-  border-color: #c45c26;
-  box-shadow: 0 10px 22px rgba(196, 92, 38, 0.22);
-  color: #1b1730;
+  background: #1b1730;
+  border-color: #1b1730;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+  color: #fff;
 }
 
 .overview__guides {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
   margin: 22px 0 0;
   padding: 0;
   list-style: none;
+  align-items: start;
+}
+
+.overview__guides > li {
+  min-width: 0;
+  display: flex;
 }
 
 .overview__guides a {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  height: 100%;
-  padding: 18px 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(242, 244, 251, 0.14);
-  background: linear-gradient(180deg, rgba(242, 244, 251, 0.08), rgba(242, 244, 251, 0.03));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 14px;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(242, 244, 251, 0.16);
+  background: linear-gradient(165deg, rgba(242, 244, 251, 0.1), rgba(242, 244, 251, 0.03));
   color: var(--ink-strong);
   font-weight: 650;
-  line-height: 1.35;
+  line-height: 1.3;
   text-decoration: none;
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
-    background-color 0.2s ease;
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .overview__guides-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
-  margin-top: 2px;
-  color: var(--accent, #c45c26);
-  font-family: var(--font-heading);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  line-height: 1.2;
+  min-width: 2.6rem;
+  height: 2.6rem;
+  padding: 0 0.35rem;
+  border-radius: 12px;
+  border: 1px solid rgba(196, 92, 38, 0.55);
+  background:
+    linear-gradient(160deg, rgba(232, 122, 58, 0.28), rgba(196, 92, 38, 0.12));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 220, 190, 0.18),
+    0 6px 16px rgba(196, 92, 38, 0.18);
+  color: #ffb07a;
+  font-family: var(--font-heading, Poppins, system-ui, sans-serif);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .overview__guides-title {
-  flex: 1 1 auto;
   min-width: 0;
+  font-size: 15px;
 }
 
 .overview__guides a::after {
   content: "";
   display: block;
   flex: none;
-  align-self: center;
   width: 0.5em;
   height: 0.5em;
-  margin-top: 1px;
   border-right: 2px solid var(--accent, #c45c26);
   border-top: 2px solid var(--accent, #c45c26);
   transform: rotate(45deg);
+  opacity: 0.9;
 }
 
 .overview__guides a:hover {
   transform: translateY(-2px);
   border-color: rgba(196, 92, 38, 0.55);
   background: rgba(196, 92, 38, 0.14);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.overview__guides a:hover .overview__guides-no {
+  color: #ffc49a;
+  border-color: rgba(232, 122, 58, 0.75);
+  background: linear-gradient(160deg, rgba(232, 122, 58, 0.38), rgba(196, 92, 38, 0.18));
 }
 
 .overview__guides a:focus-visible {
