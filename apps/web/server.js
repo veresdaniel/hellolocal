@@ -18,7 +18,7 @@ import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
 import { overviewLang, overviewShareUrl, renderOverviewDocument } from './ssr/renderOverview.js';
 import { resolveGuideRequest, renderGuideDocument } from './ssr/renderGuide.js';
-import { guidePathSync, loadPathSegments } from './ssr/pathSegments.js';
+import { loadPathSegments } from './ssr/pathSegments.js';
 import {
   applyAdminRobots,
   buildPublicContentHtml,
@@ -734,10 +734,6 @@ app.get('*', async (req, res, next) => {
       );
       if (response.ok) {
         const data = await response.json();
-        // Old hu slug on /en/… → localized slug (301).
-        if (data?.slug && data.slug !== guide.slug) {
-          return res.redirect(301, guidePathSync(guide.lang, data.slug, pathSegments));
-        }
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(
           renderGuideDocument(readShell(), data, publicOrigin(requestOrigin), pathSegments)

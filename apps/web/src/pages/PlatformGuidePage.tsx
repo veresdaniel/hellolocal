@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { Footer } from "../ui/layout/Footer";
@@ -7,7 +7,6 @@ import { LandingHtml } from "../components/LandingHtml";
 import { useSeo } from "../seo/useSeo";
 import { getPlatformGuide } from "../api/platformGuides";
 import { guideCanonical } from "../app/guideCanonical";
-import { platformGuidePath } from "../app/guidePaths";
 import { isLang, type Lang } from "../app/config";
 import "../styles/overview.css";
 
@@ -20,10 +19,6 @@ export function PlatformGuidePage() {
     queryFn: () => getPlatformGuide(slug, lang),
     enabled: Boolean(slug),
   });
-
-  if (data?.slug && data.slug !== slug) {
-    return <Navigate to={platformGuidePath(lang, data.slug)} replace />;
-  }
 
   const canonical = data ? guideCanonical(origin, lang, data.slug) : undefined;
   const image =
