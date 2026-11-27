@@ -26,6 +26,7 @@ import type { ReactNode } from "react";
 import {
   armPublicSsrRevealFallback,
   isOverviewSsrBoot,
+  isPublicSsrPending,
   parkPublicSsr,
 } from "./lib/publicSsrHold";
 
@@ -33,13 +34,16 @@ import {
 parkPublicSsr();
 
 if (typeof document !== "undefined") {
-  // Platform overview: keep #root hidden until OverviewPage + async CSS are ready
-  // (deferred index.css otherwise FOUCs the hero). Other routes clear boot paint now.
+  // Overview keeps #root hidden until OverviewPage + async CSS are ready (avoids FOUC).
+  // Explore SSR also parks into pending — always arm a fallback so a stuck layout
+  // (SiteLayout null while loading) cannot leave an empty blue page forever.
   if (isOverviewSsrBoot()) {
     document.documentElement.classList.add("hl-spa-pending");
-    armPublicSsrRevealFallback(8000);
   } else {
     document.documentElement.classList.remove("hl-booting");
+  }
+  if (isPublicSsrPending()) {
+    armPublicSsrRevealFallback(8000);
   }
 }
 

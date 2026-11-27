@@ -26,7 +26,7 @@ import { publicFontCssVars } from "../../styles/publicFonts";
 import { useApplyPublicFonts } from "../../hooks/useApplyPublicFonts";
 import { useApplyPublicTheme, publicThemeStyle } from "../../hooks/useApplyPublicTheme";
 import { resolvePublicThemePreset } from "../../styles/publicThemeColors";
-import { isPublicSsrPending } from "../../lib/publicSsrHold";
+import { isPublicSsrPending, revealPublicSpa } from "../../lib/publicSsrHold";
 import { InsideSiteChrome, PlatformGaShell } from "../../components/PlatformGaShell";
 import { PublicGaOverrideProvider } from "../../context/PublicGaOverrideContext";
 
@@ -107,7 +107,7 @@ export function SiteLayout() {
 
   // Reserved segments are public pages, not site slugs. Render them after hooks
   // so navigating onto one of these paths does not change the hook count.
-  if (HAS_MULTIPLE_SITES && siteKeyParam && RESERVED_PATHS.includes(siteKeyParam) && !viewOnTownHost) {
+  if (HAS_MULTIPLE_SITES && siteKeyParam && isReservedSiteKey(siteKeyParam) && !viewOnTownHost) {
     if (isOverviewPathSegment(siteKeyParam)) {
       // Legacy overview segment → platform landing at /:lang
       return <Navigate to={`/${lang}${location.search}${location.hash}`} replace />;
@@ -165,6 +165,8 @@ export function SiteLayout() {
   // Hiba esetén (pl. rossz siteKey): 404 → NotFoundPage, egyéb → 500 state.
   // isError boolean; a HTTP státusz a query error objektumon van.
   if (isError || !platform) {
+    // Explore SSR parks #root as visibility:hidden — reveal so errors are visible.
+    if (isPublicSsrPending()) revealPublicSpa();
     const queryError = error as { status?: number; response?: { status?: number } } | null;
     const errorStatus = queryError?.status ?? queryError?.response?.status;
     if (errorStatus === 404 || (!isError && !platform)) {
