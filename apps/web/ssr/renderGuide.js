@@ -44,20 +44,9 @@ export async function resolveGuideRequest(pathname, apiUrl) {
   return guideRequest(pathname, payload);
 }
 
-/** Hungarian guides are canonical on hellolocal.hu; other langs on hellolocal.eu. */
+/** Canonical stays on the request host — .hu and .eu both serve every language. */
 export function guideCanonical(origin, lang, slug, payload) {
-  let host = "";
-  try {
-    host = new URL(origin).hostname.replace(/^www\./, "");
-  } catch {
-    host = "";
-  }
-  const marketing = host === "hellolocal.hu" || host === "hellolocal.eu" || host === "hello-local.io";
-  const base = !marketing
-    ? String(origin || "").replace(/\/$/, "")
-    : lang === "hu"
-      ? "https://hellolocal.hu"
-      : "https://hellolocal.eu";
+  const base = String(origin || "").replace(/\/$/, "") || "https://hellolocal.hu";
   return `${base}${guidePathSync(lang, slug, payload)}`;
 }
 

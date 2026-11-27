@@ -287,15 +287,16 @@ export function platformGuidePath(lang: string, slug: string): string {
 }
 
 /**
- * Which guide languages belong on this public host (sync default).
- * Prefer the async PathSegmentsService + UiLanguage list in sitemap.
- * hellolocal.hu → hu only; hellolocal.eu → every non-hu language; hello-local.io → none.
+ * Which guide languages to list/allow on this public host.
+ * hellolocal.hu and hellolocal.eu both expose every UiLanguage (language switcher
+ * works on both). hello-local.io stays guide-free (app/product host).
  */
 export function guideLangsForSitemapHost(origin: string, allLangs: readonly string[] = PUBLIC_LANGS): readonly string[] {
   const host = hostnameFromUrl(origin).replace(/^www\./, "");
-  if (host === "hellolocal.hu") return ["hu"];
-  if (host === "hellolocal.eu") return allLangs.filter((code) => code !== "hu");
   if (host === "hello-local.io") return [];
+  if (host === "hellolocal.hu" || host === "hellolocal.eu") {
+    return allLangs.length ? [...allLangs] : [...PUBLIC_LANGS];
+  }
   return allLangs;
 }
 

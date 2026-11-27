@@ -1,18 +1,10 @@
 import { platformGuidePath } from "./guidePaths";
 
-/** Canonical host for a platform guide. Hungarian on .hu, English and German on .eu. */
+/**
+ * Canonical URL for a platform guide on the current marketing host.
+ * Stay on the request origin (.hu and .eu both serve every language).
+ */
 export function guideCanonical(origin: string, lang: string, slug: string): string {
-  let host = "";
-  try {
-    host = new URL(origin).hostname.replace(/^www\./, "");
-  } catch {
-    host = "";
-  }
-  const marketing = host === "hellolocal.hu" || host === "hellolocal.eu" || host === "hello-local.io";
-  const base = !marketing
-    ? origin.replace(/\/$/, "")
-    : lang === "hu"
-      ? "https://hellolocal.hu"
-      : "https://hellolocal.eu";
+  const base = String(origin || "").replace(/\/$/, "") || "https://hellolocal.hu";
   return `${base}${platformGuidePath(lang, slug)}`;
 }

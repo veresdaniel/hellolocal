@@ -35,9 +35,15 @@ describe("path-segment.dict", () => {
 });
 
 describe("guideLangsForSitemapHost", () => {
-  it("splits marketing hosts by language", () => {
-    expect(guideLangsForSitemapHost("https://hellolocal.hu", ["hu", "en", "de", "fr"])).toEqual(["hu"]);
+  it("exposes every language on .hu and .eu; none on hello-local.io", () => {
+    expect(guideLangsForSitemapHost("https://hellolocal.hu", ["hu", "en", "de", "fr"])).toEqual([
+      "hu",
+      "en",
+      "de",
+      "fr",
+    ]);
     expect(guideLangsForSitemapHost("https://hellolocal.eu", ["hu", "en", "de", "fr"])).toEqual([
+      "hu",
       "en",
       "de",
       "fr",
