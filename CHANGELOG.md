@@ -78,6 +78,9 @@ in prose as used in the product.
 
 ### Fixed
 
+- Platform `robots.txt` lists every active region, including ones that also
+  have a custom domain, so a region with indexing off is disallowed on
+  hellolocal.hu / .eu as well.
 - `robots.txt` allows each indexable URL and disallows each entity whose
   indexing is off (global switch and the entity’s own switch). No `Disallow: /`
   and no `*` patterns while any public URL is indexable — GSC treated those as

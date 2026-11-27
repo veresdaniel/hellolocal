@@ -18,7 +18,7 @@ import {
   legalPagePath,
   withoutOwnerPrefix,
 } from "./public-path.util";
-import { SitemapScopeResolver, type SitemapScope } from "./sitemap-scope";
+import type { SitemapScope } from "./sitemap-scope";
 
 /**
  * OG / share scrapers. Meta's Sharing Debugger treats a matching `Disallow`
@@ -79,8 +79,7 @@ export class RobotsService {
   constructor(
     private readonly platformSettings: PlatformSettingsService,
     private readonly prisma: PrismaService,
-    private readonly pathSegments: PathSegmentsService,
-    private readonly scopeResolver: SitemapScopeResolver
+    private readonly pathSegments: PathSegmentsService
   ) {}
 
   /**
@@ -207,7 +206,12 @@ export class RobotsService {
 
     const siteIds =
       scope.kind === "platform"
-        ? await this.scopeResolver.platformTenantSiteIds()
+        ? (
+            await this.prisma.site.findMany({
+              where: { isActive: true },
+              select: { id: true },
+            })
+          ).map((site) => site.id)
         : scope.kind === "site" || scope.kind === "town" || scope.kind === "place"
           ? [scope.siteId]
           : [];
