@@ -1,13 +1,6 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  OnModuleInit,
-  Optional,
-  forwardRef,
-} from "@nestjs/common";
+import { BadRequestException, Injectable, OnModuleInit } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { PrismaService } from "../prisma/prisma.service";
-import { SitemapService } from "../seo/sitemap.service";
 import {
   PATH_SEGMENT_KEYS,
   isPathSegmentKey,
@@ -53,9 +46,7 @@ export class PathSegmentsService implements OnModuleInit {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Optional()
-    @Inject(forwardRef(() => SitemapService))
-    private readonly sitemap?: SitemapService
+    private readonly moduleRef: ModuleRef
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -64,7 +55,16 @@ export class PathSegmentsService implements OnModuleInit {
 
   invalidate(): void {
     this.cache = null;
-    this.sitemap?.invalidate();
+    // SitemapService is in SeoCrawlModule — resolve at runtime to avoid a Nest module cycle.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { SitemapService } = require("../seo/sitemap.service") as {
+        SitemapService: new (...args: unknown[]) => { invalidate: () => void };
+      };
+      this.moduleRef.get(SitemapService, { strict: false })?.invalidate();
+    } catch {
+      /* SeoCrawl not loaded in this context */
+    }
   }
 
   async getPayload(): Promise<PathSegmentsPayload> {
