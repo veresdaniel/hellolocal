@@ -1570,6 +1570,8 @@ model PlatformGuideTranslation {
   id              String  @id @default(cuid())
   guideId         String
   lang            String  @db.VarChar(8)
+  /** Public URL slug for this language (`/en/guide/{slug}`). Falls back to PlatformGuide.slug. */
+  slug            String?
   title           String
   body            String  @db.Text
   imageUrl        String?
@@ -1580,7 +1582,9 @@ model PlatformGuideTranslation {
   guide PlatformGuide @relation(fields: [guideId], references: [id], onDelete: Cascade)
 
   @@unique([guideId, lang])
+  @@unique([lang, slug])
   @@index([lang])
+  @@index([slug])
 }
 
 // UiLanguage: languages the public interface can be shown in.

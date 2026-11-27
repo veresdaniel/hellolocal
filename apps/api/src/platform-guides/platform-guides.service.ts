@@ -15,6 +15,7 @@ const LANG_CODE_RE = /^[a-z]{2,8}$/;
 
 export type GuideTranslationInput = {
   lang: string;
+  slug?: string | null;
   title?: string;
   body?: string;
   imageUrl?: string | null;
@@ -46,6 +47,27 @@ function cleanText(value: unknown, max: number): string {
     .slice(0, max);
 }
 
+function publicSlugFor(
+  guide: { slug: string; translations: Array<{ lang: string; slug: string | null }> },
+  lang: string
+): string {
+  const row = pickTranslation(guide.translations, lang);
+  const localized = row?.slug?.trim();
+  return localized && SLUG_RE.test(localized) ? localized : guide.slug;
+}
+
+function slugsByLang(
+  guide: { slug: string; translations: Array<{ lang: string; slug: string | null }> }
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const row of guide.translations) {
+    const localized = row.slug?.trim();
+    out[row.lang] = localized && SLUG_RE.test(localized) ? localized : guide.slug;
+  }
+  if (!out.hu) out.hu = guide.slug;
+  return out;
+}
+
 @Injectable()
 export class PlatformGuidesService implements OnModuleInit {
   constructor(
@@ -58,34 +80,66 @@ export class PlatformGuidesService implements OnModuleInit {
     for (const seed of PLATFORM_GUIDE_SEED) {
       const existing = await this.prisma.platformGuide.findUnique({
         where: { slug: seed.slug },
-        select: { id: true },
+        select: { id: true, translations: { select: { id: true, lang: true, slug: true } } },
       });
-      if (existing) continue;
-      try {
-        await this.prisma.platformGuide.create({
-          data: {
-            slug: seed.slug,
-            sortOrder: seed.sortOrder,
-            isPublished: true,
-            translations: {
-              create: (["hu", "en", "de"] as const).map((lang) => {
-                const row = seed.translations[lang];
-                return {
-                  lang,
-                  title: row.title,
-                  body: row.body,
-                  imageUrl: row.imageUrl,
-                  imageCaption: row.imageCaption,
-                  seoTitle: row.seoTitle,
-                  seoDescription: row.seoDescription,
-                };
-              }),
+      if (!existing) {
+        try {
+          await this.prisma.platformGuide.create({
+            data: {
+              slug: seed.slug,
+              sortOrder: seed.sortOrder,
+              isPublished: true,
+              translations: {
+                create: (["hu", "en", "de"] as const).map((lang) => {
+                  const row = seed.translations[lang];
+                  return {
+                    lang,
+                    slug: row.slug,
+                    title: row.title,
+                    body: row.body,
+                    imageUrl: row.imageUrl,
+                    imageCaption: row.imageCaption,
+                    seoTitle: row.seoTitle,
+                    seoDescription: row.seoDescription,
+                  };
+                }),
+              },
             },
-          },
-        });
-      } catch (err) {
-        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") continue;
-        throw err;
+          });
+        } catch (err) {
+          if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") continue;
+          throw err;
+        }
+        continue;
+      }
+
+      // Backfill / refresh per-language URL slugs from seed (never wipe title/body).
+      for (const lang of ["hu", "en", "de"] as const) {
+        const wanted = seed.translations[lang]?.slug;
+        if (!wanted || !SLUG_RE.test(wanted)) continue;
+        const row = existing.translations.find((t) => t.lang === lang);
+        if (row?.slug === wanted) continue;
+        if (row) {
+          await this.prisma.platformGuideTranslation.update({
+            where: { id: row.id },
+            data: { slug: wanted },
+          });
+        } else {
+          const copy = seed.translations[lang];
+          await this.prisma.platformGuideTranslation.create({
+            data: {
+              guideId: existing.id,
+              lang,
+              slug: wanted,
+              title: copy.title,
+              body: copy.body,
+              imageUrl: copy.imageUrl,
+              imageCaption: copy.imageCaption,
+              seoTitle: copy.seoTitle,
+              seoDescription: copy.seoDescription,
+            },
+          });
+        }
       }
     }
   }
@@ -102,7 +156,7 @@ export class PlatformGuidesService implements OnModuleInit {
         const translation = pickTranslation(guide.translations, lang);
         if (!translation) return null;
         return {
-          slug: guide.slug,
+          slug: publicSlugFor(guide, lang),
           title: translation.title,
           imageUrl: translation.imageUrl,
           imageCaption: translation.imageCaption,
@@ -111,18 +165,44 @@ export class PlatformGuidesService implements OnModuleInit {
       .filter((row): row is NonNullable<typeof row> => row !== null);
   }
 
-  async getPublic(slug: string, langRaw: string | undefined) {
+  async getPublic(slugRaw: string, langRaw: string | undefined) {
     const lang = asLang(langRaw);
-    const guide = await this.prisma.platformGuide.findUnique({
-      where: { slug },
+    const slug = cleanText(slugRaw, 80).toLowerCase();
+    if (!SLUG_RE.test(slug)) throw new NotFoundException();
+
+    const byLocalized = await this.prisma.platformGuide.findFirst({
+      where: {
+        isPublished: true,
+        translations: { some: { lang, slug } },
+      },
       include: { translations: true },
     });
-    if (!guide || !guide.isPublished) throw new NotFoundException();
+    const byCanonical =
+      byLocalized ||
+      (await this.prisma.platformGuide.findFirst({
+        where: { isPublished: true, slug },
+        include: { translations: true },
+      }));
+    // Also accept another language's slug (e.g. hu slug on /en/…) then redirect to localized.
+    const byAnySlug =
+      byCanonical ||
+      (await this.prisma.platformGuide.findFirst({
+        where: {
+          isPublished: true,
+          translations: { some: { slug } },
+        },
+        include: { translations: true },
+      }));
+
+    const guide = byAnySlug;
+    if (!guide) throw new NotFoundException();
     const translation = pickTranslation(guide.translations, lang);
     if (!translation) throw new NotFoundException();
     const indexable = await this.platformSettings.getLandingCrawlability();
+    const publicSlug = publicSlugFor(guide, lang);
     return {
-      slug: guide.slug,
+      slug: publicSlug,
+      canonicalSlug: guide.slug,
       lang,
       title: translation.title,
       body: translation.body,
@@ -132,6 +212,7 @@ export class PlatformGuidesService implements OnModuleInit {
       seoDescription: translation.seoDescription || "",
       indexable,
       languages: guide.translations.map((row) => row.lang),
+      slugsByLang: slugsByLang(guide),
     };
   }
 
@@ -161,7 +242,7 @@ export class PlatformGuidesService implements OnModuleInit {
         slug,
         sortOrder: numberOr(input.sortOrder, 0),
         isPublished: input.isPublished !== false,
-        translations: { create: normalizeTranslations(input.translations) },
+        translations: { create: normalizeTranslations(input.translations, slug) },
       },
       include: { translations: true },
     });
@@ -170,20 +251,22 @@ export class PlatformGuidesService implements OnModuleInit {
   }
 
   async update(id: string, input: GuideWriteInput) {
-    await this.getAdmin(id);
+    const current = await this.getAdmin(id);
     const data: Prisma.PlatformGuideUpdateInput = {
       sortOrder: input.sortOrder === undefined ? undefined : numberOr(input.sortOrder, 0),
       isPublished: input.isPublished,
     };
+    let canonical = current.slug;
     if (input.slug !== undefined) {
       const slug = cleanText(input.slug, 80);
       if (!SLUG_RE.test(slug)) {
         throw new BadRequestException("A slug kisbetű, szám és kötőjel lehet.");
       }
       data.slug = slug;
+      canonical = slug;
     }
     if (input.translations) {
-      const rows = normalizeTranslations(input.translations);
+      const rows = normalizeTranslations(input.translations, canonical);
       await this.prisma.$transaction([
         this.prisma.platformGuide.update({ where: { id }, data }),
         ...rows.map((row) =>
@@ -219,7 +302,7 @@ function pickTranslation<T extends { lang: string }>(rows: T[], lang: string): T
   return rows.find((row) => row.lang === lang) || rows.find((row) => row.lang === "hu") || rows[0] || null;
 }
 
-function normalizeTranslations(rows: GuideTranslationInput[] | undefined) {
+function normalizeTranslations(rows: GuideTranslationInput[] | undefined, fallbackSlug: string) {
   const byLang = new Map<string, GuideTranslationInput>();
   for (const row of rows ?? []) {
     const lang = asLang(row.lang);
@@ -235,8 +318,11 @@ function normalizeTranslations(rows: GuideTranslationInput[] | undefined) {
     if (!title || !body) {
       throw new BadRequestException("Minden megadott nyelvhez cím és szöveg kell.");
     }
+    const localized = cleanText(row.slug, 80).toLowerCase();
+    const slug = SLUG_RE.test(localized) ? localized : fallbackSlug;
     return {
       lang: row.lang,
+      slug,
       title,
       body,
       imageUrl: cleanText(row.imageUrl, 500) || null,

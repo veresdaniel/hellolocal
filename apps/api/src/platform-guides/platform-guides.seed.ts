@@ -1,5 +1,6 @@
 /** First-run copy for the six platform guides. Existing slugs are left alone. */
 export type GuideSeedTranslation = {
+  slug: string;
   title: string;
   body: string;
   imageUrl: string;
@@ -22,6 +23,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
     sortOrder: 10,
     translations: {
       hu: {
+        slug: "google-terkep",
         title: "Miért nem elég a Google Térkép?",
         imageUrl: "/marketing/map-szeged.jpg",
         imageCaption: "A helyi kínálat egy térképen: helyek, szűrők és a soron következő programok.",
@@ -36,6 +38,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       en: {
+        slug: "google-maps",
         title: "Why Google Maps is not enough",
         imageUrl: "/marketing/map-szeged.jpg",
         imageCaption: "The local offer on one map: places, filters and what is on this week.",
@@ -50,6 +53,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       de: {
+        slug: "google-maps",
         title: "Warum Google Maps nicht reicht",
         imageUrl: "/marketing/map-szeged.jpg",
         imageCaption: "Das lokale Angebot auf einer Karte: Orte, Filter und das Programm dieser Woche.",
@@ -70,6 +74,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
     sortOrder: 20,
     translations: {
       hu: {
+        slug: "onkormanyzat",
         title: "Önkormányzatnak és turisztikai irodának",
         imageUrl: "/marketing/visitor-hiker.jpg",
         imageCaption: "A vendég egy linken indul el, nem tíz külön oldalon keresgél.",
@@ -84,6 +89,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       en: {
+        slug: "municipalities",
         title: "For councils and tourist offices",
         imageUrl: "/marketing/visitor-hiker.jpg",
         imageCaption: "The visitor starts from one link instead of hunting across ten pages.",
@@ -98,6 +104,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       de: {
+        slug: "gemeinden",
         title: "Für Gemeinden und Tourismusbüros",
         imageUrl: "/marketing/visitor-hiker.jpg",
         imageCaption: "Der Gast startet von einem Link, statt zehn Seiten abzusuchen.",
@@ -118,6 +125,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
     sortOrder: 30,
     translations: {
       hu: {
+        slug: "helyi-vallalkozas",
         title: "Műhely, bolt és szolgáltatás a térképen",
         imageUrl: "/marketing/craft-workshop.jpg",
         imageCaption: "Kézzel készült kerámia a műhelyasztalon: a kis hely is saját oldalt kap.",
@@ -132,6 +140,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       en: {
+        slug: "local-business",
         title: "Workshops, shops and services on the map",
         imageUrl: "/marketing/craft-workshop.jpg",
         imageCaption: "Handmade bowls on a workshop table: a small place gets its own page.",
@@ -146,6 +155,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       de: {
+        slug: "lokale-betriebe",
         title: "Werkstatt, Laden und Dienstleistung auf der Karte",
         imageUrl: "/marketing/craft-workshop.jpg",
         imageCaption: "Handgemachte Schalen auf dem Werktisch: auch der kleine Ort bekommt eine eigene Seite.",
@@ -166,6 +176,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
     sortOrder: 40,
     translations: {
       hu: {
+        slug: "hogyan-kerul-fel",
         title: "Hogyan kerül fel a hely és a program?",
         imageUrl: "/marketing/mobile-place-upload.jpg",
         imageCaption: "A hely feltöltése telefonról: fotó, pár mondat, és a pont a térképen.",
@@ -180,6 +191,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       en: {
+        slug: "how-to-list",
         title: "How a place and an event get on the map",
         imageUrl: "/marketing/mobile-place-upload.jpg",
         imageCaption: "Adding a place from the phone: a photo, a few sentences, and the point on the map.",
@@ -194,6 +206,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       de: {
+        slug: "wie-eintragen",
         title: "Wie Ort und Termin auf die Karte kommen",
         imageUrl: "/marketing/mobile-place-upload.jpg",
         imageCaption: "Einen Ort vom Handy aus anlegen: Foto, ein paar Sätze und der Punkt auf der Karte.",
@@ -214,6 +227,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
     sortOrder: 50,
     translations: {
       hu: {
+        slug: "sajat-domain",
         title: "Saját domain és több nyelv",
         imageUrl: "/marketing/local-service.jpg",
         imageCaption: "A vendég a saját nyelvén olvassa ugyanazt a térképet, külön alkalmazás nélkül.",
@@ -228,6 +242,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       en: {
+        slug: "own-domain",
         title: "Your own domain and more than one language",
         imageUrl: "/marketing/local-service.jpg",
         imageCaption: "The visitor reads the same map in their own language, with no app.",
@@ -242,6 +257,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       de: {
+        slug: "eigene-domain",
         title: "Eigene Domain und mehrere Sprachen",
         imageUrl: "/marketing/local-service.jpg",
         imageCaption: "Der Gast liest dieselbe Karte in seiner Sprache, ohne App.",
@@ -262,6 +278,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
     sortOrder: 60,
     translations: {
       hu: {
+        slug: "helyi-intezmenyek",
         title: "Hivatal, iskola és könyvtár egy térképen",
         imageUrl: "/marketing/civic-institutions.jpg",
         imageCaption: "A közintézmény is felkerül: nyitvatartás, elérhetőség, rövid bemutatkozás.",
@@ -276,6 +293,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       en: {
+        slug: "local-institutions",
         title: "The town hall, the school and the library on one map",
         imageUrl: "/marketing/civic-institutions.jpg",
         imageCaption: "A public institution gets a page too: hours, contact, a short introduction.",
@@ -290,6 +308,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
         ),
       },
       de: {
+        slug: "lokale-einrichtungen",
         title: "Amt, Schule und Bibliothek auf einer Karte",
         imageUrl: "/marketing/civic-institutions.jpg",
         imageCaption: "Auch die Einrichtung bekommt eine Seite: Öffnungszeit, Kontakt, kurze Vorstellung.",

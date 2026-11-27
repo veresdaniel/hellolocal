@@ -14,11 +14,15 @@ export type PlatformGuidePublic = PlatformGuideSummary & {
   seoDescription: string;
   indexable: boolean;
   languages: string[];
+  /** Per-language public URL slugs for hreflang / language switch. */
+  slugsByLang?: Record<string, string>;
+  canonicalSlug?: string;
 };
 
 export type PlatformGuideTranslation = {
   id?: string;
   lang: string;
+  slug?: string | null;
   title: string;
   body: string;
   imageUrl: string | null;

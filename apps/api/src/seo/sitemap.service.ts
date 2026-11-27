@@ -166,7 +166,11 @@ ${entries}
     if (!(await this.isLandingCrawlOn())) return [];
     const guides = await this.prisma.platformGuide.findMany({
       where: { isPublished: true },
-      select: { slug: true, updatedAt: true },
+      select: {
+        slug: true,
+        updatedAt: true,
+        translations: { select: { lang: true, slug: true } },
+      },
       orderBy: { sortOrder: "asc" },
     });
     const payload = await this.pathSegments.getPayload();
@@ -175,8 +179,10 @@ ${entries}
     for (const guide of guides) {
       for (const lang of langs) {
         const guideSeg = await this.pathSegments.guideSegment(lang);
+        const localized =
+          guide.translations.find((row) => row.lang === lang)?.slug?.trim() || guide.slug;
         urls.push({
-          loc: absoluteUrlOnOrigin(origin, `/${lang}/${guideSeg}/${guide.slug}`),
+          loc: absoluteUrlOnOrigin(origin, `/${lang}/${guideSeg}/${localized}`),
           lastmod: guide.updatedAt.toISOString(),
           changefreq: "weekly",
           priority: 0.8,

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { FloatingHeader } from "../components/FloatingHeader";
 import { Footer } from "../ui/layout/Footer";
@@ -7,6 +7,7 @@ import { LandingHtml } from "../components/LandingHtml";
 import { useSeo } from "../seo/useSeo";
 import { getPlatformGuide } from "../api/platformGuides";
 import { guideCanonical } from "../app/guideCanonical";
+import { platformGuidePath } from "../app/guidePaths";
 import { isLang, type Lang } from "../app/config";
 import "../styles/overview.css";
 
@@ -19,6 +20,10 @@ export function PlatformGuidePage() {
     queryFn: () => getPlatformGuide(slug, lang),
     enabled: Boolean(slug),
   });
+
+  if (data?.slug && data.slug !== slug) {
+    return <Navigate to={platformGuidePath(lang, data.slug)} replace />;
+  }
 
   const canonical = data ? guideCanonical(origin, lang, data.slug) : undefined;
   const image =
@@ -50,11 +55,12 @@ export function PlatformGuidePage() {
     if (!data) return;
     const links: HTMLLinkElement[] = [];
     const langs = data.languages?.length ? data.languages : [lang];
+    const byLang = data.slugsByLang || {};
     for (const code of langs) {
       const link = document.createElement("link");
       link.rel = "alternate";
       link.hreflang = code;
-      link.href = guideCanonical(origin, code, data.slug);
+      link.href = guideCanonical(origin, code, byLang[code] || data.slug);
       link.dataset.guideHreflang = "1";
       document.head.appendChild(link);
       links.push(link);
@@ -62,7 +68,8 @@ export function PlatformGuidePage() {
     const xDefault = document.createElement("link");
     xDefault.rel = "alternate";
     xDefault.hreflang = "x-default";
-    xDefault.href = guideCanonical(origin, langs.includes("hu") ? "hu" : lang, data.slug);
+    const defaultLang = langs.includes("hu") ? "hu" : lang;
+    xDefault.href = guideCanonical(origin, defaultLang, byLang[defaultLang] || data.slug);
     xDefault.dataset.guideHreflang = "1";
     document.head.appendChild(xDefault);
     links.push(xDefault);

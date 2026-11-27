@@ -77,7 +77,10 @@ export function renderGuideDocument(indexHtml, guide, origin, payload) {
     Array.isArray(guide.languages) && guide.languages.length
       ? guide.languages.map(asLang)
       : [lang];
-  const url = guideCanonical(origin, lang, slug, payload);
+  const byLang =
+    guide.slugsByLang && typeof guide.slugsByLang === "object" ? guide.slugsByLang : {};
+  const slugFor = (code) => String(byLang[code] || slug);
+  const url = guideCanonical(origin, lang, slugFor(lang), payload);
   const title = String(guide.seoTitle || guide.title || "HelloLocal");
   const description = String(guide.seoDescription || "");
   const image = absoluteAsset(origin, guide.imageUrl) || `${origin}/marketing/hellolocal-share.jpg`;
@@ -85,10 +88,11 @@ export function renderGuideDocument(indexHtml, guide, origin, payload) {
   const alternates = languages
     .map(
       (code) =>
-        `<link rel="alternate" hreflang="${code}" href="${escapeHtml(guideCanonical(origin, code, slug, payload))}" />`
+        `<link rel="alternate" hreflang="${code}" href="${escapeHtml(guideCanonical(origin, code, slugFor(code), payload))}" />`
     )
     .join("");
-  const xDefault = guideCanonical(origin, languages.includes("hu") ? "hu" : lang, slug, payload);
+  const defaultLang = languages.includes("hu") ? "hu" : lang;
+  const xDefault = guideCanonical(origin, defaultLang, slugFor(defaultLang), payload);
   const caption = String(guide.imageCaption || "").trim();
   const figure = guide.imageUrl
     ? `<figure class="guide__figure"><img src="${escapeHtml(absoluteAsset(origin, guide.imageUrl))}" alt="${escapeHtml(caption || guide.title || "")}" />${

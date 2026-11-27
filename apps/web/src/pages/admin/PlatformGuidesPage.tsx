@@ -18,6 +18,7 @@ import {
 
 const EMPTY_TRANSLATION = (lang: string): PlatformGuideTranslation => ({
   lang,
+  slug: "",
   title: "",
   body: "",
   imageUrl: "",
@@ -228,6 +229,14 @@ export function PlatformGuidesPage() {
             </button>
           ))}
         </div>
+        <label>
+          {t("admin.slug", { defaultValue: "URL slug (nyelv)" })}
+          <input
+            value={current.slug || ""}
+            onChange={(event) => patch({ slug: event.target.value })}
+            placeholder={slug || "google-maps"}
+          />
+        </label>
         <label>
           {t("admin.title", { defaultValue: "Cím" })}
           <input value={current.title} onChange={(event) => patch({ title: event.target.value })} />
