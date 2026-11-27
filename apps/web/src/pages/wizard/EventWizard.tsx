@@ -257,29 +257,15 @@ export function EventWizard() {
           <label style={wizardLabel} htmlFor="wiz-event-title">
             {t("admin.wizard.eventName")}
           </label>
-          <AiPostfixField
-            draft={{
-              kind: "event",
-              field: "title",
-              lang: contentLang,
-              siteId: eventSiteId,
-              placeId: placeId || undefined,
-              name: title,
-              contextHints: eventDraftHints,
-            }}
+          <input
+            id="wiz-event-title"
+            style={wizardInput}
             value={title}
-            onApply={setTitle}
-          >
-            <input
-              id="wiz-event-title"
-              style={wizardInput}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t("admin.wizard.eventNamePlaceholder")}
-              autoComplete="off"
-              autoFocus
-            />
-          </AiPostfixField>
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t("admin.wizard.eventNamePlaceholder")}
+            autoComplete="off"
+            autoFocus
+          />
         </div>
       )}
 

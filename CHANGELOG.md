@@ -18,9 +18,9 @@ in prose as used in the product.
   with AI draft (saved to `description`; falls back to short if empty).
 - Nyelvesítés field labels: human-readable titles for shared UI keys
   (error/offline/common/…), technical key kept as subtitle.
-- Mobile place/event wizard: AI draft postfix on name/title and short
-  description (same `AiPostfixField` gate as admin forms; HTML stripped to
-  plain text in the wizard textarea).
+- Mobile place/event wizard: AI draft postfix on short and long description
+  (same `AiPostfixField` gate as admin forms; HTML stripped to plain text in
+  the wizard textarea). Name/title steps stay manual — no AI button.
 - Platform landing story block for mobile place/event upload (image + DB
   UiMessage copy hu/en/de; CMS slot `mobile`).
 - Profile password change (current + new) and admin user-edit password reset
@@ -33,6 +33,8 @@ in prose as used in the product.
 
 ### Changed
 
+- Mobile place/event wizard: remove AI draft from the name/title step (keep it
+  on short and long description only).
 - Platform overview: desktop stats stay content-width (not stretched across the
   full hero); hero aligns to the top. Mobile keeps stacked full-width CTAs,
   one-column stats rows, and a hamburger menu (demo / how it works / login);

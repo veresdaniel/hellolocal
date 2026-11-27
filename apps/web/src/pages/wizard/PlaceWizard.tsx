@@ -304,30 +304,15 @@ export function PlaceWizard() {
           <label style={wizardLabel} htmlFor="wiz-place-name">
             {t("admin.wizard.name")}
           </label>
-          <AiPostfixField
-            draft={{
-              kind: "place",
-              field: "name",
-              lang: contentLang,
-              siteId: placeSiteId,
-              name,
-              categoryId: categoryId || undefined,
-              townId: townId || undefined,
-              contextHints: placeDraftHints,
-            }}
+          <input
+            id="wiz-place-name"
+            style={wizardInput}
             value={name}
-            onApply={setName}
-          >
-            <input
-              id="wiz-place-name"
-              style={wizardInput}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t("admin.wizard.namePlaceholder")}
-              autoComplete="off"
-              autoFocus
-            />
-          </AiPostfixField>
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t("admin.wizard.namePlaceholder")}
+            autoComplete="off"
+            autoFocus
+          />
         </div>
       )}
 
