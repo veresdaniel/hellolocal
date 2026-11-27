@@ -249,12 +249,7 @@ export function OverviewPage() {
         .map((word) => word.trim())
         .filter(Boolean),
       image,
-      // Apex `/` on a language-specific platform host; otherwise `/:lang`.
-      canonical: absoluteCanonical(
-        typeof window !== "undefined" && window.location.pathname === "/"
-          ? "/"
-          : platformLandingPath(lang)
-      ),
+      canonical: absoluteCanonical(platformLandingPath(lang)),
       // Platform landing only: seo.landingIndexable (platform.landingCrawlable). Default off.
       robots:
         platformSettings?.landingIndexable === true ? "index, follow" : "noindex, nofollow",
@@ -284,10 +279,7 @@ export function OverviewPage() {
           name: "HelloLocal",
           applicationCategory: "BusinessApplication",
           operatingSystem: "Web",
-          url:
-            typeof window !== "undefined" && window.location.pathname === "/"
-              ? `${origin}/`
-              : `${origin}${platformLandingPath(lang)}`,
+          url: `${origin}${platformLandingPath(lang)}`,
           description,
           inLanguage: LANGS,
           image,

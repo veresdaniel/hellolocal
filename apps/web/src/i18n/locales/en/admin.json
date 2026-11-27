@@ -396,6 +396,8 @@
   "readMore": "Read more",
   "settings": "Settings",
   "appSettings": "Platform Settings",
+  "platformGuides": "Platform guides",
+  "platformGuidesHint": "Landing subpages. Text, image and SEO fields per language.",
   "uiCopy": "Public copy (advanced)",
   "uiCopyHint": "Every sentence on the public page lives here, one language at a time. Adding a language starts from the Hungarian text. Hungarian is the fallback, so it cannot be removed.",
   "uiCopyAdd": "Add language",

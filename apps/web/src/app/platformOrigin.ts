@@ -27,6 +27,12 @@ export function getPlatformOriginForLang(lang: string): string {
   for (const [host, hostLang] of hostLangs) {
     if (hostLang === code) return `https://${host}`;
   }
+  // German has no own host; it lives on the English platform host (hellolocal.eu).
+  if (code === "de") {
+    for (const [host, hostLang] of hostLangs) {
+      if (hostLang === "en") return `https://${host}`;
+    }
+  }
   return getPlatformOrigin();
 }
 

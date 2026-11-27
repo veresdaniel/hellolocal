@@ -247,7 +247,8 @@ function renderStories(copy, landingImages, lang) {
       const story = copy.stories[key];
       if (!story) return "";
       const picture = storyPictureHtml(landingImages, lang, key, escapeHtml(richToPlain(story.alt)));
-      return `<article>${picture}<h3>${sanitizeInlineHtml(story.title)}</h3><div>${sanitizeRichHtml(story.text)}</div></article>`;
+      const caption = escapeHtml(richToPlain(story.alt));
+      return `<article><figure>${picture}${caption ? `<figcaption>${caption}</figcaption>` : ""}</figure><h3>${sanitizeInlineHtml(story.title)}</h3><div>${sanitizeRichHtml(story.text)}</div></article>`;
     })
     .join("");
 }
@@ -331,7 +332,7 @@ export function overviewLang(pathname) {
 
 /**
  * Public share / canonical URL for an overview request path.
- * Prefer apex `/` or `/:lang` — never the legacy overview segment.
+ * Always `/:lang` — never bare `/` or a legacy overview segment.
  */
 export function overviewShareUrl(origin, pathname, lang) {
   const base = String(origin || "").replace(/\/$/, "");
@@ -339,9 +340,7 @@ export function overviewShareUrl(origin, pathname, lang) {
     .split("?")[0]
     .split("/")
     .filter(Boolean);
-  if (parts.length === 0) return `${base}/`;
   if (parts.length === 1 && LANGS.includes(parts[0])) return `${base}/${parts[0]}`;
-  if (parts.length === 1 && OVERVIEW_SEGMENTS.has(parts[0])) return `${base}/`;
   const code =
     parts.length >= 1 && LANGS.includes(parts[0])
       ? parts[0]
@@ -355,6 +354,20 @@ export function overviewShareUrl(origin, pathname, lang) {
  * Render the platform overview into the SPA shell (body + head SEO/JSON-LD).
  * `shareImage` is admin/platform defaultShareImage; `indexable` gates robots (default off).
  */
+function renderGuideIndex(lang, copy, guides) {
+  if (!Array.isArray(guides) || !guides.length) return "";
+  const items = guides
+    .filter((guide) => guide && guide.slug && guide.title)
+    .map(
+      (guide) =>
+        `<li><a href="/${lang}/tema/${escapeHtml(guide.slug)}">${sanitizeInlineHtml(guide.title)}</a></li>`
+    )
+    .join("");
+  if (!items) return "";
+  const heading = sanitizeInlineHtml(copy.guidesTitle || copy.readMore || "");
+  return `<section><h2>${heading}</h2><ul>${items}</ul></section>`;
+}
+
 export function renderOverviewDocument(
   indexHtml,
   {
@@ -372,11 +385,16 @@ export function renderOverviewDocument(
     freeTrialDays,
     currencyByLang,
     currencies,
+    guides,
+    /** Host opener language for hreflang x-default (`/hu` on hellolocal.hu). */
+    xDefaultLang,
   }
 ) {
   origin = publicOrigin(origin);
   const copy = loadOverview(lang, override, messages);
   const published = Array.isArray(languages) && languages.length ? languages : LANGS;
+  const defaultLang =
+    xDefaultLang && LANGS.includes(xDefaultLang) ? xDefaultLang : lang || FALLBACK_LANG;
   const url =
     (shareUrl && String(shareUrl).trim()) ||
     overviewShareUrl(origin, pathname || `/${lang}`, lang);
@@ -493,6 +511,7 @@ export function renderOverviewDocument(
         <div>${sanitizeRichHtml(copy.plansLead || "")}</div>
         ${planItems}
       </section>
+      ${renderGuideIndex(lang, copy, guides)}
       <section>
         <h2>${sanitizeInlineHtml(copy.faqTitle)}</h2>
         ${faqItems}
@@ -505,7 +524,7 @@ export function renderOverviewDocument(
     <meta name="keywords" content="${keywords}" />
     <meta name="robots" content="${robots}" />
     ${alternates}
-    <link rel="alternate" hreflang="x-default" href="${origin}/" />
+    <link rel="alternate" hreflang="x-default" href="${origin}/${defaultLang}" />
     <script type="application/ld+json">${jsonLd}</script>`;
 
   let html = applySocialMeta(indexHtml, {

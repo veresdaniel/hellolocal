@@ -389,6 +389,14 @@ export function AdminDashboard() {
         variant: "admin",
       },
       {
+        key: "platformGuides",
+        title: t("admin.platformGuides"),
+        description: t("admin.platformGuidesHint"),
+        link: adminPath("/platform-guides"),
+        icon: "🗺️",
+        variant: "admin",
+      },
+      {
         key: "i18n",
         title: t("admin.i18n.title"),
         description: t("admin.dashboardCards.i18nDesc"),

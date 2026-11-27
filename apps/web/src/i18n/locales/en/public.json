@@ -47,8 +47,10 @@
   "overview": {
     "menu": "Overview",
     "eyebrow": "For councils, tourist offices and local businesses",
-    "title": "Your region’s places and events on one map — no app.",
-    "lead": "Visitors open it on their phone, filter, and go. You pass on a single link — on the website, in the newsletter, or at the tourist desk.",
+    "title": "Interactive tourism map for municipalities",
+    "lead": "An interactive tourism map for municipalities, tourist offices and local businesses. Visitors open it on their phone, filter, and go. You pass on a single link — on the website, in the newsletter, or at the tourist desk.",
+    "readMore": "Read more",
+    "guidesTitle": "In more detail",
     "introP1": "HelloLocal is a browser-based local tourism map. It brings a region’s sights, services, hospitality, institutions, special places and events onto one screen. No app to install, no account to browse, no hopping between websites — guests start where they already are: on their phone.",
     "introP2": "A region is more than its famous landmarks. Family cellars, craft workshops, tucked-away restaurants, local producers and everyday institutions deserve a shared, easy-to-share presence. Place owners write their own pages; the council or tourist office passes everything on with a single link.",
     "differenceKicker": "Why is this not just another map?",
@@ -522,7 +524,8 @@
     "tagline": "Discover local treasures",
     "legal": "Legal Information",
     "quickLinks": "Quick Links",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "platform": "HelloLocal"
   },
   "beTheFirst": "Be the first!",
   "saving": "Saving...",

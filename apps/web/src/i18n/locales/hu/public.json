@@ -47,8 +47,10 @@
   "overview": {
     "menu": "Áttekintés",
     "eyebrow": "Önkormányzatoknak, turisztikai irodáknak és helyi vállalkozásoknak",
-    "title": "Egy térképen a régiótok helyei és programjai — app nélkül.",
-    "lead": "A látogató a telefonján nyitja meg, szűr, és elindul. Ti egyetlen linken adjátok tovább — weboldalon, hírlevélben vagy a Tourinform pultján.",
+    "title": "Interaktív turisztikai térkép önkormányzatoknak",
+    "lead": "Interaktív turisztikai térkép önkormányzatoknak, turisztikai irodáknak és helyi vállalkozásoknak. A látogató a telefonján nyitja meg, szűr, és elindul. Ti egyetlen linken adjátok tovább — weboldalon, hírlevélben vagy a Tourinform pultján.",
+    "readMore": "Bővebben",
+    "guidesTitle": "Részletesebben",
     "introP1": "A HelloLocal böngészőből elérhető helyi turisztikai térkép: egy felületen gyűjti össze egy régió látnivalóit, szolgáltatásait, vendéglátóhelyeit, intézményeit, különleges helyszíneit és programjait. Nem kell alkalmazást letölteni, regisztrálni vagy több weboldal között keresgélni — a vendég ott kezdi, ahol van: a telefonján.",
     "introP2": "Egy régió értékét nemcsak a legismertebb látványosságok adják. Ott vannak a családi pincék, a kézműves műhelyek, az eldugott éttermek, a helyi termelők és a mindennapi intézmények is. A HelloLocal ezeknek ad közös, könnyen megosztható megjelenést — a hely gazdája írja a saját oldalát, az önkormányzat vagy a turisztikai iroda pedig egyetlen linken adja tovább a vendégnek.",
     "differenceKicker": "Miért más, mint egy általános térkép?",
@@ -522,7 +524,8 @@
     "tagline": "Fedezd fel a helyi kincseket",
     "legal": "Jogi információk",
     "quickLinks": "Gyors linkek",
-    "rights": "Minden jog fenntartva."
+    "rights": "Minden jog fenntartva.",
+    "platform": "HelloLocal"
   },
   "beTheFirst": "Legyél Te az első!",
   "saving": "Mentés...",

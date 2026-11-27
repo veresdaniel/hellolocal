@@ -27,13 +27,14 @@ describe("overviewLang", () => {
 describe("overviewShareUrl", () => {
   const origin = "https://hellolocal.hu";
 
-  it("keeps apex and bare lang without overview segment", () => {
-    expect(overviewShareUrl(origin, "/", "hu")).toBe("https://hellolocal.hu/");
+  it("always uses /:lang — never bare /", () => {
+    expect(overviewShareUrl(origin, "/", "hu")).toBe("https://hellolocal.hu/hu");
     expect(overviewShareUrl(origin, "/hu", "hu")).toBe("https://hellolocal.hu/hu");
     expect(overviewShareUrl(origin, "/en", "en")).toBe("https://hellolocal.hu/en");
   });
 
   it("canonicalizes legacy overview segments to the language root", () => {
+    expect(overviewShareUrl(origin, "/attekintes", "hu")).toBe("https://hellolocal.hu/hu");
     expect(overviewShareUrl(origin, "/hu/attekintes", "hu")).toBe(
       "https://hellolocal.hu/hu"
     );

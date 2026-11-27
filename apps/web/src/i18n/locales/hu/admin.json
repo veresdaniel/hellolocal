@@ -376,6 +376,8 @@
   "actions": "Akciók",
   "settings": "Beállítások",
   "appSettings": "Platform beállítások",
+  "platformGuides": "Platform útmutatók",
+  "platformGuidesHint": "A landing aloldalai. Nyelvenként szerkeszthető szöveg, kép és saját keresőcím.",
   "uiCopy": "Publikus szövegek (haladó)",
   "uiCopyHint": "A publikus oldal mondatai itt vannak, nyelvenként. Új nyelv felvétele a magyar szöveget másolja kiindulásnak. A magyar a tartalék, ezért nem törölhető.",
   "uiCopyAdd": "Nyelv felvétele",

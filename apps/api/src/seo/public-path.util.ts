@@ -290,6 +290,24 @@ export function overviewPath(lang: string): string {
   return `/${asPublicLang(lang)}`;
 }
 
+/** Platform guide article (`/:lang/tema/:slug`). */
+export function platformGuidePath(lang: string, slug: string): string {
+  return `/${asPublicLang(lang)}/tema/${slug}`;
+}
+
+/**
+ * Which guide languages belong on this public host.
+ * Hungarian articles are canonical on hellolocal.hu; English and German on hellolocal.eu.
+ * Any other host (local, hello-local.io) lists every language.
+ */
+export function guideLangsForSitemapHost(origin: string): readonly string[] {
+  const host = hostnameFromUrl(origin).replace(/^www\./, "");
+  if (host === "hellolocal.hu") return ["hu"];
+  if (host === "hellolocal.eu") return ["en", "de"];
+  if (host === "hello-local.io") return [];
+  return PUBLIC_LANGS;
+}
+
 /** Platform region list path. */
 export function regionListPath(lang: string): string {
   return `/${lang}/${regionListPathSegment(lang)}`;

@@ -45,6 +45,9 @@ const HomePage = lazy(() =>
 const OverviewPage = lazy(() =>
   import("../pages/OverviewPage").then((m) => ({ default: m.OverviewPage }))
 );
+const PlatformGuidePage = lazy(() =>
+  import("../pages/PlatformGuidePage").then((m) => ({ default: m.PlatformGuidePage }))
+);
 
 // Auth pages - loaded eagerly (small, needed for login)
 import { LoginPage } from "../pages/auth/LoginPage";
@@ -154,6 +157,9 @@ const AppSettingsPage = lazy(() =>
 );
 const UiCopyPage = lazy(() =>
   import("../pages/admin/UiCopyPage").then((m) => ({ default: m.UiCopyPage }))
+);
+const PlatformGuidesPage = lazy(() =>
+  import("../pages/admin/PlatformGuidesPage").then((m) => ({ default: m.PlatformGuidesPage }))
 );
 const I18nAdminPage = lazy(() =>
   import("../pages/admin/I18nAdminPage").then((m) => ({ default: m.I18nAdminPage }))
@@ -444,6 +450,14 @@ const createPublicRoutes = () => {
             element: <PlatformGaShell />,
             children: [
               { index: true, element: <LangIndex /> },
+              {
+                path: "tema/:slug",
+                element: (
+                  <Suspense fallback={<PublicBootShell />}>
+                    <PlatformGuidePage />
+                  </Suspense>
+                ),
+              },
               ...regionListRoutes,
               ...overviewRoutes(),
               { path: "pricing", element: <PublicPricingPage /> },
@@ -1024,6 +1038,30 @@ export const router = createBrowserRouter([
             <Suspense fallback={<AdminPageSkeleton />}>
               <AdminLayout>
                 <UiCopyPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "platform-guides",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <PlatformGuidesPage />
+              </AdminLayout>
+            </Suspense>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "platform-guides/:id",
+        element: (
+          <ProtectedRoute requiredRole={ROLE_SUPERADMIN}>
+            <Suspense fallback={<AdminPageSkeleton />}>
+              <AdminLayout>
+                <PlatformGuidesPage />
               </AdminLayout>
             </Suspense>
           </ProtectedRoute>

@@ -46,6 +46,9 @@ function landingOnlyStarBlock(): string[] {
   return [
     "User-agent: *",
     "Allow: /",
+    "Allow: /hu/tema",
+    "Allow: /en/tema",
+    "Allow: /de/tema",
     "Disallow: /*/",
     ...PUBLIC_LANGS.flatMap((lang) => [`Disallow: /${lang}/`]),
   ];

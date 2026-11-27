@@ -1552,6 +1552,37 @@ model PlaceFloorplan {
 }
 
 // FloorplanPin: Pins/markers on floorplans
+// Platform marketing guides (hellolocal.hu / hellolocal.eu /tema/:slug).
+model PlatformGuide {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  translations PlatformGuideTranslation[]
+
+  @@index([isPublished, sortOrder])
+}
+
+model PlatformGuideTranslation {
+  id              String  @id @default(cuid())
+  guideId         String
+  lang            String  @db.VarChar(8)
+  title           String
+  body            String  @db.Text
+  imageUrl        String?
+  imageCaption    String?
+  seoTitle        String?
+  seoDescription  String?
+
+  guide PlatformGuide @relation(fields: [guideId], references: [id], onDelete: Cascade)
+
+  @@unique([guideId, lang])
+  @@index([lang])
+}
+
 // UiLanguage: languages the public interface can be shown in.
 // The strings themselves live in UiMessage, one row per key and language.
 model UiLanguage {

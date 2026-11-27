@@ -900,6 +900,84 @@
   order: -1;
 }
 
+.overview__photo,
+.overview__close-figure {
+  margin: 0;
+}
+
+.overview__more {
+  margin: 14px 0 0;
+}
+
+.overview__more a {
+  color: inherit;
+  font-weight: 650;
+}
+
+.overview__guides {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.overview__guides a {
+  color: inherit;
+  font-weight: 650;
+}
+
+.guide__article {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 0 72px;
+  container-type: inline-size;
+}
+
+.overview.guide h1 {
+  max-width: none;
+  font-size: min(48px, 4.2cqi);
+  line-height: 1.12;
+  text-wrap: nowrap;
+  white-space: nowrap;
+}
+
+@container (max-width: 520px) {
+  .overview.guide h1 {
+    font-size: clamp(26px, 8cqi, 32px);
+    text-wrap: wrap;
+    white-space: normal;
+  }
+}
+
+.guide__figure,
+.guide__body {
+  max-width: 46rem;
+}
+
+.guide__back {
+  margin: 0 0 12px;
+}
+
+.guide__figure {
+  margin: 18px 0 8px;
+}
+
+.guide__figure img {
+  display: block;
+  width: 100%;
+  border-radius: 18px;
+}
+
+.guide__body {
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.guide__body p {
+  margin: 0 0 16px;
+}
+
 .overview__frame {
   overflow: hidden;
   border-radius: 22px;
@@ -1004,6 +1082,10 @@
 
 .overview__close .overview__cta {
   margin-top: 22px;
+}
+
+.overview__close .overview__caption {
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .overview__close-map {

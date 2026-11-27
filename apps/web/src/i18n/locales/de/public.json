@@ -47,8 +47,10 @@
   "overview": {
     "menu": "Überblick",
     "eyebrow": "Für Gemeinden, Tourismusbüros und lokale Betriebe",
-    "title": "Eure Orte und Termine auf einer Karte — ohne App.",
-    "lead": "Gäste öffnen sie am Handy, filtern und gehen los. Ihr gebt einen einzigen Link weiter — auf der Website, im Newsletter oder am Tourismus-Schalter.",
+    "title": "Interaktive Tourismuskarte für Gemeinden",
+    "lead": "Eine interaktive Tourismuskarte für Gemeinden, Tourismusbüros und lokale Betriebe. Gäste öffnen sie am Handy, filtern und gehen los. Ihr gebt einen einzigen Link weiter — auf der Website, im Newsletter oder am Tourismus-Schalter.",
+    "readMore": "Mehr dazu",
+    "guidesTitle": "Ausführlicher",
     "introP1": "HelloLocal ist eine lokale Tourismuskarte im Browser. Sie versammelt Sehenswürdigkeiten, Dienstleistungen, Gastronomie, Einrichtungen, besondere Orte und Veranstaltungen einer Region auf einer Oberfläche. Keine App, keine Anmeldung zum Stöbern, kein Hin- und Herspringen zwischen Websites — Gäste starten dort, wo sie schon sind: am Handy.",
     "introP2": "Eine Region ist mehr als ihre bekannten Highlights. Familienweingüter, Handwerksstätten, versteckte Restaurants, lokale Erzeuger und alltägliche Einrichtungen verdienen eine gemeinsame, leicht teilbare Präsenz. Wer den Ort führt, schreibt die eigene Seite; Gemeinde oder Tourismusbüro gibt alles mit einem Link weiter.",
     "differenceKicker": "Warum ist das keine gewöhnliche Karte?",
@@ -512,7 +514,8 @@
     "tagline": "Entdecke lokale Schätze",
     "legal": "Rechtliche Informationen",
     "quickLinks": "Schnellzugriff",
-    "rights": "Alle Rechte vorbehalten."
+    "rights": "Alle Rechte vorbehalten.",
+    "platform": "HelloLocal"
   },
   "beTheFirst": "Sei der Erste!",
   "saving": "Speichern...",

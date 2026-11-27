@@ -396,6 +396,8 @@
   "backToPublicSite": "Zurück zur öffentlichen Seite",
   "loggedOutSuccessfully": "Sie wurden erfolgreich abgemeldet",
   "appSettings": "Plattform-Einstellungen",
+  "platformGuides": "Plattform-Ratgeber",
+  "platformGuidesHint": "Unterseiten der Startseite. Text, Bild und SEO je Sprache.",
   "uiCopy": "Öffentliche Texte (erweitert)",
   "uiCopyHint": "Jeder Satz der öffentlichen Seite steht hier, pro Sprache. Eine neue Sprache startet mit dem ungarischen Text. Ungarisch ist die Ersatzsprache und kann nicht gelöscht werden.",
   "uiCopyAdd": "Sprache hinzufügen",

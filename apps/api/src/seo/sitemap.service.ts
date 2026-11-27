@@ -9,6 +9,8 @@ import {
   eventDetailPath,
   legalPagePath,
   overviewPath,
+  platformGuidePath,
+  guideLangsForSitemapHost,
   placeDetailPath,
   platformPricingPath,
   productsPath,
@@ -150,11 +152,31 @@ ${entries}
   /** Landing-only URLs when global crawl is off but platform landing is on. */
   private async landingOnlyUrls(origin: string): Promise<SitemapUrl[]> {
     if (!(await this.isLandingCrawlOn())) return [];
-    return PUBLIC_LANGS.map((lang) => ({
+    const landing = PUBLIC_LANGS.map((lang) => ({
       loc: absoluteUrlOnOrigin(origin, overviewPath(lang)),
       changefreq: "daily" as const,
       priority: 1.0,
     }));
+    return [...landing, ...(await this.guideUrls(origin))];
+  }
+
+  /** Published platform guides, one URL per language that belongs on this host. */
+  private async guideUrls(origin: string): Promise<SitemapUrl[]> {
+    if (!(await this.isLandingCrawlOn())) return [];
+    const guides = await this.prisma.platformGuide.findMany({
+      where: { isPublished: true },
+      select: { slug: true, updatedAt: true },
+      orderBy: { sortOrder: "asc" },
+    });
+    const langs = guideLangsForSitemapHost(origin);
+    return guides.flatMap((guide) =>
+      langs.map((lang) => ({
+        loc: absoluteUrlOnOrigin(origin, platformGuidePath(lang, guide.slug)),
+        lastmod: guide.updatedAt.toISOString(),
+        changefreq: "weekly" as const,
+        priority: 0.8,
+      }))
+    );
   }
 
   private async urlsForChunk(scope: SitemapScope, chunk: SitemapChunk): Promise<SitemapUrl[]> {
@@ -282,6 +304,7 @@ ${entries}
         priority: 0.5,
       });
     }
+    if (landingOn) urls.push(...(await this.guideUrls(origin)));
     return urls;
   }
 

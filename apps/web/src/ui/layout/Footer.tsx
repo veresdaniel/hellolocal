@@ -389,7 +389,7 @@ export function Footer({
                   <li><Link to={home}>{t("public.home.title")}</Link></li>
                   <li>
                     {overview.startsWith("http") ? (
-                      <a href={overview}>{t("public.overview.menu")}</a>
+                      <a href={overview}>{t("public.footer.platform")}</a>
                     ) : (
                       <Link to={overview}>{t("public.overview.menu")}</Link>
                     )}

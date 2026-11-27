@@ -155,8 +155,7 @@ export function overviewSegment(lang: string): string {
 
 /**
  * Platform marketing landing path: language root only (`/hu`), no `/attekintes`.
- * Legacy overview segments redirect here. Language-specific platform hosts still
- * open via RootRedirect onto this path (or stay on `/` for SSR/share).
+ * Bare `/` redirects here (SSR + RootRedirect). Legacy overview segments redirect here too.
  */
 export function platformLandingPath(lang: string): string {
   return `/${asLang(lang)}`;

@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DemoRequestForm } from "../components/DemoRequestForm";
 import { PlanPicker } from "../components/PlanPicker";
@@ -12,6 +13,13 @@ import {
   resolveStoryImage,
 } from "../marketing/landingCmsImages";
 import { getPlatformSettings } from "../api/places.api";
+import { listPlatformGuides } from "../api/platformGuides";
+
+const GUIDE_BY_STORY: Partial<Record<(typeof STORY_KEYS)[number], string>> = {
+  maker: "helyi-vallalkozas",
+  civic: "helyi-intezmenyek",
+  town: "onkormanyzat",
+};
 
 const FEATURE_KEYS = ["places", "events", "map", "languages", "sites", "editors"] as const;
 const STORY_KEYS = ["mobile", "maker", "service", "quiet", "civic", "town"] as const;
@@ -21,6 +29,13 @@ const FAQ_KEYS = ["app", "languages", "editors", "towns", "maps"] as const;
 
 export function OverviewBelowFold({ lang }: { lang: Lang }) {
   const text = useLandingText(lang);
+  const { data: guides } = useQuery({
+    queryKey: ["platform-guides", lang],
+    queryFn: () => listPlatformGuides(lang),
+    staleTime: 5 * 60 * 1000,
+  });
+  const guideSlugs = useMemo(() => new Set((guides ?? []).map((guide) => guide.slug)), [guides]);
+  const readMore = landingPlain(text("readMore"));
   const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", lang, "default", "theme"],
     queryFn: () => getPlatformSettings(lang),
@@ -78,6 +93,11 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
             </li>
           ))}
         </ul>
+        {guideSlugs.has("google-terkep") ? (
+          <p className="overview__more">
+            <Link to={`/${lang}/tema/google-terkep`}>{readMore}</Link>
+          </p>
+        ) : null}
       </section>
 
       <section className="overview__section" id="who">
@@ -90,18 +110,28 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
             className={`overview__story${index % 2 === 1 ? " is-flip" : ""}`}
             key={key}
           >
-            <div className="overview__frame">
-              <MarketingPicture
-                image={storyImages[key]}
-                alt={landingPlain(text(`stories.${key}.alt`))}
-              />
-            </div>
+            <figure className="overview__photo">
+              <div className="overview__frame">
+                <MarketingPicture
+                  image={storyImages[key]}
+                  alt={landingPlain(text(`stories.${key}.alt`))}
+                />
+              </div>
+              <figcaption className="overview__caption">
+                {landingPlain(text(`stories.${key}.alt`))}
+              </figcaption>
+            </figure>
             <div className="overview__story-copy">
               <LandingHtml html={text(`stories.${key}.kicker`)} className="overview__kicker" as="div" />
               <h3>
                 <LandingInline html={text(`stories.${key}.title`)} />
               </h3>
               <LandingHtml html={text(`stories.${key}.text`)} as="div" />
+              {GUIDE_BY_STORY[key] && guideSlugs.has(GUIDE_BY_STORY[key]) ? (
+                <p className="overview__more">
+                  <Link to={`/${lang}/tema/${GUIDE_BY_STORY[key]}`}>{readMore}</Link>
+                </p>
+              ) : null}
             </div>
           </article>
         ))}
@@ -122,6 +152,11 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
             </li>
           ))}
         </ol>
+        {guideSlugs.has("hogyan-kerul-fel") ? (
+          <p className="overview__more">
+            <Link to={`/${lang}/tema/hogyan-kerul-fel`}>{readMore}</Link>
+          </p>
+        ) : null}
       </section>
 
       <section className="overview__section">
@@ -136,12 +171,32 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
                 <LandingInline html={text(`features.${key}.title`)} />
               </h3>
               <LandingHtml html={text(`features.${key}.text`)} as="div" />
+              {key === "sites" && guideSlugs.has("sajat-domain") ? (
+                <p className="overview__more">
+                  <Link to={`/${lang}/tema/sajat-domain`}>{readMore}</Link>
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>
       </section>
 
       <PlanPicker lang={lang} />
+
+      {guides && guides.length > 0 ? (
+        <section className="overview__section" id="guides">
+          <h2>
+            <LandingInline html={text("guidesTitle")} />
+          </h2>
+          <ul className="overview__guides">
+            {guides.map((guide) => (
+              <li key={guide.slug}>
+                <Link to={`/${lang}/tema/${guide.slug}`}>{guide.title}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="overview__section">
         <h2>
@@ -169,11 +224,16 @@ export function OverviewBelowFold({ lang }: { lang: Lang }) {
             <LandingInline html={text("cta")} />
           </LiveDemoLink>
         </div>
-        <MarketingPicture
-          className="overview__close-map"
-          image={closingImage}
-          alt={landingPlain(text("closingImageAlt"))}
-        />
+        <figure className="overview__close-figure">
+          <MarketingPicture
+            className="overview__close-map"
+            image={closingImage}
+            alt={landingPlain(text("closingImageAlt"))}
+          />
+          <figcaption className="overview__caption">
+            {landingPlain(text("closingImageAlt"))}
+          </figcaption>
+        </figure>
       </section>
 
       <section className="overview__section" id="demo-request">

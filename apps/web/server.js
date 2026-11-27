@@ -17,6 +17,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
 import { overviewLang, overviewShareUrl, renderOverviewDocument } from './ssr/renderOverview.js';
+import { guideRequest, renderGuideDocument } from './ssr/renderGuide.js';
 import {
   applyAdminRobots,
   buildPublicContentHtml,
@@ -43,6 +44,11 @@ import {
   UC_COOKIE_NAME,
   UC_QUERY_PARAM,
 } from './ssr/underConstruction.js';
+import {
+  createPlatformHostLoader,
+  matchPlatformHostEntry,
+  platformHostCanonicalTarget,
+} from './ssr/wwwRedirect.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -77,6 +83,25 @@ const botUserAgents = [
 
 // API URL for fetching SEO data
 const API_URL = process.env.API_URL || process.env.VITE_API_URL || 'http://localhost:3002';
+
+// Platform hosts: www → apex, bare `/` → `/:lang`, legacy overview → `/:lang` (one 301 hop).
+// Runs before robots/sitemaps/static/HTML so crawlers never see duplicate openers.
+const loadPlatformHostEntries = createPlatformHostLoader(API_URL);
+app.use(async (req, res, next) => {
+  const rawHost = req.get('x-forwarded-host') || req.get('host') || '';
+  const host = String(rawHost).split(',')[0].trim().toLowerCase();
+  try {
+    const target = platformHostCanonicalTarget(
+      host,
+      await loadPlatformHostEntries(),
+      req.originalUrl || req.url
+    );
+    if (target) return res.redirect(301, target);
+  } catch (error) {
+    console.error(`[SEO] platform host redirect failed: ${error.message}`);
+  }
+  return next();
+});
 
 /** @param {string | undefined} userAgent */
 function isBot(userAgent) {
@@ -522,6 +547,24 @@ async function loadUiCopy(lang) {
  * and landingIndexable (platform.landingCrawlable; independent of global crawl).
  * Marketing copy comes from UiMessage (see /api/public/ui-copy), not planOverrides.
  */
+async function loadPlatformGuides(lang) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 800);
+  try {
+    const response = await fetch(
+      `${API_URL}/api/public/platform-guides?lang=${encodeURIComponent(lang)}`,
+      { signal: controller.signal, headers: { accept: 'application/json' } }
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function loadPlatformForOverview(lang) {
   const cached = platformCache.get(lang);
   if (cached && cached.until > Date.now()) return cached.value;
@@ -677,17 +720,44 @@ app.get('*', async (req, res, next) => {
   const requestOrigin = `${forwardProto}://${forwardHost || req.get('host') || 'localhost'}`;
   const customDomain = await resolveCustomDomain(forwardHost);
 
-  // Platform overview only on platform hosts (/, /:lang; legacy /:lang/attekintes|… still SSR).
+  // Platform guides (`/:lang/tema/:slug`) before the language-root overview.
+  const guide = !customDomain ? guideRequest(req.path) : null;
+  if (guide) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 800);
+    try {
+      const response = await fetch(
+        `${API_URL}/api/public/platform-guides/${encodeURIComponent(guide.slug)}?lang=${guide.lang}`,
+        { signal: controller.signal, headers: { accept: 'application/json' } }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(
+          renderGuideDocument(readShell(), data, publicOrigin(requestOrigin))
+        );
+      }
+    } catch (error) {
+      console.error(`[SSR] Guide render failed: ${error.message}`);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Platform overview only on platform hosts (`/:lang`; `/` and legacy overview already 301).
   // Custom domains use resolvePublicShare.
   const overview = !customDomain ? overviewLang(req.path) : null;
   if (overview) {
     try {
       const html = readShell();
       const origin = publicOrigin(requestOrigin);
-      const [uiCopy, platform] = await Promise.all([
+      const [uiCopy, platform, guides, platformEntries] = await Promise.all([
         loadUiCopy(overview),
         loadPlatformForOverview(overview),
+        loadPlatformGuides(overview),
+        loadPlatformHostEntries(),
       ]);
+      const hostEntry = matchPlatformHostEntry(forwardHost, platformEntries);
       // UiMessage is the live source; locale JSON is seed/fallback inside renderOverview.
       // planOverrides.landingCopy is retired — do not pass it as override.
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -707,6 +777,8 @@ app.get('*', async (req, res, next) => {
           freeTrialDays: platform.freeTrialDays ?? 30,
           currencyByLang: platform.currencyByLang,
           currencies: platform.currencies,
+          guides,
+          xDefaultLang: hostEntry?.lang || overview,
         })
       );
     } catch (error) {

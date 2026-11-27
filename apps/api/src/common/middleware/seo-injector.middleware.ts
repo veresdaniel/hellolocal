@@ -167,6 +167,7 @@ export class SeoInjectorMiddleware implements NestMiddleware {
         "attekintes",
         "overview",
         "ueberblick",
+        "tema",
         "pricing",
         "tarife",
         "preise",
