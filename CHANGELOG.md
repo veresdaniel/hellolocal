@@ -78,12 +78,12 @@ in prose as used in the product.
 
 ### Fixed
 
-- Landing-only `robots.txt` no longer uses `Disallow: /`. GSC URL Inspection
-  treats that rule as a full block and ignores longer Allow exceptions, so
-  every URL (including guides) stayed “blocked by robots.txt”. Public crawl
-  is `Allow: /` with admin/api/offline still disallowed. Pages that should
-  stay out of the index when global crawl is off keep doing so via noindex
-  and sitemap omission.
+- `robots.txt` allows each indexable URL and disallows each entity whose
+  indexing is off (global switch and the entity’s own switch). No `Disallow: /`
+  and no `*` patterns while any public URL is indexable — GSC treated those as
+  blocking every guide. Admin, `/api/` and `/offline` stay disallowed, and
+  those responses send `noindex`. Robots is `Cache-Control: max-age=0` so an
+  admin toggle shows up on the next fetch.
 - Google OAuth return: platform public hosts (`platform.publicHost`, e.g.
   hellolocal.hu) and the same-origin callback host are allowed, so login no
   longer falls back to hello-local.io admin when starting from another

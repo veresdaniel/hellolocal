@@ -4,6 +4,7 @@
  */
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
+import type { NextFunction, Request, Response } from "express";
 import { ValidationPipe } from "@nestjs/common";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
@@ -21,6 +22,12 @@ async function bootstrap() {
   app.getHttpAdapter().getInstance().set("trust proxy", 1);
   const prisma = app.get(PrismaService);
   const customOriginCache = new Map<string, { ok: boolean; exp: number }>();
+
+  // API responses are never search documents.
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    next();
+  });
 
   // Security headers (Helmet.js)
   app.use(

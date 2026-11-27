@@ -647,6 +647,10 @@ app.get('*', async (req, res, next) => {
 
   // Admin always open (login + every console subpage). Public routes may be gated.
   const requestPath = String(req.originalUrl || req.url || req.path || '').split('?')[0];
+  if (requestPath === "/offline" || requestPath.endsWith("/offline")) {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  }
+
   if (isAdminPath(requestPath)) {
     try {
       const html = applyAdminRobots(readShell());

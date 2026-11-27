@@ -1,4 +1,5 @@
 // src/pages/OfflinePage.tsx
+import { useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {  DEFAULT_LANG, type Lang, isLang} from "../app/config";
@@ -9,6 +10,16 @@ import { useActiveSitesCount } from "../hooks/useActiveSitesCount";
 export function OfflinePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "robots";
+      document.head.appendChild(meta);
+    }
+    meta.content = "noindex, nofollow";
+  }, []);
   const { lang: langParam } = useParams<{ lang?: string }>();
   const { data: sitesCountData } = useActiveSitesCount();
 

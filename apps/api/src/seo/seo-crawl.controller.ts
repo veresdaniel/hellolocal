@@ -30,7 +30,7 @@ export class SeoCrawlController {
   /** Host-scoped robots.txt (proxied to `/robots.txt` on the public host). */
   @Get("robots.txt")
   @Header("Content-Type", "text/plain; charset=utf-8")
-  @Header("Cache-Control", `public, max-age=${SEO_CACHE_TTL_SECONDS}`)
+  @Header("Cache-Control", "no-cache, max-age=0, must-revalidate")
   async robots(@Req() req: Request): Promise<string> {
     const scope = await this.scopeResolver.resolveFromHeaders(req.headers);
     return this.robotsService.buildRobotsTxt(scope);
