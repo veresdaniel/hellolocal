@@ -556,7 +556,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
   gap: clamp(28px, 5vw, 64px);
-  align-items: center;
+  align-items: start;
 }
 
 .overview__brand {
@@ -684,10 +684,14 @@
 }
 
 .overview__stats {
+  /* Content-sized columns — avoid stretching three short stats across 1120px. */
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px 28px;
-  max-width: 100%;
+  grid-template-columns: repeat(3, minmax(9rem, 12.5rem));
+  justify-content: start;
+  column-gap: clamp(28px, 4vw, 48px);
+  row-gap: 16px;
+  width: 100%;
+  max-width: 44rem;
   margin: clamp(40px, 6vw, 64px) 0 0;
   padding: 22px 0 0;
   list-style: none;
@@ -697,17 +701,17 @@
 .overview__stats strong {
   display: block;
   font-family: var(--font-heading);
-  font-size: 36px;
+  font-size: clamp(28px, 2.4vw, 36px);
   font-weight: 700;
   color: var(--ink-strong);
   letter-spacing: -0.03em;
-  line-height: 1;
+  line-height: 1.1;
 }
 
 .overview__stats span {
   display: block;
   margin-top: 8px;
-  max-width: 14rem;
+  max-width: 13rem;
   color: var(--muted);
   font-size: 15px;
   line-height: 1.45;
@@ -1090,6 +1094,9 @@
   /* Stack stats earlier — 3 cramped columns look broken with text values like “Nincs app”. */
   .overview__stats {
     grid-template-columns: 1fr;
+    justify-content: stretch;
+    width: 100%;
+    max-width: 100%;
     gap: 12px;
     margin-top: clamp(28px, 5vw, 48px);
     padding-top: 18px;
