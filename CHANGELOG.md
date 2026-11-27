@@ -33,6 +33,8 @@ in prose as used in the product.
 
 ### Changed
 
+- Platform overview “Read more” / Bővebben: transparent border by default, white
+  on hover (no layout jump).
 - Mobile place/event wizard: remove AI draft from the name/title step (keep it
   on short and long description only).
 - Platform overview: desktop stats stay content-width (not stretched across the

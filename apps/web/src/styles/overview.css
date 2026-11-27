@@ -944,7 +944,8 @@
   min-height: 44px;
   padding: 0 18px 0 20px;
   border-radius: 999px;
-  border: 1px solid #fff;
+  /* Reserve 1px so hover white border does not shift layout */
+  border: 1px solid transparent;
   background: #fff;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
   color: #1b1730;
@@ -975,7 +976,7 @@
 .overview__more a:hover {
   transform: translateY(-2px);
   background: #1b1730;
-  border-color: #1b1730;
+  border-color: #fff;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.36);
   color: #fff;
 }
@@ -989,14 +990,14 @@
 .overview__card .overview__more a:link,
 .overview__card .overview__more a:visited {
   background: #fff;
-  border-color: #fff;
+  border-color: transparent;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
   color: #1b1730;
 }
 
 .overview__card .overview__more a:hover {
   background: #1b1730;
-  border-color: #1b1730;
+  border-color: #fff;
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
   color: #fff;
 }
