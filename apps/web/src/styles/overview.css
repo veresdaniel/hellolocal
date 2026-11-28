@@ -76,14 +76,11 @@
   display: grid;
   gap: clamp(22px, 3vw, 32px);
   padding: clamp(24px, 3.5vw, 40px);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 253, 249, 0.16);
-  background:
-    linear-gradient(145deg, #fffefb 0%, #fff9f2 52%, #f7f4ff 100%);
-  color: var(--demo-ink);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.65) inset,
-    0 18px 48px rgba(0, 0, 0, 0.22);
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-strong, #fffdf9);
+  box-shadow: none;
 }
 
 @media (min-width: 900px) {
@@ -140,7 +137,7 @@
 .overview .overview-demo__title,
 .overview-demo__title {
   margin: 0;
-  color: var(--demo-ink);
+  color: var(--ink-strong, #fffdf9);
   font-family: var(--font-heading, Poppins, system-ui, sans-serif);
   font-size: clamp(1.55rem, 2.4vw, 2.05rem);
   font-weight: 700;
@@ -153,7 +150,7 @@
 .overview-demo__lead {
   margin: 0;
   max-width: 28rem;
-  color: var(--demo-muted);
+  color: var(--muted, rgba(255, 253, 249, 0.72));
   font-size: 1.05rem;
   font-weight: 500;
   line-height: 1.55;
@@ -161,12 +158,12 @@
 
 .overview .overview-demo__thanks-title,
 .overview-demo__thanks-title {
-  color: var(--demo-ink);
+  color: var(--ink-strong, #fffdf9);
 }
 
 .overview .overview-demo__thanks-lead,
 .overview-demo__thanks-lead {
-  color: var(--demo-muted);
+  color: var(--muted, rgba(255, 253, 249, 0.72));
 }
 
 .overview-demo__grid {
@@ -196,7 +193,7 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
-  color: var(--demo-ink);
+  color: var(--ink-strong, #fffdf9);
   font-size: 0.92rem;
   font-weight: 650;
   letter-spacing: 0.01em;
@@ -207,8 +204,8 @@
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(27, 23, 48, 0.06);
-  color: var(--demo-soft);
+  background: rgba(255, 253, 249, 0.12);
+  color: var(--muted, rgba(255, 253, 249, 0.72));
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -356,7 +353,7 @@
 
 .overview-demo__trust {
   margin: 0;
-  color: var(--demo-soft);
+  color: var(--muted, rgba(255, 253, 249, 0.72));
   font-size: 0.88rem;
   font-weight: 500;
   line-height: 1.45;
@@ -366,7 +363,7 @@
   .overview-demo__trust--aside {
     margin-top: 8px;
     padding-top: 16px;
-    border-top: 1px solid var(--demo-line);
+    border-top: 1px solid rgba(255, 253, 249, 0.16);
   }
 
   .overview-demo__trust--foot {

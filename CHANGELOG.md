@@ -36,6 +36,12 @@ in prose as used in the product.
 
 ### Changed
 
+- Admin role menus open above the page footer. Near the bottom of the table they
+  open upward instead of sliding under the footer.
+- List filter chips sit on the card with no extra white frame. The platform
+  demo form drops its blue panel and uses the dark page behind it.
+- A category or price group appears only when there are at least two chips to
+  choose from. A single option, such as one price band, stays hidden.
 - Pins that share a spot (a place and its event on the same meadow) draw as one
   thumbtack with a count. The side card lists each one so you can switch.
   Clicking a pin centers the map, and the selected pin stays visible with a

@@ -659,6 +659,15 @@ export function PlacesListView({
         .places-discover__filters {
           display: contents;
         }
+        .places-discover__filters .map-filters-inline--toolbar {
+          background: transparent;
+          border: 0;
+          box-shadow: none;
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          padding: 0;
+          border-radius: 0;
+        }
         .places-discover__filters .map-filters-inline--toolbar,
         .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-row,
         .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group {

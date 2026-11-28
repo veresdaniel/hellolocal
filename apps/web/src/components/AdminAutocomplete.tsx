@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 export type AdminAutocompleteOption = {
   value: string;
@@ -60,7 +61,10 @@ export function AdminAutocomplete({
 }: AdminAutocompleteProps) {
   const listId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const [open, setOpen] = useState(false);
+  const [box, setBox] = useState({ top: 0, left: 0, width: 0, maxHeight: 260 });
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const selected = options.find((option) => option.value === value) || null;
@@ -82,9 +86,37 @@ export function AdminAutocomplete({
     setActive(0);
   }, [query, open]);
 
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const rect = inputRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const width = Math.max(rect.width, 160);
+      let left = rect.left;
+      if (left + width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - 8 - width);
+      const listHeight = Math.min(listRef.current?.scrollHeight ?? 120, 260);
+      const spaceBelow = window.innerHeight - rect.bottom - 8;
+      const openUp = spaceBelow < listHeight && rect.top > spaceBelow;
+      const maxHeight = Math.max(80, Math.min(260, openUp ? rect.top - 8 : spaceBelow));
+      const top = openUp
+        ? Math.max(8, rect.top - 4 - Math.min(listHeight, maxHeight))
+        : rect.bottom + 4;
+      setBox({ top, left, width, maxHeight });
+    };
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [open, rows.length]);
+
   useEffect(() => {
     const onDoc = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (rootRef.current?.contains(target) || listRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -116,6 +148,7 @@ export function AdminAutocomplete({
         </label>
       ) : null}
       <input
+        ref={inputRef}
         id={id}
         role="combobox"
         aria-expanded={open}
@@ -176,17 +209,19 @@ export function AdminAutocomplete({
           {hint}
         </p>
       ) : null}
-      {open && !disabled ? (
+      {open && !disabled && box.width > 0
+        ? createPortal(
         <ul
+          ref={listRef}
           id={listId}
           role="listbox"
           style={{
-            position: "absolute",
-            zIndex: 900,
-            top: "calc(100% + 4px)",
-            left: 0,
-            right: 0,
-            maxHeight: 260,
+            position: "fixed",
+            zIndex: 2000,
+            top: box.top,
+            left: box.left,
+            width: box.width,
+            maxHeight: box.maxHeight,
             overflow: "auto",
             margin: 0,
             padding: 4,
@@ -195,6 +230,7 @@ export function AdminAutocomplete({
             border: "1px solid var(--admin-primary-border, #d1d5db)",
             borderRadius: 8,
             boxShadow: "0 8px 24px rgba(15, 23, 42, 0.12)",
+            boxSizing: "border-box",
           }}
         >
           {rows.length === 0 ? (
@@ -231,8 +267,10 @@ export function AdminAutocomplete({
               </li>
             ))
           )}
-        </ul>
-      ) : null}
+        </ul>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

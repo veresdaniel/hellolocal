@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { HAS_MULTIPLE_SITES, type Lang} from "../app/config";
@@ -87,6 +87,24 @@ export function FilterControls(props: FilterControlProps) {
     return Array.from(bands.values()).sort((a, b) => comparePriceLabels(a.name, b.name));
   }, [places]);
 
+  useEffect(() => {
+    if (showFilterSkeletons) return;
+    if (categories.length < 2 && props.selectedCategories.length > 0) {
+      props.onCategoriesChange([]);
+    }
+    if (priceBands.length < 2 && props.selectedPriceBands.length > 0) {
+      props.onPriceBandsChange([]);
+    }
+  }, [
+    showFilterSkeletons,
+    categories.length,
+    priceBands.length,
+    props.selectedCategories.length,
+    props.selectedPriceBands.length,
+    props.onCategoriesChange,
+    props.onPriceBandsChange,
+  ]);
+
   const quick = [
     {
       key: "open",
@@ -137,7 +155,7 @@ export function FilterControls(props: FilterControlProps) {
             </span>
           ))}
         </div>
-      ) : categories.length > 0 ? (
+      ) : categories.length > 1 ? (
         <div className="map-dock__filter-group">
           {categories.map((category) => (
             <button
@@ -206,7 +224,7 @@ export function FilterControls(props: FilterControlProps) {
             </span>
           ))}
         </div>
-      ) : priceBands.length > 0 ? (
+      ) : priceBands.length > 1 ? (
         <div className="map-dock__filter-group">
           <span className="map-dock__chip-label">{t("public.filters.price")}</span>
           {priceBands.map((band) => (
