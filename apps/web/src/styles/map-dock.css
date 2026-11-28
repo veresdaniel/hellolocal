@@ -18,21 +18,24 @@
   z-index: 1300;
 }
 
-/* Open panel keeps the toolbar's right edge and wraps inside the map. */
-.map-dock.is-open {
-  align-items: stretch;
+.map-dock__split {
+  width: 1px;
+  align-self: stretch;
+  margin: 8px 4px;
+  background: rgba(27, 23, 48, 0.12);
+  flex: none;
 }
 
-.map-dock.is-open .map-dock__bar {
-  align-self: flex-end;
-  width: max-content;
-  max-width: 100%;
-}
-
-.map-dock.is-open .map-dock__panel {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+/* The bar stays put. The panel hangs from its right edge and wraps. */
+@media (min-width: 768px) {
+  .map-dock.is-open .map-dock__panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(440px, var(--map-dock-panel-max, 440px));
+    max-width: min(440px, calc(100vw - 32px));
+    box-sizing: border-box;
+  }
 }
 
 .map-dock__bar,

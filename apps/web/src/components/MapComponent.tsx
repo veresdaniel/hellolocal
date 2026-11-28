@@ -91,6 +91,10 @@ interface MapComponentProps {
   defaultZoom?: number;
   mapStyle?: "default" | "hand-drawn" | "pastel";
   hideLocationButton?: boolean; // Hide the "show my location" button (for admin pages)
+  /** Open map dock panel. While set, the side card stays closed. */
+  dockPanel?: string | null;
+  /** Close the dock panel when a pin is chosen, so the two cards do not stack. */
+  onDismissDock?: () => void;
   /** Shown in the side card until a marker is chosen (region, town, or open event). */
   spotlight?: {
     title: string;
@@ -286,11 +290,10 @@ function PlaceMapPin({
     >
       <span className="hl-map-marker__shadow" />
       <span className="hl-map-marker__pin">
-        <span className="hl-map-marker__head">
-          {count > 1 ? <span className="hl-map-marker__count">{count}</span> : null}
-        </span>
+        <span className="hl-map-marker__head" />
         <span className="hl-map-marker__needle" />
       </span>
+      {count > 1 ? <span className="hl-map-marker__count">{count}</span> : null}
     </span>
   );
 }
@@ -386,6 +389,8 @@ export function MapComponent({
   defaultZoom = 13,
   mapStyle = "default",
   hideLocationButton = false,
+  dockPanel = null,
+  onDismissDock,
   spotlight = null,
 }: MapComponentProps) {
   const { t } = useTranslation();
@@ -430,6 +435,13 @@ export function MapComponent({
   /** After Navigáció, ignore hover on that pin until the pointer actually leaves. */
   const suppressHoverIdRef = useRef<string | null>(null);
   const [pinnedMarkerId, setPinnedMarkerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!dockPanel) return;
+    setSelectedMarkerId(null);
+    setPinnedMarkerId(null);
+    setHoveredMarkerId(null);
+  }, [dockPanel]);
   const lastClickTimeRef = useRef<{ [key: string]: number }>({});
   /** MapLibre often fires map click after HTML marker/card clicks — ignore those. */
   const suppressMapClickUntilRef = useRef(0);
@@ -1145,6 +1157,7 @@ export function MapComponent({
         lastRouteFetchPosition.current = null;
       }
       setSelectedMarkerId(marker.id);
+      onDismissDock?.();
       if (Number.isFinite(marker.lat) && Number.isFinite(marker.lng)) {
         setViewState((prev) => ({
           ...prev,
@@ -1166,7 +1179,7 @@ export function MapComponent({
         }
       }
     },
-    [getMap, selectedMarkerId, suppressNextMapClick]
+    [getMap, onDismissDock, selectedMarkerId, suppressNextMapClick]
   );
 
   /** Start in-app walking route: select place, ensure geolocation, draw polyline. Never opens external maps. */
@@ -1314,7 +1327,7 @@ export function MapComponent({
     const safe = sanitizeImageUrl(raw);
     return safe ? preferModernImageUrl(safe, { width: 720 }) : null;
   };
-  const sheet = !interactive
+  const sheet = !interactive || dockPanel
     ? null
     : selectedMarker
       ? {

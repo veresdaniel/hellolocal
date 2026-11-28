@@ -874,7 +874,7 @@
   line-height: 1.65;
 }
 
-.overview__step span {
+.overview__step > span {
   display: block;
   margin-bottom: 12px;
   color: var(--accent);
@@ -1343,6 +1343,29 @@
     order: 0;
   }
 
+  .overview__step {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 8px;
+    row-gap: 10px;
+    align-items: baseline;
+  }
+
+  .overview__step > span {
+    margin: 0;
+  }
+
+  .overview__step > h3 {
+    margin: 0;
+    font-size: 16px;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .overview__step > div {
+    grid-column: 1 / -1;
+  }
+
   .overview h1 {
     max-width: 12em;
     font-size: 32px;
@@ -1432,6 +1455,12 @@
 @media (max-width: 640px) {
   .overview__guides {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 340px) {
+  .overview__step > h3 {
+    font-size: 14px;
   }
 }
 

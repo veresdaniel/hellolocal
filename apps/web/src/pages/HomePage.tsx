@@ -1067,6 +1067,8 @@ export function HomePage() {
                 longitude={centerLng}
                 markers={markers}
                 spotlight={mapSpotlight}
+                dockPanel={mapPanel}
+                onDismissDock={() => setMapPanel(null)}
                 userLocation={userLocation || useFiltersStore.getState().userLocation}
                 showRoutes={false}
                 height={isMobile && typeof window !== "undefined" ? window.innerHeight : "100%"}
@@ -1075,62 +1077,18 @@ export function HomePage() {
                 mapStyle="default"
               />
             </Suspense>
-            {/* Lista nézet gomb - same position as map view button in FloatingHeader */}
-            <div
-              data-map-list-toggle
-              style={{
-                position: "absolute",
-                top: isMobile ? 12 : 16,
-                right: isMobile ? 12 : 16,
-                zIndex: 1000,
-                maxWidth: isMobile ? "calc(100% - 24px)" : undefined,
-              }}
-            >
-              <button
-                onClick={() => {
-                  navigate(
-                    buildUrl({
-                      lang,
-                      siteKey: siteKey || "",
-                      path: townSlug ? townEntityPath(lang, townSlug, "list") : "",
-                    })
-                  );
-                }}
-                style={{
-                  padding: isMobile ? "10px 14px" : "8px 16px",
-                  minHeight: 44,
-                  background: "rgba(255, 255, 255, 0.95)",
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255, 255, 255, 0.3)",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: "#333",
-                  transition: "all 0.2s",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  boxSizing: "border-box",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.2)";
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 1)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.95)";
-                }}
-              >
-                📋 {t("public.listView")}
-              </button>
-            </div>
             <MapDock
               lang={lang}
+              panel={mapPanel}
+              onListView={() => {
+                navigate(
+                  buildUrl({
+                    lang,
+                    siteKey: siteKey || "",
+                    path: townSlug ? townEntityPath(lang, townSlug, "list") : "",
+                  })
+                );
+              }}
               selectedCategories={selectedCategories}
               selectedPriceBands={selectedPriceBands}
               onPanelChange={setMapPanel}

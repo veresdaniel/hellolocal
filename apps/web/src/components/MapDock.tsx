@@ -106,10 +106,23 @@ function upcomingEvents(data: Event[]) {
 }
 
 /** Explore-map floating control dock; forwards filter props to {@link FilterControls}. */
-export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Panel) => void }) {
+export function MapDock(
+  props: FilterControlProps & {
+    onPanelChange?: (panel: Panel) => void;
+    /** When set, the parent owns which panel is open (so a pin click can close it). */
+    panel?: Panel;
+    onListView?: () => void;
+  }
+) {
+  const { onPanelChange, panel: panelProp, onListView, ...filters } = props;
   const { t, i18n } = useTranslation();
   const { siteKey } = useRouteCtx();
-  const [panel, setPanel] = useState<Panel>(null);
+  const [panelState, setPanelState] = useState<Panel>(null);
+  const panel = panelProp !== undefined ? panelProp : panelState;
+  const setPanel = (value: Panel) => {
+    setPanelState(value);
+    onPanelChange?.(value);
+  };
   const [pos, setPos] = useState<Point | null>(null);
   const [mobile, setMobile] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -125,7 +138,7 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
   } | null>(null);
   const suppressClick = useRef(false);
   panelRef.current = panel;
-  const filterCount = activeFilterCount(props);
+  const filterCount = activeFilterCount(filters);
 
   useLayoutEffect(() => {
     let lastMobile = window.matchMedia(MOBILE_MQ).matches;
@@ -147,21 +160,10 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
       const parentBox = parent.getBoundingClientRect();
       const width = dock.offsetWidth || 360;
       const height = dock.offsetHeight || 56;
-      const barHeight = dock.querySelector<HTMLElement>(".map-dock__bar")?.offsetHeight || height;
-      const toggle = parent.querySelector<HTMLElement>("[data-map-list-toggle]");
-      const toggleBox = toggle ? toggle.getBoundingClientRect() : null;
-      const besideToggle =
-        toggleBox && toggleBox.width > 0
-          ? {
-              left: toggleBox.left - parentBox.left - width - 8,
-              top: toggleBox.top - parentBox.top + (toggleBox.height - barHeight) / 2,
-            }
-          : null;
-      const fallback =
-        besideToggle ?? { left: Math.max(8, parentBox.width - width - 16), top: 16 };
+      const fallback = { left: Math.max(8, parentBox.width - width - 16), top: 16 };
       setPos((current) => {
         const saved = readPosition(false);
-        // A saved drag stays put. The default row is recomputed so it keeps sitting beside the list button.
+        // A saved drag stays put. Otherwise the bar sits in the top-right corner.
         const base = saved && !crossed && current ? current : (saved ?? fallback);
         return clampPosition(base, parentBox.width, parentBox.height, width, height);
       });
@@ -171,43 +173,22 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
     return () => window.removeEventListener("resize", place);
   }, []);
 
-  const [openFrame, setOpenFrame] = useState<{ right: number; width: number } | null>(null);
   useLayoutEffect(() => {
-    if (mobile || !panel || !pos) {
-      setOpenFrame(null);
+    const dock = dockRef.current;
+    if (!dock) return;
+    if (mobile || !panel) {
+      dock.style.removeProperty("--map-dock-panel-max");
       return;
     }
-    const dock = dockRef.current;
-    const parent = dock?.parentElement;
-    const bar = dock?.querySelector<HTMLElement>(".map-dock__bar");
-    if (!dock || !parent || !bar) return;
-    const parentWidth = parent.getBoundingClientRect().width;
-    const barWidth = bar.getBoundingClientRect().width;
-    const rightEdge = pos.left + barWidth;
-    const available = Math.max(220, rightEdge - 16);
-    const next = {
-      right: Math.max(8, parentWidth - rightEdge),
-      width: Math.min(480, available),
-    };
-    setOpenFrame((current) =>
-      current && current.right === next.right && current.width === next.width ? current : next
+    const parent = dock.parentElement;
+    const bar = dock.querySelector<HTMLElement>(".map-dock__bar");
+    if (!parent || !bar) return;
+    const available = bar.getBoundingClientRect().right - parent.getBoundingClientRect().left - 16;
+    dock.style.setProperty(
+      "--map-dock-panel-max",
+      `${Math.max(240, Math.min(440, available))}px`
     );
   }, [mobile, panel, pos]);
-
-  useLayoutEffect(() => {
-    if (mobile || !panel || !openFrame) return;
-    const dock = dockRef.current;
-    const parent = dock?.parentElement;
-    if (!dock || !parent) return;
-    const parentBox = parent.getBoundingClientRect();
-    const dockBox = dock.getBoundingClientRect();
-    const overflow = dockBox.bottom - (parentBox.bottom - 8);
-    if (overflow > 1) {
-      setPos((current) =>
-        current ? { ...current, top: Math.max(8, current.top - overflow) } : current
-      );
-    }
-  }, [panel, mobile, openFrame]);
 
   const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", props.lang, siteKey],
@@ -333,24 +314,15 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
   return (
     <div
       ref={dockRef}
-      className={`map-dock${mobile ? " map-dock--mobile" : ""}${dragging ? " is-dragging" : ""}${openFrame ? " is-open" : ""}`}
+      className={`map-dock${mobile ? " map-dock--mobile" : ""}${dragging ? " is-dragging" : ""}${panel ? " is-open" : ""}`}
       style={
         !mobile && pos
-          ? openFrame
-            ? {
-                top: pos.top,
-                right: openFrame.right,
-                left: "auto",
-                bottom: "auto",
-                width: openFrame.width,
-                maxWidth: openFrame.width,
-              }
-            : {
-                left: pos.left,
-                top: pos.top,
-                right: "auto",
-                bottom: "auto",
-              }
+          ? {
+              left: pos.left,
+              top: pos.top,
+              right: "auto",
+              bottom: "auto",
+            }
           : undefined
       }
     >
@@ -388,6 +360,14 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
           <span className="map-dock__tab-label">{t("public.servicesTab")}</span>
           {services.length > 0 && <span className="map-dock__count">{services.length}</span>}
         </button>
+        {onListView && (
+          <>
+            <span className="map-dock__split" aria-hidden="true" />
+            <button type="button" className="map-dock__tab map-dock__tab--view" onClick={onListView}>
+              <span className="map-dock__tab-label">{t("public.listView")}</span>
+            </button>
+          </>
+        )}
       </div>
 
       {panel && (
@@ -420,7 +400,7 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
           </div>
 
           {panel === "filters" ? (
-            <FilterControls {...props} />
+            <FilterControls {...filters} />
           ) : panel === "services" ? (
             servicesLoading ? (
               <p className="map-dock__empty">{t("common.loading")}</p>
