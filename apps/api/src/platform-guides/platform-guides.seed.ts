@@ -75,7 +75,7 @@ export const PLATFORM_GUIDE_SEED: GuideSeed[] = [
     translations: {
       hu: {
         slug: "onkormanyzat",
-        title: "Önkormányzatnak és turisztikai irodának",
+        title: "Interaktív turisztikai térkép önkormányzatoknak",
         imageUrl: "/marketing/visitor-hiker.jpg",
         imageCaption: "A vendég egy linken indul el, nem tíz külön oldalon keresgél.",
         seoTitle: "Interaktív turisztikai térkép önkormányzatoknak | HelloLocal",
