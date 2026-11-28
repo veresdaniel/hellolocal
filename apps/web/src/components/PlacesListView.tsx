@@ -588,6 +588,9 @@ export function PlacesListView({
           align-items: center;
           gap: 8px;
           width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          box-sizing: border-box;
           padding: 10px 12px;
           border-radius: 14px;
           background: var(--hl-card, #fffdf9);
@@ -617,6 +620,7 @@ export function PlacesListView({
           position: relative;
           flex: 0 1 220px;
           width: 220px;
+          min-width: 0;
           max-width: 100%;
         }
         .places-discover__search-icon {
@@ -632,6 +636,8 @@ export function PlacesListView({
         .places-discover__search {
           display: block;
           width: 100%;
+          min-width: 0;
+          max-width: 100%;
           min-height: 36px;
           padding: 6px 14px 6px 38px;
           font-size: 16px;
@@ -685,9 +691,37 @@ export function PlacesListView({
           color: #fff;
         }
         @media (max-width: 640px) {
+          .places-discover,
+          .places-discover__controls {
+            min-width: 0;
+            max-width: 100%;
+          }
           .places-discover__search-wrap {
-            flex-basis: 100%;
+            flex: 1 1 100%;
             width: 100%;
+          }
+          .places-discover__filters .map-filters-inline--toolbar,
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-row,
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            gap: 8px;
+          }
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group {
+            flex: 1 1 100%;
+          }
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__chip,
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__chip-label {
+            max-width: 100%;
+            min-width: 0;
+            white-space: normal;
+          }
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__chip-label {
+            flex: 1 0 100%;
           }
         }
         .places-discover__filters .map-filters-inline__clear {
