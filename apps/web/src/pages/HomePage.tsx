@@ -14,7 +14,7 @@ import {
 } from "../api/places.api";
 import { useSeo } from "../seo/useSeo";
 import { absoluteCanonical } from "../seo/canonical";
-import { resolveSeoFields } from "../seo/resolveSeoFields";
+import { firstSentences, resolveSeoFields } from "../seo/resolveSeoFields";
 import {
   generateOrganizationSchema,
   generateWebSiteSchema,
@@ -636,6 +636,9 @@ export function HomePage() {
         lng: place.location!.lng!,
         name: place.name,
         category: place.category,
+        categoryColor: place.categoryColor,
+        kind: place.categoryKind === "service" ? "service" : "place",
+        summary: firstSentences(place.shortDescription || place.description, 1),
         mapImage: place.mapImage ?? null,
         cardImage: place.cardImage ?? null,
         heroImage: place.heroImage ?? null,
@@ -673,6 +676,14 @@ export function HomePage() {
               lng: event.location!.lng,
               name: event.name,
               category: event.category,
+              kind: "event" as const,
+              summary: firstSentences(event.shortDescription || event.description, 1),
+              when: new Intl.DateTimeFormat(lang, {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }).format(new Date(event.startDate)),
               mapImage: null as string | null,
               heroImage: event.heroImage ?? null,
               onClick: () => {
@@ -698,6 +709,42 @@ export function HomePage() {
   ]);
 
   const placeSlug = searchParams.get("place")?.trim() || undefined;
+  const mapSpotlight = useMemo(() => {
+    if (placeSlug) {
+      const place = placesData?.find((row) => row.slug === placeSlug);
+      if (place) {
+        return {
+          title: place.name,
+          kicker: place.category,
+          summary: firstSentences(place.shortDescription || place.description, 1),
+          image: place.mapImage || place.cardImage || place.heroImage || null,
+          onOpen: place.slug
+            ? () =>
+                navigate(
+                  buildUrl({ lang, siteKey, path: placeEntityPath(lang, place.slug!) })
+                )
+            : undefined,
+        };
+      }
+    }
+    if (selectedTown) {
+      return {
+        title: selectedTown.name,
+        kicker: platformSettings?.site?.name || platformSettings?.siteName || null,
+        summary: firstSentences(selectedTown.description, 1),
+        image: selectedTown.heroImage,
+      };
+    }
+    const site = platformSettings?.site;
+    const title = site?.name || platformSettings?.siteName || "";
+    if (!title) return null;
+    return {
+      title,
+      summary: firstSentences(site?.shortDescription || site?.description, 1),
+      image: site?.heroImage || null,
+    };
+  }, [placeSlug, placesData, selectedTown, platformSettings, lang, siteKey, navigate]);
+
   const mapFocusKey = `${siteKey || ""}|${townSlug || ""}|${placeSlug || ""}`;
 
   // Position once per URL. A later pan or zoom is left alone.
@@ -1019,6 +1066,7 @@ export function HomePage() {
                 latitude={centerLat}
                 longitude={centerLng}
                 markers={markers}
+                spotlight={mapSpotlight}
                 userLocation={userLocation || useFiltersStore.getState().userLocation}
                 showRoutes={false}
                 height={isMobile && typeof window !== "undefined" ? window.innerHeight : "100%"}

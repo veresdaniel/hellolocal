@@ -443,17 +443,24 @@ export function PlacesListView({
         <label htmlFor="places-discover-search" className="hl-visually-hidden">
           {t("public.searchPlaces") || t("common.search")}
         </label>
-        <input
-          id="places-discover-search"
-          type="search"
-          className="places-discover__search"
-          placeholder={t("public.searchPlaces") || "Keresés..."}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          aria-label={t("public.searchPlaces") || t("common.search")}
-        />
+        <div className="places-discover__search-wrap">
+          <svg className="places-discover__search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <path d="M16 16.5 20 20.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+          <input
+            id="places-discover-search"
+            type="search"
+            className="places-discover__search"
+            placeholder={t("public.searchPlaces") || "Keresés..."}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label={t("public.searchPlaces") || t("common.search")}
+          />
+        </div>
         <div className="places-discover__filters">
           <MapFilters
+            variant="toolbar"
             selectedCategories={selectedCategories}
             selectedPriceBands={selectedPriceBands}
             onCategoriesChange={setSelectedCategories}
@@ -578,7 +585,12 @@ export function PlacesListView({
         .places-discover__form {
           display: flex;
           flex-direction: column;
-          gap: var(--pd-3);
+          gap: 10px;
+          padding: 12px;
+          border-radius: 18px;
+          background: var(--hl-card, #fffdf9);
+          border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
         }
         .places-discover__controls {
           display: flex;
@@ -586,23 +598,42 @@ export function PlacesListView({
           gap: var(--pd-3);
         }
         .places-discover__controls:not(.is-in-intro) {
-          margin-bottom: clamp(28px, 4vw, 40px);
+          margin-bottom: clamp(20px, 3vw, 28px);
         }
         .places-discover__intro .places-discover__controls {
           margin-top: var(--pd-1);
           padding-top: var(--pd-3);
           border-top: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
         }
+        .places-discover__intro .places-discover__form {
+          padding: 0;
+          border: 0;
+          box-shadow: none;
+          background: transparent;
+        }
+        .places-discover__search-wrap {
+          position: relative;
+        }
+        .places-discover__search-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          width: 18px;
+          height: 18px;
+          transform: translateY(-50%);
+          color: var(--hl-muted-on-card, #6d6578);
+          pointer-events: none;
+        }
         .places-discover__search {
           display: block;
           width: 100%;
-          min-height: 44px;
-          padding: var(--pd-2) var(--pd-3);
+          min-height: 42px;
+          padding: 8px 14px 8px 40px;
           font-size: 16px;
           font-family: var(--font-body);
-          border: 1px solid var(--hl-line-on-card);
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.72);
+          border: 1px solid rgba(27, 23, 48, 0.1);
+          border-radius: 999px;
+          background: #fff;
           color: var(--hl-ink-on-card);
           box-sizing: border-box;
         }
@@ -618,67 +649,67 @@ export function PlacesListView({
           min-width: 0;
           width: 100%;
         }
-        .places-discover__filters .map-filters-inline {
-          padding: var(--pd-3);
-          border-radius: 14px;
+        .places-discover__filters .map-filters-inline--toolbar {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 0;
+          border: 0;
           box-shadow: none;
-          border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
-          background: rgba(255, 255, 255, 0.55);
-          box-sizing: border-box;
+          background: transparent;
         }
-        .places-discover__controls:not(.is-in-intro) .places-discover__search,
-        .places-discover__controls:not(.is-in-intro) .places-discover__filters .map-filters-inline {
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
-          background: var(--hl-card);
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-row {
+          flex-direction: column;
+          align-items: stretch;
+          column-gap: 0;
+          row-gap: 8px;
         }
-        .places-discover__filters .map-filters-inline__head {
-          margin-bottom: var(--pd-2);
-          min-height: 0;
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          scrollbar-width: none;
+          gap: 6px;
+          max-width: 100%;
         }
-        .places-discover__filters .map-dock__section {
-          margin: 0 0 var(--pd-3);
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group::-webkit-scrollbar {
+          display: none;
         }
-        .places-discover__filters .map-dock__section:last-child {
-          margin-bottom: 0;
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group--kind {
+          margin: 0;
+          width: max-content;
+          max-width: 100%;
+          padding: 3px;
+          border-radius: 999px;
+          background: rgba(27, 23, 48, 0.06);
         }
-        .places-discover__filters .map-filters-inline,
-        .places-discover__filters .map-filters-inline * {
-          font-family: "Source Sans 3", Inter, system-ui, -apple-system, "Segoe UI", sans-serif !important;
-        }
-        .places-discover__filters .map-filters-inline__head h2,
-        .places-discover__filters .map-filters-inline h3,
-        .places-discover__filters .map-dock__section h3,
-        .places-discover__filters .map-dock__chip-label {
-          margin: 0 0 var(--pd-1);
-          font-size: 18px;
-          font-weight: 650;
-          color: var(--hl-ink, #1b1730);
-        }
-        .places-discover__filters .map-dock__chip-label {
-          margin: 0 2px 0 0;
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__chip,
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__chip-label {
+          font-family: "Source Sans 3", Inter, system-ui, sans-serif;
           font-size: 14px;
+          min-height: 34px;
+          padding: 4px 12px;
         }
-        .places-discover__filters .map-dock__filter-row .map-dock__chip {
-          min-height: 40px;
-          padding: 6px 14px;
-          font-size: clamp(16px, 0.95vw, 18px);
-          font-weight: 600;
-          color: var(--hl-ink, #1b1730);
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group--kind .map-dock__chip {
+          border: 0;
+          background: transparent;
+          box-shadow: none;
         }
-        @media (max-width: 767px) {
-          .places-discover__filters .map-dock__filter-row {
-            column-gap: 16px;
-          }
-          .places-discover__filters .map-dock__filter-row .map-dock__chip {
-            min-height: 40px;
-            padding: 6px 12px;
-            font-size: 15px;
-          }
-        }
-        .places-discover__filters .map-dock__chip[aria-pressed="true"] {
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__chip[aria-pressed="true"] {
           background: var(--hl-navy, #1b1730);
           border-color: var(--hl-navy, #1b1730);
           color: #fff;
+        }
+        .places-discover__filters .map-filters-inline__clear {
+          align-self: flex-start;
+          min-height: 32px;
+          padding: 0 4px;
+          border: 0;
+          background: transparent;
+          color: var(--hl-accent, #c45c26);
+          font: inherit;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
         }
         .places-list {
           container-type: inline-size;

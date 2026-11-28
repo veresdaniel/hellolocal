@@ -66,6 +66,14 @@ interface MapComponentProps {
     lng: number;
     name?: string;
     category?: string | null;
+    /** Place, service, or event — picks the pin glyph. */
+    kind?: "place" | "event" | "service";
+    /** Category color from admin, when the place has one. */
+    categoryColor?: string | null;
+    /** One-line plain text for the side card. */
+    summary?: string | null;
+    /** Event date label, already formatted. */
+    when?: string | null;
     /** Optional map-card image; falls back to cardImage, then heroImage. */
     mapImage?: string | null;
     cardImage?: string | null;
@@ -83,6 +91,14 @@ interface MapComponentProps {
   defaultZoom?: number;
   mapStyle?: "default" | "hand-drawn" | "pastel";
   hideLocationButton?: boolean; // Hide the "show my location" button (for admin pages)
+  /** Shown in the side card until a marker is chosen (region, town, or open event). */
+  spotlight?: {
+    title: string;
+    kicker?: string | null;
+    summary?: string | null;
+    image?: string | null;
+    onOpen?: () => void;
+  } | null;
 }
 
 // Constants for distance calculations
@@ -229,24 +245,32 @@ const getZoomLevel = (zoom: number): ZoomLevel => {
   return "veryFar";
 };
 
-/** Public map place pin — SVG silhouette; styles in map-markers.css */
+/** Smooth pin size: small when zoomed out, full teardrop when close. */
+function markerScale(zoom: number): number {
+  return Math.min(1.16, Math.max(0.5, 0.28 + zoom * 0.05));
+}
+
+/** Public map pin — teardrop scaled with zoom; glyph marks place / service / event. */
 function PlaceMapPin({
-  zoomLevel,
+  zoom,
+  kind,
+  color,
   isSelected,
   isHovered,
   isMuted,
 }: {
-  zoomLevel: ZoomLevel;
+  zoom: number;
+  kind: "place" | "event" | "service";
+  color?: string | null;
   isSelected: boolean;
   isHovered: boolean;
   isMuted: boolean;
 }) {
-  const isDot = zoomLevel !== "close";
+  const scale = markerScale(zoom);
   const className = [
     "hl-map-marker",
-    `hl-map-marker--size-${zoomLevel}`,
-    isDot ? "hl-map-marker--dot" : "",
-    zoomLevel === "veryFar" ? "hl-map-marker--bare" : "",
+    `hl-map-marker--${kind}`,
+    scale < 0.68 ? "is-tiny" : "",
     isSelected ? "is-selected" : "",
     isHovered ? "is-hovered" : "",
     isMuted ? "is-muted" : "",
@@ -254,19 +278,31 @@ function PlaceMapPin({
     .filter(Boolean)
     .join(" ");
 
-  if (isDot) {
-    return <span className={className} aria-hidden="true" />;
-  }
-
   return (
-    <span className={className} aria-hidden="true">
+    <span
+      className={className}
+      style={{
+        ["--hl-pin-scale" as string]: String(scale),
+        ["--hl-marker-fill" as string]: color || undefined,
+      }}
+      aria-hidden="true"
+    >
       <svg className="hl-map-marker__svg" viewBox="0 0 40 52" role="presentation">
         <path
           className="hl-map-marker__body"
           d="M20 2.5c-8.2 0-14.8 6.5-14.8 14.6 0 10.4 11.2 24.2 14.1 27.5a1 1 0 0 0 1.4 0c2.9-3.3 14.1-17.1 14.1-27.5C34.8 9 28.2 2.5 20 2.5z"
         />
         <circle className="hl-map-marker__ring" cx="20" cy="17" r="8.25" />
-        <circle className="hl-map-marker__core" cx="20" cy="17" r="4.75" />
+        {kind === "event" ? (
+          <g className="hl-map-marker__glyph">
+            <rect x="14.2" y="12.2" width="11.6" height="9.2" rx="1.4" />
+            <path d="M14.2 15.4h11.6M17.2 11.2v2.2M22.8 11.2v2.2" />
+          </g>
+        ) : kind === "service" ? (
+          <path className="hl-map-marker__glyph" d="M20 12.2 24.2 17 20 21.8 15.8 17Z" />
+        ) : (
+          <circle className="hl-map-marker__core" cx="20" cy="17" r="4.2" />
+        )}
       </svg>
     </span>
   );
@@ -328,6 +364,7 @@ export function MapComponent({
   defaultZoom = 13,
   mapStyle = "default",
   hideLocationButton = false,
+  spotlight = null,
 }: MapComponentProps) {
   const { t } = useTranslation();
   const { showToast } = useToast();
@@ -360,6 +397,8 @@ export function MapComponent({
   >([]);
   const loadingRoutesRef = useRef<Set<string>>(new Set());
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
+  /** Visitor closed the region/town card. A marker click brings it back after close. */
+  const [spotlightHidden, setSpotlightHidden] = useState(false);
   /** Place the walking route was drawn to. Survives closing the card. */
   const [navigationMarkerId, setNavigationMarkerId] = useState<string | null>(null);
   const navigationMarkerIdRef = useRef<string | null>(null);
@@ -1043,9 +1082,8 @@ export function MapComponent({
     return clusterMarkers(markersWithDistance, viewState.zoom);
   }, [markersWithDistance, viewState.zoom]);
 
-  // Sticky card selection (hover is separate and never clears selection).
-  // First click/tap → open enhanced card. Second click on same pin → open detail.
-  // Card body/media also opens detail; Navigáció draws the route without navigating away.
+  // First click opens the side card. Clicking the same pin again closes it.
+  // The card's Open button goes to the place or event page.
   const handleMarkerClick = useCallback(
     (marker: (typeof markersWithDistance)[0], event: React.MouseEvent | React.TouchEvent) => {
       const now = Date.now();
@@ -1062,23 +1100,19 @@ export function MapComponent({
       setPinnedMarkerId(null);
       setHoveredMarkerId(null);
 
-      if (selectedMarkerId !== marker.id) {
-        // Another place closes the previous card. Keep the route if this pin is its destination.
-        if (navigationMarkerIdRef.current && navigationMarkerIdRef.current !== marker.id) {
-          navigationMarkerIdRef.current = null;
-          setNavigationMarkerId(null);
-          setRoutes([]);
-          shouldHaveRoutesRef.current = false;
-          lastRouteFetchPosition.current = null;
-        }
-        setSelectedMarkerId(marker.id);
+      if (selectedMarkerId === marker.id) {
+        setSelectedMarkerId(null);
         return;
       }
 
-      // Same marker again: open place/event detail when available.
-      if (marker.onClick) {
-        marker.onClick();
+      if (navigationMarkerIdRef.current && navigationMarkerIdRef.current !== marker.id) {
+        navigationMarkerIdRef.current = null;
+        setNavigationMarkerId(null);
+        setRoutes([]);
+        shouldHaveRoutesRef.current = false;
+        lastRouteFetchPosition.current = null;
       }
+      setSelectedMarkerId(marker.id);
     },
     [selectedMarkerId, suppressNextMapClick]
   );
@@ -1218,6 +1252,36 @@ export function MapComponent({
 
   // Convert height to CSS value
   const heightStyle = typeof height === "number" ? `${height}px` : height;
+
+  const selectedMarker =
+    markersWithDistance.find((marker) => marker.id === selectedMarkerId) ?? null;
+  const sheetPhoto = (raw: string | null | undefined) => {
+    const safe = sanitizeImageUrl(raw);
+    return safe ? preferModernImageUrl(safe, { width: 720 }) : null;
+  };
+  const sheet = !interactive
+    ? null
+    : selectedMarker
+      ? {
+          title: selectedMarker.name || "",
+          kicker: selectedMarker.when || selectedMarker.category || null,
+          summary: selectedMarker.summary || null,
+          image: sheetPhoto(
+            selectedMarker.mapImage || selectedMarker.cardImage || selectedMarker.heroImage
+          ),
+          marker: selectedMarker,
+          onOpen: undefined as (() => void) | undefined,
+        }
+      : !spotlightHidden && spotlight?.title
+        ? {
+            title: spotlight.title,
+            kicker: spotlight.kicker || null,
+            summary: spotlight.summary || null,
+            image: sheetPhoto(spotlight.image),
+            marker: null,
+            onOpen: spotlight.onOpen,
+          }
+        : null;
 
   return (
     <div
@@ -1467,34 +1531,18 @@ export function MapComponent({
         {/* Additional markers (for places on explore page) */}
         {visibleMarkers.map((marker) => {
           const zoomLevel = getZoomLevel(viewState.zoom);
-          // Name chip when zoomed in; enhanced card on desktop hover / touch pin / route select
-          const showLabel = zoomLevel === "close" && marker.name;
+          const showLabel = zoomLevel === "close" && !!marker.name && selectedMarkerId !== marker.id;
           const isClickable = !!marker.onClick;
           const isSelected = selectedMarkerId === marker.id;
           const isHovered = hoveredMarkerId === marker.id;
           const isPinned = pinnedMarkerId === marker.id;
-          const isNavigatingHere = navigationMarkerId === marker.id;
-          const showEnhancedCard = isSelected || isHovered || isPinned || isNavigatingHere;
-          const showZoomChip =
-            !showEnhancedCard && showLabel && (!!marker.name || !!marker.category);
-          const destinationReady = Number.isFinite(marker.lat) && Number.isFinite(marker.lng);
-          const showDirections = destinationReady && showEnhancedCard;
-          const rawCardImage = showEnhancedCard
-            ? sanitizeImageUrl(marker.mapImage) ||
-              sanitizeImageUrl(marker.cardImage) ||
-              sanitizeImageUrl(marker.heroImage) ||
-              null
-            : null;
-          const cardImageUrl = rawCardImage
-            ? preferModernImageUrl(rawCardImage, { width: 500 })
-            : null;
 
           return (
             <Marker
               key={marker.id}
               longitude={marker.lng}
               latitude={marker.lat}
-              anchor={zoomLevel === "close" ? "bottom" : "center"}
+              anchor="bottom"
               style={{ zIndex: isSelected || isHovered || isPinned ? 5 : 1 }}
             >
               <div
@@ -1541,136 +1589,36 @@ export function MapComponent({
                 }}
               >
                 <PlaceMapPin
-                  zoomLevel={zoomLevel}
+                  zoom={viewState.zoom}
+                  kind={marker.kind || "place"}
+                  color={marker.categoryColor}
                   isSelected={isSelected}
                   isHovered={isHovered || isPinned}
                   isMuted={!isClickable}
                 />
 
-                {(showEnhancedCard || showZoomChip) && (
+                {showLabel && (
                   <div
-                    className={[
-                      "hl-map-marker-card",
-                      showEnhancedCard ? "hl-map-marker-card--enhanced" : "hl-map-marker-card--chip",
-                      showEnhancedCard ? `hl-map-marker-card--zoom-${zoomLevel}` : "",
-                      isSelected ? "hl-map-marker-card--selected" : "",
-                      cardImageUrl ? "hl-map-marker-card--has-media" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
+                    className="hl-map-marker-card hl-map-marker-card--chip"
                     onPointerDown={(e) => {
-                      e.stopPropagation();
-                      suppressNextMapClick();
-                    }}
-                    onMouseDown={(e) => {
-                      e.stopPropagation();
-                      suppressNextMapClick();
-                    }}
-                    onTouchStart={(e) => {
                       e.stopPropagation();
                       suppressNextMapClick();
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
                       suppressNextMapClick();
-                      if (showEnhancedCard) {
-                        // Enhanced card body/media → place detail.
-                        if (!isClickable || !marker.onClick) return;
-                        marker.onClick();
-                        return;
-                      }
-                      // Name chip: same as pin → open / toggle the bubble.
                       handleMarkerClick(marker, e as any);
                     }}
-                    style={{
-                      // Chip must receive taps — pointer-events:none let name clicks hit the map.
-                      pointerEvents: "auto",
-                      cursor: isClickable || showZoomChip ? "pointer" : undefined,
-                    }}
+                    style={{ pointerEvents: "auto", cursor: "pointer" }}
                   >
-                    {cardImageUrl && (
-                      <div className="hl-map-marker-card__media">
-                        <img
-                          className="hl-map-marker-card__img"
-                          src={cardImageUrl}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      </div>
-                    )}
                     <div className="hl-map-marker-card__body">
                       {marker.name && (
-                        <span
-                          className="hl-map-marker-card__title"
-                          role={isClickable || showZoomChip ? "button" : undefined}
-                          tabIndex={isClickable || showZoomChip ? 0 : undefined}
-                          onKeyDown={(e) => {
-                            if (e.key !== "Enter" && e.key !== " ") return;
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (showEnhancedCard) {
-                              if (!isClickable || !marker.onClick) return;
-                              marker.onClick();
-                              return;
-                            }
-                            handleMarkerClick(marker, e as any);
-                          }}
-                        >
-                          {marker.name}
-                        </span>
+                        <span className="hl-map-marker-card__title">{marker.name}</span>
                       )}
                       {marker.category && (
                         <span className="hl-map-marker-card__category">{marker.category}</span>
                       )}
-                      {(isSelected || isNavigatingHere) && (
-                        <>
-                          {marker.distance !== undefined && marker.distance <= MAX_DISTANCE_KM && (
-                            <>
-                              <span className="hl-map-marker-card__meta">
-                                {marker.isRouteDistance ? "🛣️" : "📍"}{" "}
-                                {formatDistance(marker.distance)}
-                              </span>
-                              <span className="hl-map-marker-card__meta hl-map-marker-card__meta--row">
-                                {marker.walkingTime !== undefined && (
-                                  <span>🚶 {formatWalkingTime(marker.walkingTime, t)}</span>
-                                )}
-                                {marker.cyclingTime !== undefined && (
-                                  <span>🚴 {formatWalkingTime(marker.cyclingTime, t)}</span>
-                                )}
-                              </span>
-                            </>
-                          )}
-                          {marker.distance !== undefined && marker.distance > MAX_DISTANCE_KM && (
-                            <span className="hl-map-marker-card__meta is-muted">
-                              {t("public.tooFarAway", { distance: MAX_DISTANCE_KM })}
-                            </span>
-                          )}
-                          {marker.distance === undefined &&
-                            loadingRoutes.has(marker.id) && (
-                              <span className="hl-map-marker-card__meta is-muted">
-                                ⏳ {t("public.calculatingRoute")}
-                              </span>
-                            )}
-                        </>
-                      )}
-                      {showDirections && (
-                        <DirectionsButton
-                          label={t("public.startNavigation")}
-                          onNavigate={() => {
-                            suppressNextMapClick(1500);
-                            startInAppNavigation({
-                              id: marker.id,
-                              lat: marker.lat,
-                              lng: marker.lng,
-                            });
-                          }}
-                        />
-                      )}
                     </div>
-                    {showEnhancedCard && (
-                      <span className="hl-map-marker-card__bridge" aria-hidden="true" />
-                    )}
                   </div>
                 )}
               </div>
@@ -1678,6 +1626,67 @@ export function MapComponent({
           );
         })}
       </ReactMapGl>
+
+      {sheet && (
+        <aside className="hl-map-sheet" aria-label={sheet.title}>
+          <button
+            type="button"
+            className="hl-map-sheet__close"
+            aria-label={t("common.close")}
+            onClick={() => {
+              if (sheet.marker) setSelectedMarkerId(null);
+              else setSpotlightHidden(true);
+            }}
+          >
+            ×
+          </button>
+          {sheet.image && (
+            <div className="hl-map-sheet__media">
+              <img src={sheet.image} alt="" />
+            </div>
+          )}
+          <div className="hl-map-sheet__body">
+            {sheet.kicker && <p className="hl-map-sheet__kicker">{sheet.kicker}</p>}
+            <h2 className="hl-map-sheet__title">{sheet.title}</h2>
+            {sheet.summary && <p className="hl-map-sheet__summary">{sheet.summary}</p>}
+            {sheet.marker && sheet.marker.distance !== undefined && sheet.marker.distance <= MAX_DISTANCE_KM && (
+              <p className="hl-map-sheet__meta">
+                {sheet.marker.isRouteDistance ? "🛣️" : "📍"} {formatDistance(sheet.marker.distance)}
+                {sheet.marker.walkingTime !== undefined
+                  ? ` · 🚶 ${formatWalkingTime(sheet.marker.walkingTime, t)}`
+                  : ""}
+              </p>
+            )}
+            {sheet.marker && (
+              <div className="hl-map-sheet__actions">
+                {sheet.marker.onClick && (
+                  <button type="button" className="hl-map-sheet__open" onClick={sheet.marker.onClick}>
+                    {t("public.open")}
+                  </button>
+                )}
+                <DirectionsButton
+                  label={t("public.startNavigation")}
+                  onNavigate={() => {
+                    suppressNextMapClick(1500);
+                    startInAppNavigation({
+                      id: sheet.marker!.id,
+                      lat: sheet.marker!.lat,
+                      lng: sheet.marker!.lng,
+                    });
+                  }}
+                />
+              </div>
+            )}
+            {!sheet.marker && sheet.onOpen && (
+              <div className="hl-map-sheet__actions">
+                <button type="button" className="hl-map-sheet__open" onClick={sheet.onOpen}>
+                  {t("public.open")}
+                </button>
+              </div>
+            )}
+          </div>
+        </aside>
+      )}
 
       {routeOverlayPath && (
         <svg

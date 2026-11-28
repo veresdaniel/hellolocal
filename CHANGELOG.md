@@ -36,6 +36,14 @@ in prose as used in the product.
 
 ### Changed
 
+- Public map pins scale with zoom. Places use their category color, services
+  a diamond, events a terracotta calendar. A marker click opens a closable
+  card on the map (photo, summary, open, navigation) instead of a bubble over
+  the pin. Until a pin is chosen the same card introduces the region, town, or
+  focused place. On a phone the card sits above the filter dock.
+- List discover: search and filters share one compact card. Search is a pill;
+  Helyek / Szolgáltatások / Események is a segmented control; other chips scroll
+  in one row. The “Szűrők” heading is gone.
 - Platform overview “Read more” / Bővebben: transparent border by default, white
   on hover (no layout jump).
 - Mobile place/event wizard: remove AI draft from the name/title step (keep it
