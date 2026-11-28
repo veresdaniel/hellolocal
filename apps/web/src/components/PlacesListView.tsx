@@ -700,19 +700,33 @@ export function PlacesListView({
             flex: 1 1 100%;
             width: 100%;
           }
+          .places-discover__form {
+            align-items: stretch;
+            justify-content: flex-start;
+          }
           .places-discover__filters .map-filters-inline--toolbar,
           .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-row,
-          .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group {
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group,
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group--kind {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
+            align-content: flex-start;
+            justify-content: flex-start;
             width: 100%;
             min-width: 0;
             max-width: 100%;
             gap: 8px;
+            margin: 0;
+            padding: 0;
           }
-          .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group {
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group,
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group--kind {
             flex: 1 1 100%;
+          }
+          .places-discover__filters .map-filters-inline--toolbar .map-dock__chip-label {
+            margin: 0;
+            padding: 0;
           }
           .places-discover__filters .map-filters-inline--toolbar .map-dock__chip,
           .places-discover__filters .map-filters-inline--toolbar .map-dock__chip-label {

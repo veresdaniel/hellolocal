@@ -83,7 +83,7 @@
   background: rgba(27, 23, 48, 0.06);
 }
 
-/* Category color runs down the photo edge; the label carries the same color as a dot. */
+/* Category color runs down the photo edge when there is no badge. */
 .list-card__media::after {
   content: "";
   position: absolute;
@@ -94,6 +94,10 @@
   width: 5px;
   background: var(--list-accent, transparent);
   pointer-events: none;
+}
+
+.list-card:has(.list-card__cat) .list-card__media::after {
+  content: none;
 }
 
 .list-card__cat {
