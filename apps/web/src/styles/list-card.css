@@ -298,6 +298,10 @@
     min-height: 0;
     margin-top: 8px;
     margin-bottom: 0;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    overflow: visible;
+    white-space: normal;
   }
 
   .list-card__footer {
