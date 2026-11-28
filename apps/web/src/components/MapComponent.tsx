@@ -489,7 +489,7 @@ export function MapComponent({
   const measureMobileLocationDefault = (
     mapRoot: Element | null | undefined
   ): { bottom: number; left: number } => {
-    const bar = mapRoot?.querySelector<HTMLElement>(".map-dock__bar");
+    const bar = (mapRoot?.parentElement ?? mapRoot)?.querySelector<HTMLElement>(".map-dock__bar");
     const barHeight = bar?.offsetHeight || LOCATION_CONTROL_MOBILE_BAR_FALLBACK;
     return {
       bottom: barHeight + LOCATION_CONTROL_MOBILE_GAP,
@@ -530,6 +530,8 @@ export function MapComponent({
 
   // Load position when device type changes
   useEffect(() => {
+    const narrow = window.matchMedia("(max-width: 767px)").matches;
+    if (narrow) return;
     const deviceKey = isDesktop ? "desktop" : "mobile";
     const saved = localStorage.getItem(`${LOCATION_CONTROL_STORAGE_PREFIX}${deviceKey}`);
     if (saved) {
@@ -543,37 +545,8 @@ export function MapComponent({
     }
     if (isDesktop) {
       setLocationControlPosition(defaultPositionDesktop);
-      return;
     }
-    const next = measureMobileLocationDefault(locationControlRef.current?.parentElement);
-    defaultMobilePosRef.current = next;
-    setLocationControlPosition(next);
   }, [isDesktop]);
-
-  // Mobile + no persisted position: keep the control above the closed map dock.
-  useLayoutEffect(() => {
-    if (hideLocationButton || isDesktop) return;
-    const storageKey = `${LOCATION_CONTROL_STORAGE_PREFIX}mobile`;
-    if (localStorage.getItem(storageKey)) return;
-
-    const apply = () => {
-      if (localStorage.getItem(storageKey)) return;
-      const next = measureMobileLocationDefault(locationControlRef.current?.parentElement);
-      defaultMobilePosRef.current = next;
-      setLocationControlPosition((current) =>
-        current.bottom === next.bottom && current.left === next.left ? current : next
-      );
-    };
-    apply();
-    const t0 = window.setTimeout(apply, 0);
-    const t1 = window.setTimeout(apply, 120);
-    window.addEventListener("resize", apply);
-    return () => {
-      window.clearTimeout(t0);
-      window.clearTimeout(t1);
-      window.removeEventListener("resize", apply);
-    };
-  }, [hideLocationButton, isDesktop]);
 
   // Save position to localStorage (device-specific)
   useEffect(() => {
@@ -1357,8 +1330,14 @@ export function MapComponent({
     const placeSheet = () => {
       if (window.matchMedia("(max-width: 767px)").matches) {
         root.style.removeProperty("--hl-sheet-top");
+        const scope = root.parentElement ?? root;
+        const bar = scope.querySelector<HTMLElement>(".map-dock__bar");
+        const rootBox = root.getBoundingClientRect();
+        const dockTop = bar ? rootBox.bottom - bar.getBoundingClientRect().top : 72;
+        root.style.setProperty("--hl-sheet-bottom", `${Math.round(dockTop + 8)}px`);
         return;
       }
+      root.style.removeProperty("--hl-sheet-bottom");
       const rootBox = root.getBoundingClientRect();
       const sheetWidth = Math.min(340, Math.max(0, rootBox.width - 32));
       const sheetLeft = rootBox.right - 16 - sheetWidth;
@@ -1395,6 +1374,43 @@ export function MapComponent({
       window.removeEventListener("resize", placeSheet);
     };
   }, []);
+
+  const sheetOpen = Boolean(sheet);
+  useLayoutEffect(() => {
+    if (hideLocationButton) return;
+    const root = mapRootRef.current;
+    if (!root) return;
+    const apply = () => {
+      if (!window.matchMedia("(max-width: 767px)").matches) return;
+      const dock = measureMobileLocationDefault(root);
+      const sheetEl = root.querySelector<HTMLElement>(".hl-map-sheet");
+      let next = dock;
+      if (sheetEl) {
+        const rootBox = root.getBoundingClientRect();
+        const sheetBox = sheetEl.getBoundingClientRect();
+        if (sheetBox.height > 0) {
+          next = {
+            bottom: Math.round(rootBox.bottom - sheetBox.top + LOCATION_CONTROL_MOBILE_GAP),
+            left: LOCATION_CONTROL_MOBILE_LEFT,
+          };
+        }
+      }
+      defaultMobilePosRef.current = next;
+      setLocationControlPosition((current) =>
+        current.bottom === next.bottom && current.left === next.left ? current : next
+      );
+    };
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(root);
+    const sheetEl = root.querySelector<HTMLElement>(".hl-map-sheet");
+    if (sheetEl) observer.observe(sheetEl);
+    window.addEventListener("resize", apply);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", apply);
+    };
+  }, [hideLocationButton, sheetOpen]);
 
   return (
     <div
@@ -1851,6 +1867,7 @@ export function MapComponent({
       {!hideLocationButton && (
         <div
           ref={locationControlRef}
+          data-location-control=""
           onMouseDown={handleLocationControlMouseDown}
           onTouchStart={handleLocationControlTouchStart}
           style={{
