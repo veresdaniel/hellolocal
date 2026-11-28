@@ -247,7 +247,7 @@ const getZoomLevel = (zoom: number): ZoomLevel => {
 
 /** Pin stays small; zoom only nudges it, it does not grow into a teardrop. */
 function markerScale(zoom: number): number {
-  return Math.min(1.02, Math.max(0.7, 0.42 + zoom * 0.034));
+  return Math.min(1.08, Math.max(0.82, 0.48 + zoom * 0.038));
 }
 
 /** Thumbtack: round red head, thin needle, tip anchored to the coordinate. */
@@ -257,6 +257,7 @@ function PlaceMapPin({
   isSelected,
   isHovered,
   isMuted,
+  count = 1,
 }: {
   zoom: number;
   kind: "place" | "event" | "service";
@@ -264,6 +265,7 @@ function PlaceMapPin({
   isSelected: boolean;
   isHovered: boolean;
   isMuted: boolean;
+  count?: number;
 }) {
   const scale = markerScale(zoom);
   const className = [
@@ -284,7 +286,9 @@ function PlaceMapPin({
     >
       <span className="hl-map-marker__shadow" />
       <span className="hl-map-marker__pin">
-        <span className="hl-map-marker__head" />
+        <span className="hl-map-marker__head">
+          {count > 1 ? <span className="hl-map-marker__count">{count}</span> : null}
+        </span>
         <span className="hl-map-marker__needle" />
       </span>
     </span>
@@ -325,6 +329,41 @@ function clusterMarkers<T extends { lat: number; lng: number }>(markers: T[], zo
   });
 
   return Array.from(cellMap.values());
+}
+
+/**
+ * Pins that sit on top of each other become one thumbtack.
+ * The radius follows the pin's size on screen (about 32px), and stays between
+ * 20 m and 80 m so a shared meadow merges while a street of cellars can split
+ * once you zoom in.
+ */
+function sameSpotRadiusKm(zoom: number, lat: number): number {
+  const z = Number.isFinite(zoom) ? zoom : 13;
+  const latitude = Number.isFinite(lat) ? lat : 47.5;
+  const metersPerPixel =
+    (156543.03392 * Math.cos((latitude * Math.PI) / 180)) / 2 ** z;
+  const fromScreen = (32 * metersPerPixel) / 1000;
+  return Math.min(0.08, Math.max(0.02, fromScreen));
+}
+
+function groupSameSpot<T extends { id: string; lat: number; lng: number; kind?: string }>(
+  markers: T[],
+  radiusKm: number
+): Array<{ anchor: T; members: T[] }> {
+  const groups: T[][] = [];
+  for (const marker of markers) {
+    const group = groups.find(
+      (members) =>
+        calculateDistance(members[0].lat, members[0].lng, marker.lat, marker.lng) <= radiusKm
+    );
+    if (group) group.push(marker);
+    else groups.push([marker]);
+  }
+  return groups.map((members) => {
+    const anchor = members.find((member) => member.kind !== "event") ?? members[0];
+    const rest = members.filter((member) => member.id !== anchor.id);
+    return { anchor, members: [anchor, ...rest] };
+  });
 }
 
 /**
@@ -1066,6 +1105,15 @@ export function MapComponent({
     return clusterMarkers(markersWithDistance, viewState.zoom);
   }, [markersWithDistance, viewState.zoom]);
 
+  const spotGroups = useMemo(
+    () =>
+      groupSameSpot(
+        visibleMarkers,
+        sameSpotRadiusKm(viewState.zoom, viewState.latitude)
+      ),
+    [visibleMarkers, viewState.zoom, viewState.latitude]
+  );
+
   // First click opens the side card. Clicking the same pin again closes it.
   // The card's Open button goes to the place or event page.
   const handleMarkerClick = useCallback(
@@ -1097,8 +1145,28 @@ export function MapComponent({
         lastRouteFetchPosition.current = null;
       }
       setSelectedMarkerId(marker.id);
+      if (Number.isFinite(marker.lat) && Number.isFinite(marker.lng)) {
+        setViewState((prev) => ({
+          ...prev,
+          latitude: marker.lat,
+          longitude: marker.lng,
+        }));
+        const map = getMap();
+        if (map) {
+          const mobile = window.matchMedia("(max-width: 767px)").matches;
+          map.easeTo({
+            center: [marker.lng, marker.lat],
+            duration: 650,
+            essential: true,
+            // Phone sheet covers the bottom; keep the pin in the open middle.
+            padding: mobile
+              ? { top: 64, bottom: 200, left: 16, right: 16 }
+              : { top: 0, bottom: 0, left: 0, right: 0 },
+          });
+        }
+      }
     },
-    [selectedMarkerId, suppressNextMapClick]
+    [getMap, selectedMarkerId, suppressNextMapClick]
   );
 
   /** Start in-app walking route: select place, ensure geolocation, draw polyline. Never opens external maps. */
@@ -1239,6 +1307,9 @@ export function MapComponent({
 
   const selectedMarker =
     markersWithDistance.find((marker) => marker.id === selectedMarkerId) ?? null;
+  const selectedSpot =
+    spotGroups.find((group) => group.members.some((member) => member.id === selectedMarkerId))
+      ?.members ?? [];
   const sheetPhoto = (raw: string | null | undefined) => {
     const safe = sanitizeImageUrl(raw);
     return safe ? preferModernImageUrl(safe, { width: 720 }) : null;
@@ -1560,13 +1631,15 @@ export function MapComponent({
         )}
 
         {/* Additional markers (for places on explore page) */}
-        {visibleMarkers.map((marker) => {
+        {spotGroups.map(({ anchor: marker, members }) => {
           const zoomLevel = getZoomLevel(viewState.zoom);
-          const showLabel = zoomLevel === "close" && !!marker.name && selectedMarkerId !== marker.id;
-          const isClickable = !!marker.onClick;
-          const isSelected = selectedMarkerId === marker.id;
-          const isHovered = hoveredMarkerId === marker.id;
-          const isPinned = pinnedMarkerId === marker.id;
+          const groupSelected = members.some((member) => member.id === selectedMarkerId);
+          const showLabel =
+            zoomLevel === "close" && !!marker.name && !groupSelected;
+          const isClickable = members.some((member) => member.onClick);
+          const isSelected = groupSelected;
+          const isHovered = members.some((member) => member.id === hoveredMarkerId);
+          const isPinned = members.some((member) => member.id === pinnedMarkerId);
 
           return (
             <Marker
@@ -1616,7 +1689,8 @@ export function MapComponent({
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleMarkerClick(marker, e as any);
+                  const open = members.find((member) => member.id === selectedMarkerId) ?? marker;
+                  handleMarkerClick(open, e as any);
                 }}
               >
                 <PlaceMapPin
@@ -1626,6 +1700,7 @@ export function MapComponent({
                   isSelected={isSelected}
                   isHovered={isHovered || isPinned}
                   isMuted={!isClickable}
+                  count={members.length}
                 />
 
                 {showLabel && (
@@ -1646,7 +1721,7 @@ export function MapComponent({
                       {marker.name && (
                         <span className="hl-map-marker-card__title">{marker.name}</span>
                       )}
-                      {marker.category && (
+                      {members.length === 1 && marker.category && (
                         <span className="hl-map-marker-card__category">{marker.category}</span>
                       )}
                     </div>
@@ -1679,6 +1754,21 @@ export function MapComponent({
           <div className="hl-map-sheet__body">
             {sheet.kicker && <p className="hl-map-sheet__kicker">{sheet.kicker}</p>}
             <h2 className="hl-map-sheet__title">{sheet.title}</h2>
+            {selectedSpot.length > 1 && (
+              <div className="hl-map-sheet__mates" role="listbox" aria-label={sheet.title}>
+                {selectedSpot.map((mate) => (
+                  <button
+                    key={mate.id}
+                    type="button"
+                    role="option"
+                    aria-selected={mate.id === selectedMarkerId}
+                    onClick={() => setSelectedMarkerId(mate.id)}
+                  >
+                    {mate.name}
+                  </button>
+                ))}
+              </div>
+            )}
             {sheet.summary && <p className="hl-map-sheet__summary">{sheet.summary}</p>}
             {sheet.marker && sheet.marker.distance !== undefined && sheet.marker.distance <= MAX_DISTANCE_KM && (
               <p className="hl-map-sheet__meta">

@@ -18,6 +18,23 @@
   z-index: 1300;
 }
 
+/* Open panel keeps the toolbar's right edge and wraps inside the map. */
+.map-dock.is-open {
+  align-items: stretch;
+}
+
+.map-dock.is-open .map-dock__bar {
+  align-self: flex-end;
+  width: max-content;
+  max-width: 100%;
+}
+
+.map-dock.is-open .map-dock__panel {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .map-dock__bar,
 .map-dock__panel,
 .map-filters-inline {

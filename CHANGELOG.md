@@ -36,6 +36,12 @@ in prose as used in the product.
 
 ### Changed
 
+- Pins that share a spot (a place and its event on the same meadow) draw as one
+  thumbtack with a count. The side card lists each one so you can switch.
+  Clicking a pin centers the map, and the selected pin stays visible with a
+  navy head.
+- Opening map filters on desktop keeps the toolbar’s right edge and wraps the
+  chips onto extra rows so they stay inside the window.
 - List cards mark the category on the photo: a color stripe down the left edge
   and a dark label with a matching dot, instead of a faint top border.
 - List discover stays full width, but the search is short and the filters wrap

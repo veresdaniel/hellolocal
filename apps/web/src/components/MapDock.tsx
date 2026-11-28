@@ -171,8 +171,31 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
     return () => window.removeEventListener("resize", place);
   }, []);
 
+  const [openFrame, setOpenFrame] = useState<{ right: number; width: number } | null>(null);
   useLayoutEffect(() => {
-    if (mobile || !panel) return;
+    if (mobile || !panel || !pos) {
+      setOpenFrame(null);
+      return;
+    }
+    const dock = dockRef.current;
+    const parent = dock?.parentElement;
+    const bar = dock?.querySelector<HTMLElement>(".map-dock__bar");
+    if (!dock || !parent || !bar) return;
+    const parentWidth = parent.getBoundingClientRect().width;
+    const barWidth = bar.getBoundingClientRect().width;
+    const rightEdge = pos.left + barWidth;
+    const available = Math.max(220, rightEdge - 16);
+    const next = {
+      right: Math.max(8, parentWidth - rightEdge),
+      width: Math.min(480, available),
+    };
+    setOpenFrame((current) =>
+      current && current.right === next.right && current.width === next.width ? current : next
+    );
+  }, [mobile, panel, pos]);
+
+  useLayoutEffect(() => {
+    if (mobile || !panel || !openFrame) return;
     const dock = dockRef.current;
     const parent = dock?.parentElement;
     if (!dock || !parent) return;
@@ -184,7 +207,7 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
         current ? { ...current, top: Math.max(8, current.top - overflow) } : current
       );
     }
-  }, [panel, mobile]);
+  }, [panel, mobile, openFrame]);
 
   const { data: platformSettings } = useQuery({
     queryKey: ["platformSettings", props.lang, siteKey],
@@ -310,15 +333,24 @@ export function MapDock(props: FilterControlProps & { onPanelChange?: (panel: Pa
   return (
     <div
       ref={dockRef}
-      className={`map-dock${mobile ? " map-dock--mobile" : ""}${dragging ? " is-dragging" : ""}`}
+      className={`map-dock${mobile ? " map-dock--mobile" : ""}${dragging ? " is-dragging" : ""}${openFrame ? " is-open" : ""}`}
       style={
         !mobile && pos
-          ? {
-              left: pos.left,
-              top: pos.top,
-              right: "auto",
-              bottom: "auto",
-            }
+          ? openFrame
+            ? {
+                top: pos.top,
+                right: openFrame.right,
+                left: "auto",
+                bottom: "auto",
+                width: openFrame.width,
+                maxWidth: openFrame.width,
+              }
+            : {
+                left: pos.left,
+                top: pos.top,
+                right: "auto",
+                bottom: "auto",
+              }
           : undefined
       }
     >

@@ -5,8 +5,8 @@
   --hl-pin-tilt: -18deg;
   position: relative;
   display: block;
-  width: 22px;
-  height: 32px;
+  width: 28px;
+  height: 40px;
   flex-shrink: 0;
   transform-origin: 50% 100%;
   transform: scale(var(--hl-pin-scale));
@@ -42,8 +42,8 @@
 .hl-map-marker__head {
   position: relative;
   z-index: 1;
-  width: 13px;
-  height: 13px;
+  width: 16px;
+  height: 16px;
   margin-bottom: -3px;
   border-radius: 50%;
   background:
@@ -52,6 +52,24 @@
     inset -1.5px -2px 2px rgba(80, 0, 0, 0.35),
     inset 1px 1px 1px rgba(255, 255, 255, 0.45),
     0 1px 1px rgba(27, 23, 48, 0.2);
+}
+
+.hl-map-marker__count {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #1b1730;
+  color: #fffdf9;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(27, 23, 48, 0.35);
 }
 
 .hl-map-marker__head::after {
@@ -67,8 +85,8 @@
 }
 
 .hl-map-marker__needle {
-  width: 3px;
-  height: 15px;
+  width: 4px;
+  height: 18px;
   background: linear-gradient(90deg, #f7f4ee 0%, #b7b3ab 42%, #4a4744 100%);
   clip-path: polygon(18% 0, 82% 0, 50% 100%);
 }
@@ -100,7 +118,12 @@
 }
 
 .hl-map-marker.is-selected .hl-map-marker__head {
-  animation: hl-pin-glint 1.8s ease-in-out infinite;
+  background:
+    radial-gradient(circle at 32% 28%, #f3f1ff 0 7%, #7a72c9 24%, #2c2658 60%, #141226 100%);
+  box-shadow:
+    inset -1.5px -2px 2px rgba(10, 8, 24, 0.45),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.4),
+    0 1px 2px rgba(27, 23, 48, 0.28);
 }
 
 @keyframes hl-pin-drop {
@@ -115,16 +138,6 @@
   100% {
     opacity: 1;
     transform: translateX(-50%) rotate(var(--hl-pin-tilt)) translateY(0);
-  }
-}
-
-@keyframes hl-pin-glint {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.18);
   }
 }
 
@@ -197,8 +210,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hl-map-marker__pin,
-  .hl-map-marker.is-selected .hl-map-marker__head {
+  .hl-map-marker__pin {
     animation: none;
   }
 }
@@ -514,6 +526,33 @@
   font-size: 22px;
   line-height: 1.2;
   letter-spacing: -0.02em;
+}
+
+.hl-map-sheet__mates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hl-map-sheet__mates button {
+  max-width: 100%;
+  padding: 4px 8px;
+  border: 1px solid rgba(27, 23, 48, 0.14);
+  border-radius: 8px;
+  background: #fff;
+  color: #1b1730;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hl-map-sheet__mates button[aria-selected="true"] {
+  background: #1b1730;
+  border-color: #1b1730;
+  color: #fffdf9;
 }
 
 .hl-map-sheet__summary,
