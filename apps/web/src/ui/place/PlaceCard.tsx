@@ -138,30 +138,10 @@ export function PlaceCard({ place, index = 0 }: PlaceCardProps) {
           </div>
         )}
         {categoryName && (
-            <div
-              style={{
-                position: "absolute",
-                top: 12,
-                right: 12,
-                zIndex: 10,
-              }}
-            >
-              <Badge
-                variant="category"
-                color={categoryColor}
-                backgroundColor="rgba(255, 255, 255, 0.95)"
-                textColor={categoryColor}
-                size="small"
-                uppercase={true}
-                style={{
-                  backdropFilter: "blur(8px)",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-                }}
-              >
-                {categoryName}
-              </Badge>
-            </div>
-          )}
+          <div className="list-card__cat-wrap">
+            <span className="list-card__cat">{categoryName}</span>
+          </div>
+        )}
       </div>
 
       <div className="list-card__body">

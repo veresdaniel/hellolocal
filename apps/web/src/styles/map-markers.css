@@ -1,129 +1,131 @@
-/* Public map place pins — cream / navy / terracotta */
+/* Thumbtack pins: small red head, needle tip on the coordinate. */
 
 .hl-map-marker {
-  --hl-marker-cream: #fffdf9;
-  --hl-marker-navy: #1b1730;
-  --hl-marker-terracotta: #c45c26;
-  --hl-marker-fill: var(--hl-marker-navy);
   --hl-pin-scale: 1;
+  --hl-pin-tilt: -18deg;
   position: relative;
   display: block;
-  width: 34px;
-  height: 44px;
+  width: 22px;
+  height: 32px;
   flex-shrink: 0;
   transform-origin: 50% 100%;
   transform: scale(var(--hl-pin-scale));
-  transition:
-    transform 0.18s ease,
-    filter 0.18s ease;
-  filter: drop-shadow(0 2px 3px rgba(27, 23, 48, 0.22))
-    drop-shadow(0 1px 1px rgba(27, 23, 48, 0.12));
+  transition: transform 0.22s ease;
   pointer-events: none;
 }
 
-.hl-map-marker__svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+.hl-map-marker__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 8px;
+  height: 3px;
+  transform: translate(-40%, 1px);
+  border-radius: 50%;
+  background: rgba(27, 23, 48, 0.28);
+  filter: blur(0.6px);
 }
 
-.hl-map-marker__body {
-  fill: var(--hl-marker-fill);
-  stroke: var(--hl-marker-cream);
-  stroke-width: 1.75;
-  paint-order: stroke fill;
-  transition:
-    fill 0.18s ease,
-    stroke 0.18s ease;
+.hl-map-marker__pin {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%) rotate(var(--hl-pin-tilt));
+  transform-origin: 50% 100%;
+  transition: transform 0.22s ease;
+  animation: hl-pin-drop 0.48s cubic-bezier(0.22, 1.15, 0.36, 1) backwards;
 }
 
-.hl-map-marker__ring {
-  fill: none;
-  stroke: rgba(255, 253, 249, 0.42);
-  stroke-width: 1.25;
-  transition: stroke 0.18s ease;
+.hl-map-marker__head {
+  position: relative;
+  z-index: 1;
+  width: 13px;
+  height: 13px;
+  margin-bottom: -3px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, #fff4f1 0 7%, #ff7a6e 22%, #e11d1d 58%, #8d1010 100%);
+  box-shadow:
+    inset -1.5px -2px 2px rgba(80, 0, 0, 0.35),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.45),
+    0 1px 1px rgba(27, 23, 48, 0.2);
 }
 
-.hl-map-marker__core {
-  fill: var(--hl-marker-cream);
-  transition: fill 0.18s ease;
+.hl-map-marker__head::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2.5px;
+  width: 3.5px;
+  height: 2.5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  transform: rotate(-24deg);
 }
 
-.hl-map-marker--event {
-  --hl-marker-fill: var(--hl-marker-terracotta);
-}
-
-.hl-map-marker__glyph {
-  fill: none;
-  stroke: var(--hl-marker-cream);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.hl-map-marker--service .hl-map-marker__glyph {
-  fill: var(--hl-marker-cream);
-  stroke: none;
-}
-
-.hl-map-marker.is-tiny .hl-map-marker__glyph,
-.hl-map-marker.is-tiny .hl-map-marker__core,
-.hl-map-marker.is-tiny .hl-map-marker__ring {
-  display: none;
+.hl-map-marker__needle {
+  width: 3px;
+  height: 15px;
+  background: linear-gradient(90deg, #f7f4ee 0%, #b7b3ab 42%, #4a4744 100%);
+  clip-path: polygon(18% 0, 82% 0, 50% 100%);
 }
 
 .hl-map-marker.is-muted {
-  opacity: 0.72;
-  filter: drop-shadow(0 1px 2px rgba(27, 23, 48, 0.18));
+  opacity: 0.55;
 }
 
-.hl-map-marker.is-muted .hl-map-marker__body {
-  fill: #8a8698;
-  stroke: var(--hl-marker-cream);
-}
-
-.hl-map-marker.is-muted .hl-map-marker__core {
-  fill: #ebe8e2;
+.hl-map-marker.is-muted .hl-map-marker__head {
+  background: radial-gradient(circle at 32% 28%, #f4f1ea 0 10%, #b7b2c4 40%, #6d6878 100%);
 }
 
 .hl-map-marker.is-hovered:not(.is-selected):not(.is-muted) {
-  transform: scale(calc(var(--hl-pin-scale) * 1.12));
-  filter: drop-shadow(0 3px 5px rgba(27, 23, 48, 0.28))
-    drop-shadow(0 1px 2px rgba(196, 92, 38, 0.2));
+  --hl-pin-tilt: -8deg;
 }
 
-.hl-map-marker.is-hovered:not(.is-selected):not(.is-muted) .hl-map-marker__body {
-  fill: #241e38;
-}
-
-.hl-map-marker.is-hovered:not(.is-selected):not(.is-muted) .hl-map-marker__ring {
-  stroke: var(--hl-marker-terracotta);
-  stroke-width: 2;
-}
-
-.hl-map-marker.is-hovered:not(.is-selected):not(.is-muted) .hl-map-marker__core {
-  fill: var(--hl-marker-cream);
+.hl-map-marker.is-hovered:not(.is-selected):not(.is-muted) .hl-map-marker__pin {
+  animation: none;
 }
 
 .hl-map-marker.is-selected {
-  transform: scale(calc(var(--hl-pin-scale) * 1.2));
-  filter: drop-shadow(0 4px 7px rgba(27, 23, 48, 0.3))
-    drop-shadow(0 1px 2px rgba(196, 92, 38, 0.28));
+  --hl-pin-tilt: -6deg;
+  transform: scale(calc(var(--hl-pin-scale) * 1.08));
   z-index: 2;
 }
 
-.hl-map-marker.is-selected .hl-map-marker__body {
-  fill: var(--hl-marker-terracotta);
-  stroke: var(--hl-marker-cream);
+.hl-map-marker.is-selected .hl-map-marker__pin {
+  animation: none;
 }
 
-.hl-map-marker.is-selected .hl-map-marker__ring {
-  stroke: rgba(255, 253, 249, 0.55);
+.hl-map-marker.is-selected .hl-map-marker__head {
+  animation: hl-pin-glint 1.8s ease-in-out infinite;
 }
 
-.hl-map-marker.is-selected .hl-map-marker__core {
-  fill: var(--hl-marker-cream);
+@keyframes hl-pin-drop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) rotate(-28deg) translateY(-8px);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) rotate(-12deg) translateY(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) rotate(var(--hl-pin-tilt)) translateY(0);
+  }
+}
+
+@keyframes hl-pin-glint {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.18);
+  }
 }
 
 /* Compact dots for medium / far / veryFar zoom */
@@ -195,11 +197,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hl-map-marker,
-  .hl-map-marker__body,
-  .hl-map-marker__ring,
-  .hl-map-marker__core {
-    transition: none;
+  .hl-map-marker__pin,
+  .hl-map-marker.is-selected .hl-map-marker__head {
+    animation: none;
   }
 }
 
@@ -439,17 +439,18 @@
   }
 }
 
-/* Side card: left on desktop, above the mobile filter dock. */
+/* Side card: top-right on desktop, clear of the header and filter row. */
 .hl-map-sheet {
   --hl-sheet-cream: #fffdf9;
   --hl-sheet-navy: #1b1730;
   --hl-sheet-terracotta: #c45c26;
   position: absolute;
   z-index: 8;
-  left: 16px;
-  bottom: 16px;
+  top: var(--hl-sheet-top, 76px);
+  right: 16px;
+  left: auto;
   width: min(340px, calc(100% - 32px));
-  max-height: min(460px, calc(100% - 96px));
+  max-height: min(460px, calc(100% - var(--hl-sheet-top, 76px) - 16px));
   display: flex;
   flex-direction: column;
   overflow: auto;
@@ -556,6 +557,7 @@
 
 @media (max-width: 767px) {
   .hl-map-sheet {
+    top: auto;
     left: 12px;
     right: 12px;
     bottom: calc(72px + env(safe-area-inset-bottom));

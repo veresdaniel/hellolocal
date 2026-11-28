@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import type { Event } from "../../api/places.api";
 import { buildUrl } from "../../app/urls";
 import { useRouteCtx } from "../../app/useRouteCtx";
-import { Badge } from "../../components/Badge";
 import { ImageWithSkeleton } from "../../components/ImageWithSkeleton";
 import { sanitizeImageUrl } from "../../utils/urlValidation";
 import "../../styles/list-card.css";
@@ -56,17 +55,8 @@ export function EventGridCard({
             />
           </div>
         ) : null}
-        <div style={{ position: "absolute", top: 12, left: 12, zIndex: 2 }}>
-          <Badge
-            variant="custom"
-            backgroundColor="rgba(102, 126, 234, 0.95)"
-            textColor="white"
-            size="small"
-            uppercase
-            style={{ backdropFilter: "blur(8px)", boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)" }}
-          >
-            {t("public.events")}
-          </Badge>
+        <div className="list-card__cat-wrap list-card__cat-wrap--start">
+          <span className="list-card__cat">{t("public.events")}</span>
         </div>
       </div>
       <div className="list-card__body">

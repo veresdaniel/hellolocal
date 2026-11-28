@@ -245,16 +245,15 @@ const getZoomLevel = (zoom: number): ZoomLevel => {
   return "veryFar";
 };
 
-/** Smooth pin size: small when zoomed out, full teardrop when close. */
+/** Pin stays small; zoom only nudges it, it does not grow into a teardrop. */
 function markerScale(zoom: number): number {
-  return Math.min(1.16, Math.max(0.5, 0.28 + zoom * 0.05));
+  return Math.min(1.02, Math.max(0.7, 0.42 + zoom * 0.034));
 }
 
-/** Public map pin — teardrop scaled with zoom; glyph marks place / service / event. */
+/** Thumbtack: round red head, thin needle, tip anchored to the coordinate. */
 function PlaceMapPin({
   zoom,
   kind,
-  color,
   isSelected,
   isHovered,
   isMuted,
@@ -270,7 +269,6 @@ function PlaceMapPin({
   const className = [
     "hl-map-marker",
     `hl-map-marker--${kind}`,
-    scale < 0.68 ? "is-tiny" : "",
     isSelected ? "is-selected" : "",
     isHovered ? "is-hovered" : "",
     isMuted ? "is-muted" : "",
@@ -281,29 +279,14 @@ function PlaceMapPin({
   return (
     <span
       className={className}
-      style={{
-        ["--hl-pin-scale" as string]: String(scale),
-        ["--hl-marker-fill" as string]: color || undefined,
-      }}
+      style={{ ["--hl-pin-scale" as string]: String(scale) }}
       aria-hidden="true"
     >
-      <svg className="hl-map-marker__svg" viewBox="0 0 40 52" role="presentation">
-        <path
-          className="hl-map-marker__body"
-          d="M20 2.5c-8.2 0-14.8 6.5-14.8 14.6 0 10.4 11.2 24.2 14.1 27.5a1 1 0 0 0 1.4 0c2.9-3.3 14.1-17.1 14.1-27.5C34.8 9 28.2 2.5 20 2.5z"
-        />
-        <circle className="hl-map-marker__ring" cx="20" cy="17" r="8.25" />
-        {kind === "event" ? (
-          <g className="hl-map-marker__glyph">
-            <rect x="14.2" y="12.2" width="11.6" height="9.2" rx="1.4" />
-            <path d="M14.2 15.4h11.6M17.2 11.2v2.2M22.8 11.2v2.2" />
-          </g>
-        ) : kind === "service" ? (
-          <path className="hl-map-marker__glyph" d="M20 12.2 24.2 17 20 21.8 15.8 17Z" />
-        ) : (
-          <circle className="hl-map-marker__core" cx="20" cy="17" r="4.2" />
-        )}
-      </svg>
+      <span className="hl-map-marker__shadow" />
+      <span className="hl-map-marker__pin">
+        <span className="hl-map-marker__head" />
+        <span className="hl-map-marker__needle" />
+      </span>
     </span>
   );
 }
@@ -379,6 +362,7 @@ export function MapComponent({
   const userLocation = userLocationFromStore || userLocationProp;
 
   const mapRef = useRef<MapRef | null>(null);
+  const mapRootRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<maplibregl.Map | null>(null);
 
   // Fresh GPS on enable / PWA resume + watch while moving (public maps only).
@@ -1283,8 +1267,55 @@ export function MapComponent({
           }
         : null;
 
+  useLayoutEffect(() => {
+    const root = mapRootRef.current;
+    if (!root) return;
+    const placeSheet = () => {
+      if (window.matchMedia("(max-width: 767px)").matches) {
+        root.style.removeProperty("--hl-sheet-top");
+        return;
+      }
+      const rootBox = root.getBoundingClientRect();
+      const sheetWidth = Math.min(340, Math.max(0, rootBox.width - 32));
+      const sheetLeft = rootBox.right - 16 - sheetWidth;
+      const sheetRight = rootBox.right - 16;
+      let top = 16;
+      const chrome = root.parentElement?.querySelectorAll<HTMLElement>(
+        ".map-dock, [data-map-list-toggle], .hl-floating-header"
+      );
+      chrome?.forEach((el) => {
+        const box = el.getBoundingClientRect();
+        if (box.width < 1 || box.height < 1) return;
+        const overlaps = box.left < sheetRight - 8 && box.right > sheetLeft + 8;
+        if (!overlaps) return;
+        const bottom = box.bottom - rootBox.top;
+        if (bottom + 12 > top) top = bottom + 12;
+      });
+      const maxTop = Math.max(16, rootBox.height - 180);
+      root.style.setProperty("--hl-sheet-top", `${Math.round(Math.min(top, maxTop))}px`);
+    };
+    placeSheet();
+    const observer = new ResizeObserver(placeSheet);
+    observer.observe(root);
+    const parent = root.parentElement;
+    const watch = parent?.querySelectorAll<HTMLElement>(
+      ".map-dock, [data-map-list-toggle], .hl-floating-header"
+    );
+    watch?.forEach((el) => observer.observe(el));
+    const mutations = new MutationObserver(placeSheet);
+    watch?.forEach((el) => mutations.observe(el, { attributes: true, attributeFilter: ["style", "class"] }));
+    window.addEventListener("resize", placeSheet);
+    return () => {
+      observer.disconnect();
+      mutations.disconnect();
+      window.removeEventListener("resize", placeSheet);
+    };
+  }, []);
+
   return (
     <div
+      ref={mapRootRef}
+      className="hl-map-root"
       style={{
         width: "100%",
         height: heightStyle,

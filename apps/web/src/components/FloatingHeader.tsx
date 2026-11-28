@@ -867,8 +867,83 @@ export function FloatingHeader({
             )}
           </nav>
 
-          {/* Mobile Menu Button (including platform overview — demo / how / lang) */}
-          {isMobile && (
+          {/* Platform overview in the browser: iOS already owns the top-right menu.
+              Show language and sign-in instead of a second hamburger. */}
+          {isMobile && isOverview ? (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+                marginRight: 10,
+                flexShrink: 0,
+              }}
+            >
+              <div className="hl-floating-header__lang">
+                <LanguageSelector />
+              </div>
+              {user && showAuthButtons && hasActiveSite ? (
+                <Link
+                  to={buildUrl({ lang, path: "admin" })}
+                  style={{
+                    color: "var(--hl-nav-fg, #f2f4fb)",
+                    fontSize: 15,
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    padding: "10px 8px",
+                    minHeight: 44,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t("admin.dashboard")}
+                </Link>
+              ) : !user ? (
+                <Link
+                  to={`/${lang}/admin/login`}
+                  style={{
+                    color: "var(--hl-nav-fg, #f2f4fb)",
+                    fontSize: 15,
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    padding: "10px 8px",
+                    minHeight: 44,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t("public.visitorAuth.login")}
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                data-mobile-menu-button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMobileMenuOpen(!isMobileMenuOpen);
+                }}
+                aria-expanded={isMobileMenuOpen}
+                aria-label={t("public.menu")}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--hl-nav-fg, #f2f4fb)",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  fontFamily: "inherit",
+                  cursor: "pointer",
+                  padding: "10px 8px",
+                  minHeight: 44,
+                  display: "inline-flex",
+                  alignItems: "center",
+                }}
+              >
+                {t("public.menu")}
+              </button>
+            </div>
+          ) : isMobile ? (
             <button
               data-mobile-menu-button
               onClick={(e) => {
@@ -926,7 +1001,7 @@ export function FloatingHeader({
                 }}
               />
             </button>
-          )}
+          ) : null}
         </div>
 
         {/* Mobile menu is portaled: the header's transform and blur would trap a fixed layer inside the bar. */}

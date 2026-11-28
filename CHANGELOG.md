@@ -36,21 +36,29 @@ in prose as used in the product.
 
 ### Changed
 
-- Public map pins scale with zoom. Places use their category color, services
-  a diamond, events a terracotta calendar. A marker click opens a closable
-  card on the map (photo, summary, open, navigation) instead of a bubble over
-  the pin. Until a pin is chosen the same card introduces the region, town, or
-  focused place. On a phone the card sits above the filter dock.
-- List discover: search and filters share one compact card. Search is a pill;
-  Helyek / Szolgáltatások / Események is a segmented control; other chips scroll
-  in one row. The “Szűrők” heading is gone.
+- List cards mark the category on the photo: a color stripe down the left edge
+  and a dark label with a matching dot, instead of a faint top border.
+- List discover stays full width, but the search is short and the filters wrap
+  in one dense row of slightly rounded rectangles.
+- Map side card sits in the top-right on desktop, under the filter row and the
+  list toggle, so it does not cover those controls.
+- Map markers are small red thumbtacks (round head, thin needle, slight tilt,
+  short drop-in) instead of large teardrop pins.
+- Platform overview on a phone no longer stacks a second hamburger under the
+  iOS menu. The header shows language, sign-in, and a text **Menü** button
+  that opens the same drawer (demo, login, legal, cookies, logout).
+- A marker click opens a closable card on the map (photo, summary, open,
+  navigation) instead of a bubble over the pin. Until a pin is chosen the same
+  card introduces the region, town, or focused place. On a phone the card sits
+  above the filter dock.
 - Platform overview “Read more” / Bővebben: transparent border by default, white
   on hover (no layout jump).
 - Mobile place/event wizard: remove AI draft from the name/title step (keep it
   on short and long description only).
 - Platform overview: desktop stats stay content-width (not stretched across the
-  full hero); hero aligns to the top. Mobile keeps stacked full-width CTAs,
-  one-column stats rows, and a hamburger menu (demo / how it works / login);
+  full hero); hero aligns to the top. Mobile keeps stacked full-width CTAs
+  and one-column stats rows; the header menu is a text button (demo / how it
+  works / login);
   login always links back to the platform landing (Áttekintés) after logout —
   not a region explore URL.
 - Mobile place/event wizard text steps use full-height textareas that fill the

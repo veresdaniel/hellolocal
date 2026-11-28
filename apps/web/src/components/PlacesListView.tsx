@@ -584,13 +584,15 @@ export function PlacesListView({
         }
         .places-discover__form {
           display: flex;
-          flex-direction: column;
-          gap: 10px;
-          padding: 12px;
-          border-radius: 18px;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px;
+          width: 100%;
+          padding: 10px 12px;
+          border-radius: 14px;
           background: var(--hl-card, #fffdf9);
           border: 1px solid var(--hl-line-on-card, rgba(27, 23, 48, 0.1));
-          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
         .places-discover__controls {
           display: flex;
@@ -613,6 +615,9 @@ export function PlacesListView({
         }
         .places-discover__search-wrap {
           position: relative;
+          flex: 0 1 220px;
+          width: 220px;
+          max-width: 100%;
         }
         .places-discover__search-icon {
           position: absolute;
@@ -627,12 +632,12 @@ export function PlacesListView({
         .places-discover__search {
           display: block;
           width: 100%;
-          min-height: 42px;
-          padding: 8px 14px 8px 40px;
+          min-height: 36px;
+          padding: 6px 14px 6px 38px;
           font-size: 16px;
           font-family: var(--font-body);
           border: 1px solid rgba(27, 23, 48, 0.1);
-          border-radius: 999px;
+          border-radius: 8px;
           background: #fff;
           color: var(--hl-ink-on-card);
           box-sizing: border-box;
@@ -646,58 +651,44 @@ export function PlacesListView({
           box-shadow: 0 0 0 3px rgba(196, 92, 38, 0.22);
         }
         .places-discover__filters {
-          min-width: 0;
-          width: 100%;
+          display: contents;
         }
-        .places-discover__filters .map-filters-inline--toolbar {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          padding: 0;
-          border: 0;
-          box-shadow: none;
-          background: transparent;
-        }
-        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-row {
-          flex-direction: column;
-          align-items: stretch;
-          column-gap: 0;
-          row-gap: 8px;
-        }
+        .places-discover__filters .map-filters-inline--toolbar,
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-row,
         .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group {
-          flex-wrap: nowrap;
-          overflow-x: auto;
-          scrollbar-width: none;
-          gap: 6px;
-          max-width: 100%;
-        }
-        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group::-webkit-scrollbar {
-          display: none;
-        }
-        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group--kind {
-          margin: 0;
-          width: max-content;
-          max-width: 100%;
-          padding: 3px;
-          border-radius: 999px;
-          background: rgba(27, 23, 48, 0.06);
+          display: contents;
         }
         .places-discover__filters .map-filters-inline--toolbar .map-dock__chip,
         .places-discover__filters .map-filters-inline--toolbar .map-dock__chip-label {
           font-family: "Source Sans 3", Inter, system-ui, sans-serif;
-          font-size: 14px;
-          min-height: 34px;
-          padding: 4px 12px;
+          font-size: 13px;
+          font-weight: 650;
+          min-height: 32px;
+          padding: 4px 10px;
+          border-radius: 8px;
+          color: var(--hl-ink, #1b1730);
         }
-        .places-discover__filters .map-filters-inline--toolbar .map-dock__filter-group--kind .map-dock__chip {
+        .places-discover__filters .map-filters-inline--toolbar .map-dock__chip-label {
+          min-height: 0;
+          padding: 0 2px 0 8px;
           border: 0;
           background: transparent;
-          box-shadow: none;
+          color: #6d6578;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
         }
         .places-discover__filters .map-filters-inline--toolbar .map-dock__chip[aria-pressed="true"] {
           background: var(--hl-navy, #1b1730);
           border-color: var(--hl-navy, #1b1730);
           color: #fff;
+        }
+        @media (max-width: 640px) {
+          .places-discover__search-wrap {
+            flex-basis: 100%;
+            width: 100%;
+          }
         }
         .places-discover__filters .map-filters-inline__clear {
           align-self: flex-start;
